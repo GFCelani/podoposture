@@ -10,7 +10,7 @@ export function Hero() {
   return (
     <section
       data-tone="deep"
-      className="relative overflow-hidden bg-accent-deep text-paper"
+      className="relative overflow-hidden bg-hero text-paper"
     >
       {/* Camada 0: a clinica, quase apagada sob o petroleo. Dessaturada e
           com veu escuro por cima; trocar a foto quando vier a nova. */}
@@ -31,6 +31,21 @@ export function Hero() {
           }}
         />
       </div>
+
+      {/* Camada 0.5: luz de janela. Nao e cor de marca, e' luz: um ambar
+          muito diluido que tira o azul frio do petroleo do lado onde o
+          texto vive, e um respiro claro no alto. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: [
+            "radial-gradient(115% 85% at 2% -8%, rgb(255 196 118 / 0.4) 0%, rgb(255 196 118 / 0.15) 32%, transparent 62%)",
+            "radial-gradient(75% 62% at 76% 110%, rgb(255 188 116 / 0.2) 0%, transparent 58%)",
+            "radial-gradient(48% 54% at 74% 42%, rgb(255 206 150 / 0.12) 0%, transparent 70%)",
+          ].join(", "),
+        }}
+      />
 
       {/* Camada 1: papel milimetrado */}
       <div
@@ -61,14 +76,14 @@ export function Hero() {
         ))}
       </div>
 
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
         <div className="relative z-10 lg:col-span-7">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" />
           </div>
 
           <h1
-            className="rule-in mt-9 font-display text-[clamp(2.75rem,5.9vw,4.75rem)] leading-[1.03] font-medium tracking-[-0.025em] text-balance text-paper"
+            className="rule-in mt-9 font-display [@media(max-height:860px)]:mt-6 text-[clamp(2.75rem,5.9vw,4.75rem)] [@media(max-height:860px)]:text-[clamp(2.5rem,4.6vw,4.125rem)] leading-[1.03] font-medium tracking-[-0.025em] text-balance text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             Integração terapêutica <mark className="marca-grifo">efetiva</mark>,
@@ -80,7 +95,7 @@ export function Hero() {
           <svg
             aria-hidden="true"
             viewBox="0 0 420 46"
-            className="rule-in mt-8 h-11 w-full max-w-[440px]"
+            className="rule-in mt-8 h-11 w-full max-w-[440px] [@media(max-height:860px)]:mt-4 [@media(max-height:860px)]:h-8"
             style={{ ["--in-delay" as string]: "760ms" }}
           >
             <path
@@ -95,25 +110,6 @@ export function Hero() {
             <circle className="traco-monitor-ponto" cx={0} cy={40} r={2.6} fill="var(--color-accent-light)" />
           </svg>
 
-          {/* O espaco real da clinica, contido: a panoramica que no fundo e'
-              so atmosfera aparece aqui de verdade. Recorte com o poster de
-              coluna, o modelo anatomico e a maca. */}
-          <div
-            className="rule-in mt-8 max-w-[440px]"
-            style={{ ["--in-delay" as string]: "700ms" }}
-          >
-            <figure className="rounded-lg border border-rule/60 bg-paper p-2 shadow-lift">
-              <Image
-                src="/img/clinica-podoposture-5.jpg"
-                alt="Sala de atendimento da clínica, com maca e modelo anatômico de coluna"
-                width={2560}
-                height={1155}
-                sizes="(min-width: 1024px) 440px, 90vw"
-                className="aspect-[16/6] w-full rounded-md object-cover saturate-[0.88]"
-                style={{ objectPosition: "30% 42%" }}
-              />
-            </figure>
-          </div>
         </div>
 
         {/* Campo de aprumo. No telefone entra no fluxo, sangrando de borda a

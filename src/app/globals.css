@@ -25,6 +25,9 @@
   /* Petroleo suavizado das secoes escuras fora do hero. Contraste:
      paper 10.7, on-deep-muted 5.4, ambos AA. */
   --color-deep-calm: #1e3d56;
+  /* O hero em petroleo aquecido: menos azul frio, mesmo peso.
+     paper 12.8, on-deep-muted 6.4, accent-light 5.1. */
+  --color-hero: #16323f;
 
   /* Texto sobre o petroleo. Contraste sobre #0D2536:
      paper 14.94, on-deep-muted 7.48. */
@@ -109,48 +112,21 @@ body {
    Um transform por no'.
    =============================================================== */
 
-/* Varredura: a linha que desce o campo. */
-.varredura {
-  opacity: 0;
-  transform: translateY(var(--scan-de, -40px));
-  animation: varredura var(--scan-dur, 9s) linear infinite;
-}
-
-@keyframes varredura {
-  0% {
-    opacity: 0;
-    transform: translateY(var(--scan-de, -40px));
-  }
-  7% {
-    opacity: 1;
-  }
-  93% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(var(--scan-ate, 680px));
-  }
-}
-
-/* O realce que a varredura acende ao passar. O atraso de cada no' e'
-   proporcional a altura dele no campo, entao a onda acompanha a linha. */
-.varrido {
+/* Respiracao: o corpo clareia e volta, com folego de cima para baixo.
+   Substituiu a varredura de scanner: o mesmo campo, outra leitura. */
+.respiro {
   opacity: var(--base-op, 1);
-  animation: varrido var(--scan-dur, 9s) linear infinite;
-  animation-delay: var(--scan-delay, 0s);
+  animation: respiro var(--resp-dur, 7s) var(--ease-ciclo) infinite;
+  animation-delay: var(--resp-delay, 0s);
 }
 
-@keyframes varrido {
+@keyframes respiro {
   0%,
   100% {
     opacity: var(--base-op, 1);
   }
-  1% {
+  45% {
     opacity: var(--pico-op, 1);
-  }
-  9% {
-    opacity: var(--base-op, 1);
   }
 }
 

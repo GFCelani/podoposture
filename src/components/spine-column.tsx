@@ -15,13 +15,11 @@ const AMPLITUDE = 1.35;
 /** A coluna fantasma exagera a mesma curva: e' a postura fora de prumo. */
 const AMPLITUDE_FANTASMA = 2.5;
 
-/* Varredura. O atraso do realce de cada no' e' a fracao do percurso ate ele,
-   entao a onda de brilho acompanha a linha exatamente, sem JS. */
-const SCAN_DUR = 9;
-const SCAN_DE = -40;
-const SCAN_ATE = VB_H + 60;
-const scanDelay = (y: number) =>
-  `${(((y - SCAN_DE) / (SCAN_ATE - SCAN_DE)) * SCAN_DUR).toFixed(2)}s`;
+/* Respiracao. O corpo inteiro clareia e volta junto, com um atraso pequeno
+   de cima para baixo: onda de folego, nao passagem de scanner. */
+const RESP_DUR = 7;
+const respDelay = (y: number) =>
+  `${(((y / VB_H) * 0.9) - 0.45).toFixed(2)}s`;
 
 const LANDMARKS: Record<number, string> = {
   0: "C1",
@@ -275,38 +273,11 @@ const ARCO_CAMPO = (() => {
   };
 })();
 
-/** Miras de medicao distribuidas pelo campo, cada uma ligada a uma vertebra. */
-const MIRAS = [
-  { x: 148, y: 150, r: 15, alvo: 3, phase: "0s" },
-  { x: 262, y: 322, r: 19, alvo: 12, phase: "-9s" },
-  { x: 116, y: 452, r: 13, alvo: 17, phase: "-4s" },
-  { x: 322, y: 548, r: 16, alvo: 22, phase: "-14s" },
-].map((m) => {
-  const v = VERTEBRAE[m.alvo];
-  const dx = v.x - v.w / 2 - m.x;
-  const dy = v.y - m.y;
-  const dist = Math.hypot(dx, dy);
-  return {
-    ...m,
-    conector: `M ${n(m.x + (dx / dist) * (m.r + 5))} ${n(
-      m.y + (dy / dist) * (m.r + 5),
-    )} L ${n(v.x - v.w / 2 - 4)} ${n(v.y)}`,
-  };
-});
-
-/** Cantoneiras: marca de enquadramento do campo. */
-const CANTOS = [
-  { x: FIELD_L, y: 26, sx: 1, sy: 1 },
-  { x: FIELD_R, y: 26, sx: -1, sy: 1 },
-  { x: FIELD_L, y: BASE_Y + 24, sx: 1, sy: -1 },
-  { x: FIELD_R, y: BASE_Y + 24, sx: -1, sy: -1 },
-];
-
 const FIOS_VERTICAIS = [118, 236, 354];
 
 const BASE_TICKS = Array.from(
-  { length: 21 },
-  (_, k) => FIELD_L + (k * (FIELD_R - FIELD_L)) / 20,
+  { length: 11 },
+  (_, k) => FIELD_L + (k * (FIELD_R - FIELD_L)) / 10,
 );
 
 export function SpineColumn({ className }: { className?: string }) {
@@ -319,11 +290,7 @@ export function SpineColumn({ className }: { className?: string }) {
       preserveAspectRatio="xMaxYMid slice"
       aria-hidden="true"
       focusable="false"
-      style={{
-        ["--scan-dur" as string]: `${SCAN_DUR}s`,
-        ["--scan-de" as string]: `${SCAN_DE}px`,
-        ["--scan-ate" as string]: `${SCAN_ATE}px`,
-      }}
+      style={{ ["--resp-dur" as string]: `${RESP_DUR}s` }}
     >
       <defs>
         <filter
@@ -336,11 +303,6 @@ export function SpineColumn({ className }: { className?: string }) {
         >
           <feDropShadow dx="2" dy="3" stdDeviation="4" floodColor="#04121c" floodOpacity="0.4" />
         </filter>
-        <linearGradient id="scan-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--color-accent-light)" stopOpacity="0" />
-          <stop offset="72%" stopColor="var(--color-accent-light)" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="var(--color-accent-light)" stopOpacity="0" />
-        </linearGradient>
         {/* Volume do corpo vertebral: luz entrando de cima */}
         <linearGradient id="corpo-grad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--color-paper)" stopOpacity="0.3" />
@@ -370,31 +332,17 @@ export function SpineColumn({ className }: { className?: string }) {
         />
       ))}
 
-      {/* --- Cantoneiras --- */}
-      {CANTOS.map((c) => (
-        <path
-          key={`canto-${c.x}-${c.y}`}
-          className="rule-in"
-          style={{ ["--in-delay" as string]: "1500ms" }}
-          d={`M ${c.x + c.sx * 22} ${c.y} L ${c.x} ${c.y} L ${c.x} ${c.y + c.sy * 22}`}
-          fill="none"
-          stroke="var(--color-paper)"
-          strokeOpacity={0.28}
-          strokeWidth={1.2}
-        />
-      ))}
-
       {/* --- Niveis: reguas que se estendem a partir da coluna --- */}
       {VERTEBRAE.map((v) => {
         const mark = LANDMARKS[v.i];
         return (
           <g
             key={`nivel-${v.i}`}
-            className="varrido"
+            className="respiro"
             style={{
-              ["--base-op" as string]: mark ? 0.34 : 0.1,
-              ["--pico-op" as string]: mark ? 1 : 0.62,
-              ["--scan-delay" as string]: scanDelay(v.y),
+              ["--base-op" as string]: mark ? 0.3 : 0.065,
+              ["--pico-op" as string]: mark ? 0.72 : 0.26,
+              ["--resp-delay" as string]: respDelay(v.y),
             }}
           >
             <rect
@@ -469,43 +417,6 @@ export function SpineColumn({ className }: { className?: string }) {
         strokeDasharray={ARCO_CAMPO.len}
       />
 
-      {/* --- Miras de medicao no campo --- */}
-      {MIRAS.map((m, k) => (
-        <g
-          key={`mira-${m.x}`}
-          className="rule-in"
-          style={{ ["--in-delay" as string]: `${1300 + k * 130}ms` }}
-        >
-          <path
-            d={m.conector}
-            fill="none"
-            stroke="var(--color-paper)"
-            strokeOpacity={0.16}
-            strokeWidth={1}
-            strokeDasharray="2 5"
-          />
-          <g className="mira" style={{ ["--phase" as string]: m.phase }}>
-            <circle
-              cx={m.x}
-              cy={m.y}
-              r={m.r}
-              fill="none"
-              stroke="var(--color-accent-light)"
-              strokeOpacity={0.4}
-              strokeWidth={1}
-              strokeDasharray="3 4"
-            />
-            <path
-              d={`M ${m.x - m.r - 6} ${m.y} h ${m.r * 2 + 12} M ${m.x} ${m.y - m.r - 6} v ${m.r * 2 + 12}`}
-              stroke="var(--color-accent-light)"
-              strokeOpacity={0.28}
-              strokeWidth={1}
-            />
-          </g>
-          <circle cx={m.x} cy={m.y} r={1.8} fill="var(--color-accent-light)" fillOpacity={0.75} />
-        </g>
-      ))}
-
       {/* --- Coluna fantasma: a postura fora de prumo, que oscila --- */}
       <g className="fantasma">
         <g className="rule-in" style={{ ["--in-delay" as string]: "900ms" }}>
@@ -552,11 +463,11 @@ export function SpineColumn({ className }: { className?: string }) {
               style={{ ["--in-delay" as string]: `${v.inDelay}ms` }}
             >
               <g
-                className="varrido"
+                className="respiro"
                 style={{
                   ["--base-op" as string]: v.depth,
                   ["--pico-op" as string]: 1,
-                  ["--scan-delay" as string]: scanDelay(v.y),
+                  ["--resp-delay" as string]: respDelay(v.y),
                 }}
               >
                 <g
@@ -726,7 +637,7 @@ export function SpineColumn({ className }: { className?: string }) {
             x1={x}
             y1={BASE_Y + 5}
             x2={x}
-            y2={BASE_Y + 5 + (k % 5 === 0 ? 13 : 6)}
+            y2={BASE_Y + 5 + (k % 5 === 0 ? 12 : 6)}
             stroke="var(--color-paper)"
             strokeOpacity={k % 5 === 0 ? 0.42 : 0.2}
             strokeWidth={1}
@@ -734,24 +645,6 @@ export function SpineColumn({ className }: { className?: string }) {
         ))}
       </g>
 
-      {/* --- Varredura: desce o campo e acende o que cruza --- */}
-      <g className="varredura">
-        <rect
-          x={FIELD_L - 24}
-          y={-26}
-          width={FIELD_R - FIELD_L + 48}
-          height={52}
-          fill="url(#scan-grad)"
-        />
-        <rect
-          x={FIELD_L - 24}
-          y={0}
-          width={FIELD_R - FIELD_L + 48}
-          height={1}
-          fill="var(--color-accent-light)"
-          fillOpacity={0.85}
-        />
-      </g>
     </svg>
   );
 }
