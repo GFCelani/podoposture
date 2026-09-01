@@ -60,7 +60,7 @@ export function Gallery() {
                     width={900}
                     height={1125}
                     sizes="(min-width: 1024px) 380px, 50vw"
-                    className="aspect-[4/5] w-full object-cover saturate-[0.85] transition-[filter] duration-300 group-hover:saturate-100"
+                    className="aspect-[4/5] w-full object-cover saturate-[0.88] transition-[filter] duration-300 group-hover:saturate-100"
                   />
                 </figure>
               </Reveal>

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { CATEGORIES, POSTS } from "@/lib/posts";
+import { BLOG_INDEX, CATEGORIES, POSTS } from "@/lib/posts";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
@@ -25,7 +25,7 @@ export function Journal() {
             <ul>
               {POSTS.map((post, i) => (
                 <li key={post.href}>
-                  <Reveal delay={Math.min(i, 4) * 80}>
+                  <Reveal delay={(i % 5) * 80}>
                     <article className="group flex gap-6 border-t border-rule py-8 sm:gap-8">
                       <a
                         href={post.href}
@@ -41,7 +41,7 @@ export function Journal() {
                           width={1024}
                           height={1024}
                           sizes="160px"
-                          className="h-24 w-24 border border-rule object-cover saturate-[0.9] transition-[filter] duration-[240ms] group-hover:saturate-100 sm:h-32 sm:w-32"
+                          className="h-24 w-24 border border-rule object-cover saturate-[0.88] transition-[filter] duration-[240ms] group-hover:saturate-100 sm:h-32 sm:w-32"
                         />
                       </a>
 
@@ -80,7 +80,12 @@ export function Journal() {
                           </p>
                         )}
 
-                        <p className="mt-4 inline-flex items-baseline gap-2.5 text-[0.875rem] text-accent">
+                        <a
+                          href={post.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex items-baseline gap-2.5 text-[0.875rem] text-accent transition-colors duration-200 hover:text-accent-deep"
+                        >
                           Continue Reading
                           <svg
                             width="13"
@@ -96,7 +101,7 @@ export function Journal() {
                               strokeWidth="1.2"
                             />
                           </svg>
-                        </p>
+                        </a>
                       </div>
                     </article>
                   </Reveal>
@@ -106,17 +111,20 @@ export function Journal() {
 
             <Reveal delay={120}>
               <div className="border-t border-rule pt-10 text-center">
-                {/* Ancora morta: sem backend nao ha pagina 2, e paginar sobre
-                    um array de 10 fingindo profundidade seria inventar dado. */}
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2.5 text-[0.9375rem] text-accent"
+                {/* Sem backend nao ha pagina 2, e o builder de origem pagina
+                    por JS, sem URL. O destino honesto e a listagem viva, o
+                    mesmo do "All Posts" da barra lateral. */}
+                <a
+                  href={BLOG_INDEX}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/mais inline-flex items-center gap-2.5 text-[0.9375rem] text-accent transition-colors duration-200 hover:text-accent-deep"
                 >
                   <span aria-hidden="true" className="text-[1.125rem]">
                     +
                   </span>
                   Show More
-                </button>
+                </a>
               </div>
             </Reveal>
           </div>

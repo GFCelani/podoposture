@@ -12,7 +12,6 @@
      e nos discos da coluna do hero. Nunca como texto sobre claro. */
   --color-action: #96bf0d;
   --color-action-deep: #4b6007;
-  --color-action-wash: #f7f9ee;
 
   /* Acento — azul do logo. Rotulos, reguas, links, secoes escuras. */
   --color-accent: #0e71b4;
@@ -20,7 +19,16 @@
      este da 5.9. Nao e cor nova, e o mesmo azul clareado. */
   --color-accent-light: #5aa6da;
   --color-accent-deep: #0d2536;
-  --color-accent-wash: #f3f7fa;
+
+  /* Profundidade. Quatro degraus, e nada fora deles.
+     tag   etiqueta e botao sobre midia
+     plate placa em repouso (cartao, ficha de endereco)
+     lift  a mesma placa no hover
+     float o unico elemento flutuante da pagina, a placa da baropodometria */
+  --shadow-tag: 0 10px 30px -22px rgb(13 37 54 / 0.7);
+  --shadow-plate: 0 16px 38px -30px rgb(13 37 54 / 0.55);
+  --shadow-lift: 0 22px 46px -26px rgb(13 37 54 / 0.6);
+  --shadow-float: 0 22px 48px -30px rgb(13 37 54 / 0.5);
 
   /* Texto sobre o petroleo. Contraste sobre #0D2536:
      paper 14.94, on-deep-muted 7.48. */

@@ -53,7 +53,7 @@ export function TreatmentCards() {
             <li key={card.href} className="flex">
               <Reveal delay={i * 110} className="flex w-full">
                 <article className="group flex w-full flex-col">
-                  <div className="relative overflow-hidden border border-rule bg-paper shadow-[0_16px_36px_-30px_rgba(13,37,54,0.55)] transition-shadow duration-[240ms] ease-out group-hover:shadow-[0_22px_44px_-26px_rgba(13,37,54,0.6)]">
+                  <div className="relative overflow-hidden border border-rule bg-paper shadow-plate transition-shadow duration-[240ms] ease-out group-hover:shadow-lift">
                     <span
                       aria-hidden="true"
                       className="absolute inset-x-0 top-0 z-10 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-[240ms] ease-out group-hover:scale-x-100"
@@ -64,7 +64,7 @@ export function TreatmentCards() {
                       width={card.width}
                       height={card.height}
                       sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                      className="aspect-[4/5] w-full object-cover saturate-[0.85] transition-[filter] duration-[240ms] ease-out group-hover:saturate-100"
+                      className="aspect-[4/5] w-full object-cover saturate-[0.88] transition-[filter] duration-[240ms] ease-out group-hover:saturate-100"
                     />
                   </div>
 

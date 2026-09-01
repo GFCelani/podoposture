@@ -59,7 +59,7 @@ export function Contact() {
 
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
             <Reveal delay={330}>
-              <div className="border-t border-rule bg-paper p-8 shadow-[0_18px_44px_-34px_rgba(13,37,54,0.55)]">
+              <div className="border-t border-rule bg-paper p-8 shadow-plate">
                 <address
                   className="text-[0.9375rem] leading-[1.75] text-ink not-italic"
                   style={{ fontFamily: "var(--mono)" }}
@@ -104,14 +104,14 @@ export function Contact() {
           src={`https://www.google.com/maps?q=${MAP_QUERY}&output=embed`}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          className="block h-[340px] w-full border-0 grayscale-[0.55] lg:h-[440px]"
+          className="block h-[340px] w-full border-0 grayscale-[0.8] lg:h-[440px]"
         />
         <div className="pointer-events-none absolute inset-0 flex items-start justify-end p-5 lg:p-8">
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="pointer-events-auto inline-flex items-center gap-3 border border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-[0_10px_30px_-22px_rgba(13,37,54,0.7)] transition-colors duration-200 hover:bg-ink hover:text-paper"
+            className="pointer-events-auto inline-flex items-center gap-3 border border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-colors duration-200 hover:bg-ink hover:text-paper"
           >
             Get directions
             <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true">

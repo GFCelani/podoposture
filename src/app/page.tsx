@@ -23,6 +23,7 @@ export default function Home() {
         <Welcome />
         <ClinicalResponsibility />
         <UnderstandFirst />
+        <SeamRuler />
         <Approach />
         <TreatmentCards />
         <ServicesGrid />

@@ -105,10 +105,13 @@ export const POSTS: Post[] = [
  * 5 delas nao tem nenhum dos 10 posts carregados aqui, e filtrar devolveria
  * "nenhum resultado" para assunto que existe no site real.
  */
+/** Listagem viva do blog. Mesmo destino do "All Posts" da barra lateral. */
+export const BLOG_INDEX = "https://podoposture.com.br/";
+
 const C = "https://podoposture.com.br/?blogcategory=";
 
 export const CATEGORIES: { label: string; href: string }[] = [
-  { label: "All Posts", href: "https://podoposture.com.br/" },
+  { label: "All Posts", href: BLOG_INDEX },
   {
     label: "Bruxismo, DTM e Dor Orofacial",
     href: `${C}Bruxismo%2C+DTM+e+Dor+Orofacial`,

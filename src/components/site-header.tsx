@@ -118,7 +118,7 @@ export function SiteHeader() {
         {/* Painel do mega-menu */}
         {activeGroup && (
           <div
-            className="absolute inset-x-0 top-full hidden border-b border-rule bg-paper shadow-[0_18px_40px_-32px_rgba(13,37,54,0.45)] lg:block"
+            className="absolute inset-x-0 top-full hidden border-b border-rule bg-paper shadow-plate lg:block"
             onMouseEnter={cancelClose}
           >
             <div className="mx-auto max-w-[1240px] px-10 py-8">
@@ -158,21 +158,21 @@ export function SiteHeader() {
           onClick={() => setDrawer((v) => !v)}
           aria-expanded={drawer}
           aria-label={drawer ? "Fechar menu" : "Abrir menu"}
-          className="-mr-2 flex h-11 w-11 items-center justify-center lg:hidden"
+          className="group/menu -mr-2 flex h-11 w-11 items-center justify-center lg:hidden"
         >
           <span className="relative block h-4 w-6">
             <span
-              className={`absolute left-0 block h-px w-6 bg-ink transition-all duration-200 ${
+              className={`absolute left-0 block h-px w-6 bg-ink transition-all duration-200 group-hover/menu:bg-accent ${
                 drawer ? "top-2 rotate-45" : "top-0"
               }`}
             />
             <span
-              className={`absolute top-2 left-0 block h-px w-6 bg-ink transition-opacity duration-200 ${
+              className={`absolute top-2 left-0 block h-px w-6 bg-ink transition-all duration-200 group-hover/menu:bg-accent ${
                 drawer ? "opacity-0" : "opacity-100"
               }`}
             />
             <span
-              className={`absolute left-0 block h-px w-6 bg-ink transition-all duration-200 ${
+              className={`absolute left-0 block h-px w-6 bg-ink transition-all duration-200 group-hover/menu:bg-accent ${
                 drawer ? "top-2 -rotate-45" : "top-4"
               }`}
             />

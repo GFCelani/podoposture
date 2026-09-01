@@ -32,14 +32,14 @@ export function Approach() {
                 aria-hidden="true"
                 className="absolute inset-0 translate-x-3 translate-y-3 border border-rule bg-surface"
               />
-              <figure className="relative -rotate-[1.2deg] border border-rule bg-paper p-3 shadow-[0_22px_48px_-30px_rgba(13,37,54,0.5)]">
+              <figure className="relative -rotate-[1.2deg] border border-rule bg-paper p-3 shadow-float">
                 <Image
                   src="/img/baropodometria.jpg"
                   alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
                   width={1080}
                   height={816}
                   sizes="(min-width: 1024px) 480px, 100vw"
-                  className="h-auto w-full"
+                  className="h-auto w-full saturate-[0.88]"
                 />
                 <figcaption
                   className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"

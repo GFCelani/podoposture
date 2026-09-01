@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import { Newsreader, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
+// Newsreader e Public Sans sao variaveis: sem `weight`, o next/font baixa o
+// arquivo variavel e todos os pesos ficam disponiveis. Com `weight` explicito
+// ele baixava uma estatica por peso e por estilo. IBM Plex Mono nao e variavel,
+// entao continua declarando o peso, e so o 400 e usado.
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -13,14 +16,13 @@ const newsreader = Newsreader({
 const publicSans = Public_Sans({
   variable: "--font-public-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400"],
   display: "swap",
 });
 
