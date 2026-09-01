@@ -1,3 +1,4 @@
+import { Approach } from "@/components/approach";
 import { ClinicalResponsibility } from "@/components/clinical-responsibility";
 import { Hero } from "@/components/hero";
 import { SiteHeader } from "@/components/site-header";
@@ -13,6 +14,7 @@ export default function Home() {
         <Welcome />
         <ClinicalResponsibility />
         <UnderstandFirst />
+        <Approach />
       </main>
     </>
   );
