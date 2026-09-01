@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-type Variant = "primary" | "secondary" | "tertiary";
+type Variant = "primary" | "secondary" | "secondary-deep" | "tertiary";
 
 /**
  * Tres niveis, e so o primario usa o verde de acao, nos dois CTAs de WhatsApp.
@@ -25,6 +25,9 @@ const BASE =
 const VARIANTS: Record<Variant, string> = {
   primary: `${BASE} btn-fill [--fill:var(--color-action-deep)] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 py-3.5 font-medium text-ink-strong shadow-tag hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
   secondary: `${BASE} btn-fill [--fill:var(--color-accent)] rounded-md border-[1.5px] border-accent/45 bg-paper px-7 py-3.5 text-accent shadow-tag hover:-translate-y-0.5 hover:border-accent hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
+  /* Sobre o petroleo: contorno claro, preenchimento que cresce em papel e
+     texto que inverte para o fundo. Papel sobre o hero da 12.8 de contraste. */
+  "secondary-deep": `${BASE} btn-fill [--fill:var(--color-paper)] rounded-md border-[1.5px] border-paper/45 px-7 py-3.5 text-paper hover:-translate-y-0.5 hover:border-paper hover:text-hero hover:shadow-lift active:translate-y-0`,
   tertiary: `${BASE} sublinha items-baseline gap-2.5 text-accent hover:text-accent-deep`,
 };
 

@@ -1,39 +1,66 @@
+"use client";
+
+import { usePassouHero } from "@/lib/use-passou-hero";
+
 /**
- * CTA fixo de WhatsApp. Mesmo rotulo e destino do CTA da secao 05.
- * Presenca: anel verde que emana (.flutuante-pulso). Decorativo, some no
- * movimento reduzido; o botao continua.
- * No telefone vira disco so com o icone; o rotulo abre no desktop.
- * Icone: balao de conversa com fone, vetor proprio, nao o glifo da Meta.
+ * Disco fixo de contato. Mesmo destino do CTA primario do hero.
+ * So aparece depois que o hero sai da tela: na primeira dobra quem chama e'
+ * o botao do hero, e nunca ha dois convites verdes ao mesmo tempo.
+ *
+ * Entrada: sobe girando de leve, com overshoot.
+ * Repouso: anel que emana a cada 3s e o balao que acena a cada 7s.
+ * Icone proprio: balao de conversa com fone, nao o glifo da Meta.
  */
 export function FloatingWhatsApp() {
+  const visivel = usePassouHero();
+
   return (
     <a
       href="https://wa.me/message/WFGOB3AVBI63J1"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar Sobre o Meu Caso"
-      className="flutuante-entra flutuante-pulso btn-fill [--fill:var(--color-action-deep)] fixed right-5 bottom-5 z-50 inline-flex h-14 items-center gap-3 rounded-full border-[1.5px] border-action-deep/25 bg-action px-4 text-[0.875rem] font-medium text-ink-strong shadow-lift transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:text-paper active:translate-y-0 lg:right-8 lg:bottom-8 lg:px-5"
+      aria-hidden={visivel ? undefined : true}
+      tabIndex={visivel ? undefined : -1}
+      className={`disco-flutuante group/flu fixed right-5 bottom-5 z-50 grid h-14 w-14 place-items-center rounded-full border-[1.5px] border-action-deep/25 bg-action text-ink-strong shadow-lift transition-[transform,box-shadow,background-color,color,opacity] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:bg-action-deep hover:text-paper hover:shadow-lift lg:right-8 lg:bottom-8 lg:h-16 lg:w-16 ${
+        visivel
+          ? "disco-entra pointer-events-auto"
+          : "pointer-events-none scale-75 opacity-0"
+      }`}
     >
+      {/* aneis que emanam, so quando o disco esta em cena */}
+      {visivel && (
+        <>
+          <span aria-hidden="true" className="disco-anel" />
+          <span
+            aria-hidden="true"
+            className="disco-anel"
+            style={{ animationDelay: "1.5s" }}
+          />
+        </>
+      )}
+
       <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
+        width="28"
+        height="28"
+        viewBox="0 0 28 28"
         aria-hidden="true"
-        className="flutuante-icone shrink-0"
+        className="disco-icone relative"
       >
+        {/* balao de conversa */}
         <path
-          d="M12 3.2c-4.9 0-8.8 3.6-8.8 8.1 0 1.6.5 3.1 1.4 4.4L3.4 20l4.5-1.1c1.2.6 2.6 1 4.1 1 4.9 0 8.8-3.6 8.8-8.3S16.9 3.2 12 3.2Z"
+          d="M14 3.6c-5.6 0-10.1 4.1-10.1 9.2 0 1.9.6 3.6 1.7 5.1l-1.3 5 5.2-1.3c1.4.7 3 1.1 4.5 1.1 5.6 0 10.1-4.1 10.1-9.9S19.6 3.6 14 3.6Z"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.7"
+          strokeWidth="1.8"
           strokeLinejoin="round"
         />
+        {/* fone dentro do balao */}
         <path
-          d="M9.1 8.6c-.3.1-.8.5-.8 1.3 0 1.7 1.5 3.6 3.2 4.6 1.3.8 2.3 1 2.9.8.6-.2 1-.7 1.1-1.1.1-.3 0-.5-.2-.6l-1.5-.8c-.2-.1-.4-.1-.6.1l-.5.5c-.2.2-.4.2-.6.1-.5-.3-1.4-1-1.9-1.9-.1-.2-.1-.4.1-.6l.4-.5c.2-.2.2-.4.1-.6l-.7-1.2c-.2-.3-.6-.3-1-.1Z"
+          d="M10.6 9.9c-.4.2-1 .7-1 1.7 0 2.1 1.9 4.4 3.9 5.6 1.6 1 2.9 1.2 3.6 1 .7-.3 1.2-.9 1.3-1.4.1-.3 0-.6-.3-.7l-1.9-1c-.3-.1-.5-.1-.7.1l-.6.6c-.2.2-.5.3-.7.1-.6-.4-1.7-1.3-2.3-2.3-.2-.3-.1-.5.1-.7l.5-.6c.2-.2.2-.5.1-.7l-.9-1.5c-.2-.4-.7-.4-1.1-.2Z"
           fill="currentColor"
         />
       </svg>
-      <span className="hidden lg:inline">Falar Sobre o Meu Caso</span>
     </a>
   );
 }
