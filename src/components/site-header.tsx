@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { BrandMark } from "./brand-mark";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
 
@@ -50,14 +50,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-6 lg:h-[88px] lg:px-10">
         <Link href="/home" className="shrink-0" aria-label="Podoposture">
-          <Image
-            src="/marca/podoposture-560.png"
-            alt="Podoposture"
-            width={168}
-            height={59}
-            priority
-            className="h-[38px] w-auto lg:h-[52px]"
-          />
+          <BrandMark className="h-[38px] w-auto lg:h-[52px]" />
         </Link>
 
         {/* Desktop */}
