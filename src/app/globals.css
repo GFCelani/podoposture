@@ -110,7 +110,28 @@ body {
   }
 }
 
+/* Entrada por scroll */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 0.7, 0.28, 1),
+    transform 0.8s cubic-bezier(0.22, 0.7, 0.28, 1);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* Opt-in por data-motion. !important em folha vence style inline e vale no
+     primeiro quadro, sem depender do IntersectionObserver disparar. */
+  [data-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   *,
   *::before,
   *::after {
