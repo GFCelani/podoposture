@@ -25,7 +25,17 @@ Dois dos quatro links sociais não abrem o destino.
 - Os dois links quebrados aparecem duas vezes cada: seção "Ligue-se a nós" e footer.
 - O link do Pinterest aponta para um pin, não para o perfil.
 
-## 3. Interface em inglês
+## 3. "Get directions" é botão de JS, sem destino
+
+- O controle sobre o mapa, na seção Converse com a Podoposture, é um `<button>` sem `href`.
+- Não é link: não abre em nova aba, não pode ser copiado, não aparece para crawler e não
+  funciona com JavaScript desligado.
+- O equivalente correto é um link para
+  `https://www.google.com/maps/dir/?api=1&destination=<endereço>`.
+- O mesmo vale para a navegação do menu: os 4 grupos abrem por `<button>`, o que é adequado,
+  mas os 20 destinos finais são links e estão corretos.
+
+## 4. Interface em inglês
 
 Rótulos gerados pelo builder, não traduzidos, num site em português:
 
@@ -39,7 +49,7 @@ Rótulos gerados pelo builder, não traduzidos, num site em português:
 - `Facebook Social Link`, `Instagram Social Link`, `LinkedIn Social Link`, `Pinterest Social Link` — rótulo acessível dos ícones
 - `og:locale` declarado como `en_US`
 
-## 4. Headings duplicados no HTML
+## 5. Headings duplicados no HTML
 
 O builder não remove o heading anterior quando o texto é editado. Ele acrescenta um irmão e
 esconde os antigos por CSS. A tela mostra um título; o DOM carrega três.
@@ -73,13 +83,13 @@ existe duas vezes, desktop e mobile.
 - Crawler lê hierarquia quebrada e conteúdo repetido.
 - A página tem 68 elementos `h1`–`h6`, dos quais 31 são cópias ocultas.
 
-## 5. Parágrafos vazios como espaçador
+## 6. Parágrafos vazios como espaçador
 
 `<p></p>` repetido para criar altura. Contagem por card: Acupuntura 8, Palmilhas 3, DTM 4,
 Zumbido 3, Baropodometria 1, Posturologia 1, Flexo-distração 1, RPG 1, Neuromodulação 1,
 Avaliação Clínica 1.
 
-## 6. Ausência de foto da responsável técnica
+## 7. Ausência de foto da responsável técnica
 
 - Não existe retrato da Dra. Claudia Meirelles em nenhuma parte do site.
 - O arquivo nomeado `Dra. Claudia Meirelles.png` no CDN é uma peça gráfica de post de blog
@@ -88,7 +98,7 @@ Avaliação Clínica 1.
   só por texto.
 - Decisão pendente do cliente: fornecer foto ou manter a seção sem rosto.
 
-## 7. Acervo de imagem no teto
+## 8. Acervo de imagem no teto
 
 - Largura nativa máxima em todo o acervo: **1254px**.
 - O CDN `img1.wsimg.com/isteam/` não entrega resolução maior. Testado com `/:/rs=w:4000` e com
@@ -99,7 +109,7 @@ Avaliação Clínica 1.
 - Decisão pendente do cliente: fornecer fotografia nova da clínica, ou aceitar hero por
   composição gráfica.
 
-## 8. Travessão na copy (recomendação, não alteração)
+## 9. Travessão na copy (recomendação, não alteração)
 
 O texto do cliente permanece como está. Fica registrado como recomendação editorial para uma
 revisão futura de copy, se houver.
@@ -117,7 +127,7 @@ Recomendação: reescrever a frase ou usar ponto e vírgula. O travessão em cop
 virar hífen em fonte que não tem o glifo, e o par de travessões abre um aposto que a leitura em
 tela raramente fecha.
 
-## 9. Outros
+## 10. Outros
 
 - Dois verdes divergentes em uso: logo `#96BF0D`, site `#92B30A`.
 - O azul `#0E71B4`, cor dominante do logo, não aparece em nenhum outro ponto do site.

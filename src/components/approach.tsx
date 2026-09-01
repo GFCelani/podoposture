@@ -27,6 +27,13 @@ export function Approach() {
                 sizes="(min-width: 1024px) 480px, 100vw"
                 className="h-auto w-full"
               />
+              <figcaption
+                className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
+                style={{ fontFamily: "var(--mono)" }}
+              >
+                <span aria-hidden="true" className="h-px w-6 bg-rule" />
+                Baropodometria
+              </figcaption>
             </figure>
           </Reveal>
 

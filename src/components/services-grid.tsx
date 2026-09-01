@@ -16,8 +16,16 @@ export function ServicesGrid() {
           {SERVICES.map((service, i) => (
             <li key={service.href} className="flex">
               <Reveal delay={(i % 3) * 90} className="flex w-full">
-                <article className="group flex w-full flex-col border-t border-rule pt-8 pb-10 transition-colors duration-200 hover:border-accent">
-                  <h3 className="text-[0.9375rem] leading-[1.45] font-semibold tracking-[0.07em] text-ink">
+                <article className="group flex w-full flex-col border-t border-rule pt-6 pb-10 transition-colors duration-200 hover:border-accent">
+                  <span
+                    aria-hidden="true"
+                    className="block text-[0.6875rem] tracking-[0.18em] text-muted transition-colors duration-200 group-hover:text-accent"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+
+                  <h3 className="mt-4 text-[0.9375rem] leading-[1.45] font-semibold tracking-[0.07em] text-ink">
                     {service.title}
                   </h3>
 
