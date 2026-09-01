@@ -48,7 +48,7 @@ export function SocialLinks({
             target="_blank"
             rel="noopener noreferrer"
             aria-label={social.label}
-            className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-200 ${colors}`}
+            className={`flex h-11 w-11 items-center justify-center rounded-full border transition-[color,border-color,transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:shadow-tag ${colors}`}
           >
             <svg width="19" height="19" viewBox="0 0 24 24" aria-hidden="true">
               <path d={social.path} fill="currentColor" />

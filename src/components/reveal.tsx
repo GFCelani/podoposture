@@ -13,10 +13,13 @@ export function Reveal({
   children,
   delay = 0,
   className = "",
+  variante = "sobe",
 }: {
   children: ReactNode;
   delay?: number;
   className?: string;
+  /** "sobe" e o padrao; "cortina" revela de baixo para cima, para titulo. */
+  variante?: "sobe" | "cortina";
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(false);
@@ -41,7 +44,7 @@ export function Reveal({
     <div
       ref={ref}
       data-motion
-      className={`reveal${shown ? " is-in" : ""}${className ? ` ${className}` : ""}`}
+      className={`${variante === "cortina" ? "reveal-cortina" : "reveal"}${shown ? " is-in" : ""}${className ? ` ${className}` : ""}`}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}

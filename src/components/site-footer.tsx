@@ -33,7 +33,7 @@ export function SiteFooter() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-[0.9375rem] text-on-deep-muted transition-colors duration-200 hover:text-paper"
+                    className="sublinha rounded-sm text-[0.9375rem] text-on-deep-muted transition-colors duration-[160ms] hover:text-paper"
                   >
                     {link.label}
                   </Link>

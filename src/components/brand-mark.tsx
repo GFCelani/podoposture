@@ -3,12 +3,14 @@
  * Tracado do master, sem reinterpretacao: as letras vem de autotrace do canal
  * azul e cada bolinha da coluna e um no proprio, para poder ser animada.
  * Cores exatas do master: #0E71B4 e #96BF0D.
+ * O viewBox leva respiro optico em volta da tinta; o desenho e a proporcao
+ * seguem os do master, sem reinterpretacao.
  * Gerador: scripts/gerar-marca.py
  */
 export function BrandMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 2036 716"
+      viewBox="-14 -12 2064 740"
       className={className}
       aria-hidden="true"
       focusable="false"

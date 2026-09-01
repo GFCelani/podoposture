@@ -30,16 +30,16 @@ export function Approach() {
             <div className="relative">
               <div
                 aria-hidden="true"
-                className="absolute inset-0 translate-x-3 translate-y-3 border border-rule bg-surface"
+                className="absolute inset-0 translate-x-3 translate-y-3 rounded-lg border border-rule bg-surface"
               />
-              <figure className="relative -rotate-[1.2deg] border border-rule bg-paper p-3 shadow-float">
+              <figure className="relative -rotate-[1.2deg] rounded-lg border border-rule bg-paper p-3 shadow-float transition-transform duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-rotate-[0.4deg]">
                 <Image
                   src="/img/baropodometria.jpg"
                   alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
                   width={1080}
                   height={816}
                   sizes="(min-width: 1024px) 480px, 100vw"
-                  className="h-auto w-full saturate-[0.88]"
+                  className="h-auto w-full rounded-md saturate-[0.88]"
                 />
                 <figcaption
                   className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"

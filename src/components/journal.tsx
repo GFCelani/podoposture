@@ -13,7 +13,7 @@ export function Journal() {
       <ColumnRules />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <Reveal>
+        <Reveal variante="cortina">
           <SectionMark n="09" />
           <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
             Conteúdos Para Compreender Melhor O Seu Corpo
@@ -26,7 +26,7 @@ export function Journal() {
               {POSTS.map((post, i) => (
                 <li key={post.href}>
                   <Reveal delay={(i % 5) * 80}>
-                    <article className="group flex gap-6 border-t border-rule py-8 sm:gap-8">
+                    <article className="group flex gap-6 rounded-md border-t border-rule px-3 py-8 transition-[background-color,border-color] duration-[260ms] hover:border-accent/40 hover:bg-surface/60 sm:gap-8">
                       <a
                         href={post.href}
                         target="_blank"
@@ -41,7 +41,7 @@ export function Journal() {
                           width={1024}
                           height={1024}
                           sizes="160px"
-                          className="h-24 w-24 border border-rule object-cover saturate-[0.88] transition-[filter] duration-[240ms] group-hover:saturate-100 sm:h-32 sm:w-32"
+                          className="h-24 w-24 rounded-md border border-rule object-cover saturate-[0.88] transition-[filter,transform] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.04] group-hover:saturate-100 sm:h-32 sm:w-32"
                         />
                       </a>
 
@@ -84,7 +84,7 @@ export function Journal() {
                           href={post.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-baseline gap-2.5 text-[0.875rem] text-accent transition-colors duration-200 hover:text-accent-deep"
+                          className="sublinha mt-4 inline-flex items-baseline gap-2.5 text-[0.875rem] text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                         >
                           Continue Reading
                           <svg
@@ -118,7 +118,7 @@ export function Journal() {
                   href={BLOG_INDEX}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group/mais inline-flex items-center gap-2.5 text-[0.9375rem] text-accent transition-colors duration-200 hover:text-accent-deep"
+                  className="group/mais inline-flex items-center gap-2.5 rounded-md border-[1.5px] border-accent/35 px-6 py-3 text-[0.9375rem] text-accent shadow-tag transition-[transform,box-shadow,background-color,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-paper hover:shadow-lift active:translate-y-0"
                 >
                   <span aria-hidden="true" className="text-[1.125rem]">
                     +

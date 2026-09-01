@@ -12,7 +12,7 @@ export function SocialBand() {
       <ColumnRules />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
-        <Reveal>
+        <Reveal variante="cortina">
           <SectionMark n="11" />
         </Reveal>
 

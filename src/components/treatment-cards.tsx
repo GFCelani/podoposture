@@ -53,10 +53,10 @@ export function TreatmentCards() {
             <li key={card.href} className="flex">
               <Reveal delay={i * 110} className="flex w-full">
                 <article className="group flex w-full flex-col">
-                  <div className="relative overflow-hidden border border-rule bg-paper shadow-plate transition-shadow duration-[240ms] ease-out group-hover:shadow-lift">
+                  <div className="relative overflow-hidden rounded-lg border border-rule bg-paper shadow-plate transition-[box-shadow,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift">
                     <span
                       aria-hidden="true"
-                      className="absolute inset-x-0 top-0 z-10 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-[240ms] ease-out group-hover:scale-x-100"
+                      className="absolute inset-x-0 top-0 z-10 h-[3px] origin-left scale-x-0 bg-accent transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-x-100"
                     />
                     <Image
                       src={card.src}
@@ -64,7 +64,7 @@ export function TreatmentCards() {
                       width={card.width}
                       height={card.height}
                       sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                      className="aspect-[4/5] w-full object-cover saturate-[0.88] transition-[filter] duration-[240ms] ease-out group-hover:saturate-100"
+                      className="aspect-[4/5] w-full scale-100 object-cover saturate-[0.88] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.04] group-hover:saturate-100"
                     />
                   </div>
 

@@ -24,7 +24,7 @@ export function Contact() {
       <ColumnRules />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <Reveal>
+        <Reveal variante="cortina">
           <SectionMark n="08" />
           <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
             Converse com a Podoposture
@@ -59,7 +59,7 @@ export function Contact() {
 
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
             <Reveal delay={330}>
-              <div className="border-t border-rule bg-paper p-8 shadow-plate">
+              <div className="rounded-lg border border-rule bg-paper p-8 shadow-plate">
                 <address
                   className="text-[0.9375rem] leading-[1.75] text-ink not-italic"
                   style={{ fontFamily: "var(--mono)" }}
@@ -111,10 +111,10 @@ export function Contact() {
             href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="pointer-events-auto inline-flex items-center gap-3 border border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-colors duration-200 hover:bg-ink hover:text-paper"
+            className="group/dir pointer-events-auto inline-flex items-center gap-3 rounded-md border-[1.5px] border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-[transform,box-shadow,background-color,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:bg-ink hover:text-paper hover:shadow-lift active:translate-y-0"
           >
             Get directions
-            <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true">
+            <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true" className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/dir:translate-x-1">
               <path
                 d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
                 fill="none"

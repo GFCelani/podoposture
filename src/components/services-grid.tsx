@@ -28,7 +28,7 @@ export function ServicesGrid() {
           {SERVICES.map((service, i) => (
             <li key={service.href} className="flex">
               <Reveal delay={(i % 3) * 90} className="flex w-full">
-                <article className="group flex w-full flex-col border-t border-rule pt-6 pb-10 transition-colors duration-200 hover:border-accent">
+                <article className="group flex w-full flex-col rounded-md border-t border-rule px-4 pt-6 pb-10 transition-[border-color,background-color,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-accent hover:bg-surface/70">
                   <span
                     aria-hidden="true"
                     className="flex items-center gap-3 text-[0.6875rem] tracking-[0.18em] text-muted transition-colors duration-200 group-hover:text-accent"
