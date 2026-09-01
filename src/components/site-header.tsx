@@ -276,15 +276,27 @@ export function SiteHeader() {
         </button>
       </div>
 
-      {/* Fio de assinatura: hairline com o azul do acento morrendo nas pontas */}
+      {/* Fio de assinatura: hairline azul, com um pulso de luz verde
+          percorrendo a linha em loop */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-        style={{
-          background:
-            "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 34%, transparent) 30%, color-mix(in srgb, var(--color-accent) 34%, transparent) 70%, transparent 96%)",
-        }}
-      />
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden"
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 34%, transparent) 30%, color-mix(in srgb, var(--color-accent) 34%, transparent) 70%, transparent 96%)",
+          }}
+        />
+        <div
+          className="fio-pulso absolute inset-y-0 w-[16%]"
+          style={{
+            background:
+              "linear-gradient(to right, transparent, color-mix(in srgb, var(--color-action) 68%, transparent) 50%, transparent)",
+          }}
+        />
+      </div>
 
       {/* Progresso de leitura: a mesma logica de medida do resto do site */}
       <span

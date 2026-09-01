@@ -10,7 +10,7 @@ export function Hero() {
   return (
     <section
       data-tone="deep"
-      className="luz relative overflow-hidden bg-accent-deep text-paper"
+      className="relative overflow-hidden bg-accent-deep text-paper"
     >
       {/* Camada 0: a clinica, quase apagada sob o petroleo. Dessaturada e
           com veu escuro por cima; trocar a foto quando vier a nova. */}

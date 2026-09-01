@@ -408,61 +408,32 @@ a:focus-visible .marca-vertebra {
 }
 
 /* ===============================================================
-   LUZ — varredura diagonal verde, o unico verde fora de disco e CTA.
-   Decorativa: em movimento reduzido ela simplesmente nao aparece.
+   FIO DO HEADER — um pulso de luz verde percorre a linha da base,
+   em loop. Decorativo: em movimento reduzido nao aparece.
    =============================================================== */
 
-.luz {
-  position: relative;
-  overflow: hidden;
-}
-
-.luz::after {
-  content: "";
-  position: absolute;
-  inset: -30% auto;
-  left: 0;
-  width: 34%;
+.fio-pulso {
   opacity: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgb(150 191 13 / 0.075) 45%,
-    rgb(150 191 13 / 0.14) 50%,
-    rgb(150 191 13 / 0.075) 55%,
-    transparent 100%
-  );
-  transform: translateX(-140%) skewX(-16deg);
-  animation: luz 14s var(--ease-ciclo) infinite;
-  animation-delay: var(--luz-delay, 2.2s);
+  transform: translateX(-30%);
+  animation: fio-pulso 14s linear infinite;
 }
 
-@keyframes luz {
+@keyframes fio-pulso {
   0% {
     opacity: 0;
-    transform: translateX(-140%) skewX(-16deg);
+    transform: translateX(-30%);
   }
-  5% {
+  4% {
     opacity: 1;
   }
-  22%,
+  26% {
+    opacity: 1;
+  }
+  30%,
   100% {
     opacity: 0;
-    transform: translateX(420%) skewX(-16deg);
+    transform: translateX(430%);
   }
-}
-
-/* Sobre papel a mesma luz precisa de menos forca. */
-.luz-clara::after {
-  background: linear-gradient(
-    100deg,
-    transparent 0%,
-    rgb(150 191 13 / 0.05) 45%,
-    rgb(150 191 13 / 0.1) 50%,
-    rgb(150 191 13 / 0.05) 55%,
-    transparent 100%
-  );
 }
 
 /* ===============================================================
