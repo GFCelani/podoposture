@@ -20,19 +20,31 @@
   --color-accent-light: #5aa6da;
   --color-accent-deep: #0d2536;
 
-  /* Profundidade. Quatro degraus, e nada fora deles.
-     tag   etiqueta e botao sobre midia
-     plate placa em repouso (cartao, ficha de endereco)
-     lift  a mesma placa no hover
-     float o unico elemento flutuante da pagina, a placa da baropodometria */
+  /* Texto sobre o petroleo. Contraste sobre #0D2536:
+     paper 14.94, on-deep-muted 7.48. */
+  --color-on-deep-muted: #a6b5bf;
+
+  /* Profundidade. Quatro degraus, e nada fora deles. */
   --shadow-tag: 0 10px 30px -22px rgb(13 37 54 / 0.7);
   --shadow-plate: 0 16px 38px -30px rgb(13 37 54 / 0.55);
   --shadow-lift: 0 22px 46px -26px rgb(13 37 54 / 0.6);
   --shadow-float: 0 22px 48px -30px rgb(13 37 54 / 0.5);
 
-  /* Texto sobre o petroleo. Contraste sobre #0D2536:
-     paper 14.94, on-deep-muted 7.48. */
-  --color-on-deep-muted: #a6b5bf;
+  /* Raio. Tres degraus, e nada fora deles.
+     sm  etiqueta, chip, numero em placa
+     md  botao, moldura de imagem, celula
+     lg  placa grande, painel do menu, cartao */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
+
+  /* Movimento. Uma curva de saida, uma de ida e volta, tres duracoes.
+     Nenhuma transicao da pagina inventa numero fora daqui. */
+  --ease-saida: cubic-bezier(0.22, 0.7, 0.28, 1);
+  --ease-ciclo: cubic-bezier(0.6, 0, 0.3, 1);
+  --dur-rapida: 160ms;
+  --dur-media: 260ms;
+  --dur-lenta: 420ms;
 }
 
 /* As variaveis do next/font sao declaradas na classe do <body>, nao no :root.
@@ -83,18 +95,80 @@ body {
   outline-color: var(--color-accent-light);
 }
 
-/* ---------------------------------------------------------------
-   Coluna do hero.
-   O repouso vive no estilo base, nunca no keyframe 100%: com
-   movimento reduzido a animacao termina no primeiro quadro e o
-   elemento volta ao base. Ver vault/repouso-de-animacao-css-vive-no-estilo-base
-   Um transform por no': entrada no <g> externo, oscilacao no interno.
-   --------------------------------------------------------------- */
+/* ===============================================================
+   CAMPO DE APRUMO — o elemento grafico do hero.
+   O repouso vive no estilo base, nunca no keyframe 100%: com movimento
+   reduzido a animacao termina no primeiro quadro e o elemento volta ao base.
+   Ver vault/repouso-de-animacao-css-vive-no-estilo-base
+   Um transform por no'.
+   =============================================================== */
+
+/* Varredura: a linha que desce o campo. */
+.varredura {
+  opacity: 0;
+  transform: translateY(var(--scan-de, -40px));
+  animation: varredura var(--scan-dur, 9s) linear infinite;
+}
+
+@keyframes varredura {
+  0% {
+    opacity: 0;
+    transform: translateY(var(--scan-de, -40px));
+  }
+  7% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(var(--scan-ate, 680px));
+  }
+}
+
+/* O realce que a varredura acende ao passar. O atraso de cada no' e'
+   proporcional a altura dele no campo, entao a onda acompanha a linha. */
+.varrido {
+  opacity: var(--base-op, 1);
+  animation: varrido var(--scan-dur, 9s) linear infinite;
+  animation-delay: var(--scan-delay, 0s);
+}
+
+@keyframes varrido {
+  0%,
+  100% {
+    opacity: var(--base-op, 1);
+  }
+  1% {
+    opacity: var(--pico-op, 1);
+  }
+  9% {
+    opacity: var(--base-op, 1);
+  }
+}
+
+/* Coluna fantasma: a postura desalinhada, que oscila em direcao ao prumo e
+   volta. E' o que da profundidade e largura ao campo. */
+.fantasma {
+  transform: none;
+  animation: fantasma 11s var(--ease-ciclo) infinite;
+}
+
+@keyframes fantasma {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(42px) rotate(-1.6deg);
+  }
+}
 
 .vertebra-in {
   opacity: 1;
   transform: none;
-  animation: vertebra-in 0.75s cubic-bezier(0.22, 0.7, 0.28, 1) backwards;
+  animation: vertebra-in 0.75s var(--ease-saida) backwards;
   animation-delay: var(--in-delay, 0ms);
 }
 
@@ -133,8 +207,23 @@ body {
   }
 }
 
+/* Regua que se estende a partir da coluna, em vez de so aparecer. */
+.regua-in {
+  transform: none;
+  transform-box: fill-box;
+  transform-origin: var(--origem, right);
+  animation: regua-in 1.1s var(--ease-saida) backwards;
+  animation-delay: var(--in-delay, 0ms);
+}
+
+@keyframes regua-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 /* Fio de prumo: traca de cima para baixo. clip-path inset e' animavel e nao
-   consome o unico transform do no'. O repouso vive na base. */
+   consome o unico transform do no'. */
 .plumb-in {
   clip-path: inset(0 0 0 0);
   animation: plumb-in 1.05s cubic-bezier(0.3, 0.7, 0.3, 1) backwards;
@@ -147,17 +236,29 @@ body {
   }
 }
 
-/* Arco de relacao: desenha pelo dashoffset. Em <path>, nao em <line>:
+/* Arco: desenha pelo dashoffset. Em <path>, nao em <line>:
    ver vault/pathlength-so-funciona-em-path-no-chrome */
 .arc-in {
   stroke-dashoffset: 0;
-  animation: arc-in 0.9s ease-out backwards;
+  animation: arc-in 1.4s ease-out backwards;
   animation-delay: var(--in-delay, 0ms);
 }
 
 @keyframes arc-in {
   from {
     stroke-dashoffset: var(--arc-len, 0);
+  }
+}
+
+/* Pontilhado que anda, nos fios verticais do campo. */
+.fio-corrente {
+  stroke-dashoffset: 0;
+  animation: fio-corrente 7s linear infinite;
+}
+
+@keyframes fio-corrente {
+  to {
+    stroke-dashoffset: -32;
   }
 }
 
@@ -183,22 +284,58 @@ body {
   }
 }
 
-/* Vertebras da marca: pulso que desce a coluna no hover do link do logo.
-   Cada no' tem --v, o indice de cima para baixo. */
+/* Mira de medicao no campo: meia volta por ciclo, bem devagar. */
+.mira {
+  transform: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mira 26s linear infinite;
+  animation-delay: var(--phase, 0s);
+}
+
+@keyframes mira {
+  to {
+    transform: rotate(180deg);
+  }
+}
+
+/* ===============================================================
+   MARCA
+   =============================================================== */
+
+/* Em repouso, uma onda percorre as 9 vertebras a cada 7s.
+   No hover do link, a onda para e todas crescem em cascata. */
 .marca-vertebra {
   transform: none;
   transform-box: fill-box;
   transform-origin: center;
-  transition: transform 0.42s cubic-bezier(0.22, 0.7, 0.28, 1);
+  animation: marca-onda 7s var(--ease-ciclo) infinite;
+  animation-delay: calc(var(--v, 0) * 90ms);
+  transition: transform var(--dur-lenta) var(--ease-saida);
   transition-delay: calc(var(--v, 0) * 26ms);
+}
+
+@keyframes marca-onda {
+  0%,
+  24%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+  9% {
+    transform: translateX(7px) scale(1.18);
+  }
 }
 
 a:hover .marca-vertebra,
 a:focus-visible .marca-vertebra {
-  transform: scale(1.28);
+  animation-play-state: paused;
+  transform: scale(1.3);
 }
 
-/* Grifo atras de palavra do titulo. <mark> traz fundo amarelo do UA. */
+/* ===============================================================
+   TIPOGRAFIA, ENTRADA E ESTADOS
+   =============================================================== */
+
 .marca-grifo {
   background-color: transparent;
   background-image: linear-gradient(
@@ -212,7 +349,6 @@ a:focus-visible .marca-vertebra {
   box-decoration-break: clone;
 }
 
-/* Sobre papel o grifo usa o acento cheio, que ali tem contraste. */
 .marca-grifo-claro {
   background-image: linear-gradient(
     to top,
@@ -222,18 +358,79 @@ a:focus-visible .marca-vertebra {
   box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
 }
 
-/* Entrada por scroll */
+/* Entrada por scroll. Padrao: sobe e aparece. */
 .reveal {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(14px);
   transition:
-    opacity 0.8s cubic-bezier(0.22, 0.7, 0.28, 1),
-    transform 0.8s cubic-bezier(0.22, 0.7, 0.28, 1);
+    opacity 0.75s var(--ease-saida),
+    transform 0.75s var(--ease-saida);
 }
 
 .reveal.is-in {
   opacity: 1;
   transform: none;
+}
+
+/* Titulo: revela por cortina de baixo para cima, no idioma da regua. */
+.reveal-cortina {
+  opacity: 0;
+  clip-path: inset(0 0 100% 0);
+  transform: translateY(8px);
+  transition:
+    opacity 0.5s var(--ease-saida),
+    clip-path 0.9s var(--ease-saida),
+    transform 0.9s var(--ease-saida);
+}
+
+.reveal-cortina.is-in {
+  opacity: 1;
+  clip-path: inset(0 0 -12% 0);
+  transform: none;
+}
+
+/* Sublinhado que cresce da esquerda. Link de texto e item de menu. */
+.sublinha {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 calc(100% - 2px);
+  background-size: 0% 1px;
+  transition: background-size var(--dur-media) var(--ease-saida);
+}
+
+.sublinha:hover,
+.sublinha:focus-visible,
+.grupo-aberto > .sublinha {
+  background-size: 100% 1px;
+}
+
+/* Entrada em cascata dos itens do mega-menu. */
+.item-menu {
+  opacity: 1;
+  transform: none;
+  animation: item-menu 0.42s var(--ease-saida) backwards;
+  animation-delay: calc(var(--i, 0) * 22ms + 40ms);
+}
+
+@keyframes item-menu {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Painel do mega-menu: desce e abre. */
+.painel-menu {
+  opacity: 1;
+  transform: none;
+  animation: painel-menu 0.3s var(--ease-saida) backwards;
+}
+
+@keyframes painel-menu {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -242,6 +439,7 @@ a:focus-visible .marca-vertebra {
   [data-motion] {
     opacity: 1 !important;
     transform: none !important;
+    clip-path: none !important;
   }
 
   *,
