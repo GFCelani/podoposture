@@ -18,6 +18,10 @@
   --color-accent: #0e71b4;
   --color-accent-deep: #0d2536;
   --color-accent-wash: #f3f7fa;
+
+  /* Texto sobre o petroleo. Contraste sobre #0D2536:
+     paper 14.94, on-deep-muted 7.48. */
+  --color-on-deep-muted: #a6b5bf;
 }
 
 /* As variaveis do next/font sao declaradas na classe do <body>, nao no :root.

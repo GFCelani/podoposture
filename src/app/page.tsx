@@ -1,6 +1,7 @@
 import { ClinicalResponsibility } from "@/components/clinical-responsibility";
 import { Hero } from "@/components/hero";
 import { SiteHeader } from "@/components/site-header";
+import { UnderstandFirst } from "@/components/understand-first";
 import { Welcome } from "@/components/welcome";
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
         <Hero />
         <Welcome />
         <ClinicalResponsibility />
+        <UnderstandFirst />
       </main>
     </>
   );
