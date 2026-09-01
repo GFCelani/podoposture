@@ -1,71 +1,127 @@
-import numpy as np, potrace
-from PIL import Image
-from collections import deque
+"""
+Gera src/components/brand-mark.tsx a partir dos glyphs da Newsreader
+(fonte variavel do proprio site, instanciada em wght 500) e da geometria
+medida no master public/marca/podoposture.png (2036x716):
+  - "pod" na linha de cima, "p"+"sture" na de baixo
+  - os dois "o" sao os discos verdes do master (elipses medidas)
+  - as 9 vertebras sao circulos medidos no master, um no' animavel cada
+Sem autotrace: os paths das letras vem do arquivo da fonte.
+"""
+import glob
+from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.misc.transform import Transform
 
-SRC = r"C:\Projetos\Web\podoposture\public\marca\podoposture.png"
-im = Image.open(SRC).convert("RGBA")
-a = np.array(im)
-H, W = a.shape[:2]
-rgb = a[..., :3].astype(int)
-op = a[..., 3] > 128
+# --- fonte: o woff2 normal (nao italico) da Newsreader dentro do build ---
+fonte = None
+for f in glob.glob(".next/static/media/*.woff2"):
+    t = TTFont(f)
+    nome = (t["name"].getDebugName(1) or "")
+    sub = (t["name"].getDebugName(2) or "")
+    cm = t.getBestCmap() or {}
+    if ("Newsreader" in nome and "Italic" not in nome + sub and "fvar" in t
+            and {ord(c) for c in "podsture"} <= set(cm)):
+        fonte = f
+        break
+assert fonte, "Newsreader nao encontrada no build"
+font = TTFont(fonte)
+instantiateVariableFont(font, {"wght": 500}, inplace=True)
+upm = font["head"].unitsPerEm
+glyphset = font.getGlyphSet()
+cmap = font.getBestCmap()
+hmtx = font["hmtx"]
 
-# Azul tem B > G; verde tem G > B. Separacao por canal pega tambem o
-# antialias, que a distancia ate a cor exata descartaria.
-blue = op & (rgb[..., 2] > rgb[..., 1] + 20)
-green = op & (rgb[..., 1] > rgb[..., 2] + 20)
-print("mask azul %d px, verde %d px, sobra %d px" % (blue.sum(), green.sum(), (op & ~blue & ~green).sum()))
+def medidas(ch):
+    g = cmap[ord(ch)]
+    return g, hmtx[g][0]
 
-def comps(mask, minarea=40):
-    lab = np.zeros(mask.shape, np.int32); n = 0; out = []
-    for y in range(H):
-        for x in range(W):
-            if mask[y, x] and lab[y, x] == 0:
-                n += 1; q = deque([(y, x)]); lab[y, x] = n
-                while q:
-                    cy, cx = q.popleft()
-                    for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):
-                        ny, nx = cy+dy, cx+dx
-                        if 0 <= ny < H and 0 <= nx < W and mask[ny,nx] and lab[ny,nx]==0:
-                            lab[ny,nx] = n; q.append((ny,nx))
-    for i in range(1, n+1):
-        m = lab == i
-        if m.sum() < minarea: continue
-        ys, xs = np.where(m)
-        out.append({"mask": m, "cx": xs.mean(), "cy": ys.mean(), "area": int(m.sum()),
-                    "rx": (xs.max()-xs.min()+1)/2, "ry": (ys.max()-ys.min()+1)/2})
-    return out
+TRACK = -10  # units/em: aproxima de leve, a Newsreader e' mais larga que o master
 
-def trace(mask, turd=4):
-    bmp = potrace.Bitmap(~mask)  # potracer inverte no construtor: ink = ~entrada
-    path = bmp.trace(turdsize=turd, alphamax=1.0, opticurve=True, opttolerance=0.2)
-    def pt(p):
-        try: return float(p.x), float(p.y)
-        except AttributeError: return float(p[0]), float(p[1])
-    d = []
-    for curve in path:
-        x, y = pt(curve.start_point)
-        d.append("M%.1f %.1f" % (x, y))
-        for seg in curve:
-            if seg.is_corner:
-                cx, cy = pt(seg.c); ex, ey = pt(seg.end_point)
-                d.append("L%.1f %.1fL%.1f %.1f" % (cx, cy, ex, ey))
-            else:
-                x1, y1 = pt(seg.c1); x2, y2 = pt(seg.c2); ex, ey = pt(seg.end_point)
-                d.append("C%.1f %.1f %.1f %.1f %.1f %.1f" % (x1, y1, x2, y2, ex, ey))
-        d.append("Z")
-    return "".join(d)
+def compor(texto, x0, baseline, em_px):
+    """Devolve (path_d, largura_px) do texto ancorado em x0/baseline."""
+    esc = em_px / upm
+    pen = SVGPathPen(glyphset, ntos=lambda v: f"{v:.1f}")
+    x = x0
+    for ch in texto:
+        g, adv = medidas(ch)
+        tp = TransformPen(pen, Transform(esc, 0, 0, -esc, x, baseline))
+        glyphset[g].draw(tp)
+        x += (adv + TRACK) * esc
+    return pen.getCommands(), x - x0
 
-blue_d = trace(blue)
-print("path azul: %d chars" % len(blue_d))
+def largura(texto, em_px):
+    esc = em_px / upm
+    return sum(medidas(ch)[1] + TRACK for ch in texto) * esc
 
-gc = sorted(comps(green), key=lambda c: c["cy"])
-print("componentes verdes: %d" % len(gc))
-parts = []
-for c in gc:
-    kind = "letra" if c["area"] > 20000 else "vertebra"
-    parts.append({"kind": kind, "cx": c["cx"], "cy": c["cy"], "d": trace(c["mask"], turd=2), "area": c["area"]})
-    print("  %-9s cx=%7.1f cy=%7.1f area=%6d  path %d chars" % (kind, c["cx"], c["cy"], c["area"], len(parts[-1]["d"])))
+def xheight_px(em_px):
+    bp = BoundsPen(glyphset)
+    glyphset[cmap[ord("o")]].draw(bp)
+    return bp.bounds[3] * em_px / upm  # topo do "o" acima da baseline
 
-import json
-json.dump({"w": W, "h": H, "blue": blue_d, "green": parts}, open(r"%s/logo.json" % r"C:/Users/guilh/AppData/Local/Temp/claude/C--Projetos-Web/5983c6e1-718b-44f2-ac46-a3b8f1e85652/scratchpad", "w"))
-print("ok")
+# --- geometria do master ---
+# Escala pela altura otica: o "o" do texto com a mesma altura dos discos (252).
+EM = 560
+EM = EM * 252.0 / xheight_px(EM)
+print("EM final: %.0f (x-height %.1f)" % (EM, xheight_px(EM)))
+BASE1, BASE2 = 345, 626
+# linha 1: "pod" termina encostando no disco (que comeca em x=881)
+w_pod = largura("pod", EM)
+d_pod, _ = compor("pod", 858 - w_pod, BASE1, EM)
+# linha 2: "p" termina antes do disco (553); "sture" comeca depois (790)
+w_p = largura("p", EM)
+d_p, _ = compor("p", 530 - w_p, BASE2, EM)
+d_sture, w_sture = compor("sture", 800, BASE2, EM)
+x_min = 858 - w_pod
+x_max = 800 + w_sture
+print("larguras: pod %.0f  p %.0f  sture %.0f | x %.0f..%.0f" % (w_pod, w_p, w_sture, x_min, x_max))
+
+DISCOS = [(994.3, 219.1, 113.0, 126.0), (665.7, 499.7, 113.0, 126.0)]
+VERTS = [(876.0, 75.5, 16.2), (840.4, 125.7, 21.7), (822.5, 196.7, 27.7),
+         (825.5, 279.4, 30.5), (840.4, 366.5, 35.0), (855.3, 452.2, 30.5),
+         (846.4, 531.2, 27.7), (825.5, 595.4, 20.0), (794.6, 646.5, 16.0)]
+
+linhas = []
+a = linhas.append
+a("/**")
+a(" * Marca recomposta a mao: letras sao glyphs da Newsreader wght 500 (a fonte")
+a(" * de display do proprio site), sem autotrace; os dois discos e as nove")
+a(" * vertebras usam a geometria medida no master (2036x716).")
+a(" * Cores da marca: #0E71B4 e #96BF0D. Gerador: scripts/gerar-marca.py")
+a(" */")
+a("export function BrandMark({ className }: { className?: string }) {")
+a("  return (")
+a("    <svg")
+a('      viewBox="%.0f -18 %.0f 758"' % (x_min - 16, (x_max - x_min) + 32))
+a("      className={className}")
+a('      aria-hidden="true"')
+a('      focusable="false"')
+a("    >")
+a("      <defs>")
+a('        <radialGradient id="marca-disco" cx="0.36" cy="0.3" r="0.85">')
+a('          <stop offset="0%" stopColor="#a8ce27" />')
+a('          <stop offset="100%" stopColor="#96BF0D" />')
+a("        </radialGradient>")
+a("      </defs>")
+a("")
+a("      {/* Letras */}")
+for d in (d_pod, d_p, d_sture):
+    a('      <path fill="#0E71B4" d="%s" />' % d)
+a("")
+a('      {/* Os dois "o": discos com leve luz, borda de acabamento */}')
+for cx, cy, rx, ry in DISCOS:
+    a('      <ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="%.1f" fill="url(#marca-disco)" stroke="#4b6007" strokeOpacity={0.16} strokeWidth={3} />' % (cx, cy, rx, ry))
+a("")
+a("      {/* Coluna: 9 vertebras, de cima para baixo, um no' animavel cada */}")
+a('      <g fill="url(#marca-disco)">')
+for i, (cx, cy, r) in enumerate(VERTS):
+    a('        <circle className="marca-vertebra" style={{ ["--v" as string]: %d }} cx="%.1f" cy="%.1f" r="%.1f" />' % (i, cx, cy, r))
+a("      </g>")
+a("    </svg>")
+a("  );")
+a("}")
+
+open("src/components/brand-mark.tsx", "w", encoding="utf-8").write("\n".join(linhas) + "\n")
+print("brand-mark.tsx gerado: %d linhas" % len(linhas))
