@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
-import { usePassouHero } from "@/lib/use-passou-hero";
 import { BrandMark } from "./brand-mark";
 
 export function SiteHeader() {
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [rolou, setRolou] = useState(false);
-  // Na primeira dobra quem chama e' o CTA do hero: o do header so entra depois.
-  const passouHero = usePassouHero();
   const [accordion, setAccordion] = useState<string | null>(NAV_GROUPS[0].label);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progresso = useRef<HTMLSpanElement>(null);
@@ -167,22 +164,16 @@ export function SiteHeader() {
               </Link>
             </li>
 
-            {/* O unico verde do header. Mesmo rotulo e destino da secao 05.
-                Entra so depois do hero, para nao duplicar o CTA da dobra. */}
-            <li
-              className={`ml-3 transition-[opacity,transform] duration-[320ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] ${
-                passouHero
-                  ? "translate-y-0 opacity-100"
-                  : "pointer-events-none -translate-y-1 opacity-0"
-              }`}
-              aria-hidden={passouHero ? undefined : true}
-            >
+            {/* Sempre visivel, em qualquer scroll, e sem mudar de estado.
+                Contorno em vez de preenchimento: le como controle sem
+                disputar com o verde do hero. O verde so aparece no hover,
+                pelo preenchimento que cresce do canto. */}
+            <li className="ml-3">
               <a
                 href="https://wa.me/message/WFGOB3AVBI63J1"
                 target="_blank"
                 rel="noopener noreferrer"
-                tabIndex={passouHero ? undefined : -1}
-                className="btn-fill [--fill:var(--color-action-deep)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-action-deep/25 bg-action px-4 py-2 text-[0.8125rem] font-medium text-ink-strong shadow-tag transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0"
+                className="btn-fill [--fill:var(--color-action)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-4 py-2 text-[0.8125rem] font-medium text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0"
               >
                 Falar Sobre o Meu Caso
               </a>
