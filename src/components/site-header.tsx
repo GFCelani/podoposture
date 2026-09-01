@@ -127,8 +127,8 @@ export function SiteHeader() {
                   >
                     <span
                       aria-hidden="true"
-                      className={`text-[0.625rem] tracking-[0.14em] transition-colors duration-[160ms] ${
-                        isOpen ? "text-accent" : "text-muted/70"
+                      className={`text-[0.5625rem] tracking-[0.16em] transition-colors duration-[160ms] ${
+                        isOpen ? "text-accent" : "text-muted/45"
                       }`}
                       style={{ fontFamily: "var(--mono)" }}
                     >

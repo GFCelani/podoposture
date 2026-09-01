@@ -1,6 +1,10 @@
 import { SectionMark } from "./layers";
 import { SpineColumn } from "./spine-column";
 
+/** Mascara do campo: some onde o titulo passa, cheia onde a coluna esta. */
+const MASCARA =
+  "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.22) 24%, rgba(0,0,0,0.75) 46%, #000 64%)";
+
 export function Hero() {
   return (
     <section
@@ -36,8 +40,8 @@ export function Hero() {
         ))}
       </div>
 
-      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-8 px-6 pt-20 pb-20 lg:min-h-[calc(100svh-88px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16">
-        <div className="lg:col-span-7">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16">
+        <div className="relative z-10 lg:col-span-7">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" />
           </div>
@@ -57,8 +61,15 @@ export function Hero() {
           />
         </div>
 
-        <div className="lg:col-span-5">
-          <SpineColumn className="mx-auto h-[clamp(330px,52svh,460px)] w-auto lg:h-[clamp(420px,62svh,620px)]" />
+        {/* Campo de aprumo. No telefone entra no fluxo, sangrando de borda a
+            borda; no desktop passa a ocupar dois tercos da largura do hero,
+            por tras do titulo, com a mascara devolvendo a legibilidade. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none relative -mx-6 mt-12 h-[clamp(340px,52svh,460px)] w-[calc(100%+3rem)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:h-auto lg:w-[64%]"
+          style={{ maskImage: MASCARA, WebkitMaskImage: MASCARA }}
+        >
+          <SpineColumn className="h-full w-full" />
         </div>
       </div>
     </section>
