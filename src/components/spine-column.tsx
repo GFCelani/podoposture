@@ -7,7 +7,6 @@ const SPACING = 21;
 const BASE_Y = 596;
 const FIELD_L = 60;
 const FIELD_R = 640;
-const LABEL_X = 12;
 const LABEL_X_DIR = 712;
 
 /** Amplitude sagital. O perfil abaixo e' a forma; isto e' o quanto ela varre. */

@@ -39,7 +39,7 @@ export function TreatmentCards() {
   return (
     <section
       id="tratamentos"
-      className="relative overflow-hidden border-b border-rule bg-surface"
+      className="corte-alto-dir relative overflow-hidden border-b border-rule bg-surface"
     >
       <GridPaper size={112} fade="top" />
 

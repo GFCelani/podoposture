@@ -19,7 +19,7 @@ export function Contact() {
   return (
     <section
       id="contato"
-      className="relative overflow-hidden border-b border-rule bg-surface"
+      className="corte-alto-esq relative overflow-hidden border-b border-rule bg-surface"
     >
       <GridPaper size={96} fade="left" />
       <ColumnRules />

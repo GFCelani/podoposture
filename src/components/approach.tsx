@@ -21,7 +21,7 @@ export function Approach() {
   return (
     <section
       id="nossa-abordagem"
-      className="relative overflow-hidden border-b border-rule"
+      className="relative overflow-hidden"
     >
       <GridPaper size={88} fade="left" />
       <ColumnRules />

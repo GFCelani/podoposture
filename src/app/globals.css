@@ -867,6 +867,32 @@ a:focus-visible .marca-vertebra {
   }
 }
 
+/* ===============================================================
+   CORTE DIAGONAL — so em duas secoes, so a partir de 768.
+   Angulo baixo (menos de 1 grau em 1440): le como respiro, nao como
+   recurso. A secao sobe pela margem negativa e o clip recorta a mesma
+   altura, entao o conteudo nao muda de lugar e nao ha reflow: clip-path
+   nao participa do layout.
+   =============================================================== */
+
+@media (min-width: 768px) {
+  .corte-alto-dir,
+  .corte-alto-esq {
+    --corte: clamp(18px, 2.5vw, 42px);
+    margin-top: calc(var(--corte) * -1);
+  }
+
+  /* quina alta a direita */
+  .corte-alto-dir {
+    clip-path: polygon(0 var(--corte), 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* quina alta a esquerda, alternando com a de cima */
+  .corte-alto-esq {
+    clip-path: polygon(0 0, 100% var(--corte), 100% 100%, 0 100%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Opt-in por data-motion. !important em folha vence style inline e vale no
      primeiro quadro, sem depender do IntersectionObserver disparar. */
