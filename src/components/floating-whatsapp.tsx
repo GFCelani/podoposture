@@ -12,14 +12,14 @@ export function FloatingWhatsApp() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar Sobre o Meu Caso"
-      className="flutuante-pulso btn-fill [--fill:var(--color-action-deep)] fixed right-5 bottom-5 z-50 inline-flex h-14 items-center gap-3 rounded-full border-[1.5px] border-action-deep/25 bg-action px-4 text-[0.875rem] font-medium text-ink-strong shadow-lift transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:text-paper active:translate-y-0 lg:right-8 lg:bottom-8 lg:px-5"
+      className="flutuante-entra flutuante-pulso btn-fill [--fill:var(--color-action-deep)] fixed right-5 bottom-5 z-50 inline-flex h-14 items-center gap-3 rounded-full border-[1.5px] border-action-deep/25 bg-action px-4 text-[0.875rem] font-medium text-ink-strong shadow-lift transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:text-paper active:translate-y-0 lg:right-8 lg:bottom-8 lg:px-5"
     >
       <svg
         width="24"
         height="24"
         viewBox="0 0 24 24"
         aria-hidden="true"
-        className="shrink-0"
+        className="flutuante-icone shrink-0"
       >
         <path
           d="M12 3.2c-4.9 0-8.8 3.6-8.8 8.1 0 1.6.5 3.1 1.4 4.4L3.4 20l4.5-1.1c1.2.6 2.6 1 4.1 1 4.9 0 8.8-3.6 8.8-8.3S16.9 3.2 12 3.2Z"

@@ -20,7 +20,7 @@ export function SiteFooter() {
   return (
     <footer
       data-tone="deep"
-      className="relative overflow-hidden bg-accent-deep"
+      className="relative overflow-hidden bg-deep-calm"
     >
       <GridPaper tone="deep" size={72} fade="top" />
       <ColumnRules tone="deep" />

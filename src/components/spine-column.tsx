@@ -347,11 +347,6 @@ export function SpineColumn({ className }: { className?: string }) {
           <stop offset="55%" stopColor="var(--color-paper)" stopOpacity="0.1" />
           <stop offset="100%" stopColor="var(--color-paper)" stopOpacity="0.04" />
         </linearGradient>
-        {/* Nucleo do disco: verde com luz no centro, como material vivo */}
-        <radialGradient id="disco-grad" cx="0.42" cy="0.36" r="0.9">
-          <stop offset="0%" stopColor="#b7d84a" />
-          <stop offset="100%" stopColor="#96bf0d" />
-        </radialGradient>
         <linearGradient id="fio-grad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--color-paper)" stopOpacity="0" />
           <stop offset="30%" stopColor="var(--color-paper)" stopOpacity="0.55" />

@@ -3,20 +3,18 @@ import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Nove fotografias reais da clinica.
+ * Seis fotografias reais da clinica; recepcao, consultorio e acupuntura
+ * moram agora nas secoes 02, 08 e 03 e sairam daqui para nao repetir.
  * As outras sete imagens da galeria do site atual sao pecas de marketing com
  * texto embutido (Palmilhas para corrida, Paciente RPG, Paciente com Zumbido,
  * Neuromodulacao, POSTURE+, Axon e um print de Street View) e ficaram de fora.
  */
 const PHOTOS = [
-  { src: "/img/galeria/recepcao.jpg", alt: "Recepção da clínica, com balcão em madeira e placa da Podoposture" },
-  { src: "/img/galeria/consultorio.jpg", alt: "Consultório com mesa de atendimento, espelho de avaliação e bolas suíças" },
   { src: "/img/galeria/sala-de-exame.jpg", alt: "Sala de exame com maca e bancada de equipamentos" },
   { src: "/img/galeria/escritorio.jpg", alt: "Mesa de atendimento com diplomas e modelos anatômicos ao fundo" },
   { src: "/img/galeria/corredor-de-marcha.jpg", alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro" },
   { src: "/img/galeria/avaliacao-postural.jpg", alt: "Paciente em avaliação postural sobre a plataforma, de perfil ao espelho" },
   { src: "/img/galeria/plataforma-de-pressao.jpg", alt: "Pés descalços sobre a plataforma de baropodometria" },
-  { src: "/img/galeria/acupuntura.jpg", alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente" },
   { src: "/img/galeria/ecobag.jpg", alt: "Ecobag da Podoposture com a marca impressa" },
 ];
 
@@ -25,7 +23,7 @@ export function Gallery() {
     <section
       data-tone="deep"
       id="galeria"
-      className="relative overflow-hidden bg-accent-deep"
+      className="relative overflow-hidden bg-deep-calm"
     >
       <GridPaper tone="deep" size={128} fade="top" />
       <ColumnRules tone="deep" />
@@ -49,7 +47,7 @@ export function Gallery() {
                 <figure className="group relative overflow-hidden rounded-lg border border-white/[0.12] transition-[border-color,transform,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:border-white/40 hover:shadow-lift">
                   <span
                     aria-hidden="true"
-                    className="absolute top-0 left-0 z-10 rounded-br-md bg-accent-deep px-2.5 py-1.5 text-[0.625rem] tracking-[0.18em] text-on-deep-muted"
+                    className="absolute top-0 left-0 z-10 rounded-br-md bg-deep-calm px-2.5 py-1.5 text-[0.625rem] tracking-[0.18em] text-on-deep-muted"
                     style={{ fontFamily: "var(--mono)" }}
                   >
                     {String(i + 1).padStart(2, "0")}

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ButtonLink } from "./button-link";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -58,6 +59,18 @@ export function Contact() {
           </div>
 
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
+            <Reveal delay={240}>
+              <figure className="mb-6 rounded-lg border border-rule bg-paper p-3 shadow-plate">
+                <Image
+                  src="/img/galeria/consultorio.jpg"
+                  alt="Consultório com mesa de atendimento, espelho de avaliação e bolas suíças"
+                  width={900}
+                  height={1125}
+                  sizes="(min-width: 1024px) 440px, 100vw"
+                  className="aspect-[16/9] w-full rounded-md object-cover saturate-[0.88]"
+                />
+              </figure>
+            </Reveal>
             <Reveal delay={330}>
               <div className="rounded-lg border border-rule bg-paper p-8 shadow-plate">
                 <address

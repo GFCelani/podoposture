@@ -77,7 +77,7 @@ export function Approach() {
             <ol className="relative mt-11 space-y-7">
               <div
                 aria-hidden="true"
-                className="absolute top-4 bottom-4 left-[17px] w-[1.5px] bg-gradient-to-b from-rule via-accent/55 to-rule"
+                className="absolute top-4 bottom-4 left-[17px] w-[1.5px] bg-gradient-to-b from-rule via-accent/35 to-rule"
               />
               {PASSOS.map((texto, i) => (
                 <li key={texto} className="relative pl-14">

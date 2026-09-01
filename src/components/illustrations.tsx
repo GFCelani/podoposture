@@ -104,7 +104,7 @@ export function FigurePoints({ className }: { className?: string }) {
         y1={4}
         x2={100}
         y2={426}
-        stroke="var(--color-accent)"
+        stroke="currentColor"
         strokeOpacity={0.3}
         strokeWidth={1}
         strokeDasharray="3 6"
@@ -117,7 +117,8 @@ export function FigurePoints({ className }: { className?: string }) {
           y1={y}
           x2={186}
           y2={y}
-          stroke="var(--color-rule)"
+          stroke="currentColor"
+          strokeOpacity={0.16}
           strokeWidth={1}
           strokeDasharray="1 5"
         />
@@ -126,9 +127,9 @@ export function FigurePoints({ className }: { className?: string }) {
       <path
         className="traco-desenha"
         d={SILHUETA_D}
-        fill="var(--color-accent)"
+        fill="currentColor"
         fillOpacity={0.05}
-        stroke="var(--color-accent)"
+        stroke="currentColor"
         strokeWidth={1.8}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -141,14 +142,14 @@ export function FigurePoints({ className }: { className?: string }) {
           className="ponto-avaliacao"
           style={{ ["--seq" as string]: i }}
         >
-          <circle cx={p.x} cy={p.y} r={3} fill="var(--color-accent)" />
+          <circle cx={p.x} cy={p.y} r={3} fill="currentColor" />
           <circle
             className="ponto-anel"
             cx={p.x}
             cy={p.y}
             r={7}
             fill="none"
-            stroke="var(--color-accent)"
+            stroke="currentColor"
             strokeWidth={1.2}
           />
         </g>
@@ -244,74 +245,6 @@ export function Regua30({ className }: { className?: string }) {
     </svg>
   );
 }
-
-/* ================================================================
-   04 — TRES ADAPTACOES
-   "o corpo se adapta no movimento, no sono, na forma de se organizar":
-   uma vinheta por adaptacao, traco claro sobre petroleo.
-   ================================================================ */
-
-function VinhetaMovimento() {
-  return (
-    <svg viewBox="0 0 120 96" aria-hidden="true" className="h-full w-full">
-      {/* figura lateral em passo */}
-      <circle cx={62} cy={18} r={8} fill="none" stroke="currentColor" strokeWidth={1.8} />
-      <path d="M62 26 Q60 40 57 52" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-      <path d="M60 34 L74 46 M60 34 L46 44" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M57 52 L74 66 L80 84 M57 52 L46 70 L36 82" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      <line x1={16} y1={88} x2={104} y2={88} stroke="currentColor" strokeOpacity={0.4} strokeWidth={1.2} />
-      {/* linhas de deslocamento andando */}
-      <g className="traco-corre">
-        <line x1={14} y1={22} x2={34} y2={22} stroke="currentColor" strokeOpacity={0.55} strokeWidth={1.3} strokeDasharray="6 7" strokeLinecap="round" />
-        <line x1={10} y1={34} x2={30} y2={34} stroke="currentColor" strokeOpacity={0.4} strokeWidth={1.3} strokeDasharray="6 7" strokeLinecap="round" />
-      </g>
-    </svg>
-  );
-}
-
-function VinhetaSono() {
-  return (
-    <svg viewBox="0 0 120 96" aria-hidden="true" className="h-full w-full">
-      {/* figura deitada de lado; a coluna pontilhada e o que importa */}
-      <line x1={10} y1={74} x2={110} y2={74} stroke="currentColor" strokeOpacity={0.4} strokeWidth={1.2} />
-      <circle cx={26} cy={58} r={8} fill="none" stroke="currentColor" strokeWidth={1.8} />
-      <path d="M34 60 Q56 52 74 58 Q92 64 102 60" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-      <path d="M52 60 L60 72 M78 60 L88 72" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-      <path d="M36 57 Q56 49 74 55 Q90 60 100 57" fill="none" stroke="currentColor" strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray="1 4" strokeLinecap="round" />
-      {/* respiracao */}
-      <g className="respira">
-        <path d="M22 34 Q26 30 30 34" fill="none" stroke="currentColor" strokeOpacity={0.55} strokeWidth={1.3} strokeLinecap="round" />
-        <path d="M18 26 Q26 20 34 26" fill="none" stroke="currentColor" strokeOpacity={0.35} strokeWidth={1.3} strokeLinecap="round" />
-      </g>
-    </svg>
-  );
-}
-
-function VinhetaOrganizacao() {
-  return (
-    <svg viewBox="0 0 120 96" aria-hidden="true" className="h-full w-full">
-      {/* figura sentada a mesa, coluna em flexao */}
-      <line x1={12} y1={88} x2={108} y2={88} stroke="currentColor" strokeOpacity={0.4} strokeWidth={1.2} />
-      <circle cx={50} cy={24} r={8} fill="none" stroke="currentColor" strokeWidth={1.8} />
-      <path d="M50 32 Q42 44 44 56" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-      {/* a coluna em flexao, pontilhada como na vinheta do sono */}
-      <path d="M49 34 Q41 45 43 55" fill="none" stroke="currentColor" strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray="1 4" strokeLinecap="round" />
-      <path d="M45 40 L64 48" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
-      <path d="M44 56 L62 58 L62 78 M44 56 L44 78" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
-      {/* mesa e tela */}
-      <path d="M58 50 L92 50 L92 78" fill="none" stroke="currentColor" strokeOpacity={0.7} strokeWidth={1.5} strokeLinecap="round" />
-      <rect x={72} y={28} width={18} height={14} rx={2} fill="none" stroke="currentColor" strokeOpacity={0.7} strokeWidth={1.5} />
-      {/* alerta da curva */}
-      <path className="pisca" d="M36 40 Q30 46 32 54" fill="none" stroke="currentColor" strokeWidth={1.3} strokeDasharray="2 4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-export const VINHETAS_ADAPTACAO = [
-  { chave: "movimento", Vinheta: VinhetaMovimento },
-  { chave: "sono", Vinheta: VinhetaSono },
-  { chave: "organizacao", Vinheta: VinhetaOrganizacao },
-];
 
 /* ================================================================
    05 — MAPA DE PRESSAO PLANTAR

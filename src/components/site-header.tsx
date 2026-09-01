@@ -206,7 +206,11 @@ export function SiteHeader() {
                 </div>
 
                 {/* Itens */}
-                <ul className="col-span-9 grid grid-cols-3 gap-x-2 gap-y-0.5 p-6">
+                <ul
+                  className={`col-span-9 grid gap-x-2 gap-y-0.5 p-6 ${
+                    activeGroup.items.length <= 4 ? "grid-cols-2" : "grid-cols-3"
+                  }`}
+                >
                   {activeGroup.items.map((item, i) => (
                     <li
                       key={item.href}
@@ -286,7 +290,7 @@ export function SiteHeader() {
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 34%, transparent) 30%, color-mix(in srgb, var(--color-accent) 34%, transparent) 70%, transparent 96%)",
+              "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 22%, transparent) 30%, color-mix(in srgb, var(--color-accent) 22%, transparent) 70%, transparent 96%)",
           }}
         />
         <div

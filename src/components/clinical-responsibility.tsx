@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "./button-link";
 import { MARCAS_CLINICAS, Regua30 } from "./illustrations";
@@ -5,9 +6,9 @@ import { ColumnRules, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * As tres competencias da credencial (Osteopata, Posturologa, Acupunturista)
- * desenhadas como tres marcas proprias, e os 30 anos da copy como regua de
- * 30 tracos com o cursor percorrendo. Sem caixa em volta de texto.
+ * A credencial com a pratica real ao lado: sessao de acupuntura da clinica.
+ * As tres marcas de competencia viram faixa secundaria sob a foto, com a
+ * regua dos 30 anos fechando a coluna. Sem caixa em volta de texto.
  */
 export function ClinicalResponsibility() {
   return (
@@ -65,26 +66,33 @@ export function ClinicalResponsibility() {
             </Reveal>
           </div>
 
-          {/* As tres competencias desenhadas, e a regua dos 30 anos */}
+          {/* A pratica real, com as competencias como faixa secundaria */}
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
-            <div className="grid grid-cols-3 gap-x-4">
-              {MARCAS_CLINICAS.map(({ chave, Marca }, i) => (
-                <Reveal key={chave} delay={160 + i * 110}>
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="h-24 w-24 text-accent lg:h-28 lg:w-28">
-                      <Marca />
-                    </div>
-                    <span
-                      aria-hidden="true"
-                      className="h-px w-10 bg-rule"
-                    />
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+            <Reveal delay={140}>
+              <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
+                <Image
+                  src="/img/galeria/acupuntura.jpg"
+                  alt="Agulhas de acupuntura aplicadas ao longo das costas de um paciente"
+                  width={900}
+                  height={1125}
+                  sizes="(min-width: 1024px) 440px, 100vw"
+                  className="aspect-[4/3] w-full rounded-md object-cover saturate-[0.88]"
+                />
+              </figure>
+            </Reveal>
 
-            <Reveal delay={480}>
-              <div className="mt-10">
+            <Reveal delay={280}>
+              <div className="mt-7 flex items-center justify-between gap-6 px-1">
+                {MARCAS_CLINICAS.map(({ chave, Marca }) => (
+                  <div key={chave} className="h-14 w-14 text-accent/80">
+                    <Marca />
+                  </div>
+                ))}
+                <div className="hidden flex-1 sm:block">
+                  <Regua30 className="w-full" />
+                </div>
+              </div>
+              <div className="mt-4 sm:hidden">
                 <Regua30 className="w-full" />
               </div>
             </Reveal>

@@ -1,24 +1,35 @@
-import { VINHETAS_ADAPTACAO } from "./illustrations";
+import { FigurePoints } from "./illustrations";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * "o corpo se adapta no movimento, no sono, na forma de se organizar":
- * as tres adaptacoes desenhadas na coluna direita, uma vinheta cada.
- * Sem timeline, sem caixa em volta de texto.
+ * "avaliacao cuidadosa do corpo como um todo", desenhada: a silhueta com os
+ * pontos de avaliacao acendendo mora aqui, em traco claro sobre o petroleo
+ * suave, ocupando a coluna direita inteira. Sem caixa, sem timeline.
  */
 export function UnderstandFirst() {
   return (
     <section
       id="compreender-antes-de-tratar"
       data-tone="deep"
-      className="relative overflow-hidden bg-accent-deep"
+      className="relative overflow-hidden bg-deep-calm"
     >
       <GridPaper tone="deep" size={104} fade="bottom" />
       <ColumnRules tone="deep" />
 
+      {/* Prumo: o mesmo instrumento do hero, atravessando o bloco */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-[10%] hidden w-px lg:block"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(to bottom, var(--color-accent-light) 0 3px, transparent 3px 8px)",
+          opacity: 0.28,
+        }}
+      />
+
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
+        <div className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6">
           <div className="lg:col-span-7">
             <Reveal variante="cortina">
               <SectionMark n="04" tone="deep" />
@@ -48,19 +59,11 @@ export function UnderstandFirst() {
             </Reveal>
           </div>
 
-          {/* As tres adaptacoes da copy, desenhadas */}
-          <div className="mt-14 lg:col-span-4 lg:col-start-9 lg:mt-2">
-            <div className="grid grid-cols-3 gap-4 lg:grid-cols-1 lg:gap-9">
-              {VINHETAS_ADAPTACAO.map(({ chave, Vinheta }, i) => (
-                <Reveal key={chave} delay={200 + i * 130}>
-                  <div className="flex justify-center lg:justify-start">
-                    <div className="h-24 w-32 text-paper lg:h-32 lg:w-44">
-                      <Vinheta />
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+          {/* O corpo como um todo, lido nivel a nivel */}
+          <div className="mt-14 lg:col-span-4 lg:col-start-9 lg:mt-0">
+            <Reveal delay={200}>
+              <FigurePoints className="mx-auto h-[clamp(300px,40vh,440px)] w-auto text-paper/90" />
+            </Reveal>
           </div>
         </div>
       </div>

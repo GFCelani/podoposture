@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { BLOG_INDEX, CATEGORIES, POSTS } from "@/lib/posts";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { ColumnRules, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 export function Journal() {
@@ -9,7 +9,6 @@ export function Journal() {
       id="conteudos"
       className="relative overflow-hidden border-b border-rule"
     >
-      <GridPaper size={80} fade="right" />
       <ColumnRules />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">

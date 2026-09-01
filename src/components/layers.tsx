@@ -34,7 +34,7 @@ export function GridPaper({
         backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
         backgroundSize: `${size}px ${size}px`,
         backgroundPosition: "center",
-        opacity: tone === "deep" ? 1 : 0.3,
+        opacity: tone === "deep" ? 0.55 : 0.16,
         maskImage: FADE[fade],
         WebkitMaskImage: FADE[fade],
       }}
@@ -83,7 +83,7 @@ export function SectionMark({
       </span>
       <span
         aria-hidden="true"
-        className={`h-px w-14 ${tone === "deep" ? "bg-accent-light/70" : "bg-accent/50"}`}
+        className={`h-px w-14 ${tone === "deep" ? "bg-accent-light/45" : "bg-accent/30"}`}
       />
     </div>
   );
@@ -96,7 +96,7 @@ export function SectionMark({
 export function SeamRuler() {
   return (
     <div aria-hidden="true" className="pointer-events-none">
-      <div className="h-px w-full bg-accent-light/40" />
+      <div className="h-px w-full bg-accent-light/25" />
       <div className="relative h-3.5">
         <div
           className="absolute inset-0"
