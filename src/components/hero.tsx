@@ -94,18 +94,16 @@ export function Hero() {
           </h1>
 
           {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
-              o primario e' o mesmo CTA de WhatsApp da secao 05; o secundario
+              o primario e' o par completo da secao 08, rotulo e destino; o
+              secundario
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}
           <div
             className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
             style={{ ["--in-delay" as string]: "620ms" }}
           >
-            <ButtonLink
-              href="https://wa.me/message/WFGOB3AVBI63J1"
-              variant="primary"
-            >
-              Falar Sobre o Meu Caso
+            <ButtonLink href="https://wa.me/5521992035643" variant="primary">
+              Envie uma mensagem
             </ButtonLink>
             <ButtonLink href="/tratamento-da-dor" variant="secondary-deep">
               Quero mais informações
