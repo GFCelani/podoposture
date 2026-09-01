@@ -55,7 +55,7 @@ export function Approach() {
           <div className="mt-16 lg:col-span-6 lg:col-start-7 lg:mt-0">
             <Reveal delay={110}>
               <SectionMark n="05" />
-              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
+              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
                 Nossa Abordagem
               </h2>
             </Reveal>

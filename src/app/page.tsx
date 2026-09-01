@@ -1,6 +1,7 @@
 import { Approach } from "@/components/approach";
 import { ClinicalResponsibility } from "@/components/clinical-responsibility";
 import { Contact } from "@/components/contact";
+import { FloatingWhatsApp } from "@/components/floating-whatsapp";
 import { Gallery } from "@/components/gallery";
 import { Hero } from "@/components/hero";
 import { Journal } from "@/components/journal";
@@ -34,6 +35,7 @@ export default function Home() {
         <SocialBand />
       </main>
       <SiteFooter />
+      <FloatingWhatsApp />
     </>
   );
 }

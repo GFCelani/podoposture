@@ -26,7 +26,7 @@ export function Contact() {
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal variante="cortina">
           <SectionMark n="08" />
-          <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
+          <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
             Converse com a Podoposture
           </h2>
         </Reveal>
@@ -34,7 +34,7 @@ export function Contact() {
         <div className="mt-14 lg:grid lg:grid-cols-12 lg:gap-x-6">
           <div className="lg:col-span-6">
             <Reveal delay={110}>
-              <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink">
+              <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
                 Sua dor merece ser compreendida
               </h3>
             </Reveal>

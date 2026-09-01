@@ -18,7 +18,7 @@ export function SocialBand() {
 
         <Reveal delay={90}>
           <div className="mt-10 flex flex-col gap-8 border-t border-rule pt-10 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.2] font-semibold tracking-[-0.015em] text-ink">
+            <h2 className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.2] font-semibold tracking-[-0.015em] text-ink-strong">
               Ligue-se a nós
             </h2>
             <SocialLinks tone="light" />

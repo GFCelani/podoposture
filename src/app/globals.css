@@ -4,8 +4,11 @@
   /* Neutros */
   --color-paper: #faf9f6;
   --color-surface: #f1efea;
-  --color-ink: #0d2536;
-  --color-muted: #4a525a;
+  /* Tinta em dois pesos: corpo azulado suave (8.2 sobre paper) e strong
+     para titulo (13.3). O preto puro saiu da pagina. */
+  --color-ink: #2e4f6a;
+  --color-ink-strong: #102e46;
+  --color-muted: #4a5a68;
   --color-rule: #dad7cf;
 
   /* Cor de acao — verde do logo. So em preenchimento de CTA primario
@@ -402,6 +405,122 @@ a:focus-visible .marca-vertebra {
 .sublinha:focus-visible,
 .grupo-aberto > .sublinha {
   background-size: 100% 1px;
+}
+
+/* ===============================================================
+   LUZ — varredura diagonal verde, o unico verde fora de disco e CTA.
+   Decorativa: em movimento reduzido ela simplesmente nao aparece.
+   =============================================================== */
+
+.luz {
+  position: relative;
+  overflow: hidden;
+}
+
+.luz::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto;
+  left: 0;
+  width: 34%;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgb(150 191 13 / 0.075) 45%,
+    rgb(150 191 13 / 0.14) 50%,
+    rgb(150 191 13 / 0.075) 55%,
+    transparent 100%
+  );
+  transform: translateX(-140%) skewX(-16deg);
+  animation: luz 9s var(--ease-ciclo) infinite;
+  animation-delay: var(--luz-delay, 2.2s);
+}
+
+@keyframes luz {
+  0% {
+    opacity: 0;
+    transform: translateX(-140%) skewX(-16deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  34%,
+  100% {
+    opacity: 0;
+    transform: translateX(420%) skewX(-16deg);
+  }
+}
+
+/* Sobre papel a mesma luz precisa de menos forca. */
+.luz-clara::after {
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgb(150 191 13 / 0.05) 45%,
+    rgb(150 191 13 / 0.1) 50%,
+    rgb(150 191 13 / 0.05) 55%,
+    transparent 100%
+  );
+}
+
+/* ===============================================================
+   BOTAO — preenchimento que cresce do canto inferior esquerdo.
+   O ::before e' um circulo que escala; o conteudo fica acima dele.
+   =============================================================== */
+
+.btn-fill {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.btn-fill::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -10%;
+  bottom: -10%;
+  width: 150%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--fill, var(--color-accent));
+  transform: translate(-40%, 55%) scale(0);
+  transition: transform var(--dur-lenta) var(--ease-saida);
+}
+
+.btn-fill:hover::before,
+.btn-fill:focus-visible::before {
+  transform: translate(-18%, 26%) scale(1.75);
+}
+
+/* ===============================================================
+   FLUTUANTE — presenca por anel que emana. Decorativo: some no reduce.
+   =============================================================== */
+
+.flutuante-pulso::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 2px solid var(--color-action);
+  opacity: 0;
+  transform: scale(1);
+  animation: flutuante-pulso 2.8s var(--ease-ciclo) infinite;
+  pointer-events: none;
+}
+
+@keyframes flutuante-pulso {
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
 }
 
 /* Entrada em cascata dos itens do mega-menu. */

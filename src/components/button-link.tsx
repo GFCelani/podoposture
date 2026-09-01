@@ -20,9 +20,11 @@ type Variant = "primary" | "secondary" | "tertiary";
 const BASE =
   "group/btn inline-flex items-center gap-3 text-[0.9375rem] transition-[transform,box-shadow,background-color,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)]";
 
+/* O hover nao troca o fundo: um circulo cresce do canto inferior esquerdo
+   (.btn-fill em globals). --fill define a cor do preenchimento por nivel. */
 const VARIANTS: Record<Variant, string> = {
-  primary: `${BASE} rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 py-3.5 font-medium text-ink shadow-tag hover:-translate-y-0.5 hover:bg-action-deep hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
-  secondary: `${BASE} rounded-md border-[1.5px] border-accent/45 bg-paper px-7 py-3.5 text-accent shadow-tag hover:-translate-y-0.5 hover:border-accent hover:bg-accent hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
+  primary: `${BASE} btn-fill [--fill:var(--color-action-deep)] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 py-3.5 font-medium text-ink-strong shadow-tag hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
+  secondary: `${BASE} btn-fill [--fill:var(--color-accent)] rounded-md border-[1.5px] border-accent/45 bg-paper px-7 py-3.5 text-accent shadow-tag hover:-translate-y-0.5 hover:border-accent hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
   tertiary: `${BASE} sublinha items-baseline gap-2.5 text-accent hover:text-accent-deep`,
 };
 

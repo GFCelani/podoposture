@@ -163,6 +163,18 @@ export function SiteHeader() {
                 {NAV_BLOG.label}
               </Link>
             </li>
+
+            {/* O unico verde do header. Mesmo rotulo e destino da secao 05. */}
+            <li className="ml-3">
+              <a
+                href="https://wa.me/message/WFGOB3AVBI63J1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-fill [--fill:var(--color-action-deep)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-action-deep/25 bg-action px-5 py-2.5 text-[0.875rem] font-medium text-ink-strong shadow-tag transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0"
+              >
+                Falar Sobre o Meu Caso
+              </a>
+            </li>
           </ul>
         </nav>
 
@@ -184,7 +196,7 @@ export function SiteHeader() {
                       NAV_GROUPS.findIndex((g) => g.label === activeGroup.label) + 1,
                     ).padStart(2, "0")}
                   </p>
-                  <p className="mt-4 font-display text-[1.5rem] leading-[1.2] font-semibold tracking-[-0.018em] text-ink">
+                  <p className="mt-4 font-display text-[1.5rem] leading-[1.2] font-semibold tracking-[-0.018em] text-ink-strong">
                     {activeGroup.label}
                   </p>
                   <span
@@ -264,17 +276,13 @@ export function SiteHeader() {
         </button>
       </div>
 
-      {/* Regua de ticks: instrumento do site, so no topo da pagina */}
+      {/* Fio de assinatura: hairline com o azul do acento morrendo nas pontas */}
       <div
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 bottom-0 h-1.5 transition-opacity duration-[420ms] ${rolou ? "opacity-0" : "opacity-100"}`}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(to right, var(--color-rule) 0 1px, transparent 1px 22px)",
-          maskImage:
-            "linear-gradient(to right, transparent, #000 18%, #000 82%, transparent)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent, #000 18%, #000 82%, transparent)",
+          background:
+            "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 34%, transparent) 30%, color-mix(in srgb, var(--color-accent) 34%, transparent) 70%, transparent 96%)",
         }}
       />
 

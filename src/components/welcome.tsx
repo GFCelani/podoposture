@@ -18,7 +18,7 @@ export function Welcome() {
 
           <div className="mt-10 lg:col-span-9 lg:col-start-3 lg:mt-0 lg:border-l lg:border-rule lg:pl-12">
             <Reveal>
-              <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
+              <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
                 Bem-vindo(a) à Podoposture
               </h2>
             </Reveal>

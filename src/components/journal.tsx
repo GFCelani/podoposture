@@ -15,7 +15,7 @@ export function Journal() {
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal variante="cortina">
           <SectionMark n="09" />
-          <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
+          <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
             Conteúdos Para Compreender Melhor O Seu Corpo
           </h2>
         </Reveal>
@@ -63,7 +63,7 @@ export function Journal() {
                           )}
                         </p>
 
-                        <h3 className="mt-3 font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink">
+                        <h3 className="mt-3 font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink-strong">
                           <a
                             href={post.href}
                             target="_blank"

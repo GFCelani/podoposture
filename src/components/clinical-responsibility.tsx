@@ -16,7 +16,7 @@ export function ClinicalResponsibility() {
           <div className="lg:col-span-4">
             <Reveal variante="cortina">
               <SectionMark n="03" />
-              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
+              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
                 Cuidado com{" "}
                 <mark className="marca-grifo marca-grifo-claro">
                   Responsabilidade

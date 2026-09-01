@@ -9,7 +9,7 @@ export function Hero() {
   return (
     <section
       data-tone="deep"
-      className="relative overflow-hidden bg-accent-deep text-paper"
+      className="luz relative overflow-hidden bg-accent-deep text-paper"
     >
       {/* Camada 1: papel milimetrado */}
       <div

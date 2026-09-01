@@ -53,7 +53,10 @@ export function TreatmentCards() {
             <li key={card.href} className="flex">
               <Reveal delay={i * 110} className="flex w-full">
                 <article className="group flex w-full flex-col">
-                  <div className="relative overflow-hidden rounded-lg border border-rule bg-paper shadow-plate transition-[box-shadow,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift">
+                  <div
+                    className="luz luz-clara relative overflow-hidden rounded-lg border border-rule bg-paper shadow-plate transition-[box-shadow,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift"
+                    style={{ ["--luz-delay" as string]: `${3.4 + i * 2.1}s` }}
+                  >
                     <span
                       aria-hidden="true"
                       className="absolute inset-x-0 top-0 z-10 h-[3px] origin-left scale-x-0 bg-accent transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-x-100"
@@ -76,7 +79,7 @@ export function TreatmentCards() {
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <h3 className="font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink">
+                    <h3 className="font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
                       {card.title}
                     </h3>
                   </div>
