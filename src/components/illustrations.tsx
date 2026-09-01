@@ -277,15 +277,31 @@ const PE: Pt[] = [
 
 const PE_D = curva(PE, true);
 
+/**
+ * Dedos no espaco do contorno base. O halux fica em x baixo aqui; o espelho
+ * do pe da esquerda o joga para o lado interno, entao os dois halux ficam
+ * voltados um para o outro, como na anatomia.
+ */
+const DEDOS = [
+  { cx: 51, cy: 9, rx: 7.4, ry: 8.6, rot: -8 },
+  { cx: 67, cy: 8, rx: 5.3, ry: 6.4, rot: 4 },
+  { cx: 79, cy: 13, rx: 4.7, ry: 5.7, rot: 16 },
+  { cx: 88.5, cy: 21, rx: 4.1, ry: 5, rot: 28 },
+  { cx: 95, cy: 30.5, rx: 3.4, ry: 4.2, rot: 40 },
+];
+
 /** Zonas de pressao: halux, metatarsos, calcanhar. */
 const ZONAS = [
-  { cx: 56, cy: 32, rx: 13, ry: 11 },
+  { cx: 52, cy: 33, rx: 12, ry: 11 },
   { cx: 66, cy: 74, rx: 24, ry: 17 },
   { cx: 68, cy: 194, rx: 15, ry: 19 },
 ];
 
 function Planta({ lado }: { lado: "e" | "d" }) {
-  const t = lado === "d" ? "translate(248 0) scale(-1 1)" : undefined;
+  // O pe da esquerda e' o espelho; o da direita so translada. Assim o lado
+  // medial de cada um aponta para a linha media, entre os dois.
+  const t =
+    lado === "e" ? "translate(134 0) scale(-1 1)" : "translate(114 0)";
   return (
     <g transform={t} className={`pe-${lado}`}>
       <path
@@ -295,19 +311,18 @@ function Planta({ lado }: { lado: "e" | "d" }) {
         stroke="var(--color-accent)"
         strokeWidth={1.7}
       />
-      {/* dedos menores */}
-      {[
-        { x: 86, y: 12, r: 4.6 },
-        { x: 100, y: 19, r: 4.1 },
-        { x: 110, y: 30, r: 3.7 },
-        { x: 116, y: 44, r: 3.2 },
-      ].map((d) => (
-        <circle
-          key={d.x}
-          cx={d.x}
-          cy={d.y}
-          r={d.r}
-          fill="none"
+      {/* Cinco dedos, em arco sobre a borda anterior do proprio pe:
+          halux maior no lado medial, decrescendo ate o quinto lateral. */}
+      {DEDOS.map((d) => (
+        <ellipse
+          key={d.cx}
+          cx={d.cx}
+          cy={d.cy}
+          rx={d.rx}
+          ry={d.ry}
+          transform={`rotate(${d.rot} ${d.cx} ${d.cy})`}
+          fill="var(--color-accent)"
+          fillOpacity={0.05}
           stroke="var(--color-accent)"
           strokeWidth={1.5}
         />
