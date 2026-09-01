@@ -67,18 +67,21 @@ export function Approach() {
             <ol className="relative mt-11 space-y-7">
               <div
                 aria-hidden="true"
-                className="absolute top-4 bottom-4 left-[17px] w-px bg-gradient-to-b from-rule via-accent/40 to-rule"
+                className="absolute top-4 bottom-4 left-[17px] w-[1.5px] bg-gradient-to-b from-rule via-accent/55 to-rule"
               />
               {PASSOS.map((texto, i) => (
                 <li key={texto} className="relative pl-14">
+                  {/* Fora do Reveal: reveal.is-in tem transform none, que nao
+                      cria containing block, e o absolute ancoraria no li com
+                      o left errado. Aqui ancora no li de proposito, em 0. */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-0 left-0 flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-accent/45 bg-paper text-[0.6875rem] tracking-[0.08em] text-accent shadow-tag"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <Reveal delay={140 + i * 90}>
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-0 -left-14 flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-accent/45 bg-paper text-[0.6875rem] tracking-[0.08em] text-accent shadow-tag"
-                      style={{ fontFamily: "var(--mono)" }}
-                    >
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
                     <p
                       className={`leading-[1.65] ${
                         i === 0 || i === PASSOS.length - 1
