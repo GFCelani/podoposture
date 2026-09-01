@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  /* Neutros */
+  --color-paper: #faf9f6;
+  --color-surface: #f1efea;
+  --color-ink: #0d2536;
+  --color-muted: #5a6169;
+  --color-rule: #dad7cf;
+
+  /* Cor de acao — verde do logo. So em preenchimento de CTA primario
+     e nos discos da coluna do hero. Nunca como texto sobre claro. */
+  --color-action: #96bf0d;
+  --color-action-deep: #4b6007;
+  --color-action-wash: #f7f9ee;
+
+  /* Acento — azul do logo. Rotulos, reguas, links, secoes escuras. */
+  --color-accent: #0e71b4;
+  --color-accent-deep: #0d2536;
+  --color-accent-wash: #f3f7fa;
+}
+
+/* As variaveis do next/font sao declaradas na classe do <body>, nao no :root.
+   Com @theme normal, o token e' resolvido no :root, onde --font-newsreader nao
+   existe, e a custom property inteira vira invalida. @theme inline resolve o
+   valor dentro do utilitario, ja no elemento certo. */
+@theme inline {
+  --font-display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-public-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* Declaradas no <body> porque e' aqui que --font-* do next/font existe.
+     Dai herdam validas para a arvore inteira, inclusive style inline. */
+  --display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --text: var(--font-public-sans), system-ui, -apple-system, sans-serif;
+  --mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--text);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: var(--color-action);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------
+   Coluna do hero.
+   O repouso vive no estilo base, nunca no keyframe 100%: com
+   movimento reduzido a animacao termina no primeiro quadro e o
+   elemento volta ao base. Ver vault/repouso-de-animacao-css-vive-no-estilo-base
+   Um transform por no': entrada no <g> externo, oscilacao no interno.
+   --------------------------------------------------------------- */
+
+.vertebra-in {
+  opacity: 1;
+  transform: none;
+  animation: vertebra-in 0.75s cubic-bezier(0.22, 0.7, 0.28, 1) backwards;
+  animation-delay: var(--in-delay, 0ms);
+}
+
+@keyframes vertebra-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.vertebra-sway {
+  transform: none;
+  animation: vertebra-sway 9s ease-in-out infinite;
+  animation-delay: var(--phase, 0ms);
+}
+
+@keyframes vertebra-sway {
+  0%,
+  100% {
+    transform: translateX(calc(var(--amp, 0) * -1px));
+  }
+  50% {
+    transform: translateX(calc(var(--amp, 0) * 1px));
+  }
+}
+
+.rule-in {
+  opacity: 1;
+  animation: rule-in 0.9s ease-out backwards;
+  animation-delay: var(--in-delay, 0ms);
+}
+
+@keyframes rule-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
