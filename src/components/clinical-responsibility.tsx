@@ -6,7 +6,7 @@ import { ColumnRules, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * A credencial com a pratica real ao lado: sessao de acupuntura da clinica.
+ * A credencial com a pratica real ao lado: avaliacao postural na clinica.
  * As tres marcas de competencia viram faixa secundaria sob a foto, com a
  * regua dos 30 anos fechando a coluna. Sem caixa em volta de texto.
  */
@@ -71,8 +71,8 @@ export function ClinicalResponsibility() {
             <Reveal delay={140}>
               <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
                 <Image
-                  src="/img/galeria/acupuntura.jpg"
-                  alt="Agulhas de acupuntura aplicadas ao longo das costas de um paciente"
+                  src="/img/galeria/avaliacao-postural.jpg"
+                  alt="Paciente em avaliação postural sobre a plataforma, de perfil ao espelho"
                   width={900}
                   height={1125}
                   sizes="(min-width: 1024px) 440px, 100vw"

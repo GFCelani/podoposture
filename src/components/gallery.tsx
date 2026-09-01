@@ -3,8 +3,8 @@ import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Seis fotografias reais da clinica; recepcao, consultorio e acupuntura
- * moram agora nas secoes 02, 08 e 03 e sairam daqui para nao repetir.
+ * Seis fotografias reais da clinica; recepcao, consultorio e avaliacao
+ * postural moram agora nas secoes 02, 08 e 03 e sairam daqui para nao repetir.
  * As outras sete imagens da galeria do site atual sao pecas de marketing com
  * texto embutido (Palmilhas para corrida, Paciente RPG, Paciente com Zumbido,
  * Neuromodulacao, POSTURE+, Axon e um print de Street View) e ficaram de fora.
@@ -13,7 +13,7 @@ const PHOTOS = [
   { src: "/img/galeria/sala-de-exame.jpg", alt: "Sala de exame com maca e bancada de equipamentos" },
   { src: "/img/galeria/escritorio.jpg", alt: "Mesa de atendimento com diplomas e modelos anatômicos ao fundo" },
   { src: "/img/galeria/corredor-de-marcha.jpg", alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro" },
-  { src: "/img/galeria/avaliacao-postural.jpg", alt: "Paciente em avaliação postural sobre a plataforma, de perfil ao espelho" },
+  { src: "/img/galeria/acupuntura.jpg", alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente" },
   { src: "/img/galeria/plataforma-de-pressao.jpg", alt: "Pés descalços sobre a plataforma de baropodometria" },
   { src: "/img/galeria/ecobag.jpg", alt: "Ecobag da Podoposture com a marca impressa" },
 ];
