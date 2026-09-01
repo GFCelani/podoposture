@@ -287,6 +287,17 @@ export function SpineColumn({ className }: { className?: string }) {
           <stop offset="72%" stopColor="var(--color-accent-light)" stopOpacity="0.18" />
           <stop offset="100%" stopColor="var(--color-accent-light)" stopOpacity="0" />
         </linearGradient>
+        {/* Volume do corpo vertebral: luz entrando de cima */}
+        <linearGradient id="corpo-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="var(--color-paper)" stopOpacity="0.3" />
+          <stop offset="55%" stopColor="var(--color-paper)" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="var(--color-paper)" stopOpacity="0.04" />
+        </linearGradient>
+        {/* Nucleo do disco: verde com luz no centro, como material vivo */}
+        <radialGradient id="disco-grad" cx="0.42" cy="0.36" r="0.9">
+          <stop offset="0%" stopColor="#b7d84a" />
+          <stop offset="100%" stopColor="#96bf0d" />
+        </radialGradient>
         <linearGradient id="fio-grad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--color-paper)" stopOpacity="0" />
           <stop offset="30%" stopColor="var(--color-paper)" stopOpacity="0.55" />
@@ -453,30 +464,29 @@ export function SpineColumn({ className }: { className?: string }) {
             d={FANTASMA_D}
             fill="none"
             stroke="var(--color-paper)"
-            strokeOpacity={0.2}
-            strokeWidth={11}
+            strokeOpacity={0.14}
+            strokeWidth={14}
             strokeLinecap="round"
           />
           <path
             d={FANTASMA_D}
             fill="none"
             stroke="var(--color-paper)"
-            strokeOpacity={0.34}
+            strokeOpacity={0.4}
             strokeWidth={1.2}
-            strokeDasharray="5 6"
+            strokeDasharray="1 7"
+            strokeLinecap="round"
           />
           {FANTASMA_BLOCOS.map((b) => (
-            <rect
+            <circle
               key={`f-${b.i}`}
-              x={b.x - b.w / 2}
-              y={b.y - b.h / 2}
-              width={b.w}
-              height={b.h}
-              rx={3}
-              fill="none"
+              cx={b.x}
+              cy={b.y}
+              r={4}
+              fill="var(--color-accent-deep)"
               stroke="var(--color-paper)"
-              strokeOpacity={0.3}
-              strokeWidth={1}
+              strokeOpacity={0.42}
+              strokeWidth={1.2}
             />
           ))}
         </g>
@@ -523,8 +533,7 @@ export function SpineColumn({ className }: { className?: string }) {
                       width={v.w}
                       height={v.h}
                       rx={3.5}
-                      fill="var(--color-paper)"
-                      fillOpacity={0.13}
+                      fill="url(#corpo-grad)"
                       stroke="var(--color-paper)"
                       strokeWidth={1.8}
                     />
@@ -535,8 +544,8 @@ export function SpineColumn({ className }: { className?: string }) {
                       cy={(v.y + next.y) / 2}
                       rx={v.w * 0.34}
                       ry={1.8 + (v.i / (COUNT - 1)) * 1.2}
-                      fill="var(--color-action)"
-                      fillOpacity={0.9}
+                      fill="url(#disco-grad)"
+                      fillOpacity={0.95}
                     />
                   )}
                 </g>
@@ -553,8 +562,7 @@ export function SpineColumn({ className }: { className?: string }) {
                   L ${L5.x + 40} ${SACRUM_TOP_Y}
                   L ${L5.x + 14} ${SACRUM_TOP_Y + 48}
                   Q ${L5.x} ${SACRUM_TOP_Y + 57} ${L5.x - 14} ${SACRUM_TOP_Y + 48} Z`}
-              fill="var(--color-paper)"
-              fillOpacity={0.1}
+              fill="url(#corpo-grad)"
               stroke="var(--color-paper)"
               strokeWidth={2}
               strokeLinejoin="round"
