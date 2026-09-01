@@ -36,7 +36,7 @@ export function SocialLinks({
 }) {
   const colors =
     tone === "dark"
-      ? "border-white/20 text-paper hover:border-action hover:text-action"
+      ? "border-white/20 text-paper hover:border-accent-light hover:text-accent-light"
       : "border-rule text-ink hover:border-accent hover:text-accent";
 
   return (

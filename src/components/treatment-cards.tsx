@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
+import { GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -36,17 +37,26 @@ const CARDS = [
 
 export function TreatmentCards() {
   return (
-    <section id="tratamentos" className="border-b border-rule bg-surface">
-      <div className="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
-        <ul className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+    <section
+      id="tratamentos"
+      className="relative overflow-hidden border-b border-rule bg-surface"
+    >
+      <GridPaper size={112} fade="top" />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
+        <Reveal>
+          <SectionMark n="06" />
+        </Reveal>
+
+        <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
           {CARDS.map((card, i) => (
             <li key={card.href} className="flex">
               <Reveal delay={i * 110} className="flex w-full">
                 <article className="group flex w-full flex-col">
-                  <div className="relative overflow-hidden border border-rule bg-paper">
+                  <div className="relative overflow-hidden border border-rule bg-paper shadow-[0_16px_36px_-30px_rgba(13,37,54,0.55)] transition-shadow duration-[240ms] ease-out group-hover:shadow-[0_22px_44px_-26px_rgba(13,37,54,0.6)]">
                     <span
                       aria-hidden="true"
-                      className="absolute inset-x-0 top-0 z-10 h-0.5 origin-left scale-x-0 bg-action transition-transform duration-[240ms] ease-out group-hover:scale-x-100"
+                      className="absolute inset-x-0 top-0 z-10 h-0.5 origin-left scale-x-0 bg-accent transition-transform duration-[240ms] ease-out group-hover:scale-x-100"
                     />
                     <Image
                       src={card.src}
@@ -58,9 +68,18 @@ export function TreatmentCards() {
                     />
                   </div>
 
-                  <h3 className="mt-7 font-display text-[1.375rem] leading-[1.25] text-balance text-ink">
-                    {card.title}
-                  </h3>
+                  <div className="mt-7 flex items-baseline gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="text-[0.6875rem] tracking-[0.18em] text-muted transition-colors duration-200 group-hover:text-accent"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink">
+                      {card.title}
+                    </h3>
+                  </div>
 
                   <div className="mt-auto pt-6">
                     <ButtonLink href={card.href} variant="secondary">

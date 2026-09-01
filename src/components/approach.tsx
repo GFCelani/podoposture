@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
+import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 const PARAGRAPHS = [
@@ -12,34 +13,49 @@ const PARAGRAPHS = [
 
 export function Approach() {
   return (
-    <section id="nossa-abordagem" className="border-b border-rule">
-      <div className="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-36">
+    <section
+      id="nossa-abordagem"
+      className="relative overflow-hidden border-b border-rule"
+    >
+      <GridPaper size={88} fade="left" />
+      <ColumnRules />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6">
           {/* Placa da baropodometria. Fonte 1080x816 de faixa util, renderizada
-              a no maximo 480 CSS: 2,25x de densidade, sem esticar nada. */}
+              a no maximo 480 CSS: 2,25x de densidade, sem esticar nada.
+              Unico elemento flutuante da pagina: inclinacao leve, sombra e uma
+              segunda folha deslocada atras. Um so, para nao virar maneirismo. */}
           <Reveal className="lg:col-span-5">
-            <figure className="border border-rule bg-surface p-3">
-              <Image
-                src="/img/baropodometria.jpg"
-                alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
-                width={1080}
-                height={816}
-                sizes="(min-width: 1024px) 480px, 100vw"
-                className="h-auto w-full"
+            <div className="relative">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 translate-x-3 translate-y-3 border border-rule bg-surface"
               />
-              <figcaption
-                className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
-                style={{ fontFamily: "var(--mono)" }}
-              >
-                <span aria-hidden="true" className="h-px w-6 bg-rule" />
-                Baropodometria
-              </figcaption>
-            </figure>
+              <figure className="relative -rotate-[1.2deg] border border-rule bg-paper p-3 shadow-[0_22px_48px_-30px_rgba(13,37,54,0.5)]">
+                <Image
+                  src="/img/baropodometria.jpg"
+                  alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
+                  width={1080}
+                  height={816}
+                  sizes="(min-width: 1024px) 480px, 100vw"
+                  className="h-auto w-full"
+                />
+                <figcaption
+                  className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
+                  style={{ fontFamily: "var(--mono)" }}
+                >
+                  <span aria-hidden="true" className="h-px w-6 bg-rule" />
+                  Baropodometria
+                </figcaption>
+              </figure>
+            </div>
           </Reveal>
 
-          <div className="mt-12 lg:col-span-6 lg:col-start-7 lg:mt-0">
+          <div className="mt-16 lg:col-span-6 lg:col-start-7 lg:mt-0">
             <Reveal delay={110}>
-              <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-normal text-balance text-ink">
+              <SectionMark n="05" />
+              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
                 Nossa Abordagem
               </h2>
             </Reveal>
@@ -47,11 +63,7 @@ export function Approach() {
             <div className="mt-9 space-y-5">
               {PARAGRAPHS.map((text, i) => (
                 <Reveal key={text} delay={180 + i * 70}>
-                  <p
-                    className={`text-[1.0625rem] leading-[1.7] ${
-                      i === 0 ? "text-ink" : "text-muted"
-                    }`}
-                  >
+                  <p className="text-[1.0625rem] leading-[1.7] text-ink">
                     {text}
                   </p>
                 </Reveal>

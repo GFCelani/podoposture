@@ -142,7 +142,7 @@ export function SiteHeader() {
                       onClick={() => setOpen(null)}
                       className="group flex items-baseline gap-3 border-b border-transparent py-2.5 text-[0.9375rem] text-ink transition-colors hover:border-rule hover:text-accent"
                     >
-                      <span className="h-px w-4 shrink-0 translate-y-[-0.3em] bg-rule transition-all duration-200 group-hover:w-6 group-hover:bg-action" />
+                      <span className="h-px w-4 shrink-0 translate-y-[-0.3em] bg-rule transition-all duration-200 group-hover:w-6 group-hover:bg-accent" />
                       {item.label}
                     </Link>
                   </li>

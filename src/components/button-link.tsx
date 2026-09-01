@@ -3,7 +3,8 @@ import Link from "next/link";
 type Variant = "primary" | "secondary" | "tertiary";
 
 /**
- * Tres niveis, e so o primario usa o verde de acao.
+ * Tres niveis, e so o primario usa o verde de acao, nos dois CTAs de WhatsApp.
+ * Nenhum outro ponto do site preenche ou escreve em verde.
  * Contraste medido sobre --paper #FAF9F6:
  *   primario  ink #0D2536 sobre acao #96BF0D .......... 7.31
  *   primario  hover papel sobre acao-deep #4B6007 ..... 6.70
@@ -17,7 +18,7 @@ const VARIANTS: Record<Variant, string> = {
   secondary:
     "inline-flex items-center gap-3 border border-accent px-7 py-3.5 text-accent transition-colors duration-200 hover:bg-accent hover:text-paper",
   tertiary:
-    "group inline-flex items-baseline gap-2.5 text-accent transition-colors duration-200 hover:text-action-deep",
+    "group inline-flex items-baseline gap-2.5 text-accent transition-colors duration-200 hover:text-accent-deep",
 };
 
 export function ButtonLink({

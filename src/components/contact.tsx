@@ -68,7 +68,7 @@ export function Contact() {
                     <li key={phone.href}>
                       <a
                         href={phone.href}
-                        className="text-[0.9375rem] tracking-[0.02em] text-accent transition-colors duration-200 hover:text-action-deep"
+                        className="text-[0.9375rem] tracking-[0.02em] text-accent transition-colors duration-200 hover:text-accent-deep"
                         style={{ fontFamily: "var(--mono)" }}
                       >
                         {phone.label}
