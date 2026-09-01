@@ -14,7 +14,7 @@ export function ClinicalResponsibility() {
   return (
     <section
       id="responsabilidade-clinica"
-      className="relative overflow-hidden border-b border-rule bg-surface"
+      className="corte-alto-esq relative overflow-hidden border-b border-rule bg-surface"
     >
       <ColumnRules />
 

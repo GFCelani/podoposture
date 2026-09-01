@@ -10,7 +10,7 @@ export function Welcome() {
   return (
     <section
       id="bem-vindo"
-      className="relative overflow-hidden border-b border-rule"
+      className="relative overflow-hidden"
     >
       <GridPaper size={64} fade="right" />
       <ColumnRules />
