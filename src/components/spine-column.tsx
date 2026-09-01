@@ -389,7 +389,8 @@ export function SpineColumn({ className }: { className?: string }) {
                   x={LABEL_X_DIR}
                   y={v.y + 4}
                   textAnchor="end"
-                  fill="var(--color-on-deep-muted)"
+                  fill="var(--color-paper)"
+                  fillOpacity={0.82}
                   fontSize={13}
                   letterSpacing="0.16em"
                   style={{ fontFamily: "var(--mono)" }}

@@ -25,9 +25,10 @@
   /* Petroleo suavizado das secoes escuras fora do hero. Contraste:
      paper 10.7, on-deep-muted 5.4, ambos AA. */
   --color-deep-calm: #1e3d56;
-  /* O hero em petroleo aquecido: menos azul frio, mesmo peso.
-     paper 12.8, on-deep-muted 6.4, accent-light 5.1. */
-  --color-hero: #16323f;
+  /* O hero clareia ate o teto do contraste: com este tom o texto mono
+     on-deep-muted ainda da 4.85 (AA para corpo) e o h1 da 9.7. Um degrau
+     acima (#244B62) derruba o mono para 4.42 e sai de AA. */
+  --color-hero: #20455a;
 
   /* Texto sobre o petroleo. Contraste sobre #0D2536:
      paper 14.94, on-deep-muted 7.48. */

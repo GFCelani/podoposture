@@ -21,13 +21,15 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-[0.17] saturate-0"
+          className="object-cover object-[34%_45%] opacity-[0.34] saturate-[0.25]"
         />
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "linear-gradient(to bottom, var(--color-accent-deep) 0%, rgb(13 37 54 / 0.55) 40%, rgb(13 37 54 / 0.6) 70%, var(--color-accent-deep) 100%)",
+            background: [
+              "linear-gradient(to right, rgb(32 69 90 / 0.88) 0%, rgb(32 69 90 / 0.56) 32%, rgb(32 69 90 / 0.3) 56%, rgb(32 69 90 / 0.62) 82%, rgb(32 69 90 / 0.86) 100%)",
+              "linear-gradient(to bottom, rgb(32 69 90 / 0.7) 0%, transparent 22%, transparent 74%, rgb(32 69 90 / 0.62) 100%)",
+            ].join(", "),
           }}
         />
       </div>
