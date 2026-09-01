@@ -40,17 +40,18 @@ const MEIA_SILHUETA: Pt[] = [
   { x: 116, y: 56 },
   { x: 108, y: 64 },
   { x: 108, y: 76 },
-  { x: 128, y: 84 },
-  { x: 148, y: 94 },
-  { x: 156, y: 112 },
-  { x: 160, y: 142 },
-  { x: 164, y: 176 },
-  { x: 168, y: 208 },
-  { x: 162, y: 216 },
-  { x: 152, y: 210 },
-  { x: 148, y: 184 },
-  { x: 142, y: 152 },
-  { x: 138, y: 128 },
+  { x: 128, y: 82 },
+  { x: 148, y: 92 },
+  { x: 157, y: 110 },
+  { x: 162, y: 144 },
+  { x: 166, y: 182 },
+  { x: 171, y: 222 },
+  { x: 169, y: 244 },
+  { x: 158, y: 246 },
+  { x: 152, y: 226 },
+  { x: 147, y: 188 },
+  { x: 142, y: 150 },
+  { x: 139, y: 124 },
   { x: 136, y: 160 },
   { x: 138, y: 196 },
   { x: 142, y: 232 },
@@ -165,15 +166,16 @@ export function FigurePoints({ className }: { className?: string }) {
 function MarcaOsteopatia() {
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" className="h-full w-full">
-      {/* vertebra vista de cima: corpo, canal, transversos, espinhoso */}
-      <ellipse cx={32} cy={22} rx={14} ry={9.5} fill="currentColor" fillOpacity={0.09} stroke="currentColor" strokeWidth={1.7} />
-      <path d="M22 29 Q20 38 27 38 Q29 34 32 34 Q35 34 37 38 Q44 38 42 29" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" />
-      <line x1={24} y1={35} x2={12} y2={38} stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
-      <line x1={40} y1={35} x2={52} y2={38} stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" />
-      <path d="M30 38 L30 48 L34 48 L34 38" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round" />
+      {/* duas vertebras laterais com disco, a linguagem da coluna do site,
+          sob arcos de mobilizacao: a mao do osteopata sugerida pelo gesto */}
+      <rect x={22} y={14} width={22} height={9} rx={2.5} fill="currentColor" fillOpacity={0.09} stroke="currentColor" strokeWidth={1.6} />
+      <path d="M22 16 L14 21 L21 22" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" />
+      <rect x={20} y={31} width={22} height={9} rx={2.5} fill="currentColor" fillOpacity={0.09} stroke="currentColor" strokeWidth={1.6} />
+      <path d="M20 33 L12 38 L19 39" fill="none" stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round" />
+      <ellipse cx={32.5} cy={27} rx={8.5} ry={2.2} fill="currentColor" fillOpacity={0.16} stroke="currentColor" strokeWidth={1.2} />
       {/* arcos de mobilizacao */}
-      <path d="M8 16 Q3 27 8 38" fill="none" stroke="currentColor" strokeWidth={1.3} strokeLinecap="round" strokeDasharray="2 4" />
-      <path d="M56 16 Q61 27 56 38" fill="none" stroke="currentColor" strokeWidth={1.3} strokeLinecap="round" strokeDasharray="2 4" />
+      <path d="M50 12 Q56 26 49 40" fill="none" stroke="currentColor" strokeWidth={1.3} strokeLinecap="round" strokeDasharray="2 4" />
+      <path d="M50 46 L48.2 41.4 L53 41.8" fill="none" stroke="currentColor" strokeWidth={1.3} strokeLinejoin="round" />
     </svg>
   );
 }
@@ -290,8 +292,10 @@ function VinhetaOrganizacao() {
     <svg viewBox="0 0 120 96" aria-hidden="true" className="h-full w-full">
       {/* figura sentada a mesa, coluna em flexao */}
       <line x1={12} y1={88} x2={108} y2={88} stroke="currentColor" strokeOpacity={0.4} strokeWidth={1.2} />
-      <circle cx={46} cy={24} r={8} fill="none" stroke="currentColor" strokeWidth={1.8} />
-      <path d="M48 32 Q42 44 44 56" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+      <circle cx={50} cy={24} r={8} fill="none" stroke="currentColor" strokeWidth={1.8} />
+      <path d="M50 32 Q42 44 44 56" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+      {/* a coluna em flexao, pontilhada como na vinheta do sono */}
+      <path d="M49 34 Q41 45 43 55" fill="none" stroke="currentColor" strokeOpacity={0.55} strokeWidth={1.2} strokeDasharray="1 4" strokeLinecap="round" />
       <path d="M45 40 L64 48" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
       <path d="M44 56 L62 58 L62 78 M44 56 L44 78" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
       {/* mesa e tela */}

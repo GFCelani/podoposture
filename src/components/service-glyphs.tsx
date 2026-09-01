@@ -113,6 +113,10 @@ function GlifoBaropodometria({ className }: { className?: string }) {
       <line x1={33.5} y1={40} x2={33.5} y2={33.5} strokeWidth={1.6} />
       <line x1={36.8} y1={40} x2={36.8} y2={28.5} strokeWidth={1.6} />
       <line x1={40.1} y1={40} x2={40.1} y2={23.5} strokeWidth={1.6} />
+      {/* pontos de pressao sob a planta: o que a plataforma le */}
+      <circle cx={12.5} cy={38.2} r={1.4} fill="currentColor" stroke="none" />
+      <circle cx={21} cy={38.2} r={1.7} fill="currentColor" stroke="none" />
+      <circle cx={26.6} cy={38.6} r={1.2} fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -147,6 +151,8 @@ function GlifoRpg({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <line x1={36.5} y1={4} x2={36.5} y2={44} strokeWidth={1.2} strokeOpacity={0.6} />
+      <line x1={8} y1={44} x2={36.5} y2={44} strokeWidth={1.2} strokeOpacity={0.6} />
+      <path d="M 12 24 Q 14 14.5 22 10.5" fill="none" strokeWidth={1.1} strokeOpacity={0.55} strokeDasharray="2 4" />
       <circle cx={25.5} cy={10} r={3.6} strokeWidth={1.6} />
       <path d="M 27.8 13 C 31 10.8 33.5 9.3 36.5 8.3" strokeWidth={1.5} />
       <path d="M 26.5 13.5 C 25.2 19.5 24.8 24.5 24.3 29" strokeWidth={1.6} />

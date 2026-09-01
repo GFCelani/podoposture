@@ -141,12 +141,12 @@ function arcoPath(x: number, y: number, w: number, h: number, t: number): {
     `M ${n(p)} ${n(y - hh * 0.55)}`,
     `L ${n(b + 1)} ${n(y - hh * 0.6)}`,
     // processo articular superior
-    `L ${n(b - 0.5)} ${n(y - hh - 3.4)}`,
+    `L ${n(b - 0.8)} ${n(y - hh - 4.6)}`,
     `M ${n(b + 1)} ${n(y - hh * 0.6)}`,
     // lamina descendo
     `L ${n(b - 1)} ${n(y + hh * 0.5)}`,
     // processo articular inferior
-    `L ${n(b - 2.5)} ${n(y + hh + 3.2)}`,
+    `L ${n(b - 3)} ${n(y + hh + 4.4)}`,
   ].join(" ");
 
   const ang = t < 0.26 ? 22 : t < 0.78 ? 42 : 14;
@@ -587,8 +587,8 @@ export function SpineColumn({ className }: { className?: string }) {
                       d={v.arco}
                       fill="none"
                       stroke="var(--color-paper)"
-                      strokeOpacity={0.55}
-                      strokeWidth={1.3}
+                      strokeOpacity={0.7}
+                      strokeWidth={1.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -610,18 +610,18 @@ export function SpineColumn({ className }: { className?: string }) {
                         rx={v.w * 0.36}
                         ry={2.4 + (v.i / (COUNT - 1)) * 1.3}
                         fill="var(--color-action)"
-                        fillOpacity={0.14}
+                        fillOpacity={0.1}
                         stroke="var(--color-action)"
-                        strokeOpacity={0.45}
+                        strokeOpacity={0.3}
                         strokeWidth={1}
                       />
                       <ellipse
                         cx={(v.x + next.x) / 2 - v.w * 0.05}
                         cy={(v.y + next.y) / 2}
-                        rx={v.w * 0.11}
-                        ry={1.2 + (v.i / (COUNT - 1)) * 0.6}
-                        fill="url(#disco-grad)"
-                        fillOpacity={0.85}
+                        rx={v.w * 0.1}
+                        ry={1.1 + (v.i / (COUNT - 1)) * 0.5}
+                        fill="var(--color-action)"
+                        fillOpacity={0.6}
                       />
                     </>
                   )}

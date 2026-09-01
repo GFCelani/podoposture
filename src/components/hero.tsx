@@ -21,7 +21,7 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center opacity-[0.13] saturate-0"
+          className="object-cover object-center opacity-[0.17] saturate-0"
         />
         <div
           className="absolute inset-0"
@@ -81,7 +81,8 @@ export function Hero() {
             style={{ ["--in-delay" as string]: "560ms" }}
           />
 
-          {/* Tracado de leitura clinica correndo sob o titulo */}
+          {/* Curva de forca da marcha: o duplo pico de cada passo, o
+              vocabulario da baropodometria, correndo sob o titulo */}
           <svg
             aria-hidden="true"
             viewBox="0 0 420 46"
@@ -90,14 +91,14 @@ export function Hero() {
           >
             <path
               className="traco-monitor"
-              d="M0 30 H70 L84 30 92 12 100 40 108 26 116 30 H180 L194 30 202 16 210 38 218 27 226 30 H300 L312 30 320 10 328 42 336 25 344 30 H420"
+              d="M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420"
               fill="none"
               stroke="var(--color-accent-light)"
               strokeOpacity={0.55}
               strokeWidth={1.4}
               strokeLinejoin="round"
             />
-            <circle className="traco-monitor-ponto" cx={0} cy={30} r={2.6} fill="var(--color-accent-light)" />
+            <circle className="traco-monitor-ponto" cx={0} cy={40} r={2.6} fill="var(--color-accent-light)" />
           </svg>
         </div>
 
