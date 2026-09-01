@@ -50,11 +50,42 @@ export function Contact() {
             </Reveal>
 
             <Reveal delay={260}>
-              <div className="mt-10">
+              <div className="mt-12">
                 <ButtonLink href="https://wa.me/5521992035643" variant="primary">
                   Envie uma mensagem
                 </ButtonLink>
               </div>
+            </Reveal>
+
+            {/* O outro jeito de conversar. Estava preso na ficha de endereco,
+                que e' sobre onde a clinica fica, nao sobre falar com ela. */}
+            <Reveal delay={340}>
+              <div
+                aria-hidden="true"
+                className="mt-14 h-px w-full max-w-[26rem] bg-rule"
+              />
+              <ul className="mt-10 space-y-7">
+                {PHONES.map((phone) => (
+                  <li key={phone.href} className="flex items-baseline gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="h-px w-8 shrink-0 translate-y-[-0.35em] bg-accent/40"
+                    />
+                    <a
+                      href={phone.href}
+                      className="sublinha text-[1.0625rem] tracking-[0.02em] text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      {phone.label}
+                    </a>
+                    {phone.note && (
+                      <span className="text-[0.8125rem] text-muted">
+                        {phone.note}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </Reveal>
           </div>
 
@@ -84,26 +115,6 @@ export function Contact() {
                   Estamos a 11 minutos da estação Cantagalo do metrô.
                 </p>
 
-                <div aria-hidden="true" className="mt-7 h-px w-full bg-rule" />
-
-                <ul className="mt-6 space-y-2.5">
-                  {PHONES.map((phone) => (
-                    <li key={phone.href}>
-                      <a
-                        href={phone.href}
-                        className="text-[0.9375rem] tracking-[0.02em] text-accent transition-colors duration-200 hover:text-accent-deep"
-                        style={{ fontFamily: "var(--mono)" }}
-                      >
-                        {phone.label}
-                      </a>
-                      {phone.note && (
-                        <span className="ml-2.5 text-[0.8125rem] text-muted">
-                          {phone.note}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </Reveal>
           </div>
