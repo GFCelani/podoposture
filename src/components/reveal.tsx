@@ -40,11 +40,30 @@ export function Reveal({
     return () => io.disconnect();
   }, []);
 
+  /* Cortina: o observer NUNCA vai no elemento clipado. Chromium desconta o
+     clip-path do alvo ao calcular a intersecao, e inset(0 0 100%) tem area
+     visivel zero: o observer nao dispara e o reveal trava em deadlock.
+     O wrapper observado fica sem clip; um filho carrega a cortina.
+     Ver vault/intersection-observer-clip-path-deadlock */
+  if (variante === "cortina") {
+    return (
+      <div ref={ref} className={className || undefined}>
+        <div
+          data-motion
+          className={`reveal-cortina${shown ? " is-in" : ""}`}
+          style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={ref}
       data-motion
-      className={`${variante === "cortina" ? "reveal-cortina" : "reveal"}${shown ? " is-in" : ""}${className ? ` ${className}` : ""}`}
+      className={`reveal${shown ? " is-in" : ""}${className ? ` ${className}` : ""}`}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}
