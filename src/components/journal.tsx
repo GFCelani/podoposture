@@ -53,7 +53,7 @@ export function Journal() {
                           <span>{post.date}</span>
                           {post.category && (
                             <>
-                              <span aria-hidden="true" className="text-rule">
+                              <span aria-hidden="true" className="text-muted">
                                 /
                               </span>
                               <span className="text-accent">
