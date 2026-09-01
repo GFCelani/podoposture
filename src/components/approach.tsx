@@ -3,7 +3,11 @@ import { ButtonLink } from "./button-link";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
-const PARAGRAPHS = [
+/**
+ * Os cinco paragrafos sao cinco momentos do mesmo raciocinio clinico.
+ * Viram passos numerados ligados por uma linha, verbatim.
+ */
+const PASSOS = [
   "Na Podoposture, o cuidado não começa por protocolos prontos.",
   "Começa pela observação dos padrões de movimento, das estratégias de adaptação e da forma como o sistema nervoso participa desse processo.",
   "Cada atendimento se desenvolve a partir de uma avaliação clínica e evolui conforme as respostas do organismo.",
@@ -24,9 +28,8 @@ export function Approach() {
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6">
           {/* Placa da baropodometria. Fonte 1080x816 de faixa util, renderizada
               a no maximo 480 CSS: 2,25x de densidade, sem esticar nada.
-              Unico elemento flutuante da pagina: inclinacao leve, sombra e uma
-              segunda folha deslocada atras. Um so, para nao virar maneirismo. */}
-          <Reveal className="lg:col-span-5">
+              Unico elemento flutuante da pagina. */}
+          <Reveal className="lg:sticky lg:top-28 lg:col-span-5">
             <div className="relative">
               <div
                 aria-hidden="true"
@@ -53,25 +56,45 @@ export function Approach() {
           </Reveal>
 
           <div className="mt-16 lg:col-span-6 lg:col-start-7 lg:mt-0">
-            <Reveal delay={110}>
+            <Reveal variante="cortina">
               <SectionMark n="05" />
               <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
                 Nossa Abordagem
               </h2>
             </Reveal>
 
-            <div className="mt-9 space-y-5">
-              {PARAGRAPHS.map((text, i) => (
-                <Reveal key={text} delay={180 + i * 70}>
-                  <p className="text-[1.0625rem] leading-[1.7] text-ink">
-                    {text}
-                  </p>
-                </Reveal>
+            {/* Passos: marcadores circulares ligados por uma linha */}
+            <ol className="relative mt-11 space-y-7">
+              <div
+                aria-hidden="true"
+                className="absolute top-4 bottom-4 left-[17px] w-px bg-gradient-to-b from-rule via-accent/40 to-rule"
+              />
+              {PASSOS.map((texto, i) => (
+                <li key={texto} className="relative pl-14">
+                  <Reveal delay={140 + i * 90}>
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-0 -left-14 flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-accent/45 bg-paper text-[0.6875rem] tracking-[0.08em] text-accent shadow-tag"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <p
+                      className={`leading-[1.65] ${
+                        i === 0 || i === PASSOS.length - 1
+                          ? "font-display text-[1.25rem] font-medium text-ink-strong"
+                          : "text-[1.0625rem] text-ink"
+                      }`}
+                    >
+                      {texto}
+                    </p>
+                  </Reveal>
+                </li>
               ))}
-            </div>
+            </ol>
 
-            <Reveal delay={560}>
-              <div className="mt-11">
+            <Reveal delay={620}>
+              <div className="mt-11 pl-14">
                 <ButtonLink
                   href="https://wa.me/message/WFGOB3AVBI63J1"
                   variant="primary"

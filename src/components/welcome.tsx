@@ -34,9 +34,10 @@ export function Welcome() {
             </Reveal>
 
             <Reveal delay={200}>
-              <p className="mt-8 flex items-center gap-5 font-display text-[1.0625rem] italic text-muted">
-                <span aria-hidden="true" className="h-px w-12 bg-rule" />
-                (Copacabana – Rio de Janeiro)
+              <p className="mt-9 inline-flex items-center rounded-md border border-rule bg-paper p-[3px] shadow-tag">
+                <span className="rounded-[7px] border border-rule/70 px-5 py-2.5 font-display text-[1rem] italic text-muted">
+                  (Copacabana – Rio de Janeiro)
+                </span>
               </p>
             </Reveal>
           </div>
