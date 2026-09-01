@@ -1,3 +1,4 @@
+import { FigurePoints } from "./illustrations";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
@@ -10,15 +11,12 @@ export function Welcome() {
       <GridPaper size={64} fade="right" />
       <ColumnRules />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-32">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
-          <Reveal className="lg:col-span-2">
-            <SectionMark n="02" />
-          </Reveal>
-
-          <div className="mt-10 lg:col-span-9 lg:col-start-3 lg:mt-0 lg:border-l lg:border-rule lg:pl-12">
-            <Reveal>
-              <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
+        <div className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6">
+          <div className="lg:col-span-7">
+            <Reveal variante="cortina">
+              <SectionMark n="02" />
+              <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
                 Bem-vindo(a) à Podoposture
               </h2>
             </Reveal>
@@ -34,11 +32,18 @@ export function Welcome() {
             </Reveal>
 
             <Reveal delay={200}>
-              <p className="mt-9 inline-flex items-center rounded-md border border-rule bg-paper p-[3px] shadow-tag">
-                <span className="rounded-[7px] border border-rule/70 px-5 py-2.5 font-display text-[1rem] italic text-muted">
-                  (Copacabana – Rio de Janeiro)
-                </span>
+              <p className="mt-8 flex items-center gap-5 font-display text-[1.0625rem] italic text-muted">
+                <span aria-hidden="true" className="h-px w-12 bg-rule" />
+                (Copacabana – Rio de Janeiro)
               </p>
+            </Reveal>
+          </div>
+
+          {/* "avaliacao cuidadosa do corpo como um todo", desenhada:
+              a silhueta com os pontos de avaliacao acendendo em sequencia */}
+          <div className="mt-14 lg:col-span-4 lg:col-start-9 lg:mt-0">
+            <Reveal delay={180}>
+              <FigurePoints className="mx-auto h-[clamp(300px,38vh,420px)] w-auto" />
             </Reveal>
           </div>
         </div>

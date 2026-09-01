@@ -1,4 +1,5 @@
 import { SERVICES } from "@/lib/services";
+import { GLYPHS } from "./service-glyphs";
 import { ButtonLink } from "./button-link";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -29,14 +30,23 @@ export function ServicesGrid() {
             <li key={service.href} className="flex">
               <Reveal delay={(i % 3) * 90} className="flex w-full">
                 <article className="group flex w-full flex-col rounded-md border-t border-rule px-4 pt-6 pb-10 transition-[border-color,background-color,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-accent hover:bg-surface/70">
-                  <span
-                    aria-hidden="true"
-                    className="flex items-center gap-3 text-[0.6875rem] tracking-[0.18em] text-muted transition-colors duration-200 group-hover:text-accent"
-                    style={{ fontFamily: "var(--mono)" }}
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                    <span className="h-px w-0 bg-accent transition-all duration-[240ms] ease-out group-hover:w-8" />
-                  </span>
+                  <div className="flex items-start justify-between gap-4">
+                    <span
+                      aria-hidden="true"
+                      className="flex items-center gap-3 text-[0.6875rem] tracking-[0.18em] text-muted transition-colors duration-200 group-hover:text-accent"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                      <span className="h-px w-0 bg-accent transition-all duration-[240ms] ease-out group-hover:w-8" />
+                    </span>
+                    {/* o servico desenhado, nao icone de biblioteca */}
+                    <span
+                      aria-hidden="true"
+                      className="-mt-1 block h-14 w-14 shrink-0 text-accent transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-0.5 group-hover:scale-[1.06]"
+                    >
+                      {GLYPHS[service.href]?.({})}
+                    </span>
+                  </div>
 
                   <h3 className="mt-4 text-[0.9375rem] leading-[1.45] font-semibold tracking-[0.07em] text-ink">
                     {service.title}

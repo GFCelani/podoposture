@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SectionMark } from "./layers";
 import { SpineColumn } from "./spine-column";
 
@@ -11,6 +12,26 @@ export function Hero() {
       data-tone="deep"
       className="luz relative overflow-hidden bg-accent-deep text-paper"
     >
+      {/* Camada 0: a clinica, quase apagada sob o petroleo. Dessaturada e
+          com veu escuro por cima; trocar a foto quando vier a nova. */}
+      <div aria-hidden="true" className="absolute inset-0">
+        <Image
+          src="/img/clinica-podoposture-5.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center opacity-[0.13] saturate-0"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, var(--color-accent-deep) 0%, rgb(13 37 54 / 0.55) 40%, rgb(13 37 54 / 0.6) 70%, var(--color-accent-deep) 100%)",
+          }}
+        />
+      </div>
+
       {/* Camada 1: papel milimetrado */}
       <div
         aria-hidden="true"
@@ -59,6 +80,25 @@ export function Hero() {
             className="rule-in mt-10 h-px w-full max-w-[420px] bg-paper/[0.14] lg:mt-12"
             style={{ ["--in-delay" as string]: "560ms" }}
           />
+
+          {/* Tracado de leitura clinica correndo sob o titulo */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 420 46"
+            className="rule-in mt-6 h-11 w-full max-w-[420px]"
+            style={{ ["--in-delay" as string]: "760ms" }}
+          >
+            <path
+              className="traco-monitor"
+              d="M0 30 H70 L84 30 92 12 100 40 108 26 116 30 H180 L194 30 202 16 210 38 218 27 226 30 H300 L312 30 320 10 328 42 336 25 344 30 H420"
+              fill="none"
+              stroke="var(--color-accent-light)"
+              strokeOpacity={0.55}
+              strokeWidth={1.4}
+              strokeLinejoin="round"
+            />
+            <circle className="traco-monitor-ponto" cx={0} cy={30} r={2.6} fill="var(--color-accent-light)" />
+          </svg>
         </div>
 
         {/* Campo de aprumo. No telefone entra no fluxo, sangrando de borda a

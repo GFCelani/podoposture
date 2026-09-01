@@ -523,6 +523,148 @@ a:focus-visible .marca-vertebra {
   }
 }
 
+/* ===============================================================
+   ILUSTRACOES — animacoes do desenho clinico.
+   Repouso = estado final; tudo decorativo some ou para no reduce.
+   =============================================================== */
+
+/* Contorno que se desenha uma vez na entrada (pathLength=1 no path). */
+.traco-desenha {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: traco-desenha 2.4s var(--ease-saida) backwards;
+  animation-delay: 0.3s;
+}
+
+@keyframes traco-desenha {
+  from {
+    stroke-dashoffset: 1;
+    fill-opacity: 0;
+  }
+}
+
+/* Pontos de avaliacao acendendo em sequencia, ciclo continuo. */
+.ponto-avaliacao {
+  opacity: 1;
+}
+
+.ponto-avaliacao .ponto-anel {
+  opacity: 0.25;
+  transform: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ponto-acende 6.4s var(--ease-ciclo) infinite;
+  animation-delay: calc(var(--seq, 0) * 0.55s + 2s);
+}
+
+@keyframes ponto-acende {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  5% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+  14% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+}
+
+/* Cursor da regua de 30: percorre e recomeca. Repouso no fim do curso. */
+.cursor-regua {
+  transform: translateX(296px);
+  animation: cursor-regua 12s linear infinite;
+}
+
+@keyframes cursor-regua {
+  0% {
+    transform: translateX(4px);
+  }
+  88%,
+  100% {
+    transform: translateX(296px);
+  }
+}
+
+/* Linhas de deslocamento das vinhetas. */
+.traco-corre line {
+  animation: fio-corrente 2.6s linear infinite;
+}
+
+/* Respiracao da vinheta do sono. */
+.respira {
+  opacity: 1;
+  animation: respira 4.6s var(--ease-ciclo) infinite;
+}
+
+@keyframes respira {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Curva de alerta piscando de leve. */
+.pisca {
+  opacity: 0.8;
+  animation: respira 3.2s var(--ease-ciclo) infinite;
+}
+
+/* Zonas de pressao alternando como a marcha: pe esquerdo e direito em
+   contrafase, zonas em onda do calcanhar ao halux. */
+.zona-pressao {
+  opacity: 0.75;
+  animation: zona-pressao 3.2s var(--ease-ciclo) infinite;
+  animation-delay: calc(var(--z, 0) * -0.5s);
+}
+
+.pe-d .zona-pressao {
+  animation-delay: calc(var(--z, 0) * -0.5s - 1.6s);
+}
+
+@keyframes zona-pressao {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Tracado de monitor: linha correndo, ponto percorrendo. */
+.traco-monitor {
+  stroke-dasharray: 640 240;
+  stroke-dashoffset: 0;
+  animation: traco-monitor 7s linear infinite;
+}
+
+@keyframes traco-monitor {
+  to {
+    stroke-dashoffset: -880;
+  }
+}
+
+.traco-monitor-ponto {
+  opacity: 0.9;
+  animation: traco-ponto 7s linear infinite;
+}
+
+@keyframes traco-ponto {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(420px);
+  }
+}
+
 /* Entrada em cascata dos itens do mega-menu. */
 .item-menu {
   opacity: 1;

@@ -170,7 +170,7 @@ export function SiteHeader() {
                 href="https://wa.me/message/WFGOB3AVBI63J1"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-fill [--fill:var(--color-action-deep)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-action-deep/25 bg-action px-5 py-2.5 text-[0.875rem] font-medium text-ink-strong shadow-tag transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0"
+                className="btn-fill [--fill:var(--color-action-deep)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-action-deep/25 bg-action px-4 py-2 text-[0.8125rem] font-medium text-ink-strong shadow-tag transition-[transform,box-shadow,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0"
               >
                 Falar Sobre o Meu Caso
               </a>

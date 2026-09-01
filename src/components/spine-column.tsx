@@ -89,25 +89,78 @@ type Vertebra = {
   rot: number;
   amp: number;
   depth: number;
-  spinous: string;
+  corpo: string;
+  arco: string;
+  espinhoso: string;
   inDelay: number;
   phase: number;
 };
 
-/** Processo espinhoso: sai da borda posterior do corpo, afilando para baixo. */
-function spinousPath(x: number, y: number, w: number, t: number): string {
-  const back = x - w / 2;
-  const ang = t < 0.26 ? 20 : t < 0.78 ? 42 : 12;
-  const len = t < 0.26 ? 12 : t < 0.78 ? 19 : 15;
-  const half = 2.6 + t * 0.9;
+/**
+ * Anatomia da vista lateral, simplificada para vetor mas com as pecas que
+ * um olho tecnico procura: corpo com platôs concavos e face anterior
+ * convexa; pediculo deixando o forame como vao real; processos articulares
+ * superior e inferior; lamina levando ao espinhoso.
+ */
+
+/** Corpo vertebral: platôs (endplates) concavos, face anterior convexa. */
+function corpoPath(x: number, y: number, w: number, h: number): string {
+  const a = x + w / 2; // anterior
+  const p = x - w / 2; // posterior
+  const hh = h / 2;
+  return [
+    `M ${n(p + 1.5)} ${n(y - hh)}`,
+    // plato superior, levemente concavo
+    `Q ${n(x)} ${n(y - hh + 1.6)} ${n(a - 3)} ${n(y - hh)}`,
+    // canto e face anterior convexa
+    `Q ${n(a + 1)} ${n(y - hh + 0.6)} ${n(a + 1.8)} ${n(y - hh * 0.4)}`,
+    `Q ${n(a + 3)} ${n(y)} ${n(a + 1.8)} ${n(y + hh * 0.4)}`,
+    `Q ${n(a + 1)} ${n(y + hh - 0.6)} ${n(a - 3)} ${n(y + hh)}`,
+    // plato inferior, levemente concavo
+    `Q ${n(x)} ${n(y + hh - 1.6)} ${n(p + 1.5)} ${n(y + hh)}`,
+    // face posterior quase reta, com leve cintura
+    `Q ${n(p - 0.8)} ${n(y)} ${n(p + 1.5)} ${n(y - hh)}`,
+    "Z",
+  ].join(" ");
+}
+
+/**
+ * Arco posterior: pediculo (deixando o vao do forame contra o disco),
+ * processos articulares sup/inf e a lamina que vira o espinhoso.
+ */
+function arcoPath(x: number, y: number, w: number, h: number, t: number): {
+  arco: string;
+  espinhoso: string;
+} {
+  const p = x - w / 2;
+  const ped = 4.5 + t * 2; // comprimento do pediculo
+  const b = p - ped; // raiz da lamina
+  const hh = h / 2;
+  const arco = [
+    // pediculo saindo do terco superior do corpo
+    `M ${n(p)} ${n(y - hh * 0.55)}`,
+    `L ${n(b + 1)} ${n(y - hh * 0.6)}`,
+    // processo articular superior
+    `L ${n(b - 0.5)} ${n(y - hh - 3.4)}`,
+    `M ${n(b + 1)} ${n(y - hh * 0.6)}`,
+    // lamina descendo
+    `L ${n(b - 1)} ${n(y + hh * 0.5)}`,
+    // processo articular inferior
+    `L ${n(b - 2.5)} ${n(y + hh + 3.2)}`,
+  ].join(" ");
+
+  const ang = t < 0.26 ? 22 : t < 0.78 ? 42 : 14;
+  const len = t < 0.26 ? 11 : t < 0.78 ? 17 : 13;
+  const half = 2.2 + t * 0.8;
   const rad = (ang * Math.PI) / 180;
-  const tipX = back - len * Math.cos(rad);
+  const tipX = b - len * Math.cos(rad);
   const tipY = y + len * Math.sin(rad);
-  return `M ${n(back)} ${n(y - half)} Q ${n(back - len * 0.62)} ${n(
-    y - half * 0.4 + len * 0.28,
-  )} ${n(tipX)} ${n(tipY)} Q ${n(back - len * 0.52)} ${n(
-    y + half * 1.1 + len * 0.34,
-  )} ${n(back)} ${n(y + half)} Z`;
+  const espinhoso = `M ${n(b)} ${n(y - half)} Q ${n(b - len * 0.6)} ${n(
+    y - half * 0.4 + len * 0.26,
+  )} ${n(tipX)} ${n(tipY)} Q ${n(b - len * 0.5)} ${n(
+    y + half + len * 0.32,
+  )} ${n(b + 0.5)} ${n(y + half)} Z`;
+  return { arco, espinhoso };
 }
 
 const VERTEBRAE: Vertebra[] = Array.from({ length: COUNT }, (_, i) => {
@@ -130,7 +183,8 @@ const VERTEBRAE: Vertebra[] = Array.from({ length: COUNT }, (_, i) => {
     ),
     amp: Number((2.8 * (1 - t) + 0.25).toFixed(2)),
     depth: Number((0.55 + t * 0.45).toFixed(2)),
-    spinous: spinousPath(x, y, w, t),
+    corpo: corpoPath(x, y, w, 9 + t * 3),
+    ...arcoPath(x, y, w, 9 + t * 3, t),
     inDelay: 340 + (COUNT - 1 - i) * 30,
     phase: Number((-i * 0.26).toFixed(2)),
   };
@@ -518,35 +572,58 @@ export function SpineColumn({ className }: { className?: string }) {
                   }}
                 >
                   <g transform={`rotate(${v.rot} ${v.x} ${v.y})`}>
+                    {/* espinhoso, atras de tudo */}
                     <path
-                      d={v.spinous}
+                      d={v.espinhoso}
                       fill="var(--color-paper)"
-                      fillOpacity={0.05}
+                      fillOpacity={0.06}
                       stroke="var(--color-paper)"
-                      strokeOpacity={0.4}
+                      strokeOpacity={0.45}
                       strokeWidth={1.2}
                       strokeLinejoin="round"
                     />
-                    <rect
-                      x={v.x - v.w / 2}
-                      y={v.y - v.h / 2}
-                      width={v.w}
-                      height={v.h}
-                      rx={3.5}
+                    {/* pediculo, facetas e lamina; o vao ate o disco e o forame */}
+                    <path
+                      d={v.arco}
+                      fill="none"
+                      stroke="var(--color-paper)"
+                      strokeOpacity={0.55}
+                      strokeWidth={1.3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    {/* corpo com platôs e face anterior convexa */}
+                    <path
+                      d={v.corpo}
                       fill="url(#corpo-grad)"
                       stroke="var(--color-paper)"
-                      strokeWidth={1.8}
+                      strokeWidth={1.7}
+                      strokeLinejoin="round"
                     />
                   </g>
                   {next && (
-                    <ellipse
-                      cx={(v.x + next.x) / 2}
-                      cy={(v.y + next.y) / 2}
-                      rx={v.w * 0.34}
-                      ry={1.8 + (v.i / (COUNT - 1)) * 1.2}
-                      fill="url(#disco-grad)"
-                      fillOpacity={0.95}
-                    />
+                    <>
+                      {/* disco: anel fibroso + nucleo pulposo */}
+                      <ellipse
+                        cx={(v.x + next.x) / 2}
+                        cy={(v.y + next.y) / 2}
+                        rx={v.w * 0.36}
+                        ry={2.4 + (v.i / (COUNT - 1)) * 1.3}
+                        fill="var(--color-action)"
+                        fillOpacity={0.14}
+                        stroke="var(--color-action)"
+                        strokeOpacity={0.45}
+                        strokeWidth={1}
+                      />
+                      <ellipse
+                        cx={(v.x + next.x) / 2 - v.w * 0.05}
+                        cy={(v.y + next.y) / 2}
+                        rx={v.w * 0.11}
+                        ry={1.2 + (v.i / (COUNT - 1)) * 0.6}
+                        fill="url(#disco-grad)"
+                        fillOpacity={0.85}
+                      />
+                    </>
                   )}
                 </g>
               </g>

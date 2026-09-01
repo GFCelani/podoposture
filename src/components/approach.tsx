@@ -1,11 +1,13 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
+import { PressaoPlantar } from "./illustrations";
 import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Os cinco paragrafos sao cinco momentos do mesmo raciocinio clinico.
- * Viram passos numerados ligados por uma linha, verbatim.
+ * Os cinco paragrafos sao cinco momentos do mesmo raciocinio clinico:
+ * passos numerados ligados por uma linha, verbatim. Ao lado, o que o exame
+ * produz: a foto da baropodometria e o mapa de pressao plantar desenhado.
  */
 const PASSOS = [
   "Na Podoposture, o cuidado não começa por protocolos prontos.",
@@ -26,34 +28,42 @@ export function Approach() {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6">
-          {/* Placa da baropodometria. Fonte 1080x816 de faixa util, renderizada
-              a no maximo 480 CSS: 2,25x de densidade, sem esticar nada.
-              Unico elemento flutuante da pagina. */}
-          <Reveal className="lg:sticky lg:top-28 lg:col-span-5">
-            <div className="relative">
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 translate-x-3 translate-y-3 rounded-lg border border-rule bg-surface"
-              />
-              <figure className="relative -rotate-[1.2deg] rounded-lg border border-rule bg-paper p-3 shadow-float transition-transform duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-rotate-[0.4deg]">
-                <Image
-                  src="/img/baropodometria.jpg"
-                  alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
-                  width={1080}
-                  height={816}
-                  sizes="(min-width: 1024px) 480px, 100vw"
-                  className="h-auto w-full rounded-md saturate-[0.88]"
+          <div className="lg:sticky lg:top-28 lg:col-span-5">
+            {/* Placa da baropodometria. Fonte 1080x816 de faixa util,
+                renderizada a no maximo 480 CSS: 2,25x de densidade. */}
+            <Reveal>
+              <div className="relative">
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 translate-x-3 translate-y-3 rounded-lg border border-rule bg-surface"
                 />
-                <figcaption
-                  className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
-                  style={{ fontFamily: "var(--mono)" }}
-                >
-                  <span aria-hidden="true" className="h-px w-6 bg-rule" />
-                  Baropodometria
-                </figcaption>
-              </figure>
-            </div>
-          </Reveal>
+                <figure className="relative -rotate-[1.2deg] rounded-lg border border-rule bg-paper p-3 shadow-float transition-transform duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-rotate-[0.4deg]">
+                  <Image
+                    src="/img/baropodometria.jpg"
+                    alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
+                    width={1080}
+                    height={816}
+                    sizes="(min-width: 1024px) 480px, 100vw"
+                    className="h-auto w-full rounded-md saturate-[0.88]"
+                  />
+                  <figcaption
+                    className="mt-3 flex items-center gap-3 px-1 pb-1 text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    <span aria-hidden="true" className="h-px w-6 bg-rule" />
+                    Baropodometria
+                  </figcaption>
+                </figure>
+              </div>
+            </Reveal>
+
+            {/* O que o exame produz: mapa de pressao plantar, desenhado */}
+            <Reveal delay={200}>
+              <div className="mt-10 hidden lg:block">
+                <PressaoPlantar className="mx-auto h-56 w-auto" />
+              </div>
+            </Reveal>
+          </div>
 
           <div className="mt-16 lg:col-span-6 lg:col-start-7 lg:mt-0">
             <Reveal variante="cortina">
@@ -71,9 +81,6 @@ export function Approach() {
               />
               {PASSOS.map((texto, i) => (
                 <li key={texto} className="relative pl-14">
-                  {/* Fora do Reveal: reveal.is-in tem transform none, que nao
-                      cria containing block, e o absolute ancoraria no li com
-                      o left errado. Aqui ancora no li de proposito, em 0. */}
                   <span
                     aria-hidden="true"
                     className="absolute top-0 left-0 flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-accent/45 bg-paper text-[0.6875rem] tracking-[0.08em] text-accent shadow-tag"
@@ -104,6 +111,13 @@ export function Approach() {
                 >
                   Falar Sobre o Meu Caso
                 </ButtonLink>
+              </div>
+            </Reveal>
+
+            {/* No telefone o mapa entra depois dos passos */}
+            <Reveal delay={200}>
+              <div className="mt-14 lg:hidden">
+                <PressaoPlantar className="mx-auto h-52 w-auto" />
               </div>
             </Reveal>
           </div>
