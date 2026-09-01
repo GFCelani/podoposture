@@ -75,18 +75,12 @@ export function Hero() {
             inovadora com resultados rápidos e eficazes
           </h1>
 
-          <div
-            aria-hidden="true"
-            className="rule-in mt-10 h-px w-full max-w-[420px] bg-paper/[0.14] lg:mt-12"
-            style={{ ["--in-delay" as string]: "560ms" }}
-          />
-
           {/* Curva de forca da marcha: o duplo pico de cada passo, o
               vocabulario da baropodometria, correndo sob o titulo */}
           <svg
             aria-hidden="true"
             viewBox="0 0 420 46"
-            className="rule-in mt-6 h-11 w-full max-w-[420px]"
+            className="rule-in mt-8 h-11 w-full max-w-[440px]"
             style={{ ["--in-delay" as string]: "760ms" }}
           >
             <path
@@ -100,6 +94,26 @@ export function Hero() {
             />
             <circle className="traco-monitor-ponto" cx={0} cy={40} r={2.6} fill="var(--color-accent-light)" />
           </svg>
+
+          {/* O espaco real da clinica, contido: a panoramica que no fundo e'
+              so atmosfera aparece aqui de verdade. Recorte com o poster de
+              coluna, o modelo anatomico e a maca. */}
+          <div
+            className="rule-in mt-8 max-w-[440px]"
+            style={{ ["--in-delay" as string]: "700ms" }}
+          >
+            <figure className="rounded-lg border border-rule/60 bg-paper p-2 shadow-lift">
+              <Image
+                src="/img/clinica-podoposture-5.jpg"
+                alt="Sala de atendimento da clínica, com maca e modelo anatômico de coluna"
+                width={2560}
+                height={1155}
+                sizes="(min-width: 1024px) 440px, 90vw"
+                className="aspect-[16/6] w-full rounded-md object-cover saturate-[0.88]"
+                style={{ objectPosition: "30% 42%" }}
+              />
+            </figure>
+          </div>
         </div>
 
         {/* Campo de aprumo. No telefone entra no fluxo, sangrando de borda a
