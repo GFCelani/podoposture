@@ -18,6 +18,10 @@ export function ServicesGrid() {
       className="relative overflow-hidden border-b border-rule"
     >
       <GridPaper size={56} fade="right" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface/70 via-transparent to-surface/70"
+      />
       <ColumnRules />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
@@ -25,11 +29,11 @@ export function ServicesGrid() {
           <SectionMark n="07" />
         </Reveal>
 
-        <ul className="mt-12 grid grid-cols-1 gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((service, i) => (
             <li key={service.href} className="flex">
               <Reveal delay={(i % 3) * 90} className="flex w-full">
-                <article className="group flex w-full flex-col rounded-md border-t border-rule px-4 pt-6 pb-10 transition-[border-color,background-color,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-accent hover:bg-surface/70">
+                <article className="group flex w-full flex-col rounded-lg border border-rule bg-paper p-6 shadow-tag transition-[border-color,box-shadow,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:border-accent/50 hover:shadow-lift lg:p-7">
                   <div className="flex items-start justify-between gap-4">
                     <span
                       aria-hidden="true"
