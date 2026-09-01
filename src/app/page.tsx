@@ -1,5 +1,6 @@
 import { Approach } from "@/components/approach";
 import { ClinicalResponsibility } from "@/components/clinical-responsibility";
+import { Contact } from "@/components/contact";
 import { Hero } from "@/components/hero";
 import { ServicesGrid } from "@/components/services-grid";
 import { SiteHeader } from "@/components/site-header";
@@ -19,6 +20,7 @@ export default function Home() {
         <Approach />
         <TreatmentCards />
         <ServicesGrid />
+        <Contact />
       </main>
     </>
   );
