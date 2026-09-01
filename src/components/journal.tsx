@@ -1,13 +1,21 @@
 import Image from "next/image";
 import { CATEGORIES, POSTS } from "@/lib/posts";
+import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 export function Journal() {
   return (
-    <section id="conteudos" className="border-b border-rule">
-      <div className="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-32">
+    <section
+      id="conteudos"
+      className="relative overflow-hidden border-b border-rule"
+    >
+      <GridPaper size={80} fade="right" />
+      <ColumnRules />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal>
-          <h2 className="max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-normal text-balance text-ink">
+          <SectionMark n="09" />
+          <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
             Conteúdos Para Compreender Melhor O Seu Corpo
           </h2>
         </Reveal>
@@ -55,7 +63,7 @@ export function Journal() {
                           )}
                         </p>
 
-                        <h3 className="mt-3 font-display text-[1.25rem] leading-[1.3] text-balance text-ink">
+                        <h3 className="mt-3 font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink">
                           <a
                             href={post.href}
                             target="_blank"

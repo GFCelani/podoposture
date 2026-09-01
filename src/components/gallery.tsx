@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -21,10 +22,18 @@ const PHOTOS = [
 
 export function Gallery() {
   return (
-    <section data-tone="deep" id="galeria" className="bg-accent-deep">
-      <div className="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-32">
+    <section
+      data-tone="deep"
+      id="galeria"
+      className="relative overflow-hidden bg-accent-deep"
+    >
+      <GridPaper tone="deep" size={128} fade="top" />
+      <ColumnRules tone="deep" />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal>
-          <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-normal text-paper">
+          <SectionMark n="10" tone="deep" />
+          <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
             Galeria
           </h2>
         </Reveal>
@@ -38,6 +47,13 @@ export function Gallery() {
             <li key={photo.src}>
               <Reveal delay={(i % 3) * 90}>
                 <figure className="group relative overflow-hidden border border-white/[0.12] transition-colors duration-300 hover:border-white/40">
+                  <span
+                    aria-hidden="true"
+                    className="absolute top-0 left-0 z-10 bg-accent-deep px-2.5 py-1.5 text-[0.625rem] tracking-[0.18em] text-on-deep-muted"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <Image
                     src={photo.src}
                     alt={photo.alt}

@@ -4,6 +4,7 @@ import { Contact } from "@/components/contact";
 import { Gallery } from "@/components/gallery";
 import { Hero } from "@/components/hero";
 import { Journal } from "@/components/journal";
+import { SeamRuler } from "@/components/layers";
 import { ServicesGrid } from "@/components/services-grid";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -18,6 +19,7 @@ export default function Home() {
       <SiteHeader />
       <main>
         <Hero />
+        <SeamRuler />
         <Welcome />
         <ClinicalResponsibility />
         <UnderstandFirst />
@@ -27,6 +29,7 @@ export default function Home() {
         <Contact />
         <Journal />
         <Gallery />
+        <SeamRuler />
         <SocialBand />
       </main>
       <SiteFooter />

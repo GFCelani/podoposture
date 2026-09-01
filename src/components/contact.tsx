@@ -1,4 +1,5 @@
 import { ButtonLink } from "./button-link";
+import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 const ADDRESS =
@@ -15,10 +16,17 @@ const PHONES = [
 
 export function Contact() {
   return (
-    <section id="contato" className="border-b border-rule bg-surface">
-      <div className="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-32">
+    <section
+      id="contato"
+      className="relative overflow-hidden border-b border-rule bg-surface"
+    >
+      <GridPaper size={96} fade="left" />
+      <ColumnRules />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal>
-          <h2 className="font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-normal text-balance text-ink">
+          <SectionMark n="08" />
+          <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink">
             Converse com a Podoposture
           </h2>
         </Reveal>
@@ -26,13 +34,13 @@ export function Contact() {
         <div className="mt-14 lg:grid lg:grid-cols-12 lg:gap-x-6">
           <div className="lg:col-span-6">
             <Reveal delay={110}>
-              <h3 className="font-display text-[1.375rem] leading-[1.3] text-ink">
+              <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink">
                 Sua dor merece ser compreendida
               </h3>
             </Reveal>
 
             <Reveal delay={180}>
-              <p className="mt-6 max-w-[56ch] text-[1.0625rem] leading-[1.7] text-muted">
+              <p className="mt-6 max-w-[56ch] text-[1.0625rem] leading-[1.7] text-ink">
                 Se você convive com dor ou sente que seu corpo precisa ser
                 avaliado com mais atenção, estamos à disposição para ouvir,
                 orientar e entender se uma avaliação faz sentido para o seu
@@ -51,7 +59,7 @@ export function Contact() {
 
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
             <Reveal delay={330}>
-              <div className="border-t border-rule pt-8">
+              <div className="border-t border-rule bg-paper p-8 shadow-[0_18px_44px_-34px_rgba(13,37,54,0.55)]">
                 <address
                   className="text-[0.9375rem] leading-[1.75] text-ink not-italic"
                   style={{ fontFamily: "var(--mono)" }}
@@ -59,9 +67,11 @@ export function Contact() {
                   {ADDRESS}
                 </address>
 
-                <p className="mt-7 text-[0.9375rem] leading-[1.7] text-muted">
+                <p className="mt-7 text-[0.9375rem] leading-[1.7] text-ink">
                   Estamos a 11 minutos da estação Cantagalo do metrô.
                 </p>
+
+                <div aria-hidden="true" className="mt-7 h-px w-full bg-rule" />
 
                 <ul className="mt-6 space-y-2.5">
                   {PHONES.map((phone) => (
