@@ -434,7 +434,7 @@ a:focus-visible .marca-vertebra {
     transparent 100%
   );
   transform: translateX(-140%) skewX(-16deg);
-  animation: luz 9s var(--ease-ciclo) infinite;
+  animation: luz 14s var(--ease-ciclo) infinite;
   animation-delay: var(--luz-delay, 2.2s);
 }
 
@@ -443,10 +443,10 @@ a:focus-visible .marca-vertebra {
     opacity: 0;
     transform: translateX(-140%) skewX(-16deg);
   }
-  8% {
+  5% {
     opacity: 1;
   }
-  34%,
+  22%,
   100% {
     opacity: 0;
     transform: translateX(420%) skewX(-16deg);
