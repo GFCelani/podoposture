@@ -1,8 +1,12 @@
+import { SectionMark } from "./layers";
 import { SpineColumn } from "./spine-column";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-accent-deep text-paper">
+    <section
+      data-tone="deep"
+      className="relative overflow-hidden bg-accent-deep text-paper"
+    >
       {/* Camada 1: papel milimetrado */}
       <div
         aria-hidden="true"
@@ -34,17 +38,8 @@ export function Hero() {
 
       <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-8 px-6 pt-20 pb-20 lg:min-h-[calc(100svh-88px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16">
         <div className="lg:col-span-7">
-          <div
-            className="rule-in flex items-center gap-4"
-            style={{ ["--in-delay" as string]: "80ms" }}
-          >
-            <span
-              className="text-[0.6875rem] tracking-[0.2em] text-on-deep-muted"
-              style={{ fontFamily: "var(--mono)" }}
-            >
-              01
-            </span>
-            <span aria-hidden="true" className="h-px w-14 bg-accent-light/70" />
+          <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
+            <SectionMark n="01" tone="deep" />
           </div>
 
           <h1

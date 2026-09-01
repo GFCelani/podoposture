@@ -123,9 +123,15 @@ export function SiteHeader() {
           >
             <div className="mx-auto max-w-[1240px] px-10 py-8">
               <p
-                className="mb-5 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                className="mb-5 flex items-center gap-3 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
                 style={{ fontFamily: "var(--mono)" }}
               >
+                <span className="text-accent">
+                  {String(
+                    NAV_GROUPS.findIndex((g) => g.label === activeGroup.label) + 1,
+                  ).padStart(2, "0")}
+                </span>
+                <span aria-hidden="true" className="h-px w-8 bg-rule" />
                 {activeGroup.label}
               </p>
               <ul className="grid grid-cols-4 gap-x-8 gap-y-1">

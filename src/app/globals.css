@@ -5,7 +5,7 @@
   --color-paper: #faf9f6;
   --color-surface: #f1efea;
   --color-ink: #0d2536;
-  --color-muted: #5a6169;
+  --color-muted: #4a525a;
   --color-rule: #dad7cf;
 
   /* Cor de acao — verde do logo. So em preenchimento de CTA primario
@@ -65,6 +65,14 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
+  /* transition-colors do Tailwind inclui outline-color: sem isto o anel de
+     foco entra desbotando por 200ms, em vez de aparecer no ato. */
+  transition-property: none;
+}
+
+/* Sobre o petroleo o azul do acento nao se ve. O tint resolve sem cor nova. */
+[data-tone="deep"] :focus-visible {
+  outline-color: var(--color-accent-light);
 }
 
 /* ---------------------------------------------------------------
@@ -167,6 +175,21 @@ body {
   }
 }
 
+/* Vertebras da marca: pulso que desce a coluna no hover do link do logo.
+   Cada no' tem --v, o indice de cima para baixo. */
+.marca-vertebra {
+  transform: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.42s cubic-bezier(0.22, 0.7, 0.28, 1);
+  transition-delay: calc(var(--v, 0) * 26ms);
+}
+
+a:hover .marca-vertebra,
+a:focus-visible .marca-vertebra {
+  transform: scale(1.28);
+}
+
 /* Grifo atras de palavra do titulo. <mark> traz fundo amarelo do UA. */
 .marca-grifo {
   background-color: transparent;
@@ -179,6 +202,16 @@ body {
   color: inherit;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+}
+
+/* Sobre papel o grifo usa o acento cheio, que ali tem contraste. */
+.marca-grifo-claro {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-accent) 14%, transparent) 0 36%,
+    transparent 36%
+  );
+  box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
 }
 
 /* Entrada por scroll */

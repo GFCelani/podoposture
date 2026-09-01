@@ -1,23 +1,5 @@
+import { ColumnRules, GridPaper, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
-
-/** Grade de colunas visivel: a camada que da densidade ao bloco escuro. */
-function ColumnGrid() {
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 mx-auto max-w-[1240px] px-6 lg:px-10"
-    >
-      <div className="grid h-full grid-cols-4 gap-x-6 lg:grid-cols-12">
-        {Array.from({ length: 12 }, (_, i) => (
-          <div
-            key={i}
-            className={`border-l border-white/[0.07] ${i >= 4 ? "hidden lg:block" : ""}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Rule({ delay }: { delay: number }) {
   return (
@@ -31,19 +13,33 @@ function Rule({ delay }: { delay: number }) {
  * Silhueta em Z, deliberadamente diferente da secao 03: titulo em cima a
  * esquerda, tese larga no meio comecando na mesma margem, corpo embaixo a
  * direita. Duas reguas horizontais de largura total dao a densidade que o
- * bloco escuro pede.
+ * bloco escuro pede. O prumo vertical retoma o instrumento do hero.
  */
 export function UnderstandFirst() {
   return (
     <section
       id="compreender-antes-de-tratar"
+      data-tone="deep"
       className="relative overflow-hidden bg-accent-deep"
     >
-      <ColumnGrid />
+      <GridPaper tone="deep" size={104} fade="bottom" />
+      <ColumnRules tone="deep" />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-32">
+      {/* Prumo: o mesmo instrumento do hero, atravessando o bloco */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-[18%] hidden w-px lg:block"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(to bottom, var(--color-accent-light) 0 3px, transparent 3px 8px)",
+          opacity: 0.45,
+        }}
+      />
+
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal>
-          <h2 className="max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-normal text-balance text-paper">
+          <SectionMark n="04" tone="deep" />
+          <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
             Compreender Antes de Tratar
           </h2>
         </Reveal>
@@ -54,7 +50,7 @@ export function UnderstandFirst() {
 
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
           <Reveal delay={190} className="lg:col-span-8">
-            <p className="mt-12 font-display text-[clamp(1.5rem,2.6vw,2.125rem)] leading-[1.3] text-balance text-paper">
+            <p className="mt-12 font-display text-[clamp(1.5rem,2.6vw,2.125rem)] leading-[1.3] font-medium text-balance text-paper">
               Conviver com dor ou limitações raramente é uma questão local.
             </p>
           </Reveal>

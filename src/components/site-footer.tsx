@@ -17,7 +17,7 @@ const FOOTER_LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="bg-accent-deep">
+    <footer data-tone="deep" className="bg-accent-deep">
       <div className="mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
         <div className="flex flex-col gap-10 border-b border-white/[0.14] pb-12 lg:flex-row lg:items-start lg:justify-between">
           <nav aria-label="Rodapé" className="max-w-[46rem]">
