@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -89,20 +88,73 @@ export function Contact() {
           </div>
 
           <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
+            {/*
+              Mapa na coluna, no lugar da foto do consultorio. O disco ocupa a
+              largura inteira da coluna: o anel tracejado e' o limite externo,
+              e o recorte do mapa fica para dentro dele, entao nada estoura.
+
+              O embed ancora o cartao de endereco no canto superior esquerdo do
+              iframe. Sangrando 180px para fora, o cartao sai do recorte e o
+              ponto continua no centro. Isso tambem esconde o credito do Google
+              que vem no rodape do iframe, entao ele e' reescrito logo abaixo,
+              com o link de termos: obrigatorio, nao pode sumir com a mascara.
+
+              Abaixo de 390 o disco ficaria com menos de 240px uteis. Nessa
+              faixa vira retangulo 4:3, que entrega mais mapa no mesmo espaco.
+            */}
             <Reveal delay={240}>
-              <figure className="mb-6 rounded-lg border border-rule bg-paper p-3 shadow-plate">
-                <Image
-                  src="/img/galeria/consultorio.jpg"
-                  alt="Consultório com mesa de atendimento, espelho de avaliação e bolas suíças"
-                  width={900}
-                  height={1125}
-                  sizes="(min-width: 1024px) 440px, 100vw"
-                  className="aspect-[16/9] w-full rounded-md object-cover saturate-[0.88]"
-                />
-              </figure>
+              <div className="relative mx-auto w-full max-w-[420px] lg:max-w-none">
+                <div className="relative aspect-[4/3] w-full min-[390px]:aspect-square">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0 hidden rounded-full border border-dashed border-rule min-[390px]:block"
+                  />
+                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden min-[390px]:block">
+                    {["top-0 left-1/2 -translate-x-1/2 h-3 w-px",
+                      "bottom-0 left-1/2 -translate-x-1/2 h-3 w-px",
+                      "left-0 top-1/2 -translate-y-1/2 w-3 h-px",
+                      "right-0 top-1/2 -translate-y-1/2 w-3 h-px"].map((pos) => (
+                      <span key={pos} className={`absolute bg-accent/35 ${pos}`} />
+                    ))}
+                  </div>
+
+                  <div className="absolute inset-0 overflow-hidden rounded-lg border border-rule bg-surface shadow-plate min-[390px]:inset-5 min-[390px]:rounded-full">
+                    <iframe
+                      title={`Mapa: ${ADDRESS}`}
+                      src={`https://www.google.com/maps?q=${MAP_QUERY}&z=16&output=embed`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 grayscale-[0.7]"
+                    />
+                  </div>
+                </div>
+
+                <p
+                  className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.6875rem] tracking-[0.04em] text-muted"
+                  style={{ fontFamily: "var(--mono)" }}
+                >
+                  <span>Dados do mapa © Google</span>
+                  <a
+                    href="https://www.google.com/intl/pt-BR/help/terms_maps/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sublinha rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                  >
+                    Termos
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sublinha rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                  >
+                    Como chegar
+                  </a>
+                </p>
+              </div>
             </Reveal>
             <Reveal delay={330}>
-              <div className="rounded-lg border border-rule bg-paper p-8 shadow-plate">
+              <div className="mt-6 rounded-lg border border-rule bg-paper p-8 shadow-plate">
                 <address
                   className="text-[0.9375rem] leading-[1.75] text-ink not-italic"
                   style={{ fontFamily: "var(--mono)" }}
@@ -120,68 +172,6 @@ export function Contact() {
         </div>
       </div>
 
-      {/*
-        Mapa em disco. Sai da faixa de ponta a ponta e vira objeto sobre o
-        papel: a grade da pagina passa a aparecer em volta dele, e o recorte
-        redondo repete a linguagem de instrumento da pagina (a mira do hero,
-        os discos da coluna). O anel externo tracejado e os quatro tracos
-        cardeais sao a mesma regua das outras secoes, nao ornamento novo.
-        Embed sem chave de API.
-      */}
-      <div className="relative border-t border-rule py-16 lg:py-24">
-        <Reveal>
-          <div className="relative mx-auto flex w-[min(84vw,620px)] flex-col items-center">
-            <div className="relative aspect-square w-full">
-              {/* Anel externo e tracos cardeais, fora do recorte do mapa */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute -inset-5 rounded-full border border-dashed border-rule lg:-inset-8"
-              />
-              <div aria-hidden="true" className="pointer-events-none absolute -inset-5 lg:-inset-8">
-                {["top-0 left-1/2 -translate-x-1/2 h-3 w-px",
-                  "bottom-0 left-1/2 -translate-x-1/2 h-3 w-px",
-                  "left-0 top-1/2 -translate-y-1/2 w-3 h-px",
-                  "right-0 top-1/2 -translate-y-1/2 w-3 h-px"].map((pos) => (
-                  <span key={pos} className={`absolute bg-accent/35 ${pos}`} />
-                ))}
-              </div>
-
-              {/* O embed ancora o cartao de endereco no canto superior
-                  esquerdo do iframe. Com o iframe do tamanho do disco, o
-                  recorte redondo cortava o cartao ao meio. Sangrando 180px
-                  para fora em todos os lados, o cartao e os botoes do Google
-                  caem fora do circulo e o ponto continua no centro; a escala
-                  do que se ve e a mesma em qualquer largura, so muda o corte. */}
-              <div className="relative h-full w-full overflow-hidden rounded-full border border-rule bg-surface shadow-plate">
-                <iframe
-                  title={`Mapa: ${ADDRESS}`}
-                  src={`https://www.google.com/maps?q=${MAP_QUERY}&z=16&output=embed`}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 grayscale-[0.7]"
-                />
-              </div>
-            </div>
-
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group/dir mt-10 inline-flex items-center gap-3 rounded-md border-[1.5px] border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-[transform,box-shadow,background-color,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:bg-ink hover:text-paper hover:shadow-lift active:translate-y-0 lg:mt-14"
-            >
-              Como chegar
-              <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true" className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/dir:translate-x-1">
-                <path
-                  d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                />
-              </svg>
-            </a>
-          </div>
-        </Reveal>
-      </div>
     </section>
   );
 }
