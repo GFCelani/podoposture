@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
-import { SpineColumn } from "./spine-column";
+import { VertebraLombar } from "./vertebra-lombar";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -11,10 +11,6 @@ import { SpineColumn } from "./spine-column";
  * vw nem de media query por altura.
  */
 const ESCALA_BOTAO = "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem]";
-
-/** Mascara do campo: some onde o titulo passa, cheia onde a coluna esta. */
-const MASCARA =
-  "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.22) 24%, rgba(0,0,0,0.75) 46%, #000 64%)";
 
 export function Hero() {
   return (
@@ -135,15 +131,25 @@ export function Hero() {
 
         </div>
 
-        {/* Campo de aprumo. No telefone entra no fluxo, sangrando de borda a
-            borda; no desktop passa a ocupar dois tercos da largura do hero,
-            por tras do titulo, com a mascara devolvendo a legibilidade. */}
+        {/*
+          A vertebra: contrapeso do bloco de titulo. Nao ha mais mascara: o
+          corpo dela e' quase branco, e titulo branco por cima mataria o
+          contraste. Em vez de mascarar, ela nao passa por baixo do texto.
+          O campo comeca 24px depois do fim da linha mais larga do titulo e
+          vai ate a borda da janela, com 40px de folga. As constantes vem da
+          geometria do titulo: em lg a linha mais larga termina em 606px
+          (pad 40 + 566); em xl, em 50vw + 114 (contentor centrado + 694).
+          Se o corpo do titulo mudar, estes dois calc mudam junto.
+
+          Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
+          reduzida (ate 320px): e' a peca grafica do hero, entao fica; so
+          nao ocupa a altura que ocupava a coluna inteira.
+        */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative -mx-6 mt-12 h-[clamp(340px,52svh,460px)] w-[calc(100%+3rem)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:h-auto lg:w-[64%]"
-          style={{ maskImage: MASCARA, WebkitMaskImage: MASCARA }}
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-10 xl:w-[calc(50vw-138px)]"
         >
-          <SpineColumn className="h-full w-full" />
+          <VertebraLombar className="w-full lg:max-w-[540px]" />
         </div>
       </div>
     </section>

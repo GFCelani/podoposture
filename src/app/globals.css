@@ -172,77 +172,12 @@ body {
 }
 
 /* ===============================================================
-   CAMPO DE APRUMO — o elemento grafico do hero.
+   HERO — entrada do texto e respiracao da vertebra.
    O repouso vive no estilo base, nunca no keyframe 100%: com movimento
    reduzido a animacao termina no primeiro quadro e o elemento volta ao base.
    Ver vault/repouso-de-animacao-css-vive-no-estilo-base
    Um transform por no'.
    =============================================================== */
-
-/* Respiracao: o corpo clareia e volta, com folego de cima para baixo.
-   Substituiu a varredura de scanner: o mesmo campo, outra leitura. */
-.respiro {
-  opacity: var(--base-op, 1);
-  animation: respiro var(--resp-dur, 7s) var(--ease-ciclo) infinite;
-  animation-delay: var(--resp-delay, 0s);
-}
-
-@keyframes respiro {
-  0%,
-  100% {
-    opacity: var(--base-op, 1);
-  }
-  45% {
-    opacity: var(--pico-op, 1);
-  }
-}
-
-/* Coluna fantasma: a postura desalinhada, que oscila em direcao ao prumo e
-   volta. E' o que da profundidade e largura ao campo. */
-.fantasma {
-  transform: none;
-  animation: fantasma 11s var(--ease-ciclo) infinite;
-}
-
-@keyframes fantasma {
-  0%,
-  100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  50% {
-    transform: translateX(42px) rotate(-1.6deg);
-  }
-}
-
-.vertebra-in {
-  opacity: 1;
-  transform: none;
-  animation: vertebra-in 0.75s var(--ease-saida) backwards;
-  animation-delay: var(--in-delay, 0ms);
-}
-
-@keyframes vertebra-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-.vertebra-sway {
-  transform: none;
-  animation: vertebra-sway 9s ease-in-out infinite;
-  animation-delay: var(--phase, 0ms);
-}
-
-@keyframes vertebra-sway {
-  0%,
-  100% {
-    transform: translateX(calc(var(--amp, 0) * -1px));
-  }
-  50% {
-    transform: translateX(calc(var(--amp, 0) * 1px));
-  }
-}
 
 .rule-in {
   opacity: 1;
@@ -256,95 +191,21 @@ body {
   }
 }
 
-/* Regua que se estende a partir da coluna, em vez de so aparecer. */
-.regua-in {
+/* A vertebra respira: sobe um fio e cresce quase nada, e volta. E' o unico
+   transform do <img>; a entrada (opacidade) fica no wrapper. */
+.vertebra-respira {
   transform: none;
-  transform-box: fill-box;
-  transform-origin: var(--origem, right);
-  animation: regua-in 1.1s var(--ease-saida) backwards;
-  animation-delay: var(--in-delay, 0ms);
+  animation: vertebra-respira 8s var(--ease-ciclo) infinite;
+  animation-delay: 1.2s;
 }
 
-@keyframes regua-in {
-  from {
-    transform: scaleX(0);
-  }
-}
-
-/* Fio de prumo: traca de cima para baixo. clip-path inset e' animavel e nao
-   consome o unico transform do no'. */
-.plumb-in {
-  clip-path: inset(0 0 0 0);
-  animation: plumb-in 1.05s cubic-bezier(0.3, 0.7, 0.3, 1) backwards;
-  animation-delay: 140ms;
-}
-
-@keyframes plumb-in {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-}
-
-/* Arco: desenha pelo dashoffset. Em <path>, nao em <line>:
-   ver vault/pathlength-so-funciona-em-path-no-chrome */
-.arc-in {
-  stroke-dashoffset: 0;
-  animation: arc-in 1.4s ease-out backwards;
-  animation-delay: var(--in-delay, 0ms);
-}
-
-@keyframes arc-in {
-  from {
-    stroke-dashoffset: var(--arc-len, 0);
-  }
-}
-
-/* Pontilhado que anda, nos fios verticais do campo. */
-.fio-corrente {
-  stroke-dashoffset: 0;
-  animation: fio-corrente 7s linear infinite;
-}
-
-@keyframes fio-corrente {
-  to {
-    stroke-dashoffset: -32;
-  }
-}
-
-/* Pulso nos cruzamentos do prumo com a curva. */
-.node-pulse {
-  opacity: 0.5;
-  transform: none;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: node-pulse 3.6s ease-in-out infinite;
-  animation-delay: var(--phase, 0s);
-}
-
-@keyframes node-pulse {
+@keyframes vertebra-respira {
   0%,
   100% {
-    opacity: 0.22;
-    transform: scale(0.82);
+    transform: translateY(0) scale(1);
   }
   50% {
-    opacity: 0.92;
-    transform: scale(1.12);
-  }
-}
-
-/* Mira de medicao no campo: meia volta por ciclo, bem devagar. */
-.mira {
-  transform: none;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: mira 26s linear infinite;
-  animation-delay: var(--phase, 0s);
-}
-
-@keyframes mira {
-  to {
-    transform: rotate(180deg);
+    transform: translateY(-7px) scale(1.012);
   }
 }
 
