@@ -136,7 +136,12 @@ export function Hero() {
           corpo dela e' quase branco, e titulo branco por cima mataria o
           contraste. Em vez de mascarar, ela nao passa por baixo do texto.
           O campo comeca 24px depois do fim da linha mais larga do titulo e
-          vai ate a borda da janela, com 40px de folga. As constantes vem da
+          vai ate a borda da janela. A imagem encosta a direita na borda de
+          conteudo do contentor, a mesma linha onde o titulo comeca do outro
+          lado (50vw - 580px), com piso de 64px onde o contentor ainda nao
+          abriu margem (lg e o inicio de xl). Como a folga minima com o
+          titulo e' fixa, o ganho de respiro a direita vem do campo inteiro
+          deslocar: em 1024 a 1440 a imagem encolhe o mesmo tanto. As constantes vem da
           geometria do titulo: em lg a linha mais larga termina em 606px
           (pad 40 + 566); em xl, em 50vw + 114 (contentor centrado + 694).
           Se o corpo do titulo mudar, estes dois calc mudam junto.
@@ -147,9 +152,9 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-10 xl:w-[calc(50vw-138px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-[max(64px,50vw_-_580px)] xl:w-[calc(50vw-138px)]"
         >
-          <VertebraLombar className="w-full lg:max-w-[540px]" />
+          <VertebraLombar className="w-full" />
         </div>
       </div>
     </section>
