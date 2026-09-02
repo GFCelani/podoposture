@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 const ADDRESS =
@@ -21,8 +21,7 @@ export function Contact() {
       id="contato"
       className="corte-alto-esq relative overflow-hidden border-b border-rule bg-surface"
     >
-      <GridPaper size={96} fade="left" />
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal variante="cortina">

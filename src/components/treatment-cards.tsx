@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
-import { GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -41,7 +41,7 @@ export function TreatmentCards() {
       id="tratamentos"
       className="corte-alto-dir relative overflow-hidden border-b border-rule bg-surface"
     >
-      <GridPaper size={112} fade="top" />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
         <Reveal>

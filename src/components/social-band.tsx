@@ -1,4 +1,4 @@
-import { ColumnRules, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 import { SocialLinks } from "./social-links";
 
@@ -8,7 +8,7 @@ export function SocialBand() {
       id="ligue-se-a-nos"
       className="relative overflow-hidden border-b border-rule"
     >
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
         <Reveal variante="cortina">

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -25,8 +25,7 @@ export function Gallery() {
       id="galeria"
       className="relative overflow-hidden bg-deep-calm"
     >
-      <GridPaper tone="deep" size={128} fade="top" />
-      <ColumnRules tone="deep" />
+      <PageGrid tone="deep" />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal variante="cortina">

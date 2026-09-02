@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { BLOG_INDEX, CATEGORIES, POSTS } from "@/lib/posts";
-import { ColumnRules, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 export function Journal() {
@@ -9,7 +9,7 @@ export function Journal() {
       id="conteudos"
       className="relative overflow-hidden border-b border-rule"
     >
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <Reveal variante="cortina">

@@ -1,7 +1,7 @@
 import { SERVICES } from "@/lib/services";
 import { GLYPHS } from "./service-glyphs";
 import { ButtonLink } from "./button-link";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -17,12 +17,11 @@ export function ServicesGrid() {
       id="servicos"
       className="relative overflow-hidden"
     >
-      <GridPaper size={56} fade="right" />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface/70 via-transparent to-surface/70"
       />
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
         <Reveal>

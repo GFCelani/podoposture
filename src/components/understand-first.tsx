@@ -1,5 +1,5 @@
 import { FigurePoints } from "./illustrations";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -14,8 +14,7 @@ export function UnderstandFirst() {
       data-tone="deep"
       className="relative overflow-hidden bg-deep-calm"
     >
-      <GridPaper tone="deep" size={104} fade="bottom" />
-      <ColumnRules tone="deep" />
+      <PageGrid tone="deep" />
 
       {/* Prumo: o mesmo instrumento do hero, atravessando o bloco */}
       <div

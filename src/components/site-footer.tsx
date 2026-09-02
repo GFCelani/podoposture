@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ColumnRules, GridPaper } from "./layers";
+import { PageGrid } from "./layers";
 import { SocialLinks } from "./social-links";
 
 /** Os 10 itens do menu de rodape do site atual, na mesma ordem. */
@@ -22,8 +22,7 @@ export function SiteFooter() {
       data-tone="deep"
       className="relative overflow-hidden bg-deep-calm"
     >
-      <GridPaper tone="deep" size={72} fade="top" />
-      <ColumnRules tone="deep" />
+      <PageGrid tone="deep" />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
         <div className="flex flex-col gap-10 border-b border-white/[0.14] pb-12 lg:flex-row lg:items-start lg:justify-between">

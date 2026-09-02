@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
-import { SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { SpineColumn } from "./spine-column";
 
 /** Mascara do campo: some onde o titulo passa, cheia onde a coluna esta. */
@@ -50,34 +50,8 @@ export function Hero() {
         }}
       />
 
-      {/* Camada 1: papel milimetrado */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, rgba(250,249,246,0.055) 1px, transparent 1px), linear-gradient(to bottom, rgba(250,249,246,0.055) 1px, transparent 1px)",
-          backgroundSize: "88px 88px",
-          backgroundPosition: "center",
-          maskImage:
-            "linear-gradient(to left, #000 0%, rgba(0,0,0,0.4) 52%, transparent 82%)",
-          WebkitMaskImage:
-            "linear-gradient(to left, #000 0%, rgba(0,0,0,0.4) 52%, transparent 82%)",
-        }}
-      />
-
-      {/* Camada 2: fios de coluna, na mesma grade do conteudo */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 mx-auto grid max-w-[1240px] grid-cols-4 px-6 lg:grid-cols-12 lg:px-10"
-      >
-        {Array.from({ length: 12 }, (_, i) => (
-          <div
-            key={i}
-            className={`border-l border-paper/[0.055] ${i >= 4 ? "hidden lg:block" : ""}`}
-          />
-        ))}
-      </div>
+      {/* Camada 1: a grade da pagina, na mesma geometria de todas as bandas */}
+      <PageGrid tone="deep" />
 
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
         <div className="relative z-10 lg:col-span-7">
@@ -85,12 +59,31 @@ export function Hero() {
             <SectionMark n="01" tone="deep" />
           </div>
 
+          {/*
+            Quebra escrita, nao emergente. O corpo do titulo e' um bloco por
+            linha, entao o navegador nao tem o que decidir: nao ha text-balance,
+            nao ha clamp por vw e nao ha corpo por altura de janela. Era esse
+            trio que fazia o mesmo titulo cair diferente em desktop e em laptop
+            (o @media max-height trocava o corpo por altura, e o balance
+            redistribuia as palavras em cada largura).
+            Corpo em degraus fixos por faixa; dentro de cada faixa a linha mais
+            larga cabe com folga sobre a fonte de fallback, entao a quebra
+            tambem nao muda no swap da Newsreader e a altura do bloco e' a
+            mesma antes e depois: linhas x corpo x entrelinha, sem CLS.
+          */}
           <h1
-            className="rule-in mt-9 font-display [@media(max-height:860px)]:mt-6 text-[clamp(2.75rem,5.9vw,4.75rem)] [@media(max-height:860px)]:text-[clamp(2.5rem,4.6vw,4.125rem)] leading-[1.03] font-medium tracking-[-0.025em] text-balance text-paper"
+            className="rule-in mt-9 font-display [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[56px] xl:text-[66px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
-            Integração terapêutica <mark className="marca-grifo">efetiva</mark>,
-            inovadora com resultados rápidos e eficazes
+            <span className="block">
+              <span className="block sm:inline">Integração </span>
+              <span className="block sm:inline">terapêutica </span>
+            </span>
+            <span className="block">
+              <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
+            </span>
+            <span className="block">com resultados </span>
+            <span className="block">rápidos e eficazes</span>
           </h1>
 
           {/* Acao do hero. Rotulos e destinos ja existentes na pagina:

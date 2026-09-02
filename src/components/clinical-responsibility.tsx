@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ButtonLink } from "./button-link";
 import { MARCAS_CLINICAS, Regua30 } from "./illustrations";
-import { ColumnRules, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -16,7 +16,7 @@ export function ClinicalResponsibility() {
       id="responsabilidade-clinica"
       className="corte-alto-esq relative overflow-hidden border-b border-rule bg-surface"
     >
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">

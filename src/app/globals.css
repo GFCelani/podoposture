@@ -106,6 +106,64 @@ body {
 }
 
 /* ===============================================================
+   GRADE DE FUNDO — uma geometria so, no nivel da pagina.
+   Origem e passo saem da largura da janela, nunca do contentor da
+   secao: e' por isso que os fios caem na mesma abscissa em todas as
+   bandas, atravessam a pagina de borda a borda e nao param onde o
+   texto comeca. A cor e' a unica coisa que muda entre banda clara e
+   banda escura; densidade e espessura sao as mesmas em toda a
+   extensao.
+   A ancora existe so para dar unidade de contentor: 100cqw e' a
+   largura util da pagina, sem a barra de rolagem que o 100vw inclui.
+   =============================================================== */
+
+.grade-ancora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  container-type: inline-size;
+}
+
+.grade {
+  --pad: 24px;
+  --cols: 4;
+  --gap: 24px;
+  --util: calc(min(1240px, 100cqw) - 2 * var(--pad));
+  --col: calc((var(--util) - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  --passo: calc(var(--col) + var(--gap));
+  --origem: calc(max((100cqw - 1240px) / 2, 0px) + var(--pad));
+  --fio-forte: color-mix(in srgb, var(--color-rule) 60%, transparent);
+  --fio-fino: color-mix(in srgb, var(--color-rule) 16%, transparent);
+
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--fio-forte) 0 1px, transparent 1px),
+    linear-gradient(to right, var(--fio-fino) 0 1px, transparent 1px),
+    linear-gradient(to bottom, var(--fio-fino) 0 1px, transparent 1px);
+  background-size:
+    var(--passo) 100%,
+    calc(var(--passo) / 2) 100%,
+    100% calc(var(--passo) / 2);
+  background-position:
+    var(--origem) 0,
+    var(--origem) 0,
+    0 0;
+}
+
+.grade[data-grade="deep"] {
+  --fio-forte: rgb(250 249 246 / 0.07);
+  --fio-fino: rgb(250 249 246 / 0.03);
+}
+
+@media (min-width: 1024px) {
+  .grade {
+    --pad: 40px;
+    --cols: 12;
+  }
+}
+
+/* ===============================================================
    CAMPO DE APRUMO — o elemento grafico do hero.
    O repouso vive no estilo base, nunca no keyframe 100%: com movimento
    reduzido a animacao termina no primeiro quadro e o elemento volta ao base.

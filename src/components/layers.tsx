@@ -6,59 +6,22 @@
 
 type Tone = "light" | "deep";
 
-const FADE: Record<string, string> = {
-  left: "linear-gradient(to left, #000 0%, rgba(0,0,0,0.35) 52%, transparent 84%)",
-  right: "linear-gradient(to right, #000 0%, rgba(0,0,0,0.35) 52%, transparent 84%)",
-  top: "linear-gradient(to top, #000 0%, rgba(0,0,0,0.3) 46%, transparent 80%)",
-  bottom:
-    "linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.3) 46%, transparent 80%)",
-};
-
-/** Papel milimetrado. Escala diferente por secao, para o fundo nao repetir. */
-export function GridPaper({
-  tone = "light",
-  size = 72,
-  fade = "left",
-}: {
-  tone?: Tone;
-  size?: number;
-  fade?: keyof typeof FADE;
-}) {
-  const line =
-    tone === "deep" ? "rgba(250,249,246,0.055)" : "var(--color-rule)";
+/**
+ * Grade de fundo. Papel milimetrado e fios de coluna na mesma camada, para
+ * que nenhuma banda possa ter um sem o outro.
+ *
+ * A geometria e' da pagina, nao da secao: a origem e o passo saem da largura
+ * da janela (100cqw na ancora), entao os fios caem na mesma abscissa em todas
+ * as bandas, correm de borda a borda e nao herdam a largura da coluna de
+ * texto. Ver .grade em globals.css.
+ *
+ * Toda banda da pagina recebe uma, inclusive as costuras e o cabecalho: e' o
+ * que faz a grade nao ter interrupcao de cima a baixo.
+ */
+export function PageGrid({ tone = "light" }: { tone?: Tone }) {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0"
-      style={{
-        backgroundImage: `linear-gradient(to right, ${line} 1px, transparent 1px), linear-gradient(to bottom, ${line} 1px, transparent 1px)`,
-        backgroundSize: `${size}px ${size}px`,
-        backgroundPosition: "center",
-        opacity: tone === "deep" ? 0.55 : 0.16,
-        maskImage: FADE[fade],
-        WebkitMaskImage: FADE[fade],
-      }}
-    />
-  );
-}
-
-/** Fios verticais na mesma grade do conteudo. Estrutura o vazio. */
-export function ColumnRules({ tone = "light" }: { tone?: Tone }) {
-  const border =
-    tone === "deep" ? "border-paper/[0.07]" : "border-rule/60";
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 mx-auto max-w-[1240px] px-6 lg:px-10"
-    >
-      <div className="grid h-full grid-cols-4 gap-x-6 lg:grid-cols-12">
-        {Array.from({ length: 12 }, (_, i) => (
-          <div
-            key={i}
-            className={`border-l ${border} ${i >= 4 ? "hidden lg:block" : ""}`}
-          />
-        ))}
-      </div>
+    <div aria-hidden="true" className="grade-ancora">
+      <div className="grade" data-grade={tone} />
     </div>
   );
 }
@@ -92,11 +55,14 @@ export function SectionMark({
 /**
  * Costura entre o hero em petroleo e o papel: o plano de apoio da coluna
  * continua na pagina como regua, em vez de o escuro cortar seco no claro.
+ * Leva a grade tambem: sao 15px, mas sem ela os fios verticais piscariam
+ * a cada troca de banda.
  */
 export function SeamRuler() {
   return (
-    <div aria-hidden="true" className="pointer-events-none">
-      <div className="h-px w-full bg-accent-light/25" />
+    <div aria-hidden="true" className="pointer-events-none relative">
+      <PageGrid />
+      <div className="relative h-px w-full bg-accent-light/25" />
       <div className="relative h-3.5">
         <div
           className="absolute inset-0"

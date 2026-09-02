@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ColumnRules, GridPaper, SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
@@ -12,8 +12,7 @@ export function Welcome() {
       id="bem-vindo"
       className="relative overflow-hidden"
     >
-      <GridPaper size={64} fade="right" />
-      <ColumnRules />
+      <PageGrid />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
         <div className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6">
