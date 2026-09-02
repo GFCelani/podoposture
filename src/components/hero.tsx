@@ -154,7 +154,27 @@ export function Hero() {
           aria-hidden="true"
           className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-[max(64px,50vw_-_580px)] xl:w-[calc(50vw-138px)]"
         >
-          <VertebraLombar className="w-full" />
+          {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
+              0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
+              claro. Vivem no campo, nao na imagem: atravessam a vertebra e
+              seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
+              entram no titulo porque o campo comeca depois dele. Atras da
+              imagem, como as reguas ficavam atras das vertebras. Sem rotulo:
+              C7 / T12 / L5 nao cabem numa vertebra unica. Abaixo de lg o campo
+              e' estreito e entra no fluxo; ali as linhas so poluiriam. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+            {[24, 50, 76].map((y, i) => (
+              <div
+                key={y}
+                className="rule-in absolute right-9 left-0"
+                style={{ top: `${y}%`, ["--in-delay" as string]: `${760 + i * 140}ms` }}
+              >
+                <div className="h-px w-full bg-paper/30" />
+                <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
+              </div>
+            ))}
+          </div>
+          <VertebraLombar className="relative w-full" />
         </div>
       </div>
     </section>
