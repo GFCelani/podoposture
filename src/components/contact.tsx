@@ -108,6 +108,12 @@ export function Contact() {
 
               Abaixo de 390 o disco ficaria com menos de 240px uteis. Nessa
               faixa vira retangulo 4:3, que entrega mais mapa no mesmo espaco.
+
+              z=14 e' o enquadramento, nao o padrao do embed: em 16 so se via
+              um punhado de quadras e a clinica ficava sem lugar no mapa. Em 14
+              entra o arco inteiro de Copacabana com Ipanema, o Arpoador e a
+              Lagoa, entao da para situar o endereco na Zona Sul sem o pino
+              perder a leitura.
             */}
             <Reveal delay={240}>
               <div className="relative mx-auto w-full max-w-[420px] lg:max-w-none">
@@ -128,7 +134,7 @@ export function Contact() {
                   <div className="absolute inset-0 overflow-hidden rounded-lg border border-rule bg-surface shadow-plate min-[390px]:inset-5 min-[390px]:rounded-full">
                     <iframe
                       title={`Mapa: ${ADDRESS}`}
-                      src={`https://www.google.com/maps?q=${MAP_QUERY}&z=16&output=embed`}
+                      src={`https://www.google.com/maps?q=${MAP_QUERY}&z=14&output=embed`}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 grayscale-[0.7]"
