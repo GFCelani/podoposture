@@ -4,7 +4,7 @@ import { SocialLinks } from "./social-links";
 
 /** Os 10 itens do menu de rodape do site atual, na mesma ordem. */
 const FOOTER_LINKS = [
-  { label: "Home", href: "/home" },
+  { label: "Início", href: "/home" },
   { label: "Osteopatia", href: "/osteopatia" },
   { label: "Posturologia", href: "/posturologia" },
   { label: "Palmilhas Personalizadas", href: "/palmilhas-personalizadas" },
@@ -48,7 +48,7 @@ export function SiteFooter() {
           className="mt-10 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
           style={{ fontFamily: "var(--mono)" }}
         >
-          Copyright © 2020 podoposture.com.br
+          © 2020 podoposture.com.br
         </p>
       </div>
     </footer>

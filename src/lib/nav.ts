@@ -5,7 +5,7 @@ export type NavGroup = { label: string; items: NavItem[] };
  * Os 20 itens do menu atual, reagrupados em 4 categorias.
  * Rotulos e destinos sao os do site em producao, sem alteracao.
  */
-export const NAV_HOME: NavItem = { label: "Home", href: "/home" };
+export const NAV_HOME: NavItem = { label: "Início", href: "/home" };
 export const NAV_BLOG: NavItem = { label: "Nosso Blog", href: "/nosso-blog" };
 
 export const NAV_GROUPS: NavGroup[] = [

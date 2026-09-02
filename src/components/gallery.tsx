@@ -15,7 +15,7 @@ const PHOTOS = [
   { src: "/img/galeria/corredor-de-marcha.jpg", alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro" },
   { src: "/img/galeria/acupuntura.jpg", alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente" },
   { src: "/img/galeria/plataforma-de-pressao.jpg", alt: "Pés descalços sobre a plataforma de baropodometria" },
-  { src: "/img/galeria/ecobag.jpg", alt: "Ecobag da Podoposture com a marca impressa" },
+  { src: "/img/galeria/ecobag.jpg", alt: "Sacola de pano da Podoposture com a marca impressa" },
 ];
 
 export function Gallery() {

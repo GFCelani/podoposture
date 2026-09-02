@@ -100,18 +100,18 @@ export const POSTS: Post[] = [
 ];
 
 /**
- * As 9 categorias da sidebar, mais "All Posts".
+ * As 9 categorias da sidebar, mais "Todos os artigos".
  * Continuam LINK para a URL filtrada do site vivo, nao filtro client-side:
  * 5 delas nao tem nenhum dos 10 posts carregados aqui, e filtrar devolveria
  * "nenhum resultado" para assunto que existe no site real.
  */
-/** Listagem viva do blog. Mesmo destino do "All Posts" da barra lateral. */
+/** Listagem viva do blog. Mesmo destino do "Todos os artigos" da barra lateral. */
 export const BLOG_INDEX = "https://podoposture.com.br/";
 
 const C = "https://podoposture.com.br/?blogcategory=";
 
 export const CATEGORIES: { label: string; href: string }[] = [
-  { label: "All Posts", href: BLOG_INDEX },
+  { label: "Todos os artigos", href: BLOG_INDEX },
   {
     label: "Bruxismo, DTM e Dor Orofacial",
     href: `${C}Bruxismo%2C+DTM+e+Dor+Orofacial`,

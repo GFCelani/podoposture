@@ -85,7 +85,7 @@ export function Journal() {
                           rel="noopener noreferrer"
                           className="sublinha mt-4 inline-flex items-baseline gap-2.5 text-[0.875rem] text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                         >
-                          Continue Reading
+                          Continuar lendo
                           <svg
                             width="13"
                             height="9"
@@ -112,7 +112,7 @@ export function Journal() {
               <div className="border-t border-rule pt-10 text-center">
                 {/* Sem backend nao ha pagina 2, e o builder de origem pagina
                     por JS, sem URL. O destino honesto e a listagem viva, o
-                    mesmo do "All Posts" da barra lateral. */}
+                    mesmo do "Todos os artigos" da barra lateral. */}
                 <a
                   href={BLOG_INDEX}
                   target="_blank"
@@ -122,7 +122,7 @@ export function Journal() {
                   <span aria-hidden="true" className="text-[1.125rem]">
                     +
                   </span>
-                  Show More
+                  Ver mais
                 </a>
               </div>
             </Reveal>
@@ -132,7 +132,7 @@ export function Journal() {
             <Reveal delay={200}>
               <div className="border-t border-rule pt-8">
                 <h3 className="text-[0.6875rem] tracking-[0.18em] text-muted uppercase" style={{ fontFamily: "var(--mono)" }}>
-                  Categories
+                  Categorias
                 </h3>
                 <ul className="mt-6 space-y-3.5">
                   {CATEGORIES.map((category) => (
