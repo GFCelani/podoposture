@@ -136,12 +136,12 @@ export function Hero() {
           corpo dela e' quase branco, e titulo branco por cima mataria o
           contraste. Em vez de mascarar, ela nao passa por baixo do texto.
           O campo comeca 24px depois do fim da linha mais larga do titulo e
-          vai ate a borda da janela. A imagem encosta a direita na borda de
-          conteudo do contentor, a mesma linha onde o titulo comeca do outro
-          lado (50vw - 580px), com piso de 64px onde o contentor ainda nao
-          abriu margem (lg e o inicio de xl). Como a folga minima com o
-          titulo e' fixa, o ganho de respiro a direita vem do campo inteiro
-          deslocar: em 1024 a 1440 a imagem encolhe o mesmo tanto. As constantes vem da
+          vai ate a borda da janela. A margem direita da imagem e' metade da
+          margem do contentor ((50vw - 580px) / 2), com piso de 64px: a
+          imagem termina a meio caminho entre a borda de conteudo e a borda
+          da janela. Teto de 600px; ate la, o que limita e' o campo. De 1024
+          a 1280 a margem ja esta no piso e a folga com o titulo e' fixa,
+          entao ali a imagem nao tem para onde crescer. As constantes vem da
           geometria do titulo: em lg a linha mais larga termina em 606px
           (pad 40 + 566); em xl, em 50vw + 114 (contentor centrado + 694).
           Se o corpo do titulo mudar, estes dois calc mudam junto.
@@ -152,11 +152,11 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-[max(64px,50vw_-_580px)] xl:w-[calc(50vw-138px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-[max(64px,25vw_-_290px)] xl:w-[calc(50vw-138px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
-              claro. Vivem no campo, nao na imagem: atravessam a vertebra e
+              claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na imagem: atravessam a vertebra e
               seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
               entram no titulo porque o campo comeca depois dele. Atras da
               imagem, como as reguas ficavam atras das vertebras. Sem rotulo:
@@ -169,12 +169,15 @@ export function Hero() {
                 className="rule-in absolute right-9 left-0"
                 style={{ top: `${y}%`, ["--in-delay" as string]: `${760 + i * 140}ms` }}
               >
-                <div className="h-px w-full bg-paper/30" />
+                <div
+                  className="estende h-px w-full bg-paper/30"
+                  style={{ ["--dur" as string]: `${9 + i * 2.5}s`, ["--fase" as string]: `${i * 1.7}s` }}
+                />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
               </div>
             ))}
           </div>
-          <VertebraLombar className="relative w-full" />
+          <VertebraLombar className="relative w-full lg:max-w-[600px]" />
         </div>
       </div>
     </section>

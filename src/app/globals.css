@@ -224,7 +224,7 @@ body {
     opacity: 1;
   }
   50% {
-    opacity: 0.55;
+    opacity: 0.6;
   }
 }
 
@@ -237,12 +237,65 @@ body {
 
 @keyframes sonar-onda {
   0% {
-    opacity: 0.65;
+    opacity: 0.95;
     transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(5);
+    transform: scale(9);
+  }
+}
+
+/* Movimento da camada verde/azul da vertebra. Um transform por no, repouso
+   no estilo base. Os arcos sao arcos de circulo girando em torno do centro
+   do circulo, entao girar = percorrer a propria trajetoria. */
+.gira {
+  transform: rotate(0deg);
+  animation: gira var(--dur, 16s) linear infinite;
+  animation-direction: var(--sentido, normal);
+}
+
+@keyframes gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.varre {
+  transform: rotate(0deg);
+  animation: varre var(--dur, 8s) var(--ease-ciclo) infinite alternate;
+}
+
+@keyframes varre {
+  to {
+    transform: rotate(var(--ang, 8deg));
+  }
+}
+
+.flutua {
+  transform: translateY(0);
+  animation: flutua var(--dur, 6s) var(--ease-ciclo) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes flutua {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Linhas de referencia do hero: recolhem a partir da esquerda e voltam, com
+   a ponta direita (o traco curto) parada. Origem a direita. */
+.estende {
+  transform: scaleX(1);
+  transform-origin: right center;
+  animation: estende var(--dur, 10s) var(--ease-ciclo) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes estende {
+  50% {
+    transform: scaleX(0.42);
   }
 }
 
