@@ -59,8 +59,9 @@ export function Hero() {
         }}
       />
 
-      {/* Camada 1: a grade da pagina, na mesma geometria de todas as bandas */}
-      <PageGrid tone="deep" />
+      {/* Camada 1: a grade da pagina, na mesma geometria de todas as bandas.
+          O hero e' a unica banda que acende os fios de coluna. */}
+      <PageGrid tone="deep" colunas />
 
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
         <div className="relative z-10 lg:col-span-9">

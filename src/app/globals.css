@@ -156,6 +156,14 @@ body {
   --fio-fino: rgb(250 249 246 / 0.03);
 }
 
+/* Fios de coluna so onde forem pedidos: hoje, so no hero. Abaixo dele fica
+   a trama fina sozinha, que ja passa por cima das mesmas abscissas (o passo
+   fino e' metade do passo de coluna). Fica depois das regras de tom de
+   proposito: mesma especificidade, e aqui e' a ordem que decide. */
+.grade:not([data-colunas]) {
+  --fio-forte: transparent;
+}
+
 @media (min-width: 1024px) {
   .grade {
     --pad: 40px;

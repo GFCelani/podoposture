@@ -19,11 +19,22 @@ type Tone = "light" | "deep";
  * faz a grade nao ter interrupcao de cima a baixo. O cabecalho fica de fora
  * de proposito: e' chapa opaca POR CIMA da grade, nao superficie que ela
  * atravessa.
+ *
+ * `colunas` acende os fios fortes, os que marcam as colunas do conteudo. So
+ * o hero os usa: abaixo dele a trama fina corre sozinha. A geometria nao
+ * muda, entao a grade continua na mesma abscissa de ponta a ponta; o que
+ * muda e' so o peso.
  */
-export function PageGrid({ tone = "light" }: { tone?: Tone }) {
+export function PageGrid({
+  tone = "light",
+  colunas = false,
+}: {
+  tone?: Tone;
+  colunas?: boolean;
+}) {
   return (
     <div aria-hidden="true" className="grade-ancora">
-      <div className="grade" data-grade={tone} />
+      <div className="grade" data-grade={tone} data-colunas={colunas ? "sim" : undefined} />
     </div>
   );
 }
