@@ -31,7 +31,7 @@ export function Contact() {
         </Reveal>
 
         <div className="mt-14 lg:grid lg:grid-cols-12 lg:gap-x-6">
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-6 lg:flex lg:h-full lg:flex-col">
             <Reveal delay={110}>
               <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
                 Sua dor merece ser compreendida
@@ -57,7 +57,11 @@ export function Contact() {
 
             {/* O outro jeito de conversar. Estava preso na ficha de endereco,
                 que e' sobre onde a clinica fica, nao sobre falar com ela. */}
-            <Reveal delay={340}>
+            {/* mt-auto: a coluna esquerda tem menos conteudo que a direita, e
+                sem isso sobrava um vao morto de ~300px no pe dela. Assim o par
+                regua+telefones desce e fecha junto com a ficha de endereco, que
+                e' o par natural dele: os dois sao coordenada da clinica. */}
+            <Reveal delay={340} className="lg:mt-auto">
               <div
                 aria-hidden="true"
                 className="mt-14 h-px w-full max-w-[26rem] bg-rule"
@@ -87,7 +91,10 @@ export function Contact() {
             </Reveal>
           </div>
 
-          <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
+          {/* A coluna e' capada em 380: o disco cheio (469) deixava a direita ~300px
+              mais alta que a esquerda. Capando a coluna inteira, e nao so o mapa,
+              disco, creditos e ficha continuam com as mesmas bordas. */}
+          <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0 lg:ml-auto lg:max-w-[380px]">
             {/*
               Mapa na coluna, no lugar da foto do consultorio. O disco ocupa a
               largura inteira da coluna: o anel tracejado e' o limite externo,
