@@ -57,6 +57,42 @@ export function VertebraLombar({ className = "" }: { className?: string }) {
         draggable={false}
       />
 
+      {/* Detalhes em verde-oliva, no viewBox da imagem: contornos deslocados
+          que acompanham a silhueta sem redesenha-la, um arco de aproximacao
+          e pontos soltos, na mesma familia dos arcos azuis que a propria
+          ilustracao ja traz. Traco em espessura de tela (non-scaling), entao
+          nao engrossa nem some ao escalar. Abaixo de md a imagem tem menos de
+          320px e isto viraria ruido: sai. */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 1043 1058"
+        className="rule-in pointer-events-none absolute inset-0 hidden h-full w-full overflow-visible md:block"
+        style={{ ["--in-delay" as string]: "980ms" }}
+        fill="none"
+        stroke={OLIVA}
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      >
+        <g vectorEffect="non-scaling-stroke" strokeWidth={1}>
+          {/* contorno do corpo, por fora do arco azul que ja existe */}
+          <path d="M 112 640 Q 78 940 372 1052" strokeOpacity={0.7} strokeDasharray="3 6" vectorEffect="non-scaling-stroke" />
+          {/* borda direita do processo espinhoso */}
+          <path d="M 688 92 Q 724 210 800 262" strokeOpacity={0.6} vectorEffect="non-scaling-stroke" />
+          {/* dorso da asa transversa direita */}
+          <path d="M 748 552 Q 890 532 1018 580" strokeOpacity={0.6} strokeDasharray="2 5" vectorEffect="non-scaling-stroke" />
+          {/* arco de aproximacao, alto e a direita */}
+          <path d="M 640 26 Q 985 96 1004 452" strokeOpacity={0.45} vectorEffect="non-scaling-stroke" />
+          {/* tracos curtos de medida, no arco */}
+          <path d="M 968 300 l 14 -3 M 992 386 l 14 -2" strokeOpacity={0.6} vectorEffect="non-scaling-stroke" />
+        </g>
+        <g fill={OLIVA} stroke="none">
+          <circle cx={104} cy={512} r={3} fillOpacity={0.75} />
+          <circle cx={958} cy={150} r={2.5} fillOpacity={0.6} />
+          <circle cx={846} cy={952} r={3} fillOpacity={0.7} />
+          <circle cx={372} cy={1052} r={2.5} fillOpacity={0.6} />
+        </g>
+      </svg>
+
       {/* Sonar: ponto fixo e duas ondas defasadas que expandem e somem. So
           transform e opacity. A onda tem opacity 0 no estilo base: com
           movimento reduzido ela nunca aparece, e o ponto fica parado. */}
