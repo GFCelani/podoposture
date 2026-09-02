@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
 import { BrandMark } from "./brand-mark";
-import { PageGrid } from "./layers";
 
 export function SiteHeader() {
   const [open, setOpen] = useState<string | null>(null);
@@ -79,13 +78,12 @@ export function SiteHeader() {
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
-      {/* A grade nao comeca no hero: o cabecalho e' opaco e sem ela abriria uma
-          faixa sem fio no topo. Mesma geometria, entao quando ele gruda por
-          cima do conteudo os fios continuam nos mesmos eixos. */}
-      <PageGrid />
-
+      {/* Sem grade aqui de proposito. A grade e' camada de fundo: o cabecalho
+          e' chapa opaca por cima dela, nao superficie que ela atravessa. Com a
+          camada dentro do header os fios passavam sobre o logo e o menu, ja
+          que logo e nav sao estaticos e camada absoluta pinta depois. */}
       <div
-        className={`relative mx-auto flex max-w-[1240px] items-center justify-between px-6 transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] lg:px-10 ${
+        className={`mx-auto flex max-w-[1240px] items-center justify-between px-6 transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] lg:px-10 ${
           rolou ? "h-14 lg:h-[68px]" : "h-16 lg:h-[92px]"
         }`}
       >

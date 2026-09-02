@@ -15,8 +15,10 @@ type Tone = "light" | "deep";
  * as bandas, correm de borda a borda e nao herdam a largura da coluna de
  * texto. Ver .grade em globals.css.
  *
- * Toda banda da pagina recebe uma, inclusive as costuras e o cabecalho: e' o
- * que faz a grade nao ter interrupcao de cima a baixo.
+ * Toda banda do corpo da pagina recebe uma, inclusive as costuras: e' o que
+ * faz a grade nao ter interrupcao de cima a baixo. O cabecalho fica de fora
+ * de proposito: e' chapa opaca POR CIMA da grade, nao superficie que ela
+ * atravessa.
  */
 export function PageGrid({ tone = "light" }: { tone?: Tone }) {
   return (
