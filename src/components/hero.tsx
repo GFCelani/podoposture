@@ -16,10 +16,14 @@ export function Hero() {
   return (
     <section
       data-tone="deep"
-      className="relative overflow-hidden bg-hero text-paper"
+      className="relative overflow-hidden bg-accent-deep text-paper"
     >
-      {/* Camada 0: a clinica, quase apagada sob o petroleo. Dessaturada e
-          com veu escuro por cima; trocar a foto quando vier a nova. */}
+      {/* Camada 0: fundo copiado do preview p3-fotografia. A foto deixa de
+          ser textura quase apagada e vira o fundo real: sem opacidade
+          reduzida e sem dessaturacao. Por cima, o scrim de dois gradientes
+          do p3, em accent-deep, que e' o que garante a leitura do texto.
+          A camada de luz de janela (ambar) saiu junto: ela nao existe no p3,
+          e mante-la faria o fundo nao bater com a referencia. */}
       <div aria-hidden="true" className="absolute inset-0">
         <Image
           src="/img/clinica-podoposture-5.jpg"
@@ -27,33 +31,18 @@ export function Hero() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[34%_45%] opacity-[0.34] saturate-[0.25]"
+          className="object-cover object-[34%_45%]"
         />
         <div
           className="absolute inset-0"
           style={{
             background: [
-              "linear-gradient(to right, rgb(32 69 90 / 0.88) 0%, rgb(32 69 90 / 0.56) 32%, rgb(32 69 90 / 0.3) 56%, rgb(32 69 90 / 0.62) 82%, rgb(32 69 90 / 0.86) 100%)",
-              "linear-gradient(to bottom, rgb(32 69 90 / 0.7) 0%, transparent 22%, transparent 74%, rgb(32 69 90 / 0.62) 100%)",
+              "linear-gradient(to top, rgb(13 37 54 / 0.95) 0%, rgb(13 37 54 / 0.9) 42%, rgb(13 37 54 / 0.55) 72%, rgb(13 37 54 / 0.35) 100%)",
+              "linear-gradient(to right, rgb(13 37 54 / 0.92) 0%, rgb(13 37 54 / 0.6) 46%, rgb(13 37 54 / 0.28) 100%)",
             ].join(", "),
           }}
         />
       </div>
-
-      {/* Camada 0.5: luz de janela. Nao e cor de marca, e' luz: um ambar
-          muito diluido que tira o azul frio do petroleo do lado onde o
-          texto vive, e um respiro claro no alto. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: [
-            "radial-gradient(115% 85% at 2% -8%, rgb(255 196 118 / 0.4) 0%, rgb(255 196 118 / 0.15) 32%, transparent 62%)",
-            "radial-gradient(75% 62% at 76% 110%, rgb(255 188 116 / 0.2) 0%, transparent 58%)",
-            "radial-gradient(48% 54% at 74% 42%, rgb(255 206 150 / 0.12) 0%, transparent 70%)",
-          ].join(", "),
-        }}
-      />
 
       {/* Camada 1: a grade da pagina, na mesma geometria de todas as bandas.
           O hero e' a unica banda que acende os fios de coluna. */}
