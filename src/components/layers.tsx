@@ -28,18 +28,25 @@ export function PageGrid({ tone = "light" }: { tone?: Tone }) {
   );
 }
 
-/** Numeracao mono da secao, no mesmo desenho do 01 do hero. */
+/**
+ * Numeracao mono da secao, no mesmo desenho do 01 do hero.
+ * `destaque` e' so do hero: la o numeral cresce junto com o titulo e os
+ * botoes, para o bloco inteiro escalar como conjunto. Nas demais secoes o
+ * numeral e' o mesmo de sempre.
+ */
 export function SectionMark({
   n,
   tone = "light",
+  destaque = false,
 }: {
   n: string;
   tone?: Tone;
+  destaque?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-4">
+    <div className={`flex items-center gap-4 ${destaque ? "lg:gap-5" : ""}`}>
       <span
-        className={`text-[0.6875rem] tracking-[0.2em] ${
+        className={`text-[0.6875rem] tracking-[0.2em] ${destaque ? "lg:text-[0.8125rem]" : ""} ${
           tone === "deep" ? "text-on-deep-muted" : "text-muted"
         }`}
         style={{ fontFamily: "var(--mono)" }}
@@ -48,7 +55,7 @@ export function SectionMark({
       </span>
       <span
         aria-hidden="true"
-        className={`h-px w-14 ${tone === "deep" ? "bg-accent-light/45" : "bg-accent/30"}`}
+        className={`h-px w-14 ${destaque ? "lg:w-16" : ""} ${tone === "deep" ? "bg-accent-light/45" : "bg-accent/30"}`}
       />
     </div>
   );

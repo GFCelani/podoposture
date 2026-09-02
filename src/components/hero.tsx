@@ -3,6 +3,15 @@ import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { SpineColumn } from "./spine-column";
 
+/**
+ * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
+ * titulo, entrelinha, botoes e os espacos entre eles crescem pelo mesmo
+ * fator (~1,15). Isto e' a parte dos botoes; o resto esta nas classes lg:
+ * de cada peca. Degraus fixos por faixa, como o titulo: nada de clamp por
+ * vw nem de media query por altura.
+ */
+const ESCALA_BOTAO = "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem]";
+
 /** Mascara do campo: some onde o titulo passa, cheia onde a coluna esta. */
 const MASCARA =
   "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.22) 24%, rgba(0,0,0,0.75) 46%, #000 64%)";
@@ -54,9 +63,9 @@ export function Hero() {
       <PageGrid tone="deep" />
 
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
-        <div className="relative z-10 lg:col-span-7">
+        <div className="relative z-10 lg:col-span-9">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
-            <SectionMark n="01" tone="deep" />
+            <SectionMark n="01" tone="deep" destaque />
           </div>
 
           {/*
@@ -72,7 +81,7 @@ export function Hero() {
             mesma antes e depois: linhas x corpo x entrelinha, sem CLS.
           */}
           <h1
-            className="rule-in mt-9 font-display [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[56px] xl:text-[66px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[60px] lg:text-[62px] xl:text-[76px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <span className="block">
@@ -92,13 +101,13 @@ export function Hero() {
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}
           <div
-            className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
+            className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5"
             style={{ ["--in-delay" as string]: "620ms" }}
           >
-            <ButtonLink href="https://wa.me/5521992035643" variant="primary">
+            <ButtonLink href="https://wa.me/5521992035643" variant="primary" className={ESCALA_BOTAO}>
               Envie uma mensagem
             </ButtonLink>
-            <ButtonLink href="/tratamento-da-dor" variant="secondary-deep">
+            <ButtonLink href="/tratamento-da-dor" variant="secondary-deep" className={ESCALA_BOTAO}>
               Quero mais informações
             </ButtonLink>
           </div>
@@ -108,7 +117,7 @@ export function Hero() {
           <svg
             aria-hidden="true"
             viewBox="0 0 420 46"
-            className="rule-in mt-8 h-11 w-full max-w-[440px] [@media(max-height:860px)]:mt-4 [@media(max-height:860px)]:h-8"
+            className="rule-in mt-8 h-11 w-full max-w-[440px] lg:mt-10 lg:h-[3.25rem] lg:max-w-[506px] [@media(max-height:860px)]:mt-4 [@media(max-height:860px)]:h-8"
             style={{ ["--in-delay" as string]: "760ms" }}
           >
             <path
