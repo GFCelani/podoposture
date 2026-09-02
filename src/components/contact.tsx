@@ -87,11 +87,14 @@ export function Contact() {
             </Reveal>
           </div>
 
-          {/* Capada em 380 e encostada na margem: disco, creditos e ficha ficam com
-              as mesmas duas bordas. Nenhuma das colunas estica para casar com a
-              outra; a diferenca de altura sobra no fim, que e' onde ela incomoda
-              menos. */}
-          <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0 lg:ml-auto lg:max-w-[380px]">
+          {/* A pilha ocupa a largura inteira da coluna, entao o disco e' o maior que
+              cabe nela. O -mt-48 sobe a pilha ate o topo do circulo ficar a dois
+              quadrados da grade do limite da secao: o vao que existia acima do
+              mapa some, e o mapa e' quem cresce para dentro dele. A subida nao
+              esbarra no titulo, que vive na metade esquerda.
+              Nenhuma das colunas estica para casar com a outra; a diferenca de
+              altura sobra no fim. */}
+          <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:-mt-48">
             {/*
               Mapa na coluna, no lugar da foto do consultorio. O disco ocupa a
               largura inteira da coluna: o anel tracejado e' o limite externo,
