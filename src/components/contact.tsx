@@ -4,7 +4,7 @@ import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 const ADDRESS =
-  "Avenida Nossa Senhora de Copacabana, 928 - sala 501 - Copacabana, Rio de Janeiro - Rio de Janeiro, Brazil";
+  "Avenida Nossa Senhora de Copacabana, 928 - sala 501 - Copacabana, Rio de Janeiro - RJ, Brasil";
 
 const MAP_QUERY = encodeURIComponent(
   "Avenida Nossa Senhora de Copacabana, 928, Copacabana, Rio de Janeiro",
@@ -120,33 +120,67 @@ export function Contact() {
         </div>
       </div>
 
-      {/* Mapa full-bleed, como no site atual. Embed sem chave de API. */}
-      <div className="relative border-t border-rule">
-        <iframe
-          title={ADDRESS}
-          src={`https://www.google.com/maps?q=${MAP_QUERY}&output=embed`}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          className="block h-[340px] w-full border-0 grayscale-[0.8] lg:h-[440px]"
-        />
-        <div className="pointer-events-none absolute inset-0 flex items-start justify-end p-5 lg:p-8">
-          <a
-            href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group/dir pointer-events-auto inline-flex items-center gap-3 rounded-md border-[1.5px] border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-[transform,box-shadow,background-color,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:bg-ink hover:text-paper hover:shadow-lift active:translate-y-0"
-          >
-            Get directions
-            <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true" className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/dir:translate-x-1">
-              <path
-                d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.2"
+      {/*
+        Mapa em disco. Sai da faixa de ponta a ponta e vira objeto sobre o
+        papel: a grade da pagina passa a aparecer em volta dele, e o recorte
+        redondo repete a linguagem de instrumento da pagina (a mira do hero,
+        os discos da coluna). O anel externo tracejado e os quatro tracos
+        cardeais sao a mesma regua das outras secoes, nao ornamento novo.
+        Embed sem chave de API.
+      */}
+      <div className="relative border-t border-rule py-16 lg:py-24">
+        <Reveal>
+          <div className="relative mx-auto flex w-[min(84vw,620px)] flex-col items-center">
+            <div className="relative aspect-square w-full">
+              {/* Anel externo e tracos cardeais, fora do recorte do mapa */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-5 rounded-full border border-dashed border-rule lg:-inset-8"
               />
-            </svg>
-          </a>
-        </div>
+              <div aria-hidden="true" className="pointer-events-none absolute -inset-5 lg:-inset-8">
+                {["top-0 left-1/2 -translate-x-1/2 h-3 w-px",
+                  "bottom-0 left-1/2 -translate-x-1/2 h-3 w-px",
+                  "left-0 top-1/2 -translate-y-1/2 w-3 h-px",
+                  "right-0 top-1/2 -translate-y-1/2 w-3 h-px"].map((pos) => (
+                  <span key={pos} className={`absolute bg-accent/35 ${pos}`} />
+                ))}
+              </div>
+
+              {/* O embed ancora o cartao de endereco no canto superior
+                  esquerdo do iframe. Com o iframe do tamanho do disco, o
+                  recorte redondo cortava o cartao ao meio. Sangrando 180px
+                  para fora em todos os lados, o cartao e os botoes do Google
+                  caem fora do circulo e o ponto continua no centro; a escala
+                  do que se ve e a mesma em qualquer largura, so muda o corte. */}
+              <div className="relative h-full w-full overflow-hidden rounded-full border border-rule bg-surface shadow-plate">
+                <iframe
+                  title={`Mapa: ${ADDRESS}`}
+                  src={`https://www.google.com/maps?q=${MAP_QUERY}&z=16&output=embed`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 grayscale-[0.7]"
+                />
+              </div>
+            </div>
+
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group/dir mt-10 inline-flex items-center gap-3 rounded-md border-[1.5px] border-rule bg-paper px-6 py-3 text-[0.9375rem] text-ink shadow-tag transition-[transform,box-shadow,background-color,color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:bg-ink hover:text-paper hover:shadow-lift active:translate-y-0 lg:mt-14"
+            >
+              Como chegar
+              <svg width="13" height="9" viewBox="0 0 13 9" aria-hidden="true" className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/dir:translate-x-1">
+                <path
+                  d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+            </a>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
