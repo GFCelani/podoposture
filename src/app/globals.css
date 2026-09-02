@@ -209,6 +209,43 @@ body {
   }
 }
 
+/* Sonar da vertebra. O ponto respira em opacidade; a onda nasce no ponto,
+   expande e some. Base da onda e' opacity 0: com movimento reduzido nao ha
+   onda, so o ponto parado. Ver vault/startup-lp-loop-css-precisa-de-opacity-0-na-base */
+.sonar-ponto {
+  opacity: 1;
+  animation: sonar-ponto var(--dur, 4s) var(--ease-ciclo) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes sonar-ponto {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.sonar-onda {
+  opacity: 0;
+  transform: scale(1);
+  animation: sonar-onda var(--dur, 4s) cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes sonar-onda {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(5);
+  }
+}
+
 /* ===============================================================
    MARCA
    =============================================================== */

@@ -23,6 +23,23 @@ import Image from "next/image";
  * vira placa branca, em 0,70 comeca a afundar no petroleo.
  */
 
+/** Verde-oliva medido nas facetas da propria ilustracao (media #c8d1a6). */
+const OLIVA = "#c8d1a6";
+
+/**
+ * Pontos de sonar sobre a peca: posicao em porcentagem da caixa da imagem,
+ * cor da paleta da ilustracao, duracao e fase proprias para nunca pulsarem
+ * em unissono. Sao HTML com tamanho em px, entao a onda tem o mesmo tamanho
+ * na tela em qualquer largura; so a posicao acompanha a imagem.
+ */
+const SONAR = [
+  { x: 57.5, y: 9.0, cor: "var(--color-accent-light)", dur: 3.6, fase: 0.0 },
+  { x: 9.0, y: 31.0, cor: OLIVA, dur: 4.4, fase: 1.3 },
+  { x: 94.5, y: 55.5, cor: "var(--color-accent-light)", dur: 3.9, fase: 0.6 },
+  { x: 45.0, y: 83.0, cor: OLIVA, dur: 4.9, fase: 2.1 },
+  { x: 77.0, y: 28.5, cor: "var(--color-accent-light)", dur: 4.1, fase: 2.9 },
+] as const;
+
 export function VertebraLombar({ className = "" }: { className?: string }) {
   return (
     <div
@@ -39,6 +56,39 @@ export function VertebraLombar({ className = "" }: { className?: string }) {
         className="vertebra-respira h-auto w-full select-none opacity-75"
         draggable={false}
       />
+
+      {/* Sonar: ponto fixo e duas ondas defasadas que expandem e somem. So
+          transform e opacity. A onda tem opacity 0 no estilo base: com
+          movimento reduzido ela nunca aparece, e o ponto fica parado. */}
+      {SONAR.map((s, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className="pointer-events-none absolute h-0 w-0"
+          style={{ left: `${s.x}%`, top: `${s.y}%` }}
+        >
+          {[0, 0.5].map((k) => (
+            <span
+              key={k}
+              className="sonar-onda absolute -top-[5px] -left-[5px] h-[10px] w-[10px] rounded-full border-[1.5px]"
+              style={{
+                borderColor: s.cor,
+                ["--dur" as string]: `${s.dur}s`,
+                ["--fase" as string]: `${s.fase + k * s.dur}s`,
+              }}
+            />
+          ))}
+          <span
+            className="sonar-ponto absolute -top-[3px] -left-[3px] h-[6px] w-[6px] rounded-full"
+            style={{
+              backgroundColor: s.cor,
+              boxShadow: `0 0 6px ${s.cor}`,
+              ["--dur" as string]: `${s.dur}s`,
+              ["--fase" as string]: `${s.fase}s`,
+            }}
+          />
+        </span>
+      ))}
 
     </div>
   );
