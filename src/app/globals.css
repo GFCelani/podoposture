@@ -885,11 +885,34 @@ a:focus-visible .marca-vertebra {
 /* Entrada do texto. Como 42% dos posts nao tem um unico subtitulo — a autora
    escrevia corrido —, o primeiro paragrafo ganha peso e serve de degrau entre o
    titulo e o corpo. E o unico recurso de hierarquia que funciona sem inventar
-   secao que o texto nao tem. */
-.prosa > p:first-child {
+   secao que o texto nao tem.
+
+   O segundo seletor existe porque a maioria das 18 paginas de servico ABRE com
+   titulo, e nesse caso o primeiro seletor nunca casava: o recurso de hierarquia
+   estava escrito e desligado justamente onde mais fazia falta. */
+.prosa > p:first-child,
+.prosa > :is(h2, h3):first-child + p {
   font-size: 1.25rem;
   line-height: 1.6;
   color: var(--color-ink-strong);
+}
+
+/* Nenhuma palavra empurra a pagina para os lados. Medido: o e-mail da clinica
+   dentro de um <h2> ("contatopodoposture@gmail.com", 338px de tinta numa caixa
+   de 253px) estourava 42px de rolagem horizontal em viewport de 320. Titulo
+   quebra em qualquer ponto porque nao ha onde quebrar num endereco de e-mail;
+   o corpo quebra so entre palavras. */
+.prosa {
+  overflow-wrap: break-word;
+}
+
+.prosa :is(h2, h3, h4) {
+  overflow-wrap: anywhere;
+}
+
+/* O cabecalho e' fixo: sem esta folga a ancora para em cima do titulo. */
+.prosa :is(h2, h3) {
+  scroll-margin-top: 6rem;
 }
 
 .prosa h2,
@@ -914,6 +937,19 @@ a:focus-visible .marca-vertebra {
 
 .prosa h2 + * {
   margin-top: 0.85em;
+}
+
+/* A regua do h2 e' costura entre secoes; quando o h2 ABRE o documento nao ha
+   secao anterior para costurar, e ela vira um risco solto com 88px de vazio
+   acima. Era o que acontecia na maioria das paginas de servico: 65% da
+   primeira tela do celular ia embora antes da primeira linha de texto. */
+.prosa > :first-child {
+  margin-top: 0;
+}
+
+.prosa > :is(h2, h3, h4):first-child {
+  padding-top: 0;
+  border-top: 0;
 }
 
 .prosa h3 {
@@ -1036,6 +1072,31 @@ a:focus-visible .marca-vertebra {
   line-height: 1.5;
   letter-spacing: 0.06em;
   color: var(--color-muted);
+}
+
+/* Degrau de tablet. O site inteiro pulava de celular para desktop em 1024, e
+   entre 768 e 1023 o texto rodava no corpo do telefone com a linha quase
+   encostando na borda. 1.1875rem com 68ch mantem a linha entre 66 e 72
+   caracteres — a mesma faixa que esta classe documenta acima. */
+@media (min-width: 768px) {
+  .prosa {
+    font-size: 1.1875rem;
+    max-width: 68ch;
+  }
+
+  .prosa h2 {
+    margin-top: 3em;
+  }
+
+  /* Meia sangria: a figura ja respira em tablet, sem o avanco de desktop. */
+  .prosa figure {
+    width: calc(100% + 4rem);
+    margin-inline: -2rem;
+  }
+
+  .prosa figcaption {
+    padding-inline: 2rem;
+  }
 }
 
 @media (min-width: 1024px) {

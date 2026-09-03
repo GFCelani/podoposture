@@ -10,7 +10,7 @@ export function SocialBand() {
     >
       <PageGrid />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-16 md:px-8 lg:px-10 lg:py-20">
         <Reveal variante="cortina">
           <SectionMark n="11" />
         </Reveal>

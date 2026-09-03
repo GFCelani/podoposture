@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import urllib.parse
 
 # Um bloco de topo do HTML que os extratores emitem: sem aninhamento de bloco,
 # sem quebra de linha, tags conhecidas. Por isso regex e suficiente e confiavel.
@@ -217,6 +218,36 @@ def remover_resumo_repetido(blocos: list[str], resumo: str, registro: list[str])
     return blocos
 
 
+def desfazer_autolinks(html: str, slug: str, registro: list[str]) -> str:
+    """
+    Desembrulha o link que a pagina fazia para si mesma.
+
+    Seis paginas fechavam com "visite nosso site e agende uma consulta", e o
+    link apontava para a propria URL. Era texto de SEO da epoca do construtor;
+    no site novo, a leitora ja esta na pagina — clicar recarrega o que ela esta
+    lendo. O rotulo continua na frase, so o link circular sai.
+
+    A comparacao passa por unquote e NFC porque as URLs vem percent-encoded
+    ("/flexo-distra%C3%A7%C3%A3o") e o slug vem com acento cru.
+    """
+    alvo = unicodedata.normalize("NFC", slug).casefold()
+
+    def trocar(m: re.Match[str]) -> str:
+        destino = urllib.parse.unquote(m.group(1))
+        caminho = urllib.parse.urlsplit(destino).path.strip("/")
+        if unicodedata.normalize("NFC", caminho).casefold() != alvo:
+            return m.group(0)
+        registro.append(f"autolink removido: {texto_de(m.group(2))[:50]}")
+        return m.group(2)
+
+    return re.sub(
+        r'<a\b[^>]*href="(https?://(?:www\.)?podoposture\.com\.br/[^"]*)"[^>]*>(.*?)</a>',
+        trocar,
+        html,
+        flags=re.S,
+    )
+
+
 def normalizar(html: str, capa: str, slug: str, resumo: str = "") -> tuple[str, list[str]]:
     """Aplica as regras na ordem e devolve (html, registro do que mudou)."""
     registro: list[str] = []
@@ -229,8 +260,46 @@ def normalizar(html: str, capa: str, slug: str, resumo: str = "") -> tuple[str, 
     return "".join(blocos), registro
 
 
+def normalizar_pagina(html: str, slug: str) -> tuple[str, list[str]]:
+    """
+    Variante para as 18 paginas de servico.
+
+    Sao as mesmas regras de estrutura dos posts — a autora escrevia nos dois
+    lugares com o mesmo editor e os mesmos habitos — menos as duas que so fazem
+    sentido no blog (capa e resumo repetidos), mais o desfazimento do autolink.
+    """
+    registro: list[str] = []
+    blocos = blocos_de(html)
+    blocos = promover_sublinhado(blocos, registro)
+    blocos = promover_negrito(blocos, registro, slug)
+    blocos = agrupar_listas(blocos, registro)
+    return desfazer_autolinks("".join(blocos), slug, registro), registro
+
+
 def _autoteste() -> None:
     reg: list[str] = []
+
+    # autolink para a propria pagina sai; link para outra pagina fica
+    assert (
+        desfazer_autolinks(
+            '<p>a <a href="https://podoposture.com.br/osteopatia">visite nosso site</a> b</p>',
+            "osteopatia",
+            reg,
+        )
+        == "<p>a visite nosso site b</p>"
+    )
+    assert "podoposture.com.br/acupuntura" in desfazer_autolinks(
+        '<p><a href="https://podoposture.com.br/acupuntura">outra</a></p>', "osteopatia", reg
+    )
+    # percent-encoding e acento tem de casar
+    assert (
+        desfazer_autolinks(
+            '<p><a href="https://podoposture.com.br/flexo-distra%C3%A7%C3%A3o">x</a></p>',
+            "flexo-distração",
+            reg,
+        )
+        == "<p>x</p>"
+    )
     assert promover_sublinhado(["<p><u>O Que e Zumbido?</u></p>"], reg) == [
         "<h2>O Que e Zumbido?</h2>"
     ]

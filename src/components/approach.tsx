@@ -25,9 +25,9 @@ export function Approach() {
     >
       <PageGrid />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <div className="lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-6">
-          <div className="lg:sticky lg:top-28 lg:col-span-5">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
+        <div className="md:grid md:grid-cols-6 md:items-start md:gap-x-8 lg:grid-cols-12 lg:gap-x-6">
+          <div className="md:col-span-2 lg:sticky lg:top-28 lg:col-span-5">
             {/* Placa da baropodometria. Fonte 1080x816 de faixa util,
                 renderizada a no maximo 480 CSS: 2,25x de densidade. */}
             <Reveal>
@@ -64,7 +64,7 @@ export function Approach() {
             </Reveal>
           </div>
 
-          <div className="mt-16 lg:col-span-6 lg:col-start-7 lg:mt-0">
+          <div className="mt-16 md:col-span-4 md:col-start-3 md:mt-0 lg:col-span-6 lg:col-start-7">
             <Reveal variante="cortina">
               <SectionMark n="05" />
               <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">

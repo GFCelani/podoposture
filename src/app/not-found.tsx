@@ -23,7 +23,7 @@ export default function NaoEncontrada() {
       titulo="Não encontramos esta página"
       subtitulo="O endereço pode ter mudado. Abaixo estão as áreas do site — e, se preferir, fale direto com a clínica pelo WhatsApp."
     >
-      <div className="mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
+      <div className="mx-auto max-w-[1240px] px-6 py-16 md:px-8 lg:px-10 lg:py-20">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
           {NAV_GROUPS.map((grupo) => (
             <nav key={grupo.label} aria-label={grupo.label}>

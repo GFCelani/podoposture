@@ -32,10 +32,14 @@ from __future__ import annotations
 import html as html_mod
 import json
 import re
+import sys
 import unicodedata
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from normalizar_conteudo import normalizar_pagina
 
 RAIZ = Path(__file__).resolve().parent.parent
 ORIGEM = RAIZ / ".cache" / "godaddy" / "paginas"
@@ -226,21 +230,94 @@ def podar_menu(blocos: list[dict]) -> tuple[list[dict], int]:
     return (blocos[:fim], cortados) if cortados >= 6 else (blocos, 0)
 
 
+# Textos que o construtor injetava e nao sao conteudo da clinica. Lista fechada:
+# so entra aqui o que for verificadamente boilerplate de plataforma.
+BOILERPLATE = ("this site is protected by recaptcha",)
+
+
+def remover_boilerplate(blocos: list[dict]) -> tuple[list[dict], int]:
+    """
+    Tira textos que o GoDaddy injetava e que nao dizem respeito a clinica.
+
+    O caso real: /contato abria com o aviso de reCAPTCHA em ingles, sobre um
+    formulario que nao existe mais no site novo. Como era o primeiro filho,
+    ainda herdava o estilo de paragrafo de entrada — a pagina de contato de uma
+    clinica no Rio comecava com termos de uso do Google, em corpo grande.
+    """
+    saida = [b for b in blocos if not so_texto(b["html"]).strip().lower().startswith(BOILERPLATE)]
+    return saida, len(blocos) - len(saida)
+
+
+def realinhar_cartoes(blocos: list[dict]) -> tuple[list[dict], int]:
+    """
+    Reintercala titulo e descricao de cartoes achatados em coluna.
+
+    O construtor renderizava cartoes lado a lado emitindo primeiro todos os
+    titulos e depois todas as descricoes. Linearizado, /tratamento-da-dtm virava
+    "Cefaleia Tensional | Bruxismo | (descricao da cefaleia) | (descricao do
+    bruxismo)" — cada titulo distante da propria descricao.
+
+    Regra deliberadamente estreita: corrida de N >= 2 titulos do MESMO nivel
+    seguida por exatamente N paragrafos. Se a contagem nao bate, nao dispara —
+    prefiro deixar um cartao torto a embaralhar texto que estava certo.
+    """
+    saida: list[dict] = []
+    trocas = 0
+    i = 0
+    while i < len(blocos):
+        tag = blocos[i]["tag"]
+        if not re.fullmatch(r"h[2-6]", tag):
+            saida.append(blocos[i])
+            i += 1
+            continue
+
+        j = i
+        while j < len(blocos) and blocos[j]["tag"] == tag:
+            j += 1
+        n = j - i
+        k = j
+        while k < len(blocos) and blocos[k]["tag"] == "p":
+            k += 1
+
+        if n >= 2 and k - j == n:
+            for t, p in zip(blocos[i:j], blocos[j:k]):
+                saida.append(t)
+                saida.append(p)
+            trocas += n
+            i = k
+            continue
+
+        saida.extend(blocos[i:j])
+        i = j
+    return saida, trocas
+
+
 def renivelar(blocos: list[dict]) -> None:
     """
     Reescreve os niveis de heading para comecarem em h2, sem salto.
 
     O construtor usa h3 e h4 sem criterio: ha pagina so com h4, e pagina com h2 e
     h4 mas sem h3. Como o h1 e o titulo da pagina, emitir esses valores crus
-    criaria salto de nivel, que falha em auditoria de acessibilidade. Os niveis
-    presentes sao remapeados em sequencia, preservando a hierarquia relativa que
-    a autora escreveu.
+    criaria salto de nivel, que falha em auditoria de acessibilidade.
+
+    A conta e feita em ORDEM de documento, com pilha. A versao anterior olhava o
+    CONJUNTO de niveis presentes e nao a sequencia — por isso sobreviviam casos
+    como "h4 h2 h3" (a pagina abrindo dois degraus abaixo do h1) e "h2 h4" com
+    salto no meio. Medido antes desta correcao: 11 das 18 paginas reprovavam.
+
+    O primeiro titulo e sempre h2; um titulo mais interno desce exatamente um
+    degrau; a volta a um nivel mais externo desempilha. Nenhuma palavra e
+    tocada, so a tag em volta.
     """
-    presentes = sorted({int(b["tag"][1]) for b in blocos if re.fullmatch(r"h[2-6]", b["tag"])})
-    mapa = {n: f"h{min(i + 2, 6)}" for i, n in enumerate(presentes)}
+    pilha: list[int] = []
     for b in blocos:
-        if re.fullmatch(r"h[2-6]", b["tag"]):
-            b["tag"] = mapa[int(b["tag"][1])]
+        if not re.fullmatch(r"h[2-6]", b["tag"]):
+            continue
+        n = int(b["tag"][1])
+        while pilha and pilha[-1] >= n:
+            pilha.pop()
+        pilha.append(n)
+        b["tag"] = f"h{min(len(pilha) + 1, 6)}"
 
 
 def montar_html(blocos: list[dict]) -> str:
@@ -293,6 +370,9 @@ def main() -> int:
 
     paginas = []
     total_menu = 0
+    total_boilerplate = 0
+    total_cartoes = 0
+    relatorio: list[tuple[str, list[str]]] = []
 
     for arquivo in sorted(ORIGEM.glob("*.html")):
         bruto = arquivo.read_text(encoding="utf-8", errors="replace")
@@ -319,12 +399,25 @@ def main() -> int:
 
         unicos, cortados = podar_menu(unicos)
         total_menu += cortados
+
+        unicos, boilerplate = remover_boilerplate(unicos)
+        total_boilerplate += boilerplate
+
+        # antes do renivelamento: reordenar depois trocaria a sequencia que a
+        # pilha do renivelar acabou de usar para decidir os niveis
+        unicos, pares = realinhar_cartoes(unicos)
+        total_cartoes += pares
+
         renivelar(unicos)
 
-        corpo = montar_html(unicos)
+        slug = slug_de_arquivo(arquivo.name)
+        corpo, registro = normalizar_pagina(montar_html(unicos), slug)
+        if registro:
+            relatorio.append((slug, registro))
+
         paginas.append(
             {
-                "slug": slug_de_arquivo(arquivo.name),
+                "slug": slug,
                 "titulo": titulo,
                 **extrair_meta(bruto),
                 "html": corpo,
@@ -338,7 +431,14 @@ def main() -> int:
     DESTINO.write_text(json.dumps(paginas, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"paginas extraidas: {len(paginas)}  ->  {DESTINO.relative_to(RAIZ)}")
-    print(f"blocos de menu removidos: {total_menu}\n")
+    print(f"blocos de menu removidos: {total_menu}")
+    print(f"boilerplate do construtor removido: {total_boilerplate}")
+    print(f"titulos reintercalados com sua descricao: {total_cartoes}")
+    print(f"transformacoes de estrutura: {sum(len(r) for _, r in relatorio)}\n")
+    for slug, itens in relatorio:
+        for item in itens:
+            print(f"  [{slug}] {item}")
+    print()
     for p in sorted(paginas, key=lambda x: x["palavras"]):
         c = {t: p["html"].count(f"<{t}") for t in ("h2", "h3", "h4", "p>", "li>", "strong>", "a ")}
         aviso = "  <-- revisar" if p["palavras"] < 60 else ""

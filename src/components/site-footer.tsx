@@ -24,15 +24,18 @@ export function SiteFooter() {
     >
       <PageGrid tone="deep" />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-20">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-16 md:px-8 lg:px-10 lg:py-20">
         <div className="flex flex-col gap-10 border-b border-white/[0.14] pb-12 lg:flex-row lg:items-start lg:justify-between">
           <nav aria-label="Rodapé" className="max-w-[46rem]">
-            <ul className="flex flex-wrap gap-x-8 gap-y-3">
+            {/* gap-y-1 com py-2 no proprio link: o espaco entre as linhas passa
+                a fazer parte do alvo em vez de ficar entre eles. Os 10 links
+                tinham 17px de altura de toque, abaixo do minimo de 24. */}
+            <ul className="flex flex-wrap gap-x-8 gap-y-1">
               {FOOTER_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="sublinha rounded-sm text-[0.9375rem] text-on-deep-muted transition-colors duration-[160ms] hover:text-paper"
+                    className="sublinha inline-flex min-h-[36px] items-center rounded-sm text-[0.9375rem] text-on-deep-muted transition-colors duration-[160ms] hover:text-paper"
                   >
                     {link.label}
                   </Link>

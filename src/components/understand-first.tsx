@@ -27,7 +27,7 @@ export function UnderstandFirst() {
         }}
       />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
         <div className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6">
           <div className="lg:col-span-7">
             <Reveal variante="cortina">

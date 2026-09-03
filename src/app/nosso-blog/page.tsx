@@ -19,33 +19,72 @@ const DESCRICAO =
   "Conteúdos sobre dor crônica, postura, zumbido, DTM e tratamento osteopático, " +
   "escritos pela equipe da Podoposture.";
 
-export const metadata: Metadata = {
-  title: TITULO,
-  description: DESCRICAO,
-  alternates: { canonical: BLOG_INDEX },
-  openGraph: {
-    type: "website",
-    locale: "pt_BR",
-    siteName: "Podoposture",
-    title: TITULO,
+/**
+ * 12 por pagina. Com os 68 de uma vez, o indice tinha 31.011px de altura num
+ * celular de 390 — 37 telas de rolagem para encontrar um artigo. A pagina 1
+ * continua em /nosso-blog, exatamente a URL que o Google ja conhece; as
+ * seguintes usam ?p=N, que sao enderecos novos e nao mexem no que ja ranqueia.
+ * Nenhum post fica inalcancavel: os 68 seguem no sitemap, um a um.
+ */
+const POR_PAGINA = 12;
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ categoria?: string; p?: string }>;
+}): Promise<Metadata> {
+  const { p } = await searchParams;
+  const pagina = Math.max(1, Number(p) || 1);
+  const titulo = pagina > 1 ? `${TITULO} — página ${pagina}` : TITULO;
+  const url = pagina > 1 ? `${BLOG_INDEX}?p=${pagina}` : BLOG_INDEX;
+
+  return {
+    title: titulo,
     description: DESCRICAO,
-    url: BLOG_INDEX,
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: TITULO }],
-  },
-};
+    alternates: { canonical: url },
+    // paginas 2+ nao precisam entrar no indice: os artigos ja estao no sitemap
+    // um a um, e o que interessa indexar e o artigo, nao a vitrine
+    robots: pagina > 1 ? { index: false, follow: true } : undefined,
+    openGraph: {
+      type: "website",
+      locale: "pt_BR",
+      siteName: "Podoposture",
+      title: titulo,
+      description: DESCRICAO,
+      url,
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: titulo }],
+    },
+  };
+}
 
 export default async function IndiceDoBlog({
   searchParams,
 }: {
-  searchParams: Promise<{ categoria?: string }>;
+  searchParams: Promise<{ categoria?: string; p?: string }>;
 }) {
-  const { categoria } = await searchParams;
+  const { categoria, p } = await searchParams;
   // os links de tema no rodape da home apontam para ?categoria=X; sem este
   // filtro eles levavam ao indice completo, prometendo um recorte que nao existia
   const filtrados = categoria
     ? TODOS_OS_POSTS.filter((p) => p.category === categoria)
     : TODOS_OS_POSTS;
-  const [destaque, ...restante] = filtrados;
+  // o destaque so existe na primeira pagina: nas seguintes ele repetiria o
+  // mesmo artigo no topo de toda vitrine
+  const [primeiro, ...demais] = filtrados;
+  const totalPaginas = Math.max(1, Math.ceil(demais.length / POR_PAGINA));
+  const paginaAtual = Math.min(Math.max(1, Number(p) || 1), totalPaginas);
+  const destaque = paginaAtual === 1 ? primeiro : undefined;
+  const restante = demais.slice(
+    (paginaAtual - 1) * POR_PAGINA,
+    paginaAtual * POR_PAGINA,
+  );
+  const enderecoDaPagina = (n: number) => {
+    const q = new URLSearchParams();
+    if (categoria) q.set("categoria", categoria);
+    if (n > 1) q.set("p", String(n));
+    const s = q.toString();
+    return s ? `${BLOG_INDEX}?${s}` : BLOG_INDEX;
+  };
 
   return (
     <>
@@ -64,7 +103,7 @@ export default async function IndiceDoBlog({
             : [{ nome: TITULO }]
         }
       >
-        <div className="mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
+        <div className="mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-20 lg:py-24">
           {destaque && (
             <article className="group border-b border-rule pb-16">
               <Link
@@ -113,8 +152,8 @@ export default async function IndiceDoBlog({
             </p>
           )}
 
-          <div className="mt-16 lg:grid lg:grid-cols-12 lg:gap-x-12">
-            <div className="lg:col-span-8">
+          <div className="mt-16 md:grid md:grid-cols-6 md:gap-x-8 lg:grid-cols-12 lg:gap-x-12">
+            <div className="md:col-span-4 lg:col-span-8">
               <h2 className="sr-only">Todos os artigos</h2>
               <ul className="grid gap-x-8 gap-y-14 sm:grid-cols-2">
                 {restante.map((post) => (
@@ -145,10 +184,45 @@ export default async function IndiceDoBlog({
                   </li>
                 ))}
               </ul>
+
+              {totalPaginas > 1 && (
+                <nav
+                  aria-label="Paginação dos artigos"
+                  className="mt-16 flex items-center justify-between gap-4 border-t border-rule pt-8"
+                >
+                  {paginaAtual > 1 ? (
+                    <Link
+                      href={enderecoDaPagina(paginaAtual - 1)}
+                      rel="prev"
+                      className="sublinha inline-flex min-h-[44px] items-center text-[0.9375rem] text-accent hover:text-accent-deep"
+                    >
+                      ← Anteriores
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+
+                  <p className="font-mono text-[0.75rem] tracking-[0.14em] text-muted uppercase">
+                    Página {paginaAtual} de {totalPaginas}
+                  </p>
+
+                  {paginaAtual < totalPaginas ? (
+                    <Link
+                      href={enderecoDaPagina(paginaAtual + 1)}
+                      rel="next"
+                      className="sublinha inline-flex min-h-[44px] items-center text-[0.9375rem] text-accent hover:text-accent-deep"
+                    >
+                      Próximos →
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                </nav>
+              )}
             </div>
 
             {CATEGORIES.length > 0 && (
-              <aside className="mt-20 lg:col-span-4 lg:mt-0">
+              <aside className="mt-20 md:col-span-2 md:mt-0 lg:col-span-4">
                 <div className="lg:sticky lg:top-28">
                   <h2 className="font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">
                     Temas
@@ -159,7 +233,7 @@ export default async function IndiceDoBlog({
                         <Link
                           href={tema.href}
                           aria-current={tema.label === categoria ? "page" : undefined}
-                          className="flex items-baseline justify-between gap-4 text-[0.9375rem] text-ink hover:text-accent aria-[current=page]:text-accent"
+                          className="flex min-h-[36px] items-baseline justify-between gap-4 py-1 text-[0.9375rem] text-ink hover:text-accent aria-[current=page]:text-accent"
                         >
                           <span>{tema.label}</span>
                           <span className="font-mono text-[0.75rem] text-muted">

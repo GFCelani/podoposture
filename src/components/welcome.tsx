@@ -14,9 +14,9 @@ export function Welcome() {
     >
       <PageGrid />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <div className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6">
-          <div className="lg:col-span-6">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
+        <div className="md:grid md:grid-cols-6 md:items-center md:gap-x-8 lg:grid-cols-12 lg:gap-x-6">
+          <div className="md:col-span-3 lg:col-span-6">
             <Reveal variante="cortina">
               <SectionMark n="02" />
               <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
@@ -42,7 +42,7 @@ export function Welcome() {
             </Reveal>
           </div>
 
-          <div className="mt-14 lg:col-span-5 lg:col-start-8 lg:mt-0">
+          <div className="mt-14 md:col-span-3 md:col-start-4 md:mt-0 lg:col-span-5 lg:col-start-8">
             <Reveal delay={160}>
               <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
                 <Image

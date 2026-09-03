@@ -19,7 +19,7 @@ export function Conteudo({
   className?: string;
 }) {
   return (
-    <div className={`mx-auto max-w-[1240px] px-6 py-16 lg:px-10 lg:py-24 ${className}`}>
+    <div className={`mx-auto max-w-[1240px] px-6 py-16 md:px-8 lg:px-10 md:py-20 lg:py-24 ${className}`}>
       {/* Seguro: o HTML e gerado em build-time pelos extratores, a partir de uma
           lista fechada de tags, com todo texto e atributo escapados. Nao ha
           caminho de entrada de terceiros — o conteudo e da propria clinica. */}

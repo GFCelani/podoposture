@@ -1,22 +1,32 @@
 "use client";
 
-import { usePassouHero } from "@/lib/use-passou-hero";
+import { useElementoNaTela, usePassouHero } from "@/lib/use-passou-hero";
 
 /**
  * Disco fixo de contato. Mesmo destino do CTA primario do hero.
  * So aparece depois que o hero sai da tela: na primeira dobra quem chama e'
  * o botao do hero, e nunca ha dois convites verdes ao mesmo tempo.
  *
+ * A segunda condicao existe desde que as paginas informativas ganharam o
+ * convite de fecho: com ele em cena, o disco se cala, senao os dois verdes
+ * aparecem juntos — e chegam a se sobrepor no celular.
+ *
+ * O destino era o link curto do WhatsApp Business, diferente do numero escrito
+ * em todo o resto do site. Agora e' o mesmo (21) 99203-5643 do bloco de
+ * contato: um canal so, uma conversa so.
+ *
  * Entrada: sobe girando de leve, com overshoot.
  * Repouso: anel que emana a cada 3s e o balao que acena a cada 7s.
  * Icone proprio: balao de conversa com fone, nao o glifo da Meta.
  */
 export function FloatingWhatsApp() {
-  const visivel = usePassouHero();
+  const passou = usePassouHero();
+  const conviteNaTela = useElementoNaTela("#convite-consulta");
+  const visivel = passou && !conviteNaTela;
 
   return (
     <a
-      href="https://wa.me/message/WFGOB3AVBI63J1"
+      href="https://wa.me/5521992035643"
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar Sobre o Meu Caso"

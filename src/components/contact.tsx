@@ -14,28 +14,54 @@ const PHONES = [
   { label: "+ 55 21 99203-5643", href: "tel:5521992035643", note: "WhatsApp" },
 ];
 
-export function Contact() {
+/**
+ * Na home e' a secao 08 de uma sequencia; na rota /contato e' a pagina inteira.
+ * As duas props cobrem essa diferenca sem duplicar o componente: sem numero de
+ * secao, sem corte diagonal (nao ha banda anterior para cortar) e sem repetir
+ * no h2 o que o h1 do PageShell ja diz.
+ */
+export function Contact({
+  numero = "08",
+  comoSecao = true,
+}: {
+  numero?: string | null;
+  comoSecao?: boolean;
+} = {}) {
   return (
     <section
       id="contato"
-      className="corte-alto-esq relative overflow-hidden border-b border-rule bg-surface"
+      className={`relative overflow-hidden border-b border-rule bg-surface ${
+        comoSecao ? "corte-alto-esq" : ""
+      }`}
     >
       <PageGrid />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-28">
-        <Reveal variante="cortina">
-          <SectionMark n="08" />
-          <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
-            Converse com a Podoposture
-          </h2>
-        </Reveal>
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
+        {comoSecao && (
+          <Reveal variante="cortina">
+            {numero && <SectionMark n={numero} />}
+            <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
+              Converse com a Podoposture
+            </h2>
+          </Reveal>
+        )}
 
-        <div className="mt-14 lg:grid lg:grid-cols-12 lg:gap-x-6">
+        <div
+          className={`lg:grid lg:grid-cols-12 lg:gap-x-6 ${comoSecao ? "mt-14" : ""}`}
+        >
           <div className="lg:col-span-6">
+            {/* Na home vem depois do h2 da secao; na pagina /contato e' o
+                primeiro titulo do corpo, e como h3 pulava um degrau do h1. */}
             <Reveal delay={110}>
-              <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
-                Sua dor merece ser compreendida
-              </h3>
+              {comoSecao ? (
+                <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
+                  Sua dor merece ser compreendida
+                </h3>
+              ) : (
+                <h2 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
+                  Sua dor merece ser compreendida
+                </h2>
+              )}
             </Reveal>
 
             <Reveal delay={180}>
@@ -71,7 +97,7 @@ export function Contact() {
                     />
                     <a
                       href={phone.href}
-                      className="sublinha text-[1.0625rem] tracking-[0.02em] text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                      className="sublinha inline-flex min-h-[28px] items-center text-[1.0625rem] tracking-[0.02em] text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                       style={{ fontFamily: "var(--mono)" }}
                     >
                       {phone.label}
@@ -84,6 +110,43 @@ export function Contact() {
                   </li>
                 ))}
               </ul>
+
+              {/* E-mail e horario existiam so na pagina /contato do site antigo,
+                  e sumiriam ao trocar aquele HTML por esta secao. Aqui eles
+                  ficam no site inteiro — a home tambem nao os tinha. */}
+              <dl className="mt-8 space-y-5">
+                <div>
+                  <dt className="flex items-center gap-4 text-[0.8125rem] text-muted">
+                    <span
+                      aria-hidden="true"
+                      className="h-px w-8 shrink-0 bg-accent/40"
+                    />
+                    E-mail
+                  </dt>
+                  <dd className="mt-1 pl-12">
+                    <a
+                      href="mailto:contatopodoposture@gmail.com"
+                      className="sublinha inline-flex min-h-[28px] items-center text-[1.0625rem] tracking-[0.02em] break-all text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      contatopodoposture@gmail.com
+                    </a>
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="flex items-center gap-4 text-[0.8125rem] text-muted">
+                    <span
+                      aria-hidden="true"
+                      className="h-px w-8 shrink-0 bg-accent/40"
+                    />
+                    Horário de atendimento
+                  </dt>
+                  <dd className="mt-1 pl-12 text-[1.0625rem] text-ink">
+                    Segunda a sexta-feira, das 8h às 19h
+                  </dd>
+                </div>
+              </dl>
             </Reveal>
           </div>
 
@@ -151,7 +214,7 @@ export function Contact() {
                     href="https://www.google.com/intl/pt-BR/help/terms_maps/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="sublinha rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                    className="sublinha inline-flex min-h-[28px] items-center rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                   >
                     Termos
                   </a>
@@ -159,7 +222,7 @@ export function Contact() {
                     href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="sublinha rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
+                    className="sublinha inline-flex min-h-[28px] items-center rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                   >
                     Como chegar
                   </a>

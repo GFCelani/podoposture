@@ -28,7 +28,11 @@ const VARIANTS: Record<Variant, string> = {
   /* Sobre o petroleo: contorno claro, preenchimento que cresce em papel e
      texto que inverte para o fundo. Papel sobre o hero da 12.8 de contraste. */
   "secondary-deep": `${BASE} btn-fill [--fill:var(--color-paper)] rounded-md border-[1.5px] border-paper/45 px-7 py-3.5 text-paper hover:-translate-y-0.5 hover:border-paper hover:text-hero hover:shadow-lift active:translate-y-0`,
-  tertiary: `${BASE} sublinha items-baseline gap-2.5 text-accent hover:text-accent-deep`,
+  /* py-2 -my-2 amplia a area de toque sem mover nada: o rotulo continua na
+     mesma linha de base, mas o alvo sai de ~21px de altura para ~37. Sao 12
+     "Saiba Mais" na grade de servicos que reprovavam no minimo de 24x24 do
+     WCAG 2.2 (SC 2.5.8) — e que o Lighthouse nao audita. */
+  tertiary: `${BASE} sublinha items-baseline gap-2.5 py-2 -my-2 text-accent hover:text-accent-deep`,
 };
 
 export function ButtonLink({

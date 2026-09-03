@@ -24,7 +24,7 @@ export function ServicesGrid() {
       />
       <PageGrid />
 
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 lg:px-10 lg:py-24">
+      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-20 lg:py-24">
         <Reveal>
           <SectionMark n="07" />
         </Reveal>

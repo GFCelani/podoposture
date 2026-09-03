@@ -164,7 +164,7 @@ export function SiteHeader() {
           camada dentro do header os fios passavam sobre o logo e o menu, ja
           que logo e nav sao estaticos e camada absoluta pinta depois. */}
       <div
-        className={`mx-auto flex max-w-[1240px] items-center justify-between px-6 transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] lg:px-10 ${
+        className={`mx-auto flex max-w-[1240px] items-center justify-between px-6 transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-8 lg:px-10 ${
           rolou ? "h-14 lg:h-[68px]" : "h-16 lg:h-[92px]"
         }`}
       >
@@ -271,7 +271,7 @@ export function SiteHeader() {
         {activeGroup && (
           <div
             id={`mega-menu-${activeIndex}`}
-            className="absolute inset-x-0 top-full hidden px-6 lg:block lg:px-10"
+            className="absolute inset-x-0 top-full hidden px-6 lg:block md:px-8 lg:px-10"
             onMouseEnter={cancelClose}
           >
             <div className="painel-menu mx-auto mt-2 max-w-[1180px] overflow-hidden rounded-lg border border-rule bg-paper shadow-lift">
@@ -408,7 +408,13 @@ export function SiteHeader() {
           aria-modal="true"
           aria-label="Menu"
           tabIndex={-1}
-          className="fixed inset-x-0 top-14 bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper focus:outline-none lg:hidden"
+          /* O topo acompanha a altura real do cabecalho, que encolhe ao rolar.
+             Fixo em top-14 (56px), o drawer aberto sem rolagem ficava 8px
+             debaixo do cabecalho de 64px — o primeiro item do menu nascia
+             parcialmente coberto. */
+          className={`fixed inset-x-0 bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper transition-[top] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] focus:outline-none lg:hidden ${
+            rolou ? "top-14" : "top-16"
+          }`}
         >
           <nav aria-label="Principal" className="px-6 py-6">
             <div className="item-menu" style={{ ["--i" as string]: 0 }}>

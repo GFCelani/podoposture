@@ -100,7 +100,7 @@ export default async function PostDoBlog({
           { nome: post.titulo },
         ]}
       >
-        <div className="mx-auto max-w-[1240px] px-6 pt-10 lg:px-10">
+        <div className="mx-auto max-w-[1240px] px-6 pt-10 md:px-8 lg:px-10">
           <p className="mx-auto flex max-w-[68ch] items-center gap-4 font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">
             <time dateTime={post.dataISO}>{post.dataRotulo}</time>
             {post.categorias[0] && (
@@ -119,7 +119,7 @@ export default async function PostDoBlog({
             aria-labelledby="leia-tambem"
             className="border-t border-rule bg-surface"
           >
-            <div className="mx-auto max-w-[1240px] px-6 py-20 lg:px-10">
+            <div className="mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10">
               <h2
                 id="leia-tambem"
                 className="font-display text-[clamp(1.5rem,2.6vw,2rem)] leading-[1.2] font-semibold tracking-[-0.018em] text-ink-strong"
