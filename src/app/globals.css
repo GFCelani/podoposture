@@ -358,35 +358,42 @@ a:focus-visible .marca-vertebra {
   box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent);
 }
 
-/* Entrada por scroll. Padrao: sobe e aparece. */
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition:
-    opacity 0.75s var(--ease-saida),
-    transform 0.75s var(--ease-saida);
-}
+/* Entrada por scroll.
+   O estado inicial vive dentro de `scripting: enabled` de proposito. Estes
+   elementos nasciam com opacity:0 e so recebiam .is-in via IntersectionObserver;
+   sem JS — ou antes de ele executar — a pagina inteira ficava invisivel, o que
+   atinge acessibilidade e rastreamento ao mesmo tempo. Fora dessa media query o
+   conteudo simplesmente aparece, que e a degradacao correta. */
+@media (scripting: enabled) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.75s var(--ease-saida),
+      transform 0.75s var(--ease-saida);
+  }
 
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
+  .reveal.is-in {
+    opacity: 1;
+    transform: none;
+  }
 
-/* Titulo: revela por cortina de baixo para cima, no idioma da regua. */
-.reveal-cortina {
-  opacity: 0;
-  clip-path: inset(0 0 100% 0);
-  transform: translateY(8px);
-  transition:
-    opacity 0.5s var(--ease-saida),
-    clip-path 0.9s var(--ease-saida),
-    transform 0.9s var(--ease-saida);
-}
+  /* Titulo: revela por cortina de baixo para cima, no idioma da regua. */
+  .reveal-cortina {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(8px);
+    transition:
+      opacity 0.5s var(--ease-saida),
+      clip-path 0.9s var(--ease-saida),
+      transform 0.9s var(--ease-saida);
+  }
 
-.reveal-cortina.is-in {
-  opacity: 1;
-  clip-path: inset(0 0 -12% 0);
-  transform: none;
+  .reveal-cortina.is-in {
+    opacity: 1;
+    clip-path: inset(0 0 -12% 0);
+    transform: none;
+  }
 }
 
 /* Sublinhado que cresce da esquerda. Link de texto e item de menu. */
@@ -534,142 +541,6 @@ a:focus-visible .marca-vertebra {
   11% {
     transform: rotate(-4deg);
   }
-}
-
-/* ===============================================================
-   TIPOGRAFIA, ENTRADA E ESTADOS
-   =============================================================== */
-
-.marca-grifo {
-  background-color: transparent;
-  background-image: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--color-accent-light) 30%, transparent) 0 36%,
-    transparent 36%
-  );
-  box-shadow: inset 0 -2px 0 0 var(--color-accent-light);
-  color: inherit;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-
-.marca-grifo-claro {
-  background-image: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--color-accent) 10%, transparent) 0 36%,
-    transparent 36%
-  );
-  box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-/* Entrada por scroll. Padrao: sobe e aparece. */
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition:
-    opacity 0.75s var(--ease-saida),
-    transform 0.75s var(--ease-saida);
-}
-
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* Titulo: revela por cortina de baixo para cima, no idioma da regua. */
-.reveal-cortina {
-  opacity: 0;
-  clip-path: inset(0 0 100% 0);
-  transform: translateY(8px);
-  transition:
-    opacity 0.5s var(--ease-saida),
-    clip-path 0.9s var(--ease-saida),
-    transform 0.9s var(--ease-saida);
-}
-
-.reveal-cortina.is-in {
-  opacity: 1;
-  clip-path: inset(0 0 -12% 0);
-  transform: none;
-}
-
-/* Sublinhado que cresce da esquerda. Link de texto e item de menu. */
-.sublinha {
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 calc(100% - 2px);
-  background-size: 0% 1px;
-  transition: background-size var(--dur-media) var(--ease-saida);
-}
-
-.sublinha:hover,
-.sublinha:focus-visible,
-.grupo-aberto > .sublinha {
-  background-size: 100% 1px;
-}
-
-/* ===============================================================
-   FIO DO HEADER — um pulso de luz verde percorre a linha da base,
-   em loop. Decorativo: em movimento reduzido nao aparece.
-   =============================================================== */
-
-.fio-pulso {
-  opacity: 0;
-  transform: translateX(-30%);
-  animation: fio-pulso 14s linear infinite;
-}
-
-@keyframes fio-pulso {
-  0% {
-    opacity: 0;
-    transform: translateX(-30%);
-  }
-  4% {
-    opacity: 1;
-  }
-  26% {
-    opacity: 1;
-  }
-  30%,
-  100% {
-    opacity: 0;
-    transform: translateX(430%);
-  }
-}
-
-/* ===============================================================
-   BOTAO — preenchimento que cresce do canto inferior esquerdo.
-   O ::before e' um circulo que escala; o conteudo fica acima dele.
-   =============================================================== */
-
-/* Em @layer components de proposito: fora de layer esta regra venceria os
-   utilitarios do Tailwind, e o `position: relative` daqui sobrescrevia o
-   `fixed` do botao flutuante, que nascia no fluxo no fim do documento. */
-@layer components {
-  .btn-fill {
-    position: relative;
-    z-index: 0;
-    overflow: hidden;
-  }
-}
-
-.btn-fill::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -10%;
-  bottom: -10%;
-  width: 150%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--fill, var(--color-accent));
-  transform: translate(-40%, 55%) scale(0);
-  transition: transform var(--dur-lenta) var(--ease-saida);
-}
-
-.btn-fill:hover::before,
-.btn-fill:focus-visible::before {
-  transform: translate(-18%, 26%) scale(1.75);
 }
 
 /* ===============================================================
@@ -929,4 +800,23 @@ a:focus-visible .marca-vertebra {
     transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Atalho de teclado para pular o menu de ~20 links. Sai da tela ate receber
+   foco, entao nao ocupa espaco visual, mas continua no fluxo do documento. */
+.pular-para-conteudo {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-paper);
+  color: var(--color-ink-strong);
+  border: 1px solid var(--color-accent);
+  border-radius: 0 0 0.375rem 0;
+  font-size: 0.9375rem;
+}
+
+.pular-para-conteudo:focus {
+  left: 0;
 }

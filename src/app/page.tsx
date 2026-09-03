@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main>
+      <main id="conteudo">
         <Hero />
         <SeamRuler />
         <Welcome />
