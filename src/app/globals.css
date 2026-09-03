@@ -850,3 +850,203 @@ a:focus-visible .marca-vertebra {
 .pular-para-conteudo:focus {
   left: 0;
 }
+
+/* ===========================================================================
+   .prosa — tipografia do conteudo migrado (68 posts + 20 paginas)
+
+   Ate aqui esta classe existia so como nome no HTML: nenhuma regra em lugar
+   nenhum. Com o preflight do Tailwind zerando margem e igualando o tamanho dos
+   headings ao do corpo, os 88 documentos renderizavam crus — paragrafos colados,
+   titulo indistinguivel de texto, lista sem marcador.
+
+   As medidas seguem o publico da clinica: pacientes com dor cronica, boa parte
+   acima dos 50, lendo no celular. Corpo em 1.125rem (nao 17px), entrelinha 1.7 e
+   medida de 66 caracteres ficam do lado confortavel de todas as recomendacoes de
+   legibilidade, sem precisar de zoom.
+   =========================================================================== */
+
+.prosa {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--color-ink);
+  /* 66ch: acima de ~75 o olho perde a linha na volta; abaixo de ~55 quebra
+     demais o ritmo em telas grandes. */
+  max-width: 66ch;
+  margin-inline: auto;
+  text-wrap: pretty;
+}
+
+/* Espaco entre paragrafos vem de margin-top, e nao de margin-bottom, para o
+   primeiro filho nunca empurrar o bloco inteiro para baixo. */
+.prosa > * + * {
+  margin-top: 1.35em;
+}
+
+/* Entrada do texto. Como 42% dos posts nao tem um unico subtitulo — a autora
+   escrevia corrido —, o primeiro paragrafo ganha peso e serve de degrau entre o
+   titulo e o corpo. E o unico recurso de hierarquia que funciona sem inventar
+   secao que o texto nao tem. */
+.prosa > p:first-child {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--color-ink-strong);
+}
+
+.prosa h2,
+.prosa h3,
+.prosa h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-ink-strong);
+  text-wrap: balance;
+}
+
+/* A regua acima do h2 e o que faz a secao comecar: sem ela, so o tamanho da
+   fonte separa um assunto do outro, e em texto clinico denso isso nao basta. */
+.prosa h2 {
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  line-height: 1.2;
+  margin-top: 2.75em;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--color-rule);
+}
+
+.prosa h2 + * {
+  margin-top: 0.85em;
+}
+
+.prosa h3 {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  margin-top: 2.25em;
+}
+
+.prosa h4 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  margin-top: 1.9em;
+  color: var(--color-ink);
+}
+
+.prosa h3 + *,
+.prosa h4 + * {
+  margin-top: 0.6em;
+}
+
+.prosa ul,
+.prosa ol {
+  padding-left: 1.35rem;
+}
+
+.prosa ul {
+  list-style: disc;
+}
+
+.prosa ol {
+  list-style: decimal;
+}
+
+.prosa li {
+  padding-left: 0.35rem;
+}
+
+.prosa li + li {
+  margin-top: 0.7em;
+}
+
+.prosa li::marker {
+  color: var(--color-accent);
+}
+
+/* Nas paginas de servico o padrao da autora e "<strong>Rotulo:</strong> texto".
+   Destacar o rotulo com a cor forte transforma a lista em algo escaneavel. */
+.prosa strong {
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.prosa em {
+  font-style: italic;
+}
+
+/* Sublinhado nao aparece mais no conteudo: no editor do GoDaddy ele era usado
+   como titulo, e na web le como link. A regra fica como rede de seguranca caso
+   algum <u> volte pelo extrator. */
+.prosa u {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.prosa mark {
+  background: color-mix(in srgb, var(--color-action) 22%, transparent);
+  color: var(--color-ink-strong);
+  padding: 0.05em 0.2em;
+}
+
+.prosa a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  transition: text-decoration-color var(--dur-media, 220ms) ease;
+}
+
+.prosa a:hover {
+  text-decoration-color: currentColor;
+}
+
+.prosa blockquote {
+  margin-top: 2em;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--color-accent);
+  font-family: var(--display);
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.prosa blockquote p + p {
+  margin-top: 0.8em;
+}
+
+/* A figura respira fora da medida do texto: a coluna e estreita de proposito
+   para a leitura, e prender a imagem nela faz o post parecer um documento. */
+.prosa figure {
+  margin-top: 2.75em;
+  margin-bottom: 2.75em;
+}
+
+.prosa img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-rule);
+  background: var(--color-surface);
+}
+
+.prosa figcaption {
+  margin-top: 0.85rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+@media (min-width: 1024px) {
+  /* Sangria: a imagem avanca sobre a margem nos dois lados, ganhando presenca
+     sem empurrar a medida do texto. */
+  .prosa figure {
+    width: calc(100% + 8rem);
+    margin-inline: -4rem;
+  }
+
+  .prosa figcaption {
+    padding-inline: 4rem;
+  }
+}

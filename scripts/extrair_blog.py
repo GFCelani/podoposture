@@ -18,8 +18,12 @@ from __future__ import annotations
 import html
 import json
 import re
+import sys
 import unicodedata
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from normalizar_conteudo import normalizar
 
 RAIZ = Path(__file__).resolve().parent.parent
 ORIGEM = RAIZ / ".cache" / "godaddy" / "posts"
@@ -51,10 +55,23 @@ MESES = {
 }
 
 
-def unidades_utf16(texto: str) -> list[str]:
-    """Quebra o texto em unidades de codigo UTF-16, como o JavaScript faz."""
-    bruto = texto.encode("utf-16-le")
-    return [bruto[i : i + 2].decode("utf-16-le", errors="replace") for i in range(0, len(bruto), 2)]
+def fatiar_utf16(bruto: bytes, ini: int, fim: int) -> str:
+    """
+    Recorta o texto por indice de unidade UTF-16 e decodifica o pedaco inteiro.
+
+    Decodificar unidade a unidade — como esta funcao fazia antes — parte os pares
+    surrogate ao meio: cada metade e invalida sozinha e vira U+FFFD. O efeito
+    media 172 caracteres corrompidos em 20 dos 68 posts, quase todos emoji no
+    comeco de linha de CTA ("Agende sua avaliacao"), e as vezes com a tag de
+    negrito abrindo no meio do par. Fatiando primeiro e decodificando depois, o
+    par chega inteiro ao decodificador.
+    """
+    return bruto[ini * 2 : fim * 2].decode("utf-16-le", errors="replace")
+
+
+def tamanho_utf16(texto: str) -> int:
+    """Comprimento em unidades UTF-16 — a medida que o Draft.js usa nos offsets."""
+    return len(texto.encode("utf-16-le")) // 2
 
 
 def montar_inline(bloco: dict, entidades: dict) -> str:
@@ -66,8 +83,9 @@ def montar_inline(bloco: dict, entidades: dict) -> str:
     mesmo conjunto viram um unico par de tags. Links entram por cima, ja que
     entityRanges nao se aninham nesta base.
     """
-    unidades = unidades_utf16(bloco.get("text", ""))
-    total = len(unidades)
+    texto_bruto = bloco.get("text", "")
+    bruto = texto_bruto.encode("utf-16-le")
+    total = tamanho_utf16(texto_bruto)
     if total == 0:
         return ""
 
@@ -94,6 +112,17 @@ def montar_inline(bloco: dict, entidades: dict) -> str:
         for i in range(ini, fim):
             links[i] = url
 
+    # Um par surrogate ocupa duas unidades e nao pode ser separado. Quando uma
+    # faixa de estilo comeca ou termina no meio do par, a fronteira do run cairia
+    # entre as duas metades e cada lado viraria U+FFFD — com a tag de negrito
+    # abrindo no meio do emoji. Igualar a segunda metade a primeira faz o par
+    # pertencer sempre ao mesmo run.
+    for k in range(total - 1):
+        u = int.from_bytes(bruto[k * 2 : k * 2 + 2], "little")
+        if 0xD800 <= u <= 0xDBFF:
+            estilos[k + 1] = estilos[k]
+            links[k + 1] = links[k]
+
     partes: list[str] = []
     i = 0
     while i < total:
@@ -101,7 +130,7 @@ def montar_inline(bloco: dict, entidades: dict) -> str:
         while j < total and estilos[j] == estilos[i] and links[j] == links[i]:
             j += 1
 
-        texto = html.escape("".join(unidades[i:j]))
+        texto = html.escape(fatiar_utf16(bruto, i, j))
         # ordem estavel para o HTML nao oscilar entre execucoes
         for estilo in sorted(estilos[i]):
             tag = TAG_INLINE[estilo]
@@ -234,6 +263,7 @@ def main() -> int:
 
     posts = []
     sem_conteudo = []
+    registro: list[str] = []
 
     for arquivo in sorted(ORIGEM.glob("*.html")):
         s = arquivo.read_text(encoding="utf-8", errors="replace")
@@ -247,20 +277,27 @@ def main() -> int:
         cabeca = dados.get("head") or {}
 
         corpo_html, imagens = para_html(post["fullContent"]) if post.get("fullContent") else ("", [])
-        plano = texto_puro(corpo_html)
-        iso = post.get("publishedDate") or post.get("date") or ""
+        slug = slug_de_arquivo(arquivo.name)
 
         resumo = ""
         for meta in cabeca.get("meta", []):
             if meta.get("key") == "description":
                 resumo = meta.get("value", "").strip()
                 break
+
+        corpo_html, mudancas = normalizar(
+            corpo_html, post.get("featuredImage") or "", slug, resumo
+        )
+        registro.extend(f"`{slug}` — {m}" for m in mudancas)
+        plano = texto_puro(corpo_html)
+        iso = post.get("publishedDate") or post.get("date") or ""
+
         if not resumo:
             resumo = plano[:180].rstrip()
 
         posts.append(
             {
-                "slug": slug_de_arquivo(arquivo.name),
+                "slug": slug,
                 "titulo": (post.get("title") or "").strip(),
                 "resumo": resumo,
                 "dataISO": iso[:10],
@@ -278,7 +315,23 @@ def main() -> int:
     DESTINO.write_text(json.dumps(posts, ensure_ascii=False, indent=2), encoding="utf-8")
 
     curtos = [p for p in posts if p["palavras"] < 80]
+    cabecalho = [
+        "# Relatorio de normalizacao do conteudo",
+        "",
+        "Uma linha por transformacao aplicada ao conteudo migrado do GoDaddy.",
+        "Nenhuma palavra foi reescrita: mudou a marcacao em volta, ou saiu da",
+        "frente o marcador de lista que a autora digitava a mao.",
+        "",
+        "Serve para a clinica conferir: se alguma linha promoveu a titulo o que",
+        "era so uma frase enfatica, e uma linha para desfazer no extrator.",
+        "",
+    ]
+    (RAIZ / "RELATORIO-CONTEUDO.md").write_text(
+        "\n".join(cabecalho + [f"- {linha}" for linha in registro]) + "\n",
+        encoding="utf-8",
+    )
     print(f"posts extraidos: {len(posts)}  ->  {DESTINO.relative_to(RAIZ)}")
+    print(f"transformacoes: {len(registro)}  ->  RELATORIO-CONTEUDO.md")
     print(f"sem _BLOG_DATA: {len(sem_conteudo)}")
     print(f"mediana de palavras: {sorted(p['palavras'] for p in posts)[len(posts)//2]}")
     print(f"imagens referenciadas: {sum(len(p['imagens']) for p in posts)}")

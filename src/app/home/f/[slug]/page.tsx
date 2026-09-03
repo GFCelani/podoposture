@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ArtigoJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
-import { HtmlDoPost } from "@/components/prose";
+import { Conteudo } from "@/components/prose";
 import {
   BLOG_INDEX,
   SLUGS_DE_POST_A_GERAR,
@@ -112,7 +112,7 @@ export default async function PostDoBlog({
           </p>
         </div>
 
-        <HtmlDoPost html={post.html} />
+        <Conteudo html={post.html} />
 
         {relacionados.length > 0 && (
           <section

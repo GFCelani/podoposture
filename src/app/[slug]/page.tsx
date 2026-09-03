@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { PaginaMedicaJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
-import { BlocosDeConteudo } from "@/components/prose";
+import { Conteudo } from "@/components/prose";
 import {
   SLUGS_A_GERAR,
   buscarPagina,
@@ -86,7 +86,7 @@ export default async function Pagina({
         caminho={caminho}
       />
       <PageShell titulo={titulo} trilha={[{ nome: titulo }]}>
-        <BlocosDeConteudo blocos={pagina.blocos} tituloDaPagina={titulo} />
+        <Conteudo html={pagina.html} />
       </PageShell>
     </>
   );

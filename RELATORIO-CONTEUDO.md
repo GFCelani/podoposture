@@ -1,0 +1,191 @@
+# Relatorio de normalizacao do conteudo
+
+Uma linha por transformacao aplicada ao conteudo migrado do GoDaddy.
+Nenhuma palavra foi reescrita: mudou a marcacao em volta, ou saiu da
+frente o marcador de lista que a autora digitava a mao.
+
+Serve para a clinica conferir: se alguma linha promoveu a titulo o que
+era so uma frase enfatica, e uma linha para desfazer no extrator.
+
+- `2026-escolhas-de-hoje-qualidade-de-vida-amanhã` — capa repetida no corpo removida
+- `22-de-junho-—-dia-mundial-da-osteopatia` — capa repetida no corpo removida
+- `22-de-junho-—-dia-mundial-da-osteopatia` — resumo repetido no inicio do corpo removido: 🌍 22 de junho — dia mundial da osteopatia
+- `4-motivos-para-o-uso-da-flexo-distração-nas-patologias-discais` — capa repetida no corpo removida
+- `4-motivos-para-o-uso-da-flexo-distração-nas-patologias-discais` — resumo repetido no inicio do corpo removido: a flexo-distração é utilizada para tratar condições relacion
+- `4-motivos-para-o-uso-da-flexo-distração-nas-patologias-discais` — ol com 4 itens: <strong>ALÍVIO DA DOR</strong>: ajuda a reduzir a 
+- `a-acupuntura-funciona-para-dores-crônicas` — capa repetida no corpo removida
+- `a-acupuntura-funciona-para-dores-crônicas` — resumo repetido no inicio do corpo removido: aqui está o que a ciência diz.
+- `a-acupuntura-funciona-para-dores-crônicas` — u->h2  A ciência da acupuntura
+- `a-acupuntura-funciona-para-dores-crônicas` — u->h2  Como poderia ser?
+- `a-acupuntura-funciona-para-dores-crônicas` — u->h2  O que são pontos de acupuntura?
+- `a-acupuntura-funciona-para-dores-crônicas` — u->h2  A Acupuntura é segura?
+- `a-acupuntura-funciona-para-dores-crônicas` — u->h2  O que quero que meus pacientes saibam
+- `a-dor-lombar-que-não-aparece-na-ressonância` — capa repetida no corpo removida
+- `a-dor-lombar-que-não-aparece-na-ressonância` — resumo repetido no inicio do corpo removido: entenda o papel da fáscia toracolombar na perpetuação da dor
+- `a-história-por-trás-da-neurosynapse` — capa repetida no corpo removida
+- `a-história-por-trás-da-neurosynapse` — resumo repetido no inicio do corpo removido: o programa de neuromodulação avançada da podoposture
+- `a-importância-das-reavaliações-no-tratamento-com-palmilhas` — capa repetida no corpo removida
+- `a-importância-das-reavaliações-no-tratamento-com-palmilhas` — resumo repetido no inicio do corpo removido: seu corpo já mudou com o uso das palmilhas, agora é hora de 
+- `acordo-sempre-às-3h-da-manhã-o-que-o-meu-corpo-quer-me-dizer` — capa repetida no corpo removida
+- `acordo-sempre-às-3h-da-manhã-o-que-o-meu-corpo-quer-me-dizer` — resumo repetido no inicio do corpo removido: já aconteceu com você?
+- `afinal-para-que-serve-o-exame-de-baropodometria` — capa repetida no corpo removida
+- `bruxismo-refluxo-e-sistema-nervoso` — capa repetida no corpo removida
+- `bruxismo-refluxo-e-sistema-nervoso` — resumo repetido no inicio do corpo removido: uma nova forma de entender a dor orofacial
+- `bruxismo-sem-desgaste-dos-dentes` — capa repetida no corpo removida
+- `bruxismo-sem-desgaste-dos-dentes` — resumo repetido no inicio do corpo removido: por que você pode tensionar a mandíbula sem perceber
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Mas eu não ranjo os dentes e meus dentes não estão desgastados. Como 
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Eu fico apertando os dentes.”
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Eu não aperto os dentes.”
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Você aperta os dentes?”
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Relaxe os ombros.”
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Meus dentes estão encostados neste momento?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Minha mandíbula está realmente relaxada?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Estou fazendo algum esforço para mantê-la nessa posição?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Estou projetando a mandíbula para frente?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Estou mantendo-a desviada para algum dos lados?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Isso acontece principalmente quando estou trabalhando ou concentrado?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  trabalhando → bracing frequente
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  dirigindo → contato dentário
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  reunião estressante → clenching
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  momentos de descanso → mandíbula relaxada
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  atividade mandibular → possível sobrecarga e dor
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  dor → alteração do comportamento motor mandibular
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “Você range os dentes?”
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  O que sua mandíbula faz?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Isso acontece durante o sono ou enquanto você está acordado?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Existe clenching, bracing ou thrusting?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Em quais situações esses comportamentos aparecem?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Há dor, fadiga, cefaleia ou sintomas relacionados à ATM?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Como está o sono?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  Existem fatores emocionais ou períodos de elevada demanda cognitiva as
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  O comportamento está realmente relacionado aos sintomas apresentados?
+- `bruxismo-sem-desgaste-dos-dentes` — strong->h3  “O que sua mandíbula está fazendo quando você não está prestando atenç
+- `chinelos-100%-personalizados-para-fascite-plantar` — capa repetida no corpo removida
+- `chinelos-100%-personalizados-para-fascite-plantar` — resumo repetido no inicio do corpo removido: conforto para os pés! chinelos 100% personalizados para fasc
+- `chinelos-100%-personalizados-para-fascite-plantar` — ol com 4 itens: <u>Suporte do arco</u>: Nossos chinelos são projet
+- `chinelos-100%-personalizados-para-fascite-plantar` — ul com 3 itens: <u>Alívio duradouro</u>: Com nossos chinelos, você
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — capa repetida no corpo removida
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  Pés: A Base de Sustentação do Corpo
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  A Biomecânica dos Pés e a Coluna: Uma Relação de Mão Dupla
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  Pé Plano ou Pé Cavo: Causa ou Consequência?
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  A Avaliação Global: O Papel da Osteopatia e da Baropodometria
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  Quando as Palmilhas Personalizadas São Indicadas?
+- `como-a-biomecânica-dos-pés-pode-afetar-a-sua-coluna` — strong->h2  Conclusão: Cada Corpo é Único
+- `como-a-osteopatia-pode-aliviar-os-sintomas-da-neuralgia-de-arnold` — capa repetida no corpo removida
+- `cortisol-insônia-e-dor-o-ciclo-silencioso-que-sabota-sua-saúde` — capa repetida no corpo removida
+- `cortisol-insônia-e-dor-o-ciclo-silencioso-que-sabota-sua-saúde` — resumo repetido no inicio do corpo removido: você sente que está sempre cansado, inflamado, com dor persi
+- `cortisol-insônia-e-dor-o-ciclo-silencioso-que-sabota-sua-saúde` — strong->h3  Estresse → Insônia → Cortisol alto → Inflamação → Mais dor → Pior sono
+- `descubra-o-conforto-e-benefícios-das-palmilhas-personalizadas` — capa repetida no corpo removida
+- `descubra-o-conforto-e-benefícios-das-palmilhas-personalizadas` — resumo repetido no inicio do corpo removido: você sabia que uma simples palmilha pode fazer toda a difere
+- `descubra-o-conforto-e-benefícios-das-palmilhas-personalizadas` — ol com 5 itens: <strong>Conheça a importância de palmilhas sob med
+- `diretrizes-brasileiras-2026-para-fibromialgia` — capa repetida no corpo removida
+- `diretrizes-brasileiras-2026-para-fibromialgia` — resumo repetido no inicio do corpo removido: o que realmente mudou no tratamento?
+- `diretrizes-brasileiras-2026-para-fibromialgia` — strong->h3  O tratamento está atuando apenas no sintoma… ou na rede que sustenta o
+- `dismorfismo-podal-você-já-ouviu-falar` — capa repetida no corpo removida
+- `dismorfismo-podal-você-já-ouviu-falar` — resumo repetido no inicio do corpo removido: 🦶✨ dismorfismo podal: quando o pé afeta o corpo inteiro
+- `do-alerta-ao-esgotamento-o-que-o-estresse-crônico-faz-com-você` — capa repetida no corpo removida
+- `do-alerta-ao-esgotamento-o-que-o-estresse-crônico-faz-com-você` — resumo repetido no inicio do corpo removido: o corpo resiste até entrar em colapso: a neurociência explic
+- `do-alerta-ao-esgotamento-o-que-o-estresse-crônico-faz-com-você` — strong->h2  O alarme que nunca se apaga no cérebro
+- `do-alerta-ao-esgotamento-o-que-o-estresse-crônico-faz-com-você` — strong->h2  Os efeitos em cascata que percorrem o corpo são significativos
+- `do-alerta-ao-esgotamento-o-que-o-estresse-crônico-faz-com-você` — strong->h2  O que pode ser feito?
+- `dor-crônica-default-mode-e-medicina-bioelétrica-adaptativa` — capa repetida no corpo removida
+- `dor-crônica-default-mode-e-medicina-bioelétrica-adaptativa` — resumo repetido no inicio do corpo removido: dor crônica, default mode network e medicina bioelétrica ada
+- `dor-crônica-e-disfunção-autonômica` — capa repetida no corpo removida
+- `dor-crônica-e-disfunção-autonômica` — resumo repetido no inicio do corpo removido: quando o sistema nervoso perde o ritmo
+- `dor-na-atm-bruxismo-e-o-distúrbios-intestinais` — capa repetida no corpo removida
+- `dor-na-atm-bruxismo-e-o-distúrbios-intestinais` — resumo repetido no inicio do corpo removido: dor na mandíbula, intestino irritado e ansiedade? o cérebro 
+- `eletroacupuntura-tdcs-o-cérebro-aprende-a-não-sentir-tanta-dor` — capa repetida no corpo removida
+- `eletroacupuntura-tdcs-o-cérebro-aprende-a-não-sentir-tanta-dor` — resumo repetido no inicio do corpo removido: a dor crônica é, acima de tudo, um fenômeno cerebral.
+- `eletroacupuntura-tdcs-o-cérebro-aprende-a-não-sentir-tanta-dor` — ul com 2 itens: A eletroacupuntura tem efeitos superiores à acupun
+- `entenda-sua-pisada-com-a-baropodometria` — capa repetida no corpo removida
+- `entenda-sua-pisada-com-a-baropodometria` — resumo repetido no inicio do corpo removido: você já ouviu falar em baropodometria? este é um método avan
+- `entenda-sua-pisada-com-a-baropodometria` — ul com 4 itens: <u>Diagnóstico preciso</u>: A Baropodometria nos a
+- `enxaqueca-intestino-e-atm-por-que-esses-caminham-juntos` — capa repetida no corpo removida
+- `enxaqueca-intestino-e-atm-por-que-esses-caminham-juntos` — resumo repetido no inicio do corpo removido: a ciência começa a revelar a resposta
+- `enxaqueca-intestino-e-atm-por-que-esses-caminham-juntos` — strong->h3  ● Nervo Trigêmeo
+- `enxaqueca-intestino-e-atm-por-que-esses-caminham-juntos` — strong->h3  ● Nervo Vago
+- `enxaqueca-intestino-e-atm-por-que-esses-caminham-juntos` — strong->h3  ● Tronco cerebral
+- `estimulação-transcraniana-por-corrente-contínua-tdcs` — capa repetida no corpo removida
+- `estimulação-transcraniana-por-corrente-contínua-tdcs` — resumo repetido no inicio do corpo removido: o papel da neuromodulação na dor crônica e na reabilitação m
+- `exercícios-respiratórios-por-5-minutos-melhoram-humor-e-ansiedade` — capa repetida no corpo removida
+- `exercícios-respiratórios-por-5-minutos-melhoram-humor-e-ansiedade` — resumo repetido no inicio do corpo removido: há tempos oriento meus pacientes a praticarem exercícios res
+- `fibromialgiacomo-o-tdcs-pode-ajudar-no-tratamento-da-dor-crônica` — capa repetida no corpo removida
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — capa repetida no corpo removida
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — resumo repetido no inicio do corpo removido: a importância das palmilhas posturais no tratamento e preven
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — strong->h2  O Que São Palmilhas Posturais?
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — strong->h2  Relação entre Palmilhas Posturais e Dores na Coluna e Hérnia de Disco
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — strong->h2  Tratamento e Prevenção
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — strong->h2  Conclusão
+- `importância-das-palmilhas-posturais-nas-dores-da-coluna-e-hérnia` — ol com 4 itens: <strong>Correção da Postura</strong>: Palmilhas Po
+- `já-ouviu-falar-em-notalgia-parestésica` — capa repetida no corpo removida
+- `já-ouviu-falar-em-notalgia-parestésica` — resumo repetido no inicio do corpo removido: já percebeu que algumas pessoas têm uma mancha escurecida na
+- `mecanismo-de-windlass` — ul com 6 itens: Fascite Plantar
+- `melhorando-a-postura-por-meio-da-fisioterapia` — capa repetida no corpo removida
+- `migrânea-vestibular-tontura-e-cervical-qual-é-a-relação` — capa repetida no corpo removida
+- `neuralgia-do-auriculotemporal` — capa repetida no corpo removida
+- `neuralgia-do-auriculotemporal` — resumo repetido no inicio do corpo removido: você já ouviu falar em neuralgia do auriculotemporal (nat) ?
+- `neuralgia-occipital-ou-de-arnold` — capa repetida no corpo removida
+- `neuralgia-occipital-ou-de-arnold` — resumo repetido no inicio do corpo removido: quando a dor começa na nuca e sobe para a cabeça
+- `neurociência-da-dor-e-a-lombalgia-inespecífica` — capa repetida no corpo removida
+- `neuromodulação-auricular-no-tratamento-do-zumbido` — capa repetida no corpo removida
+- `neuromodulação-auricular-no-tratamento-do-zumbido` — resumo repetido no inicio do corpo removido: a neuromodulação auricular vagal (tavns) é uma técnica terap
+- `neuromodulação-auricular-vagal-tratamento-inovador-para-zumbido` — capa repetida no corpo removida
+- `neuromodulação-auricular-vagal-tratamento-inovador-para-zumbido` — resumo repetido no inicio do corpo removido: neuromodulação auricular vagal (tavns): tratamento inovador 
+- `neuromodulação-auricular-vagal-tratamento-inovador-para-zumbido` — strong->h3  Estudos Clínicos e Revisões Científicas:
+- `o-melhor-tratamento-para-zumbido-não-é-uma-técnica` — capa repetida no corpo removida
+- `o-melhor-tratamento-para-zumbido-não-é-uma-técnica` — resumo repetido no inicio do corpo removido: o melhor tratamento para o zumbido não é uma técnica. é a co
+- `o-que-a-ciência-está-revelando-sobre-o-nervo-vago` — capa repetida no corpo removida
+- `o-que-a-ciência-está-revelando-sobre-o-nervo-vago` — resumo repetido no inicio do corpo removido: e porque isso muda o olhar sobre o sistema de regulação.
+- `o-que-faz-uma-dor-comum-se-tornar-dor-crônica` — capa repetida no corpo removida
+- `o-que-faz-uma-dor-comum-se-tornar-dor-crônica` — strong->h3  Referência científica
+- `o-zumbido-e-o-frio-o-estresse-e-outras-causas-pouco-comentadas` — capa repetida no corpo removida
+- `osteopatia-e-disfunções-do-fígado-o-fígado-realmente-dói` — capa repetida no corpo removida
+- `palmilhas-personalizadas-para-pés-diabéticos` — capa repetida no corpo removida
+- `palmilhas-personalizadas-para-pés-diabéticos` — ol com 6 itens: <strong>DISTRIBUIÇÃO DE PRESSÃO</strong>: As palmi
+- `período-de-adaptação-ao-uso-das-palmilhas-posturais` — capa repetida no corpo removida
+- `período-de-adaptação-ao-uso-das-palmilhas-posturais` — resumo repetido no inicio do corpo removido: você sabia que é preciso um período de adaptação para o uso 
+- `posture-neurospine` — capa repetida no corpo removida
+- `posture-neurospine` — resumo repetido no inicio do corpo removido: nova abordagem baseada em neurociência para dor lombar crôni
+- `posturologia-e-as-emoções` — capa repetida no corpo removida
+- `posturologia-e-as-emoções` — ol com 4 itens: <strong>Postura e expressão emocional</strong>: As
+- `primavera-fígado-e-torcicolo-na-medicina-tradicional-chinesa` — capa repetida no corpo removida
+- `primavera-fígado-e-torcicolo-na-medicina-tradicional-chinesa` — resumo repetido no inicio do corpo removido: na medicina tradicional chinesa (mtc), cada estação do ano s
+- `quando-usar-uma-palmilha-postural-personalizada` — capa repetida no corpo removida
+- `relação-entre-dor-no-ombro-direito-e-o-fígado` — capa repetida no corpo removida
+- `relação-entre-dor-no-ombro-direito-e-o-fígado` — resumo repetido no inicio do corpo removido: e se eu te disser que a sua dor no ombro direito pode estar 
+- `relação-entre-o-ângulo-q-a-largura-do-quadril-e-os-joelhos` — capa repetida no corpo removida
+- `síndrome-de-takotsubo-quando-emoção-vira-doença-cardíaca-real` — capa repetida no corpo removida
+- `sente-uma-dor-na-lateral-da-coxa-que-parece-não-ter-explicação` — capa repetida no corpo removida
+- `sente-uma-dor-na-lateral-da-coxa-que-parece-não-ter-explicação` — resumo repetido no inicio do corpo removido: você deita de lado e lá vem aquela dor incômoda no quadril. 
+- `sente-uma-dor-na-lateral-da-coxa-que-parece-não-ter-explicação` — strong->h2  O enigma sensorial do quadril
+- `sente-uma-dor-na-lateral-da-coxa-que-parece-não-ter-explicação` — strong->h2  Conclusão
+- `tavns-uma-alternativa-promissora-na-dor-de-cabeça-crônica` — capa repetida no corpo removida
+- `tavns-uma-alternativa-promissora-na-dor-de-cabeça-crônica` — resumo repetido no inicio do corpo removido: estimulação auricular do nervo vago: como a neurociência est
+- `tecnologia-de-ponta-que-mapeia-a-atividade-cerebral-em-tempo-real` — capa repetida no corpo removida
+- `tecnologia-de-ponta-que-mapeia-a-atividade-cerebral-em-tempo-real` — resumo repetido no inicio do corpo removido: mapeamento cerebral em tempo real: tecnologia aplicada ao cu
+- `tendinite-do-calcâneo---causa-ou-consequência` — capa repetida no corpo removida
+- `tendinite-do-calcâneo---causa-ou-consequência` — resumo repetido no inicio do corpo removido: você sabia que para tratar a tendinite do calcâneo é preciso
+- `tendinite-do-calcâneo---causa-ou-consequência` — ul com 10 itens: Se já houve entorse de tornozelo no passado
+- `tontura-pressão-na-cabeça-e-sensação-de-alerta` — capa repetida no corpo removida
+- `tontura-pressão-na-cabeça-e-sensação-de-alerta` — resumo repetido no inicio do corpo removido: uma disfunção cervical-autonômica
+- `tratamento-integrado-da-dor-crônica` — capa repetida no corpo removida
+- `tratamento-integrado-da-dor-crônica` — resumo repetido no inicio do corpo removido: quando o problema não está apenas onde dói.
+- `tratamento-para-zumbido-como-a-neuromodulação-pode-ajudar` — capa repetida no corpo removida
+- `você-já-ouviu-falar-em-ondas-binaurais` — capa repetida no corpo removida
+- `você-já-ouviu-falar-em-ondas-binaurais` — resumo repetido no inicio do corpo removido: elas são uma das ferramentas que usamos aqui na clínica para
+- `você-sabe-o-que-é-trismo` — capa repetida no corpo removida
+- `você-sabe-todos-os-sintomas-que-podem-estar-associados-à-dtm` — capa repetida no corpo removida
+- `você-sabe-todos-os-sintomas-que-podem-estar-associados-à-dtm` — resumo repetido no inicio do corpo removido: você já deve ter ouvido falar da atm (articulação temporoman
+- `você-sente-o-ouvido-tampado-estalos-ou-zumbido` — capa repetida no corpo removida
+- `zumbido-o-que-é-por-que-acontece-e-como-tratar` — capa repetida no corpo removida
+- `zumbido-o-que-é-por-que-acontece-e-como-tratar` — resumo repetido no inicio do corpo removido: zumbido no ouvido: o que é, porque acontece e como tratar de
+- `zumbido-somatossensorial` — capa repetida no corpo removida
+- `zumbido-somatossensorial` — resumo repetido no inicio do corpo removido: como a neuromodulação auricular vagal pode ajudar no tratame
+- `zumbido-somatossensorial` — u->h2  O Que é Zumbido Somatossensorial?
+- `zumbido-somatossensorial` — u->h2  Sintomas Comuns
+- `zumbido-somatossensorial` — u->h2  O Que é Neuromodulação Auricular Vagal?
+- `zumbido-somatossensorial` — u->h2  Como Funciona a Neuromodulação Auricular Vagal?
+- `zumbido-somatossensorial` — u->h2  Benefícios da Neuromodulação Auricular Vagal no Tratamento do Zumbido 
+- `zumbido-somatossensorial` — u->h2  Considerações Finais
+- `zumbido-somatossensorial` — ul com 3 itens: Sensação de som constante, como apito, chiado ou z
+- `zumbido-somatossensorial` — ol com 3 itens: <strong>Redução da Intensidade do Zumbido</strong>

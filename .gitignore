@@ -10,3 +10,4 @@ _previews/
 
 # cache local do crawl do site GoDaddy (nao versionar)
 .cache/
+__pycache__/
