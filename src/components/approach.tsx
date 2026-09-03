@@ -105,7 +105,7 @@ export function Approach() {
             <Reveal delay={620}>
               <div className="mt-11 pl-14">
                 <ButtonLink
-                  href="https://wa.me/message/WFGOB3AVBI63J1"
+                  href="https://wa.me/5521992035643"
                   variant="primary"
                 >
                   Falar Sobre o Meu Caso
