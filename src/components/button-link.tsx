@@ -47,12 +47,16 @@ export function ButtonLink({
   const content = (
     <>
       {children}
+      {/* A seta e' medida em em, nao em px: acompanha o corpo do rotulo. Sem
+          isto, qualquer degrau que reduza o texto do botao deixa a seta grande
+          em proporcao. 0.867 x 0.6em e' a mesma razao 13:9 do viewBox, e da os
+          13x9px originais no corpo de base. */}
       <svg
         width="13"
         height="9"
         viewBox="0 0 13 9"
         aria-hidden="true"
-        className="shrink-0 transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/btn:translate-x-1"
+        className="h-[0.6em] w-[0.867em] shrink-0 transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/btn:translate-x-1"
       >
         <path
           d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"

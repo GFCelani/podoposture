@@ -8,9 +8,33 @@ import { PageGrid, SectionMark } from "./layers";
  * titulo, entrelinha, botoes e os espacos entre eles crescem pelo mesmo
  * fator (~1,15). Isto e' a parte dos botoes; o resto esta nas classes lg:
  * de cada peca. Degraus fixos por faixa, como o titulo: nada de clamp por
- * vw nem de media query por altura.
+ * vw.
+ * Na janela baixa (laptop, ate 860px de altura) os botoes descem junto com
+ * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
+ * ficarem grandes ao lado de um titulo de 50/61px. A regra e' essa, e vale
+ * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
+ * Corpo 14px, caixa 22x10, o que da 46px de altura contra os 55 do degrau
+ * de desktop; a seta e' medida em em no proprio ButtonLink,
+ * entao ela nao precisa de degrau proprio e nunca sobra na caixa menor.
+ * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 68/83.
  */
-const ESCALA_BOTAO = "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem]";
+/**
+ * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
+ * de trilho para o ponto: a linha e' desenhada por stroke-dash e o ponto anda
+ * por offset-path sobre este d. Era esta a origem do desalinhamento: o ponto
+ * andava por translateX em x, e a linha avanca por comprimento de arco. Nos
+ * trechos de pico o arco cresce mais rapido que o x, entao os dois se
+ * separavam no meio do ciclo. Parametrizados os dois pelo arco, ficam juntos.
+ * Com pathLength="100" o dash e' contado em porcentagem do traco, e o atraso
+ * negativo do ponto (-73% de 7s) o coloca na cabeca do segmento desenhado.
+ */
+const TRACO_MARCHA =
+  "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
+
+const ESCALA_BOTAO =
+  "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
+  "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
+  "lg:[@media(max-height:860px)]:py-2.5 lg:[@media(max-height:860px)]:text-[0.875rem]";
 
 export function Hero() {
   return (
@@ -57,7 +81,10 @@ export function Hero() {
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
-        <div className="relative z-10 lg:col-span-9">
+        {/* O recuo extra na janela baixa e' o "tudo mais para a direita": vale
+            para o numeral, o titulo, os botoes e a curva de marcha, e nao
+            para a peca grafica, que e' absoluta e ancorada a direita. */}
+        <div className="relative z-10 lg:col-span-9 lg:[@media(max-height:860px)]:pl-14">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque />
           </div>
@@ -120,14 +147,22 @@ export function Hero() {
           >
             <path
               className="traco-monitor"
-              d="M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420"
+              pathLength={100}
+              d={TRACO_MARCHA}
               fill="none"
               stroke="var(--color-accent-light)"
               strokeOpacity={0.55}
               strokeWidth={1.4}
               strokeLinejoin="round"
             />
-            <circle className="traco-monitor-ponto" cx={0} cy={40} r={2.6} fill="var(--color-accent-light)" />
+            <circle
+              className="traco-monitor-ponto"
+              cx={0}
+              cy={0}
+              r={2.6}
+              fill="var(--color-accent-light)"
+              style={{ offsetPath: `path("${TRACO_MARCHA}")` }}
+            />
           </svg>
 
         </div>
@@ -160,9 +195,14 @@ export function Hero() {
           shrink-0 na peca e' o que decide o desempate: em vez de a figura
           encolher (o svg tem preserveAspectRatio, entao encolher a largura
           reduz o desenho inteiro e ele deixa de bater com as outras faixas),
-          ela mantem o tamanho e transborda o inicio nominal do campo. Nao
-          encosta no titulo: o corpo tambem desceu um patamar nessa altura,
-          entao a linha mais larga acaba em 497 e a peca comeca em 618.
+          ela mantem o tamanho e transborda o inicio nominal do campo.
+
+          Nessa altura o campo deixa de ser a fronteira, porque o bloco de
+          texto tambem andou 56px para a direita. Quem manda ali e' a folga
+          medida entre o fim da linha mais larga e a borda da peca: 49px em
+          1024, 142 em 1280, 213 em 1366. E' esse par de numeros, e nao o
+          calc, que precisa ser reconferido se o corpo do titulo, o recuo do
+          bloco ou a rampa de margem mudarem de novo.
 
           A figura e' vertical (221 x 560), entao a escala vem da altura do
           hero, nao da largura do campo: altura = altura do hero menos 112px

@@ -849,29 +849,39 @@ a:focus-visible .marca-vertebra {
 }
 
 /* Tracado de monitor: linha correndo, ponto percorrendo. */
+/* Curva de marcha. O traco leva pathLength="100", entao dash e' porcentagem
+   do comprimento: o segmento cobre 73% e a lacuna 27%, e o ciclo empurra o
+   padrao um traco inteiro para frente. O repouso (linha cheia, ponto no
+   inicio) vive no estilo base, e o dash so existe dentro do keyframe: assim
+   quem pediu menos movimento ve a curva inteira, nao um pedaco parado. */
 .traco-monitor {
-  stroke-dasharray: 640 240;
-  stroke-dashoffset: 0;
   animation: traco-monitor 7s linear infinite;
 }
 
 @keyframes traco-monitor {
+  from {
+    stroke-dasharray: 73 27;
+    stroke-dashoffset: 0;
+  }
   to {
-    stroke-dashoffset: -880;
+    stroke-dasharray: 73 27;
+    stroke-dashoffset: -100;
   }
 }
 
+/* O ponto anda pelo mesmo traco (offset-path vem inline, do d do componente).
+   O atraso negativo de 73% do ciclo o poe na cabeca do segmento desenhado, e
+   nao na cauda. offset-distance no estilo base e' o repouso. */
 .traco-monitor-ponto {
   opacity: 0.9;
-  animation: traco-ponto 7s linear infinite;
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: traco-ponto 7s linear infinite -5.11s;
 }
 
 @keyframes traco-ponto {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(420px);
+  to {
+    offset-distance: 100%;
   }
 }
 
