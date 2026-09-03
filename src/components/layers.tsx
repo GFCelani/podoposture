@@ -20,21 +20,30 @@ type Tone = "light" | "deep";
  * de proposito: e' chapa opaca POR CIMA da grade, nao superficie que ela
  * atravessa.
  *
- * `colunas` acende os fios fortes, os que marcam as colunas do conteudo. So
- * o hero os usa: abaixo dele a trama fina corre sozinha. A geometria nao
- * muda, entao a grade continua na mesma abscissa de ponta a ponta; o que
- * muda e' so o peso.
+ * `colunas` acende os fios fortes, os que marcam as colunas do conteudo.
+ * `crescente` poe a trama numa rampa da esquerda para a direita, por
+ * mascara: quase nula onde o titulo vive, cheia sobre a area da imagem. A
+ * geometria nunca muda, entao a grade cai na mesma abscissa de ponta a ponta
+ * em qualquer combinacao; o que muda e' so o peso. Hoje so o hero e'
+ * `crescente`; as demais bandas ficam no peso padrao, uniforme.
  */
 export function PageGrid({
   tone = "light",
   colunas = false,
+  crescente = false,
 }: {
   tone?: Tone;
   colunas?: boolean;
+  crescente?: boolean;
 }) {
   return (
     <div aria-hidden="true" className="grade-ancora">
-      <div className="grade" data-grade={tone} data-colunas={colunas ? "sim" : undefined} />
+      <div
+        className="grade"
+        data-grade={tone}
+        data-colunas={colunas ? "sim" : undefined}
+        data-crescente={crescente ? "sim" : undefined}
+      />
     </div>
   );
 }

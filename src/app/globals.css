@@ -164,6 +164,20 @@ body {
   --fio-forte: transparent;
 }
 
+/* Variante do hero: a trama cresce da esquerda para a direita. Quase nula
+   onde o titulo vive, cheia sobre a area da imagem. A rampa vive na
+   mascara; o --fio-fino declarado e' o peso do extremo direito, nao a
+   media. A geometria nao muda: mascara nao desloca fio, so atenua. */
+.grade[data-crescente] {
+  --fio-fino: color-mix(in srgb, var(--color-rule) 22%, transparent);
+  -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / 0.18) 0%, rgb(0 0 0 / 0.5) 42%, #000 100%);
+  mask-image: linear-gradient(to right, rgb(0 0 0 / 0.18) 0%, rgb(0 0 0 / 0.5) 42%, #000 100%);
+}
+
+.grade[data-grade="deep"][data-crescente] {
+  --fio-fino: rgb(250 249 246 / 0.038);
+}
+
 @media (min-width: 1024px) {
   .grade {
     --pad: 40px;
@@ -172,7 +186,7 @@ body {
 }
 
 /* ===============================================================
-   HERO — entrada do texto e respiracao da vertebra.
+   HERO — entrada do texto e movimento da peca grafica.
    O repouso vive no estilo base, nunca no keyframe 100%: com movimento
    reduzido a animacao termina no primeiro quadro e o elemento volta ao base.
    Ver vault/repouso-de-animacao-css-vive-no-estilo-base
@@ -191,25 +205,7 @@ body {
   }
 }
 
-/* A vertebra respira: sobe um fio e cresce quase nada, e volta. E' o unico
-   transform do <img>; a entrada (opacidade) fica no wrapper. */
-.vertebra-respira {
-  transform: none;
-  animation: vertebra-respira 8s var(--ease-ciclo) infinite;
-  animation-delay: 1.2s;
-}
-
-@keyframes vertebra-respira {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-7px) scale(1.012);
-  }
-}
-
-/* Sonar da vertebra. O ponto respira em opacidade; a onda nasce no ponto,
+/* Sonar das articulacoes. O ponto respira em opacidade; a onda nasce no ponto,
    expande e some. Base da onda e' opacity 0: com movimento reduzido nao ha
    onda, so o ponto parado. Ver vault/startup-lp-loop-css-precisa-de-opacity-0-na-base */
 .sonar-ponto {
@@ -242,45 +238,69 @@ body {
   }
   100% {
     opacity: 0;
-    transform: scale(9);
+    transform: scale(var(--escala, 9));
   }
 }
 
-/* Movimento da camada verde/azul da vertebra. Um transform por no, repouso
-   no estilo base. Os arcos sao arcos de circulo girando em torno do centro
-   do circulo, entao girar = percorrer a propria trajetoria. */
-.gira {
-  transform: rotate(0deg);
-  animation: gira var(--dur, 16s) linear infinite;
-  animation-direction: var(--sentido, normal);
+/* A figura esquematica do hero. Um transform por no', repouso no estilo
+   base; o que nao deve existir com movimento reduzido nasce em opacity 0. */
+
+/* O conjunto respira: escala minima, ciclo lento. */
+.figura-respira {
+  transform: scale(1);
+  animation: figura-respira 9s var(--ease-ciclo) infinite;
+  animation-delay: 1.2s;
 }
 
-@keyframes gira {
-  to {
-    transform: rotate(360deg);
+@keyframes figura-respira {
+  50% {
+    transform: scale(1.012);
   }
 }
 
-.varre {
-  transform: rotate(0deg);
-  animation: varre var(--dur, 8s) var(--ease-ciclo) infinite alternate;
-}
-
-@keyframes varre {
-  to {
-    transform: rotate(var(--ang, 8deg));
-  }
-}
-
-.flutua {
-  transform: translateY(0);
-  animation: flutua var(--dur, 6s) var(--ease-ciclo) infinite;
+/* Corrente na cadeia: um ponto nasce numa ponta do segmento, corre ate a
+   outra e some; o resto do ciclo fica invisivel. --dx/--dy em px do
+   viewBox. */
+.corrente {
+  opacity: 0;
+  transform: translate(0, 0);
+  animation: corrente var(--dur, 6s) linear infinite;
   animation-delay: var(--fase, 0s);
 }
 
-@keyframes flutua {
-  50% {
-    transform: translateY(-10px);
+@keyframes corrente {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  3% {
+    opacity: 0.9;
+  }
+  21% {
+    opacity: 0.9;
+  }
+  24%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+/* Varredura da coluna: uma sobreposicao em papel por vertebra, que acende
+   por um instante; a fase cresce de cima para baixo, entao a onda desce. */
+.vertebra-acende {
+  opacity: 0;
+  animation: vertebra-acende 7s var(--ease-ciclo) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes vertebra-acende {
+  4% {
+    opacity: 0.85;
+  }
+  13%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -700,29 +720,39 @@ a:focus-visible .marca-vertebra {
 }
 
 /* Tracado de monitor: linha correndo, ponto percorrendo. */
+/* Curva de marcha. O traco leva pathLength="100", entao dash e' porcentagem
+   do comprimento: o segmento cobre 73% e a lacuna 27%, e o ciclo empurra o
+   padrao um traco inteiro para frente. O repouso (linha cheia, ponto no
+   inicio) vive no estilo base, e o dash so existe dentro do keyframe: assim
+   quem pediu menos movimento ve a curva inteira, nao um pedaco parado. */
 .traco-monitor {
-  stroke-dasharray: 640 240;
-  stroke-dashoffset: 0;
   animation: traco-monitor 7s linear infinite;
 }
 
 @keyframes traco-monitor {
+  from {
+    stroke-dasharray: 73 27;
+    stroke-dashoffset: 0;
+  }
   to {
-    stroke-dashoffset: -880;
+    stroke-dasharray: 73 27;
+    stroke-dashoffset: -100;
   }
 }
 
+/* O ponto anda pelo mesmo traco (offset-path vem inline, do d do componente).
+   O atraso negativo de 73% do ciclo o poe na cabeca do segmento desenhado, e
+   nao na cauda. offset-distance no estilo base e' o repouso. */
 .traco-monitor-ponto {
   opacity: 0.9;
-  animation: traco-ponto 7s linear infinite;
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: traco-ponto 7s linear infinite -5.11s;
 }
 
 @keyframes traco-ponto {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(420px);
+  to {
+    offset-distance: 100%;
   }
 }
 

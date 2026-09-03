@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { DevMedida } from "../components/dev-medida";
 
 import { NegocioLocalJsonLd } from "@/components/json-ld";
 import {
@@ -82,6 +83,7 @@ export default function RootLayout({
         </a>
         <NegocioLocalJsonLd />
         {children}
+        <DevMedida />
       </body>
     </html>
   );

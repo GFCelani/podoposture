@@ -6,6 +6,7 @@ out/
 .playwright-mcp/
 .vercel
 tsconfig.tsbuildinfo
+_previews/
 
 # cache local do crawl do site GoDaddy (nao versionar)
 .cache/
