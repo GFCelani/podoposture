@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { BLOG_INDEX, CATEGORIES, POSTS } from "@/lib/posts";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -131,16 +132,25 @@ export function Journal() {
           <aside className="mt-16 lg:col-span-3 lg:col-start-10 lg:mt-0">
             <Reveal delay={200}>
               <div className="border-t border-rule pt-8">
-                <h3 className="text-[0.6875rem] tracking-[0.18em] text-muted uppercase" style={{ fontFamily: "var(--mono)" }}>
+                {/* Rotulo da lista, nao subsecao do artigo: como h3 ele
+                    entrava no sumario de headings ao lado dos titulos dos
+                    posts, com o mesmo peso. Vira paragrafo e nomeia a lista
+                    pelo aria-labelledby — o desenho nao muda. */}
+                <p
+                  id="journal-categorias"
+                  className="text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
+                  style={{ fontFamily: "var(--mono)" }}
+                >
                   Categorias
-                </h3>
-                <ul className="mt-6 space-y-3.5">
+                </p>
+                <ul
+                  aria-labelledby="journal-categorias"
+                  className="mt-6 space-y-3.5"
+                >
                   {CATEGORIES.map((category) => (
                     <li key={category.href}>
-                      <a
+                      <Link
                         href={category.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="group flex items-baseline gap-3 text-[0.9375rem] leading-[1.45] text-ink transition-colors duration-200 hover:text-accent"
                       >
                         <span
@@ -148,7 +158,7 @@ export function Journal() {
                           className="h-px w-3 shrink-0 translate-y-[-0.3em] bg-rule transition-all duration-200 group-hover:w-5 group-hover:bg-accent"
                         />
                         {category.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>

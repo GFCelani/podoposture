@@ -71,10 +71,10 @@ export function ClinicalResponsibility() {
             <Reveal delay={140}>
               <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
                 <Image
-                  src="/img/galeria/avaliacao-postural.jpg"
+                  src="/img/galeria/avaliacao-postural.webp"
                   alt="Paciente em avaliação postural sobre a plataforma, de perfil ao espelho"
-                  width={900}
-                  height={1125}
+                  width={857}
+                  height={1072}
                   sizes="(min-width: 1024px) 440px, 100vw"
                   className="aspect-[4/3] w-full rounded-md object-cover saturate-[0.88]"
                 />

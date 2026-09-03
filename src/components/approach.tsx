@@ -38,7 +38,7 @@ export function Approach() {
                 />
                 <figure className="relative -rotate-[1.2deg] rounded-lg border border-rule bg-paper p-3 shadow-float transition-transform duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-rotate-[0.4deg]">
                   <Image
-                    src="/img/baropodometria.jpg"
+                    src="/img/baropodometria.webp"
                     alt="Análise de marcha com marcadores sobre plataforma de baropodometria"
                     width={1080}
                     height={816}

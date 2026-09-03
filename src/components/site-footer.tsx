@@ -48,7 +48,9 @@ export function SiteFooter() {
           className="mt-10 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
           style={{ fontFamily: "var(--mono)" }}
         >
-          © 2020 podoposture.com.br
+          {/* O ©2020 congelado veio do site antigo e era o defeito n1 da
+              AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
+          © {new Date().getFullYear()} Podoposture
         </p>
       </div>
     </footer>

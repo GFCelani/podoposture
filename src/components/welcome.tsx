@@ -46,10 +46,10 @@ export function Welcome() {
             <Reveal delay={160}>
               <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
                 <Image
-                  src="/img/galeria/recepcao.jpg"
+                  src="/img/galeria/recepcao.webp"
                   alt="Recepção da clínica, com balcão em madeira e placa da Podoposture"
-                  width={900}
-                  height={1125}
+                  width={827}
+                  height={1033}
                   sizes="(min-width: 1024px) 440px, 100vw"
                   className="aspect-[4/3] w-full rounded-md object-cover saturate-[0.88] lg:aspect-[5/4]"
                 />

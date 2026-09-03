@@ -12,7 +12,7 @@ const CARDS = [
   {
     title: "Tratamento da Dor Lombar",
     href: "/dor-lombar-crônica",
-    src: "/img/card-dor-lombar.jpg",
+    src: "/img/card-dor-lombar.webp",
     width: 1024,
     height: 1280,
     alt: "Homem sentado à mesa com dor na região lombar",
@@ -20,7 +20,7 @@ const CARDS = [
   {
     title: "Tratamento da Dor Crônica",
     href: "/tratamento-da-dor",
-    src: "/img/card-dor-cronica.jpg",
+    src: "/img/card-dor-cronica.webp",
     width: 1024,
     height: 1280,
     alt: "Mulher em pé levando a mão ao pescoço, com dor cervical",
@@ -28,7 +28,7 @@ const CARDS = [
   {
     title: "Tratamento do Zumbido, Bruxismo, Cefaleias e DTMs",
     href: "/tratamento-do-zumbido",
-    src: "/img/card-zumbido.jpg",
+    src: "/img/card-zumbido.webp",
     width: 819,
     height: 1024,
     alt: "Mulher diante de um computador com as mãos nas têmporas, com cefaleia",

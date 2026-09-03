@@ -12,6 +12,8 @@ export function SiteHeader() {
   const [accordion, setAccordion] = useState<string | null>(NAV_GROUPS[0].label);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progresso = useRef<HTMLSpanElement>(null);
+  const botaoDrawer = useRef<HTMLButtonElement>(null);
+  const painelDrawer = useRef<HTMLDivElement>(null);
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -23,27 +25,43 @@ export function SiteHeader() {
   }, [cancelClose]);
 
   // Compactacao e regua de progresso na mesma leitura de scroll, em rAF.
+  // O alcance rolavel fica em cache: scrollHeight e innerHeight so mudam
+  // quando o layout muda, mas le-los dentro do rAF obrigava o navegador a
+  // recalcular layout em TODO frame de scroll. O ResizeObserver cobre o
+  // conteudo que cresce (imagem que chega, acordeao que abre) e o resize
+  // cobre a janela; o comportamento visual e' o mesmo.
   useEffect(() => {
     let pedido = 0;
+    let alcance = 0;
+    const medir = () => {
+      alcance = document.documentElement.scrollHeight - window.innerHeight;
+    };
     const ler = () => {
       pedido = 0;
       const y = window.scrollY;
       setRolou(y > 24);
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      const p = total > 0 ? Math.min(1, y / total) : 0;
+      const p = alcance > 0 ? Math.min(1, y / alcance) : 0;
       if (progresso.current) {
         progresso.current.style.transform = `scaleX(${p.toFixed(4)})`;
       }
     };
-    const onScroll = () => {
+    const agendar = () => {
       if (!pedido) pedido = requestAnimationFrame(ler);
     };
+    const remedir = () => {
+      medir();
+      agendar();
+    };
+    medir();
     ler();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    const observador = new ResizeObserver(remedir);
+    observador.observe(document.documentElement);
+    window.addEventListener("scroll", agendar, { passive: true });
+    window.addEventListener("resize", remedir);
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      observador.disconnect();
+      window.removeEventListener("scroll", agendar);
+      window.removeEventListener("resize", remedir);
       if (pedido) cancelAnimationFrame(pedido);
     };
   }, []);
@@ -66,7 +84,70 @@ export function SiteHeader() {
     };
   }, [drawer]);
 
+  // Com o drawer aberto ele passa a ser o unico conteudo alcancavel. Sem
+  // isso o Tab escapa do menu e passeia pela pagina que ficou atras: coberta
+  // para o mouse, mas viva para o teclado e para o leitor de tela.
+  useEffect(() => {
+    if (!drawer) return;
+    const painel = painelDrawer.current;
+    if (!painel) return;
+    // capturado agora, e nao lido no cleanup: a ref pode ja ter sido
+    // desmontada quando a limpeza roda, e ai o foco nao voltaria para lugar nenhum
+    const gatilho = botaoDrawer.current;
+
+    // Fica de fora o ramo que contem o proprio drawer — a comparacao e' por
+    // contains, e nao pela tag do header, para o inert nao se voltar contra o
+    // menu se alguma pagina envolver o cabecalho num wrapper. O portal do
+    // Next tambem escapa, senao o overlay de erro do dev pararia de responder.
+    const fundo = Array.from(document.body.children).filter(
+      (el): el is HTMLElement =>
+        el instanceof HTMLElement &&
+        !el.contains(painel) &&
+        el.tagName.toLowerCase() !== "nextjs-portal",
+    );
+    fundo.forEach((el) => el.setAttribute("inert", ""));
+
+    // Foco no painel, nao no primeiro link: quem abriu o menu ainda esta
+    // escolhendo para onde ir, e o leitor de tela anuncia o dialogo inteiro.
+    painel.focus();
+
+    const onTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const lista = Array.from(
+        painel.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"),
+      );
+      if (lista.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const primeiro = lista[0];
+      const ultimo = lista[lista.length - 1];
+      const ativo = document.activeElement;
+      if (!painel.contains(ativo)) {
+        e.preventDefault();
+        (e.shiftKey ? ultimo : primeiro).focus();
+      } else if (e.shiftKey && ativo === primeiro) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && ativo === ultimo) {
+        e.preventDefault();
+        primeiro.focus();
+      }
+    };
+    document.addEventListener("keydown", onTab);
+
+    return () => {
+      document.removeEventListener("keydown", onTab);
+      fundo.forEach((el) => el.removeAttribute("inert"));
+      // O foco volta para o hamburguer porque foi dele que o drawer saiu:
+      // fechando por Esc o foco cairia no <body> e a navegacao por teclado
+      // recomecaria do topo da pagina, longe de onde a pessoa estava.
+      gatilho?.focus();
+    };
+  }, [drawer]);
+
   const activeGroup = NAV_GROUPS.find((g) => g.label === open) ?? null;
+  const activeIndex = activeGroup ? NAV_GROUPS.indexOf(activeGroup) : -1;
 
   return (
     // Sem backdrop-filter: ele tornaria o header bloco contentor dos
@@ -119,6 +200,7 @@ export function SiteHeader() {
                   <button
                     type="button"
                     aria-expanded={isOpen}
+                    aria-controls={`mega-menu-${i}`}
                     onMouseEnter={() => {
                       cancelClose();
                       setOpen(group.label);
@@ -132,7 +214,7 @@ export function SiteHeader() {
                     <span
                       aria-hidden="true"
                       className={`text-[0.5625rem] tracking-[0.16em] transition-colors duration-[160ms] ${
-                        isOpen ? "text-accent" : "text-muted/45"
+                        isOpen ? "text-accent" : "text-muted"
                       }`}
                       style={{ fontFamily: "var(--mono)" }}
                     >
@@ -188,6 +270,7 @@ export function SiteHeader() {
         {/* Painel do mega-menu: placa flutuante, nao faixa de ponta a ponta */}
         {activeGroup && (
           <div
+            id={`mega-menu-${activeIndex}`}
             className="absolute inset-x-0 top-full hidden px-6 lg:block lg:px-10"
             onMouseEnter={cancelClose}
           >
@@ -199,9 +282,7 @@ export function SiteHeader() {
                     className="text-[0.6875rem] tracking-[0.2em] text-accent"
                     style={{ fontFamily: "var(--mono)" }}
                   >
-                    {String(
-                      NAV_GROUPS.findIndex((g) => g.label === activeGroup.label) + 1,
-                    ).padStart(2, "0")}
+                    {String(activeIndex + 1).padStart(2, "0")}
                   </p>
                   <p className="mt-4 font-display text-[1.5rem] leading-[1.2] font-semibold tracking-[-0.018em] text-ink-strong">
                     {activeGroup.label}
@@ -261,9 +342,11 @@ export function SiteHeader() {
 
         {/* Mobile */}
         <button
+          ref={botaoDrawer}
           type="button"
           onClick={() => setDrawer((v) => !v)}
           aria-expanded={drawer}
+          aria-controls="menu-mobile"
           aria-label={drawer ? "Fechar menu" : "Abrir menu"}
           className="group/menu -mr-2 flex h-11 w-11 items-center justify-center rounded-md transition-colors duration-[160ms] hover:bg-surface lg:hidden"
         >
@@ -318,7 +401,15 @@ export function SiteHeader() {
 
       {/* Drawer mobile */}
       {drawer && (
-        <div className="fixed inset-x-0 top-14 bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper lg:hidden">
+        <div
+          ref={painelDrawer}
+          id="menu-mobile"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+          tabIndex={-1}
+          className="fixed inset-x-0 top-14 bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper focus:outline-none lg:hidden"
+        >
           <nav aria-label="Principal" className="px-6 py-6">
             <div className="item-menu" style={{ ["--i" as string]: 0 }}>
               <Link
@@ -341,13 +432,14 @@ export function SiteHeader() {
                   <button
                     type="button"
                     aria-expanded={isOpen}
+                    aria-controls={`grupo-mobile-${gi}`}
                     onClick={() => setAccordion(isOpen ? null : group.label)}
                     className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-ink"
                   >
                     <span className="flex items-baseline gap-3">
                       <span
                         aria-hidden="true"
-                        className="text-[0.625rem] tracking-[0.14em] text-muted/70"
+                        className="text-[0.625rem] tracking-[0.14em] text-muted"
                         style={{ fontFamily: "var(--mono)" }}
                       >
                         {String(gi + 1).padStart(2, "0")}
@@ -370,7 +462,7 @@ export function SiteHeader() {
                     </svg>
                   </button>
                   {isOpen && (
-                    <ul className="pb-3">
+                    <ul id={`grupo-mobile-${gi}`} className="pb-3">
                       {group.items.map((item, i) => (
                         <li
                           key={item.href}

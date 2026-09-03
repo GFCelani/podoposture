@@ -15,6 +15,7 @@ export function ServicesGrid() {
   return (
     <section
       id="servicos"
+      aria-labelledby="servicos-titulo"
       className="relative overflow-hidden"
     >
       <div
@@ -27,6 +28,15 @@ export function ServicesGrid() {
         <Reveal>
           <SectionMark n="07" />
         </Reveal>
+
+        {/* O "07" e' um numeral, nao um nome: sem um h2 a secao entrava no
+            sumario do leitor de tela como doze h3 soltos, sem dizer do que
+            eram. Fica invisivel porque esta banda e a de tratamentos formam
+            um par de grades sem titulo aparente — o rotulo e' para quem nao
+            ve o desenho. */}
+        <h2 id="servicos-titulo" className="sr-only">
+          Serviços
+        </h2>
 
         <ul className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((service, i) => (

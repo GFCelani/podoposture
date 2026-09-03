@@ -84,11 +84,13 @@ export function VertebraLombar({ className = "" }: { className?: string }) {
       style={{ ["--in-delay" as string]: "420ms" }}
     >
       <Image
-        src="/vertebra-lombar.png"
+        src="/vertebra-lombar.webp"
         alt="Ilustração de uma vértebra lombar vista em três quartos, com o corpo vertebral à frente e os processos espinhoso e transversos ao fundo"
         width={1043}
         height={1058}
-        priority
+        // sem `priority`: o fundo do hero e o candidato a LCP e ja carrega com
+        // prioridade. Duas imagens disputando a mesma fila so atrasam as duas.
+        loading="eager"
         sizes="(min-width: 1024px) 600px, 320px"
         className="vertebra-respira h-auto w-full select-none opacity-75"
         draggable={false}

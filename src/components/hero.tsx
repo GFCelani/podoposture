@@ -26,7 +26,7 @@ export function Hero() {
           e mante-la faria o fundo nao bater com a referencia. */}
       <div aria-hidden="true" className="absolute inset-0">
         <Image
-          src="/img/clinica-podoposture-5.jpg"
+          src="/img/clinica-podoposture-5.webp"
           alt=""
           fill
           priority
