@@ -50,7 +50,13 @@ export function Hero() {
           de coluna. */}
       <PageGrid tone="deep" crescente />
 
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
+      {/* O hero e' a unica banda com contentor mais largo que os 1240px do
+          resto da pagina: 1340 em lg. E' o que traz o bloco de texto para a
+          esquerda (50px em 1440 e 1600, 20px em 1280, nada em 1024, onde o
+          texto ja esta na goteira de 40px da grade). O preco e' que a
+          margem esquerda do hero nao bate mais com a do cabecalho e a das
+          secoes abaixo nessas larguras. Foi pedido. */}
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
         <div className="relative z-10 lg:col-span-9">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque />
@@ -69,7 +75,7 @@ export function Hero() {
             mesma antes e depois: linhas x corpo x entrelinha, sem CLS.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[60px] lg:text-[62px] xl:text-[76px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <span className="block">
@@ -125,26 +131,33 @@ export function Hero() {
         {/*
           O campo da peca grafica: contrapeso do bloco de titulo. A peca nao
           passa por baixo do texto: o campo comeca 24px depois do fim da
-          linha mais larga do titulo e vai ate a borda da janela. A margem
-          direita e' metade da margem do contentor ((50vw - 580px) / 2), com
-          piso de 64px. As constantes vem da geometria do titulo: em lg a
-          linha mais larga termina em 606px (pad 40 + 566); em xl, em
-          50vw + 114 (contentor centrado + 694). Se o corpo do titulo mudar,
-          estes dois calc mudam junto.
+          linha mais larga do titulo e vai ate a borda da janela.
 
-          A figura e' vertical (240 x 560), entao a escala vem da altura do
+          As constantes do calc saem da geometria medida do titulo, e sao a
+          soma "recuo do contentor + 40 de padding + linha mais larga + 24
+          de folga". A linha mais larga muda no degrau de corpo: 621px em lg
+          (68px), 758px em xl (83px). O recuo do contentor e'
+          max(0, (100vw - 1340) / 2), zero ate 1340 e crescente depois; por
+          isso ele entra no calc de xl, que e' a unica faixa que atravessa
+          esse limite (1280 sem recuo, 1440 com 50). Se o corpo do titulo
+          ou o max-w do contentor mudar, estes dois calc mudam junto.
+
+          A margem direita afasta a peca da borda da janela: 96 / 108 / 148 /
+          188px em 1024 / 1280 / 1440 / 1600. Foi aumentada para trazer a
+          figura para a esquerda.
+
+          A figura e' vertical (221 x 560), entao a escala vem da altura do
           hero, nao da largura do campo: altura = altura do hero menos 112px
           (56px acima e abaixo), teto de 760px; a largura segue a proporcao.
-          Em 1024 x 768 da 242 x 564; em 1440 x 900, 298 x 696. O campo
-          sempre sobra em largura, entao a folga com o titulo fica acima do
-          minimo medido (23px) em todas as faixas.
+          O campo sempre sobra em largura, entao a folga com o titulo fica
+          acima do minimo medido (23px) em todas as faixas.
 
           Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
           limitada a min(44vw, 200px): 141px em 320, 172 em 390, 200 em 768.
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw-630px)] lg:items-center lg:justify-end lg:pr-[max(64px,25vw_-_290px)] xl:w-[calc(50vw-138px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(96px,25vw_-_212px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
