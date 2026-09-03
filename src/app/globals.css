@@ -164,15 +164,18 @@ body {
   --fio-forte: transparent;
 }
 
-/* Variante leve: so a trama fina, com pouco mais da metade do peso. E' a do
-   hero, onde a foto em cor cheia por baixo ja da textura e a grade cheia
-   virava ruido sobre a imagem. */
-.grade[data-sutil] {
-  --fio-fino: color-mix(in srgb, var(--color-rule) 9%, transparent);
+/* Variante do hero: a trama cresce da esquerda para a direita. Quase nula
+   onde o titulo vive, cheia sobre a area da imagem. A rampa vive na
+   mascara; o --fio-fino declarado e' o peso do extremo direito, nao a
+   media. A geometria nao muda: mascara nao desloca fio, so atenua. */
+.grade[data-crescente] {
+  --fio-fino: color-mix(in srgb, var(--color-rule) 22%, transparent);
+  -webkit-mask-image: linear-gradient(to right, rgb(0 0 0 / 0.18) 0%, rgb(0 0 0 / 0.5) 42%, #000 100%);
+  mask-image: linear-gradient(to right, rgb(0 0 0 / 0.18) 0%, rgb(0 0 0 / 0.5) 42%, #000 100%);
 }
 
-.grade[data-grade="deep"][data-sutil] {
-  --fio-fino: rgb(250 249 246 / 0.017);
+.grade[data-grade="deep"][data-crescente] {
+  --fio-fino: rgb(250 249 246 / 0.038);
 }
 
 @media (min-width: 1024px) {
