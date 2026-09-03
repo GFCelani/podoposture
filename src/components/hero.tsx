@@ -132,8 +132,15 @@ export function Hero() {
           50vw + 114 (contentor centrado + 694). Se o corpo do titulo mudar,
           estes dois calc mudam junto.
 
+          A figura e' vertical (240 x 560), entao a escala vem da altura do
+          hero, nao da largura do campo: altura = altura do hero menos 112px
+          (56px acima e abaixo), teto de 760px; a largura segue a proporcao.
+          Em 1024 x 768 da 242 x 564; em 1440 x 900, 298 x 696. O campo
+          sempre sobra em largura, entao a folga com o titulo fica acima do
+          minimo medido (23px) em todas as faixas.
+
           Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
-          reduzida.
+          limitada a min(44vw, 200px): 141px em 320, 172 em 390, 200 em 768.
         */}
         <div
           aria-hidden="true"
@@ -161,7 +168,7 @@ export function Hero() {
               </div>
             ))}
           </div>
-          <FiguraEsquematica className="rule-in relative h-auto w-[min(44vw,210px)] lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
+          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(44vw,200px)] lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
         </div>
       </div>
     </section>
