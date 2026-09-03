@@ -6,3 +6,4 @@ out/
 .playwright-mcp/
 .vercel
 tsconfig.tsbuildinfo
+_previews/

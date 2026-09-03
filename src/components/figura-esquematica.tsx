@@ -1,22 +1,28 @@
+import { SILHUETA_D } from "./silhueta-corpo-path";
+
 /**
- * A peca grafica do hero: uma figura humana esquematica, de pe, em vista
- * lateral (de frente para a esquerda). E' lateral porque so nela a curvatura
- * da coluna existe de verdade: lordose cervical, cifose toracica, lordose
- * lombar, sacro inclinado. De frente, a coluna e' uma reta.
+ * A peca grafica do hero: figura humana esquematica, de pe, vista frontal.
  *
- * Esquematica do comeco ao fim. Vertebra e' retangulo arredondado sobre a
- * tangente da curva; disco e' um traco; articulacao e' anel com ponto;
- * silhueta e' um contorno unico fechado, sem volume; o braco e' um segundo
- * contorno mais fraco por cima do tronco. Nada de anatomia desenhada: ja
- * se tentou duas vezes neste projeto e nao funcionou.
+ * A silhueta e' a vetorizacao de assets/silhueta-corpo.png (ver
+ * silhueta-corpo-path.ts): laco unico fechado, nao redesenhado. Todo o resto
+ * (coluna, articulacoes, cadeia, prumo) foi realinhado a ela por medida, nao
+ * por estimativa: os pontos saem das corridas de pixel da propria mascara do
+ * PNG (ombro na largura do deltoide, cotovelo no meio do braco, quadril na
+ * pelve, joelho entre quadril e tornozelo, tornozelo no ponto mais estreito
+ * da perna). Eixo do corpo em x = 110,5, medido no centro do tronco.
  *
- * Tudo nasce de numeros, nao de curvas ajustadas a mao. A linha media da
- * coluna e' x(y) por tres senos (um por curvatura); as 24 vertebras sao
- * amostradas dessa funcao, com o tamanho crescendo de cima para baixo.
- * O contorno e' Catmull-Rom sobre poucos pontos, como a silhueta da
- * secao 04.
+ * Esquematica do comeco ao fim: vertebra e' retangulo arredondado, disco e'
+ * um traco, articulacao e' anel com ponto, silhueta e' contorno unico sem
+ * volume. Nada de anatomia desenhada dentro do contorno.
  *
- * viewBox 240 x 560 com width/height declarados: proporcao conhecida antes
+ * De frente a coluna nao tem curvatura lateral, e fingir uma seria desenhar
+ * um desvio que a clinica trata. Entao a coluna fica exatamente sobre o fio
+ * de prumo (que e' o que a posturologia procura) e a curvatura sagital e'
+ * sugerida por ritmo: os discos abrem no meio das lordoses (cervical e
+ * lombar) e fecham no apice da cifose toracica, e o corpo vertebral cresce
+ * de cima para baixo.
+ *
+ * viewBox 221 x 560 com width/height declarados: proporcao conhecida antes
  * do CSS, sem CLS. Um grupo por camada, para animar cada uma sozinha.
  */
 
@@ -24,189 +30,125 @@ const n = (v: number) => Number(v.toFixed(1));
 
 type Pt = { x: number; y: number };
 
-/** Catmull-Rom para bezier cubica; fechado ou aberto. */
-function curva(pts: Pt[], fechar = false): string {
-  const P = fechar ? [...pts, pts[0], pts[1]] : pts;
-  let d = `M ${n(P[0].x)} ${n(P[0].y)}`;
-  for (let i = 0; i < P.length - 1 - (fechar ? 1 : 0); i++) {
-    const p0 = P[i - 1] ?? P[i];
-    const p1 = P[i];
-    const p2 = P[i + 1];
-    const p3 = P[i + 2] ?? p2;
-    d += ` C ${n(p1.x + (p2.x - p0.x) / 6)} ${n(p1.y + (p2.y - p0.y) / 6)} ${n(
-      p2.x - (p3.x - p1.x) / 6,
-    )} ${n(p2.y - (p3.y - p1.y) / 6)} ${n(p2.x)} ${n(p2.y)}`;
-  }
-  if (fechar) d += " Z";
-  return d;
-}
-
-/** Fio de prumo: passa pela orelha, pelo ombro e pelo quadril. */
-const PRUMO = 126;
+/** Eixo do corpo, medido no centro do tronco da silhueta. */
+const EIXO = 110.5;
 
 /* ---------------------------------------------------------------
-   Coluna: linha media x(y). Anterior e' a esquerda (x menor).
-   Cervical curva para a frente, toracica para tras, lombar para a
-   frente; o sacro sai para tras. Amplitudes em unidades do viewBox.
+   Coluna. Cada regiao distribui suas vertebras num bloco [y0, y1]:
+   a fatia de cada uma e' proporcional a um peso senoidal, entao o
+   disco (fatia menos corpo vertebral) abre ou fecha no meio da
+   regiao. abertura > 0 abre no meio (lordose), < 0 fecha (cifose).
    --------------------------------------------------------------- */
-const EIXO = 131;
-const CURVAS = [
-  { de: 84, ate: 136, amp: -5 }, // lordose cervical
-  { de: 136, ate: 232, amp: 9 }, // cifose toracica
-  { de: 232, ate: 300, amp: -6 }, // lordose lombar
-] as const;
-
-function xColuna(y: number): number {
-  for (const c of CURVAS) {
-    if (y >= c.de && y <= c.ate) {
-      return EIXO + c.amp * Math.sin((Math.PI * (y - c.de)) / (c.ate - c.de));
-    }
-  }
-  return EIXO;
-}
-
-/** Inclinacao da tangente em graus (positivo = desce para tras). */
-function anguloColuna(y: number): number {
-  const dx = xColuna(y + 1) - xColuna(y - 1);
-  return (Math.atan2(dx, 2) * 180) / Math.PI;
-}
-
-type Vertebra = { y: number; w: number; h: number; nivel: "c" | "t" | "l" };
-
-/** 24 vertebras: 7 cervicais, 12 toracicas, 5 lombares. Crescem descendo. */
-const VERTEBRAS: Vertebra[] = [
-  ...Array.from({ length: 7 }, (_, i) => ({
-    y: 90 + i * 6.4,
-    w: 7.5 + i * 0.3,
-    h: 3.6,
-    nivel: "c" as const,
-  })),
-  ...Array.from({ length: 12 }, (_, i) => ({
-    y: 138 + i * 8.4,
-    w: 10 + i * 0.4,
-    h: 5 + i * 0.12,
-    nivel: "t" as const,
-  })),
-  ...Array.from({ length: 5 }, (_, i) => ({
-    y: 242 + i * 11.5,
-    w: 15 + i * 0.6,
-    h: 7.4,
-    nivel: "l" as const,
-  })),
-];
-
-/* ---------------------------------------------------------------
-   Articulacoes e cadeia.
-   --------------------------------------------------------------- */
-const ARTICULACOES = {
-  occipital: { x: 129, y: 83 },
-  ombro: { x: PRUMO, y: 130 },
-  cotovelo: { x: 129, y: 222 },
-  punho: { x: 116, y: 322 },
-  sacro: { x: 146, y: 318 },
-  quadril: { x: PRUMO, y: 306 },
-  joelho: { x: 118, y: 420 },
-  tornozelo: { x: 131, y: 530 },
-} as const;
-
-type Articulacao = keyof typeof ARTICULACOES;
-
-/** Sonar: duracao e fase proprias por articulacao, nunca em unissono. */
-const SONAR: Record<Articulacao, { dur: number; fase: number }> = {
-  occipital: { dur: 4.2, fase: 0.4 },
-  ombro: { dur: 3.7, fase: 1.9 },
-  cotovelo: { dur: 4.6, fase: 3.1 },
-  punho: { dur: 4.0, fase: 0.9 },
-  sacro: { dur: 4.4, fase: 2.5 },
-  quadril: { dur: 3.9, fase: 0.0 },
-  joelho: { dur: 4.8, fase: 1.4 },
-  tornozelo: { dur: 4.1, fase: 3.6 },
+type Regiao = {
+  chave: "cervical" | "toracica" | "lombar";
+  qtd: number;
+  y0: number;
+  y1: number;
+  w0: number;
+  w1: number;
+  h0: number;
+  h1: number;
+  abertura: number;
+  rx: number;
 };
 
-const A = ARTICULACOES;
-
-/** Ritmo da corrente por segmento, na ordem de CADEIA. */
-const CORRENTE = [
-  { dur: 6.5, fase: 0.0 },
-  { dur: 6.5, fase: 0.7 },
-  { dur: 6.5, fase: 1.6 },
-  { dur: 6.5, fase: 3.1 },
-  { dur: 7.0, fase: 0.3 },
-  { dur: 7.0, fase: 1.4 },
-  { dur: 7.0, fase: 2.4 },
-  { dur: 7.0, fase: 4.0 },
+const REGIOES: Regiao[] = [
+  { chave: "cervical", qtd: 7, y0: 90, y1: 118, w0: 6.4, w1: 8.4, h0: 1.9, h1: 1.9, abertura: 0.35, rx: 0.9 },
+  { chave: "toracica", qtd: 12, y0: 122, y1: 220, w0: 9.4, w1: 12.4, h0: 4.2, h1: 4.8, abertura: -0.3, rx: 1.5 },
+  { chave: "lombar", qtd: 5, y0: 225, y1: 272, w0: 13.6, w1: 16, h0: 6, h1: 6, abertura: 0.35, rx: 2 },
 ];
 
-/** Ligacoes: cada par e' um segmento da cadeia. */
-const CADEIA: [Pt, Pt][] = [
-  [A.occipital, { x: xColuna(90), y: 90 }],
-  [A.ombro, { x: xColuna(138), y: 138 }],
-  [A.ombro, A.cotovelo],
-  [A.cotovelo, A.punho],
-  [A.quadril, A.sacro],
-  [A.sacro, { x: xColuna(290), y: 290 }],
-  [A.quadril, A.joelho],
-  [A.joelho, A.tornozelo],
-];
+type Vertebra = { y: number; w: number; h: number; rx: number };
+
+function montarColuna(): Vertebra[] {
+  const out: Vertebra[] = [];
+  for (const r of REGIOES) {
+    const pesos = Array.from(
+      { length: r.qtd },
+      (_, i) => 1 + r.abertura * Math.sin((Math.PI * (i + 0.5)) / r.qtd),
+    );
+    const soma = pesos.reduce((a, b) => a + b, 0);
+    const escala = (r.y1 - r.y0) / soma;
+    let topo = r.y0;
+    pesos.forEach((p, i) => {
+      const fatia = p * escala;
+      const t = r.qtd === 1 ? 0 : i / (r.qtd - 1);
+      out.push({
+        y: topo + fatia / 2,
+        w: r.w0 + (r.w1 - r.w0) * t,
+        h: r.h0 + (r.h1 - r.h0) * t,
+        rx: r.rx,
+      });
+      topo += fatia;
+    });
+  }
+  return out;
+}
+
+const VERTEBRAS = montarColuna();
 
 /* ---------------------------------------------------------------
-   Contornos. Sentido horario a partir do topo da cabeca.
+   Articulacoes. Os pares nao ganham lado: numa vista frontal a
+   esquerda do desenho e' a direita de quem esta ali. Cada par e' o
+   mesmo ponto espelhado no eixo.
    --------------------------------------------------------------- */
-const SILHUETA: Pt[] = [
-  { x: 116, y: 20 },
-  { x: 138, y: 30 },
-  { x: 148, y: 56 },
-  { x: 142, y: 80 },
-  { x: 136, y: 96 },
-  { x: 138, y: 114 },
-  { x: 152, y: 136 },
-  { x: 158, y: 182 },
-  { x: 150, y: 228 },
-  { x: 141, y: 264 },
-  { x: 152, y: 300 },
-  { x: 156, y: 334 },
-  { x: 148, y: 372 },
-  { x: 138, y: 420 },
-  { x: 146, y: 462 },
-  { x: 136, y: 506 },
-  { x: 142, y: 538 },
-  { x: 140, y: 551 },
-  { x: 72, y: 551 },
-  { x: 74, y: 542 },
-  { x: 100, y: 532 },
-  { x: 110, y: 500 },
-  { x: 106, y: 452 },
-  { x: 104, y: 420 },
-  { x: 100, y: 372 },
-  { x: 98, y: 332 },
-  { x: 94, y: 292 },
-  { x: 92, y: 252 },
-  { x: 90, y: 204 },
-  { x: 94, y: 162 },
-  { x: 102, y: 136 },
-  { x: 108, y: 112 },
-  { x: 100, y: 96 },
-  { x: 94, y: 78 },
-  { x: 90, y: 56 },
-  { x: 96, y: 32 },
+const PARES = [
+  { chave: "ombro", dx: 56, y: 149.5, r: 5.5, dur: 3.7, fase: [0.0, 1.9] },
+  { chave: "cotovelo", dx: 73.8, y: 250.5, r: 5.2, dur: 4.6, fase: [3.1, 0.8] },
+  { chave: "quadril", dx: 27.6, y: 309.5, r: 5.5, dur: 3.9, fase: [1.2, 2.7] },
+  { chave: "joelho", dx: 31.7, y: 408, r: 5.5, dur: 4.8, fase: [0.5, 2.2] },
+  { chave: "tornozelo", dx: 26.1, y: 489.3, r: 5, dur: 4.1, fase: [3.6, 1.5] },
+] as const;
+
+const NO_EIXO = [
+  { chave: "occipital", y: 78, r: 4.2, dur: 4.2, fase: 0.4 },
+  { chave: "sacro", y: 281, r: 4.2, dur: 4.4, fase: 2.5 },
+] as const;
+
+type Junta = { chave: string; x: number; y: number; r: number; dur: number; fase: number };
+
+const JUNTAS: Junta[] = [
+  ...NO_EIXO.map((a) => ({ chave: a.chave, x: EIXO, y: a.y, r: a.r, dur: a.dur, fase: a.fase })),
+  ...PARES.flatMap((p) =>
+    [-1, 1].map((s, i) => ({
+      chave: `${p.chave}-${i}`,
+      x: EIXO + s * p.dx,
+      y: p.y,
+      r: p.r,
+      dur: p.dur,
+      fase: p.fase[i],
+    })),
+  ),
 ];
 
-/** Braco pendido ao lado do tronco: contorno proprio, mais fraco. */
-const BRACO: Pt[] = [
-  { x: 110, y: 128 },
-  { x: 106, y: 154 },
-  { x: 112, y: 190 },
-  { x: 118, y: 222 },
-  { x: 112, y: 262 },
-  { x: 111, y: 318 },
-  { x: 114, y: 344 },
-  { x: 122, y: 344 },
-  { x: 128, y: 318 },
-  { x: 132, y: 262 },
-  { x: 139, y: 222 },
-  { x: 138, y: 180 },
-  { x: 132, y: 142 },
-  { x: 124, y: 128 },
+function junta(chave: string): Pt {
+  const j = JUNTAS.find((k) => k.chave === chave);
+  if (!j) throw new Error(`junta desconhecida: ${chave}`);
+  return { x: j.x, y: j.y };
+}
+
+/** Ponto da coluna na altura y: a coluna esta sobre o eixo. */
+const naColuna = (y: number): Pt => ({ x: EIXO, y });
+
+/**
+ * Cadeia: cada cintura ligada a coluna e cada membro descendo em serie.
+ * Duracao e fase por segmento, escalonadas, para o sinal descer a cadeia em
+ * vez de piscar tudo junto.
+ */
+const CADEIA: { a: Pt; b: Pt; dur: number; fase: number }[] = [
+  { a: junta("occipital"), b: naColuna(90), dur: 6.5, fase: 0 },
+  // cintura escapular: os dois ombros para o alto da toracica
+  { a: junta("ombro-0"), b: naColuna(122), dur: 6.5, fase: 0.5 },
+  { a: junta("ombro-1"), b: naColuna(122), dur: 6.5, fase: 0.9 },
+  { a: junta("ombro-0"), b: junta("cotovelo-0"), dur: 6.5, fase: 1.7 },
+  { a: junta("ombro-1"), b: junta("cotovelo-1"), dur: 6.5, fase: 2.1 },
+  // cintura pelvica: o sacro para os dois quadris
+  { a: junta("sacro"), b: junta("quadril-0"), dur: 7, fase: 0.4 },
+  { a: junta("sacro"), b: junta("quadril-1"), dur: 7, fase: 0.8 },
+  { a: junta("quadril-0"), b: junta("joelho-0"), dur: 7, fase: 1.7 },
+  { a: junta("quadril-1"), b: junta("joelho-1"), dur: 7, fase: 2.1 },
+  { a: junta("joelho-0"), b: junta("tornozelo-0"), dur: 7, fase: 3.0 },
+  { a: junta("joelho-1"), b: junta("tornozelo-1"), dur: 7, fase: 3.4 },
 ];
 
 const PAPEL = "var(--color-paper)";
@@ -216,8 +158,8 @@ const VERDE = "var(--color-action)";
 export function FiguraEsquematica({ className = "" }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 240 560"
-      width={240}
+      viewBox="0 0 221 560"
+      width={221}
       height={560}
       className={className}
       aria-hidden="true"
@@ -226,145 +168,156 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {/* 3: a figura inteira respira; unico transform deste no'. Origem no
-          centro do viewBox para os pes nao sairem do chao visivelmente. */}
-      <g className="figura-respira" style={{ transformBox: "view-box", transformOrigin: "120px 300px" }}>
-      {/* 2.5 eixo de prumo: do topo ao chao, com marcas nas duas cinturas */}
-      <g data-camada="prumo" stroke={PAPEL}>
-        <line x1={PRUMO} y1={4} x2={PRUMO} y2={556} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="3 6" />
-        {[A.ombro.y, A.quadril.y].map((y) => (
-          <line key={y} x1={PRUMO - 16} y1={y} x2={PRUMO + 16} y2={y} strokeOpacity={0.45} strokeWidth={1} />
-        ))}
-        <line x1={60} y1={552} x2={176} y2={552} strokeOpacity={0.3} strokeWidth={1} />
-      </g>
+      {/* A figura inteira respira; unico transform deste no'. */}
+      <g
+        className="figura-respira"
+        style={{ transformBox: "view-box", transformOrigin: "110.5px 300px" }}
+      >
+        {/* Eixo de prumo: do alto ao chao, com marcas nas duas cinturas */}
+        <g data-camada="prumo" stroke={PAPEL}>
+          <line x1={EIXO} y1={4} x2={EIXO} y2={556} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="3 6" />
+          {PARES.filter((p) => p.chave === "ombro" || p.chave === "quadril").map((p) => (
+            <line
+              key={p.chave}
+              x1={EIXO - 16}
+              y1={p.y}
+              x2={EIXO + 16}
+              y2={p.y}
+              strokeOpacity={0.45}
+              strokeWidth={1}
+            />
+          ))}
+          <line x1={50} y1={542} x2={171} y2={542} strokeOpacity={0.3} strokeWidth={1} />
+        </g>
 
-      {/* 2.1 silhueta: contorno unico, fino, quase sem preenchimento */}
-      <g data-camada="silhueta">
-        <path d={curva(SILHUETA, true)} fill={PAPEL} fillOpacity={0.04} stroke={PAPEL} strokeOpacity={0.85} strokeWidth={1.4} />
-        <path d={curva(BRACO, true)} stroke={PAPEL} strokeOpacity={0.4} strokeWidth={1} />
-      </g>
-
-      {/* 2.4 cadeia: liga articulacoes entre si e a coluna */}
-      <g data-camada="cadeia" stroke={PAPEL} strokeOpacity={0.35} strokeWidth={0.9}>
-        {CADEIA.map(([a, b], i) => (
-          <line key={i} x1={n(a.x)} y1={n(a.y)} x2={n(b.x)} y2={n(b.y)} />
-        ))}
-      </g>
-      {/* 3: corrente. Um ponto por segmento, nasce numa ponta e morre na outra
-          (translate + opacity); base em opacity 0, entao com movimento
-          reduzido nao existe. Fase escalonada ao longo de cada cadeia. */}
-      <g data-camada="corrente" fill={PAPEL} stroke="none">
-        {CADEIA.map(([a, b], i) => (
-          <circle
-            key={i}
-            className="corrente"
-            cx={n(a.x)}
-            cy={n(a.y)}
-            r={1.7}
-            style={{
-              ["--dx" as string]: `${n(b.x - a.x)}px`,
-              ["--dy" as string]: `${n(b.y - a.y)}px`,
-              ["--dur" as string]: `${CORRENTE[i].dur}s`,
-              ["--fase" as string]: `${CORRENTE[i].fase}s`,
-            }}
+        {/* Silhueta: o contorno vetorizado, traco fino e preenchimento quase
+            transparente. Mesma pesagem da silhueta anterior. */}
+        <g data-camada="silhueta">
+          <path
+            d={SILHUETA_D}
+            fill={PAPEL}
+            fillOpacity={0.04}
+            stroke={PAPEL}
+            strokeOpacity={0.85}
+            strokeWidth={1.4}
           />
-        ))}
-      </g>
+        </g>
 
-      {/* 2.2 coluna: 24 retangulos sobre a tangente da curva, discos como
-          tracos entre eles, sacro como um retangulo inclinado */}
-      <g data-camada="coluna">
-        {VERTEBRAS.map((v, i) => {
-          const cx = xColuna(v.y);
-          const ang = anguloColuna(v.y);
-          const seg = VERTEBRAS[i + 1];
-          return (
-            <g key={i} transform={`rotate(${n(ang)} ${n(cx)} ${n(v.y)})`}>
-              <rect
-                x={n(cx - v.w / 2)}
-                y={n(v.y - v.h / 2)}
-                width={n(v.w)}
-                height={n(v.h)}
-                rx={v.nivel === "c" ? 1.2 : 1.8}
-                fill={AZUL}
-                fillOpacity={0.9}
-              />
-              <rect
-                className="vertebra-acende"
-                x={n(cx - v.w / 2)}
-                y={n(v.y - v.h / 2)}
-                width={n(v.w)}
-                height={n(v.h)}
-                rx={v.nivel === "c" ? 1.2 : 1.8}
-                fill={PAPEL}
-                style={{ ["--fase" as string]: `${n(i * 0.16)}s` }}
-              />
-              {seg && (
-                <line
-                  x1={n(cx - v.w * 0.32)}
-                  y1={n(v.y + (seg.y - v.y) / 2)}
-                  x2={n(cx + v.w * 0.32)}
-                  y2={n(v.y + (seg.y - v.y) / 2)}
-                  stroke={AZUL}
-                  strokeOpacity={0.55}
-                  strokeWidth={1}
+        {/* Cadeia: liga as articulacoes entre si e a coluna */}
+        <g data-camada="cadeia" stroke={PAPEL} strokeOpacity={0.35} strokeWidth={0.9}>
+          {CADEIA.map((c, i) => (
+            <line key={i} x1={n(c.a.x)} y1={n(c.a.y)} x2={n(c.b.x)} y2={n(c.b.y)} />
+          ))}
+        </g>
+
+        {/* Corrente: um ponto por segmento nasce numa ponta e morre na outra.
+            Base em opacity 0, entao com movimento reduzido nao existe. */}
+        <g data-camada="corrente" fill={PAPEL} stroke="none">
+          {CADEIA.map((c, i) => (
+            <circle
+              key={i}
+              className="corrente"
+              cx={n(c.a.x)}
+              cy={n(c.a.y)}
+              r={1.7}
+              style={{
+                ["--dx" as string]: `${n(c.b.x - c.a.x)}px`,
+                ["--dy" as string]: `${n(c.b.y - c.a.y)}px`,
+                ["--dur" as string]: `${c.dur}s`,
+                ["--fase" as string]: `${c.fase}s`,
+              }}
+            />
+          ))}
+        </g>
+
+        {/* Coluna: 24 retangulos sobre o eixo, discos como tracos no vao,
+            sacro como retangulo na base */}
+        <g data-camada="coluna">
+          {VERTEBRAS.map((v, i) => {
+            const seg = VERTEBRAS[i + 1];
+            const vao = seg ? seg.y - seg.h / 2 - (v.y + v.h / 2) : 0;
+            return (
+              <g key={i}>
+                <rect
+                  x={n(EIXO - v.w / 2)}
+                  y={n(v.y - v.h / 2)}
+                  width={n(v.w)}
+                  height={n(v.h)}
+                  rx={v.rx}
+                  fill={AZUL}
+                  fillOpacity={0.85}
                 />
-              )}
-            </g>
-          );
-        })}
-        <rect
-          x={133}
-          y={302}
-          width={17}
-          height={7.5}
-          rx={2}
-          transform="rotate(44 141.5 305.8)"
-          fill={AZUL}
-          fillOpacity={0.55}
-        />
-      </g>
+                <rect
+                  className="vertebra-acende"
+                  x={n(EIXO - v.w / 2)}
+                  y={n(v.y - v.h / 2)}
+                  width={n(v.w)}
+                  height={n(v.h)}
+                  rx={v.rx}
+                  fill={PAPEL}
+                  style={{ ["--fase" as string]: `${n(i * 0.16)}s` }}
+                />
+                {seg && vao > 1.2 && (
+                  <line
+                    x1={n(EIXO - v.w * 0.31)}
+                    y1={n(v.y + v.h / 2 + vao / 2)}
+                    x2={n(EIXO + v.w * 0.31)}
+                    y2={n(v.y + v.h / 2 + vao / 2)}
+                    stroke={AZUL}
+                    strokeOpacity={0.55}
+                    strokeWidth={1}
+                  />
+                )}
+              </g>
+            );
+          })}
+          <rect x={n(EIXO - 7.5)} y={274} width={15} height={16} rx={3} fill={AZUL} fillOpacity={0.55} />
+        </g>
 
-      {/* 2.3 articulacoes: anel com ponto, sobre a cadeia */}
-      <g data-camada="articulacoes">
-        {(Object.keys(ARTICULACOES) as Articulacao[]).map((k) => {
-          const p = ARTICULACOES[k];
-          const menor = k === "sacro" || k === "occipital";
-          const ritmo = SONAR[k];
-          return (
-            <g key={k} data-articulacao={k}>
+        {/* Articulacoes: anel com ponto e o sonar em verde */}
+        <g data-camada="articulacoes">
+          {JUNTAS.map((j) => (
+            <g key={j.chave} data-articulacao={j.chave}>
               {[0, 1 / 2].map((t) => (
                 <circle
                   key={t}
                   className="sonar-onda"
-                  cx={p.x}
-                  cy={p.y}
-                  r={menor ? 4.2 : 5.5}
+                  cx={n(j.x)}
+                  cy={n(j.y)}
+                  r={j.r}
                   stroke={VERDE}
                   strokeOpacity={0.75}
                   strokeWidth={0.9}
                   style={{
                     transformBox: "fill-box",
                     transformOrigin: "center",
-                    ["--escala" as string]: menor ? 3 : 3.4,
-                    ["--dur" as string]: `${ritmo.dur}s`,
-                    ["--fase" as string]: `${n(ritmo.fase + t * ritmo.dur)}s`,
+                    ["--escala" as string]: 3.2,
+                    ["--dur" as string]: `${j.dur}s`,
+                    ["--fase" as string]: `${n(j.fase + t * j.dur)}s`,
                   }}
                 />
               ))}
-              <circle cx={p.x} cy={p.y} r={menor ? 4.2 : 5.5} fill="var(--color-accent-deep)" fillOpacity={0.7} stroke={PAPEL} strokeOpacity={0.95} strokeWidth={1.3} />
+              <circle
+                cx={n(j.x)}
+                cy={n(j.y)}
+                r={j.r}
+                fill="var(--color-accent-deep)"
+                fillOpacity={0.7}
+                stroke={PAPEL}
+                strokeOpacity={0.95}
+                strokeWidth={1.3}
+              />
               <circle
                 className="sonar-ponto"
-                cx={p.x}
-                cy={p.y}
-                r={menor ? 1.7 : 2.2}
+                cx={n(j.x)}
+                cy={n(j.y)}
+                r={j.r < 5 ? 1.7 : 2.2}
                 fill={VERDE}
-                style={{ ["--dur" as string]: `${ritmo.dur}s`, ["--fase" as string]: `${ritmo.fase}s` }}
+                style={{ ["--dur" as string]: `${j.dur}s`, ["--fase" as string]: `${j.fase}s` }}
               />
             </g>
-          );
-        })}
-      </g>
+          ))}
+        </g>
       </g>
     </svg>
   );
