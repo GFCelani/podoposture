@@ -1,10 +1,12 @@
-import { SILHUETA_D } from "./silhueta-corpo-path";
+import { DETALHE_D, SILHUETA_D } from "./silhueta-corpo-path";
 
 /**
  * A peca grafica do hero: figura humana esquematica, de pe, vista frontal.
  *
  * A silhueta e' a vetorizacao de assets/silhueta-corpo.png (ver
- * silhueta-corpo-path.ts): laco unico fechado, nao redesenhado. Todo o resto
+ * silhueta-corpo-path.ts): laco unico fechado sobre a linha de centro do
+ * traco do PNG, mais os tracos internos curtos (dedos, polegar, virilha).
+ * Nao redesenhado. Todo o resto
  * (coluna, articulacoes, cadeia, prumo) foi realinhado a ela por medida, nao
  * por estimativa: os pontos saem das corridas de pixel da propria mascara do
  * PNG (ombro na largura do deltoide, cotovelo no meio do braco, quadril na
@@ -191,16 +193,10 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
         </g>
 
         {/* Silhueta: o contorno vetorizado, traco fino e preenchimento quase
-            transparente. Mesma pesagem da silhueta anterior. */}
-        <g data-camada="silhueta">
-          <path
-            d={SILHUETA_D}
-            fill={PAPEL}
-            fillOpacity={0.04}
-            stroke={PAPEL}
-            strokeOpacity={0.85}
-            strokeWidth={1.4}
-          />
+            transparente, mais os tracos internos no mesmo peso. */}
+        <g data-camada="silhueta" stroke={PAPEL} strokeOpacity={0.85} strokeWidth={1.4}>
+          <path d={SILHUETA_D} fill={PAPEL} fillOpacity={0.04} />
+          <path d={DETALHE_D} fill="none" />
         </g>
 
         {/* Cadeia: liga as articulacoes entre si e a coluna */}
