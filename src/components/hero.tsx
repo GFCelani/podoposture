@@ -142,9 +142,13 @@ export function Hero() {
           esse limite (1280 sem recuo, 1440 com 50). Se o corpo do titulo
           ou o max-w do contentor mudar, estes dois calc mudam junto.
 
-          A margem direita afasta a peca da borda da janela: 96 / 108 / 148 /
-          188px em 1024 / 1280 / 1440 / 1600. Foi aumentada para trazer a
-          figura para a esquerda.
+          A margem direita afasta a peca da borda da janela: 104 / 155 / 195 /
+          235px em 1024 / 1280 / 1440 / 1600. E' o que traz a figura para a
+          esquerda. O piso de 104 nao e' escolha de gosto: em 1024 o campo
+          tem 339px e a figura 223, entao a margem so pode chegar a 116
+          antes de a peca alcancar o inicio do campo e entrar no titulo.
+          Em 1280 para cima o teto e' 223 / 293 / 373, e a rampa e' que
+          manda.
 
           A figura e' vertical (221 x 560), entao a escala vem da altura do
           hero, nao da largura do campo: altura = altura do hero menos 112px
@@ -157,7 +161,7 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(96px,25vw_-_212px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
