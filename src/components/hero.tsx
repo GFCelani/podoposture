@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
+import { FiguraEsquematica } from "./figura-esquematica";
 import { PageGrid, SectionMark } from "./layers";
 
 /**
@@ -160,6 +161,7 @@ export function Hero() {
               </div>
             ))}
           </div>
+          <FiguraEsquematica className="relative h-auto w-[min(44vw,210px)] lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
         </div>
       </div>
     </section>
