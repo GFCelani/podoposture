@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
-import { SectionMark } from "./layers";
+import { PageGrid, SectionMark } from "./layers";
 import { VertebraLombar } from "./vertebra-lombar";
 
 /**
@@ -43,6 +43,11 @@ export function Hero() {
           }}
         />
       </div>
+
+      {/* Camada 1: a grade da pagina, na variante leve. Mesma geometria das
+          demais bandas; so o peso do fio cai, para nao virar ruido sobre a
+          foto em cor cheia. Sem os fios de coluna. */}
+      <PageGrid tone="deep" sutil />
 
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
         <div className="relative z-10 lg:col-span-9">

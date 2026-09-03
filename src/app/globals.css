@@ -164,6 +164,17 @@ body {
   --fio-forte: transparent;
 }
 
+/* Variante leve: so a trama fina, com pouco mais da metade do peso. E' a do
+   hero, onde a foto em cor cheia por baixo ja da textura e a grade cheia
+   virava ruido sobre a imagem. */
+.grade[data-sutil] {
+  --fio-fino: color-mix(in srgb, var(--color-rule) 9%, transparent);
+}
+
+.grade[data-grade="deep"][data-sutil] {
+  --fio-fino: rgb(250 249 246 / 0.017);
+}
+
 @media (min-width: 1024px) {
   .grade {
     --pad: 40px;

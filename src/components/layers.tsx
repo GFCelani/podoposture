@@ -20,21 +20,29 @@ type Tone = "light" | "deep";
  * de proposito: e' chapa opaca POR CIMA da grade, nao superficie que ela
  * atravessa.
  *
- * `colunas` acende os fios fortes, os que marcam as colunas do conteudo. So
- * o hero os usa: abaixo dele a trama fina corre sozinha. A geometria nao
- * muda, entao a grade continua na mesma abscissa de ponta a ponta; o que
- * muda e' so o peso.
+ * `colunas` acende os fios fortes, os que marcam as colunas do conteudo.
+ * `sutil` faz o contrario: derruba o peso da trama fina. A geometria nunca
+ * muda, entao a grade cai na mesma abscissa de ponta a ponta em qualquer
+ * combinacao; o que muda e' so o peso. Hoje o hero e' `sutil`, porque tem a
+ * foto em cor cheia por baixo, e as demais bandas ficam no peso padrao.
  */
 export function PageGrid({
   tone = "light",
   colunas = false,
+  sutil = false,
 }: {
   tone?: Tone;
   colunas?: boolean;
+  sutil?: boolean;
 }) {
   return (
     <div aria-hidden="true" className="grade-ancora">
-      <div className="grade" data-grade={tone} data-colunas={colunas ? "sim" : undefined} />
+      <div
+        className="grade"
+        data-grade={tone}
+        data-colunas={colunas ? "sim" : undefined}
+        data-sutil={sutil ? "sim" : undefined}
+      />
     </div>
   );
 }
