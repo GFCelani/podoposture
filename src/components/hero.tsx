@@ -27,9 +27,14 @@ import { PageGrid, SectionMark } from "./layers";
  * separavam no meio do ciclo. Parametrizados os dois pelo arco, ficam juntos.
  * Com pathLength="100" o dash e' contado em porcentagem do traco, e o atraso
  * negativo do ponto (-73% de 7s) o coloca na cabeca do segmento desenhado.
+ *
+ * Quatro passos em 560 x 46 unidades, e nao tres em 420. O numero de passos
+ * define a razao do desenho, e a razao e' o que decide a altura: a peca e'
+ * larga como o texto, entao a altura vem da largura. Com tres passos a mesma
+ * largura daria uma faixa alta demais.
  */
 const TRACO_MARCHA =
-  "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
+  "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H444 C454 40 456 16 466 15 C474 14 476 26 486 27 C496 28 498 13 506 13 C516 13 520 40 530 40 H560";
 
 const ESCALA_BOTAO =
   "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
@@ -105,66 +110,90 @@ export function Hero() {
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
             corpo x entrelinha, sem CLS.
           */}
-          <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
-            style={{ ["--in-delay" as string]: "220ms" }}
-          >
-            <span className="block">
-              <span className="block sm:inline">Integração </span>
-              <span className="block sm:inline">terapêutica </span>
-            </span>
-            <span className="block">
-              <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
-            </span>
-            <span className="block">com resultados </span>
-            <span className="block">rápidos e eficazes</span>
-          </h1>
+          {/* A largura deste embrulho e' a da linha mais larga do titulo
+              (fit-content sobre blocos de linha escrita), e e' dela que a
+              curva de marcha tira a sua: era isso que faltava para a curva
+              comecar e acabar junto com o texto. So a partir de sm, que e'
+              onde os botoes viram linha: empilhados eles ocupam a largura do
+              bloco, e a medida do embrulho os encolheria. Em linha eles somam
+              menos que a linha mais larga do titulo, entao nao mexem na
+              medida. No telefone a curva continua presa a largura do bloco. */}
+          <div className="sm:w-fit">
+            <h1
+              className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+              style={{ ["--in-delay" as string]: "220ms" }}
+            >
+              <span className="block">
+                <span className="block sm:inline">Integração </span>
+                <span className="block sm:inline">terapêutica </span>
+              </span>
+              <span className="block">
+                <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
+              </span>
+              <span className="block">com resultados </span>
+              <span className="block">rápidos e eficazes</span>
+            </h1>
 
-          {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
+            {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
               o primario e' o par completo da secao 08, rotulo e destino; o
               secundario
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}
-          <div
-            className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5"
-            style={{ ["--in-delay" as string]: "620ms" }}
-          >
-            <ButtonLink href="https://wa.me/5521992035643" variant="primary" className={ESCALA_BOTAO}>
-              Envie uma mensagem
-            </ButtonLink>
-            <ButtonLink href="/tratamento-da-dor" variant="secondary-deep" className={ESCALA_BOTAO}>
-              Quero mais informações
-            </ButtonLink>
+            <div
+              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5"
+              style={{ ["--in-delay" as string]: "620ms" }}
+            >
+              <ButtonLink
+                href="https://wa.me/5521992035643"
+                variant="primary"
+                className={ESCALA_BOTAO}
+              >
+                Envie uma mensagem
+              </ButtonLink>
+              <ButtonLink
+                href="/tratamento-da-dor"
+                variant="secondary-deep"
+                className={ESCALA_BOTAO}
+              >
+                Quero mais informações
+              </ButtonLink>
+            </div>
+
+            {/* Curva de forca da marcha: o duplo pico de cada passo, o
+              vocabulario da baropodometria, correndo sob o titulo.
+
+              Largura cheia e altura automatica: a caixa fica com a razao do
+              viewBox, entao o desenho vai de borda a borda. Antes a caixa
+              tinha altura fixa e sobrava largura, e o preserveAspectRatio
+              padrao centrava o desenho na sobra: a curva nascia uns 50px a
+              direita da margem do texto e acabava antes do fim da linha.
+              Nenhuma classe de altura aqui, por isso. */}
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 560 46"
+              className="rule-in mt-8 h-auto w-full max-w-[440px] sm:max-w-none lg:mt-10 [@media(max-height:860px)]:mt-4"
+              style={{ ["--in-delay" as string]: "760ms" }}
+            >
+              <path
+                className="traco-monitor"
+                pathLength={100}
+                d={TRACO_MARCHA}
+                fill="none"
+                stroke="var(--color-accent-light)"
+                strokeOpacity={0.55}
+                strokeWidth={1.4}
+                strokeLinejoin="round"
+              />
+              <circle
+                className="traco-monitor-ponto"
+                cx={0}
+                cy={0}
+                r={2.6}
+                fill="var(--color-accent-light)"
+                style={{ offsetPath: `path("${TRACO_MARCHA}")` }}
+              />
+            </svg>
           </div>
-
-          {/* Curva de forca da marcha: o duplo pico de cada passo, o
-              vocabulario da baropodometria, correndo sob o titulo */}
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 420 46"
-            className="rule-in mt-8 h-11 w-full max-w-[440px] lg:mt-10 lg:h-[3.25rem] lg:max-w-[506px] [@media(max-height:860px)]:mt-4 [@media(max-height:860px)]:h-8"
-            style={{ ["--in-delay" as string]: "760ms" }}
-          >
-            <path
-              className="traco-monitor"
-              pathLength={100}
-              d={TRACO_MARCHA}
-              fill="none"
-              stroke="var(--color-accent-light)"
-              strokeOpacity={0.55}
-              strokeWidth={1.4}
-              strokeLinejoin="round"
-            />
-            <circle
-              className="traco-monitor-ponto"
-              cx={0}
-              cy={0}
-              r={2.6}
-              fill="var(--color-accent-light)"
-              style={{ offsetPath: `path("${TRACO_MARCHA}")` }}
-            />
-          </svg>
-
         </div>
 
         {/*
@@ -224,16 +253,25 @@ export function Hero() {
               entram no titulo porque o campo comeca depois dele. Atras da
               peca. Sem rotulo. Abaixo de lg o campo e' estreito e entra no
               fluxo; ali as linhas so poluiriam. */}
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 hidden lg:block"
+          >
             {[24, 50, 76].map((y, i) => (
               <div
                 key={y}
                 className="rule-in absolute right-9 left-0"
-                style={{ top: `${y}%`, ["--in-delay" as string]: `${760 + i * 140}ms` }}
+                style={{
+                  top: `${y}%`,
+                  ["--in-delay" as string]: `${760 + i * 140}ms`,
+                }}
               >
                 <div
                   className="estende h-px w-full bg-paper/30"
-                  style={{ ["--dur" as string]: `${9 + i * 2.5}s`, ["--fase" as string]: `${i * 1.7}s` }}
+                  style={{
+                    ["--dur" as string]: `${9 + i * 2.5}s`,
+                    ["--fase" as string]: `${i * 1.7}s`,
+                  }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
               </div>
