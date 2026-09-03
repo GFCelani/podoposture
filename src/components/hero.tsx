@@ -29,10 +29,9 @@ import { PageGrid, SectionMark } from "./layers";
  * negativo do ponto (-73% de 7s) o coloca na cabeca do segmento desenhado.
  *
  * Tres passos em 420 x 46 unidades. O numero de passos define a razao do
- * desenho, e a razao e' o que decide a altura, porque a largura ja vem do
- * texto: menos passos, passo mais largo e faixa mais alta. Tres da 61px de
- * altura sob um titulo de 61px na janela de laptop; quatro davam 46, e foi
- * pedido aumentar.
+ * desenho, e a razao e' o que decide a altura, porque a largura vem de fora:
+ * menos passos, passo mais largo e faixa mais alta. Tres passos na largura da
+ * fila de botoes dao 54px de faixa na janela de laptop; quatro davam 40.
  */
 const TRACO_MARCHA =
   "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
@@ -111,37 +110,36 @@ export function Hero() {
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
             corpo x entrelinha, sem CLS.
           */}
-          {/* A largura deste embrulho e' a da linha mais larga do titulo
-              (fit-content sobre blocos de linha escrita), e e' dela que a
-              curva de marcha tira a sua: era isso que faltava para a curva
-              comecar e acabar junto com o texto. So a partir de sm, que e'
-              onde os botoes viram linha: empilhados eles ocupam a largura do
-              bloco, e a medida do embrulho os encolheria. Em linha eles somam
-              menos que a linha mais larga do titulo, entao nao mexem na
-              medida. No telefone a curva continua presa a largura do bloco. */}
-          <div className="sm:w-fit">
-            <h1
-              className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
-              style={{ ["--in-delay" as string]: "220ms" }}
-            >
-              <span className="block">
-                <span className="block sm:inline">Integração </span>
-                <span className="block sm:inline">terapêutica </span>
-              </span>
-              <span className="block">
-                <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
-              </span>
-              <span className="block">com resultados </span>
-              <span className="block">rápidos e eficazes</span>
-            </h1>
+          <h1
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            style={{ ["--in-delay" as string]: "220ms" }}
+          >
+            <span className="block">
+              <span className="block sm:inline">Integração </span>
+              <span className="block sm:inline">terapêutica </span>
+            </span>
+            <span className="block">
+              <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
+            </span>
+            <span className="block">com resultados </span>
+            <span className="block">rápidos e eficazes</span>
+          </h1>
 
+          {/* A medida deste embrulho e' a da fila de botoes (fit-content
+              sobre a fila em linha), e e' dela que a curva de marcha tira a
+              sua: a ponta direita do traco cai no mesmo pixel da borda
+              direita do segundo botao. So a partir de sm, que e' onde os
+              botoes viram linha; empilhados eles ocupam a largura do bloco e
+              o embrulho os encolheria, entao no telefone a curva continua
+              presa a largura do bloco. */}
+          <div className="sm:w-fit">
             {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
               o primario e' o par completo da secao 08, rotulo e destino; o
               secundario
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}
             <div
-              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5"
+              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-6"
               style={{ ["--in-delay" as string]: "620ms" }}
             >
               <ButtonLink
@@ -164,11 +162,12 @@ export function Hero() {
               vocabulario da baropodometria, correndo sob o titulo.
 
               Largura cheia e altura automatica: a caixa fica com a razao do
-              viewBox, entao o desenho vai de borda a borda. Antes a caixa
-              tinha altura fixa e sobrava largura, e o preserveAspectRatio
-              padrao centrava o desenho na sobra: a curva nascia uns 50px a
-              direita da margem do texto e acabava antes do fim da linha.
-              Nenhuma classe de altura aqui, por isso.
+              viewBox, entao o desenho vai de borda a borda da medida do
+              embrulho, que e' a fila de botoes. Antes a caixa tinha altura
+              fixa e sobrava largura, e o preserveAspectRatio padrao centrava
+              o desenho na sobra: a curva nascia uns 50px a direita da margem
+              do texto e acabava antes do fim da linha. Nenhuma classe de
+              altura aqui, por isso.
 
               Sao dois tracos sobre a mesma geometria. O de baixo esta sempre
               inteiro, apagado, e e' ele que garante o alinhamento visivel:
