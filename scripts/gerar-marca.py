@@ -1,7 +1,7 @@
 """
 Gera src/components/brand-mark.tsx a partir dos glyphs da Newsreader
 (fonte variavel do proprio site, instanciada em wght 500) e da geometria
-medida no master public/marca/podoposture.png (2036x716):
+medida no master assets/marca/podoposture.png (2036x716):
   - "pod" na linha de cima, "p"+"sture" na de baixo
   - os dois "o" sao os discos verdes do master (elipses medidas)
   - as 9 vertebras sao circulos medidos no master, um no' animavel cada
