@@ -186,7 +186,7 @@ body {
 }
 
 /* ===============================================================
-   HERO — entrada do texto e respiracao da vertebra.
+   HERO — entrada do texto e movimento da peca grafica.
    O repouso vive no estilo base, nunca no keyframe 100%: com movimento
    reduzido a animacao termina no primeiro quadro e o elemento volta ao base.
    Ver vault/repouso-de-animacao-css-vive-no-estilo-base
@@ -205,25 +205,7 @@ body {
   }
 }
 
-/* A vertebra respira: sobe um fio e cresce quase nada, e volta. E' o unico
-   transform do <img>; a entrada (opacidade) fica no wrapper. */
-.vertebra-respira {
-  transform: none;
-  animation: vertebra-respira 8s var(--ease-ciclo) infinite;
-  animation-delay: 1.2s;
-}
-
-@keyframes vertebra-respira {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-7px) scale(1.012);
-  }
-}
-
-/* Sonar da vertebra. O ponto respira em opacidade; a onda nasce no ponto,
+/* Sonar das articulacoes. O ponto respira em opacidade; a onda nasce no ponto,
    expande e some. Base da onda e' opacity 0: com movimento reduzido nao ha
    onda, so o ponto parado. Ver vault/startup-lp-loop-css-precisa-de-opacity-0-na-base */
 .sonar-ponto {
@@ -257,44 +239,6 @@ body {
   100% {
     opacity: 0;
     transform: scale(9);
-  }
-}
-
-/* Movimento da camada verde/azul da vertebra. Um transform por no, repouso
-   no estilo base. Os arcos sao arcos de circulo girando em torno do centro
-   do circulo, entao girar = percorrer a propria trajetoria. */
-.gira {
-  transform: rotate(0deg);
-  animation: gira var(--dur, 16s) linear infinite;
-  animation-direction: var(--sentido, normal);
-}
-
-@keyframes gira {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.varre {
-  transform: rotate(0deg);
-  animation: varre var(--dur, 8s) var(--ease-ciclo) infinite alternate;
-}
-
-@keyframes varre {
-  to {
-    transform: rotate(var(--ang, 8deg));
-  }
-}
-
-.flutua {
-  transform: translateY(0);
-  animation: flutua var(--dur, 6s) var(--ease-ciclo) infinite;
-  animation-delay: var(--fase, 0s);
-}
-
-@keyframes flutua {
-  50% {
-    transform: translateY(-10px);
   }
 }
 

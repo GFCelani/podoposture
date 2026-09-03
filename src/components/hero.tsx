@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
-import { VertebraLombar } from "./vertebra-lombar";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -123,23 +122,17 @@ export function Hero() {
         </div>
 
         {/*
-          A vertebra: contrapeso do bloco de titulo. Nao ha mais mascara: o
-          corpo dela e' quase branco, e titulo branco por cima mataria o
-          contraste. Em vez de mascarar, ela nao passa por baixo do texto.
-          O campo comeca 24px depois do fim da linha mais larga do titulo e
-          vai ate a borda da janela. A margem direita da imagem e' metade da
-          margem do contentor ((50vw - 580px) / 2), com piso de 64px: a
-          imagem termina a meio caminho entre a borda de conteudo e a borda
-          da janela. Teto de 600px; ate la, o que limita e' o campo. De 1024
-          a 1280 a margem ja esta no piso e a folga com o titulo e' fixa,
-          entao ali a imagem nao tem para onde crescer. As constantes vem da
-          geometria do titulo: em lg a linha mais larga termina em 606px
-          (pad 40 + 566); em xl, em 50vw + 114 (contentor centrado + 694).
-          Se o corpo do titulo mudar, estes dois calc mudam junto.
+          O campo da peca grafica: contrapeso do bloco de titulo. A peca nao
+          passa por baixo do texto: o campo comeca 24px depois do fim da
+          linha mais larga do titulo e vai ate a borda da janela. A margem
+          direita e' metade da margem do contentor ((50vw - 580px) / 2), com
+          piso de 64px. As constantes vem da geometria do titulo: em lg a
+          linha mais larga termina em 606px (pad 40 + 566); em xl, em
+          50vw + 114 (contentor centrado + 694). Se o corpo do titulo mudar,
+          estes dois calc mudam junto.
 
           Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
-          reduzida (ate 320px): e' a peca grafica do hero, entao fica; so
-          nao ocupa a altura que ocupava a coluna inteira.
+          reduzida.
         */}
         <div
           aria-hidden="true"
@@ -147,12 +140,11 @@ export function Hero() {
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
-              claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na imagem: atravessam a vertebra e
+              claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na peca: atravessam a figura e
               seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
               entram no titulo porque o campo comeca depois dele. Atras da
-              imagem, como as reguas ficavam atras das vertebras. Sem rotulo:
-              C7 / T12 / L5 nao cabem numa vertebra unica. Abaixo de lg o campo
-              e' estreito e entra no fluxo; ali as linhas so poluiriam. */}
+              peca. Sem rotulo. Abaixo de lg o campo e' estreito e entra no
+              fluxo; ali as linhas so poluiriam. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
             {[24, 50, 76].map((y, i) => (
               <div
@@ -168,7 +160,6 @@ export function Hero() {
               </div>
             ))}
           </div>
-          <VertebraLombar className="relative w-full lg:max-w-[600px]" />
         </div>
       </div>
     </section>
