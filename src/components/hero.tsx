@@ -161,7 +161,7 @@ export function Hero() {
               </div>
             ))}
           </div>
-          <FiguraEsquematica className="relative h-auto w-[min(44vw,210px)] lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
+          <FiguraEsquematica className="rule-in relative h-auto w-[min(44vw,210px)] lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
         </div>
       </div>
     </section>

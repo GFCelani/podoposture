@@ -238,7 +238,69 @@ body {
   }
   100% {
     opacity: 0;
-    transform: scale(9);
+    transform: scale(var(--escala, 9));
+  }
+}
+
+/* A figura esquematica do hero. Um transform por no', repouso no estilo
+   base; o que nao deve existir com movimento reduzido nasce em opacity 0. */
+
+/* O conjunto respira: escala minima, ciclo lento. */
+.figura-respira {
+  transform: scale(1);
+  animation: figura-respira 9s var(--ease-ciclo) infinite;
+  animation-delay: 1.2s;
+}
+
+@keyframes figura-respira {
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+/* Corrente na cadeia: um ponto nasce numa ponta do segmento, corre ate a
+   outra e some; o resto do ciclo fica invisivel. --dx/--dy em px do
+   viewBox. */
+.corrente {
+  opacity: 0;
+  transform: translate(0, 0);
+  animation: corrente var(--dur, 6s) linear infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes corrente {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  3% {
+    opacity: 0.9;
+  }
+  21% {
+    opacity: 0.9;
+  }
+  24%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+
+/* Varredura da coluna: uma sobreposicao em papel por vertebra, que acende
+   por um instante; a fase cresce de cima para baixo, entao a onda desce. */
+.vertebra-acende {
+  opacity: 0;
+  animation: vertebra-acende 7s var(--ease-ciclo) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes vertebra-acende {
+  4% {
+    opacity: 0.85;
+  }
+  13%,
+  100% {
+    opacity: 0;
   }
 }
 

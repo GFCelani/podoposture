@@ -111,7 +111,31 @@ const ARTICULACOES = {
 
 type Articulacao = keyof typeof ARTICULACOES;
 
+/** Sonar: duracao e fase proprias por articulacao, nunca em unissono. */
+const SONAR: Record<Articulacao, { dur: number; fase: number }> = {
+  occipital: { dur: 4.2, fase: 0.4 },
+  ombro: { dur: 3.7, fase: 1.9 },
+  cotovelo: { dur: 4.6, fase: 3.1 },
+  punho: { dur: 4.0, fase: 0.9 },
+  sacro: { dur: 4.4, fase: 2.5 },
+  quadril: { dur: 3.9, fase: 0.0 },
+  joelho: { dur: 4.8, fase: 1.4 },
+  tornozelo: { dur: 4.1, fase: 3.6 },
+};
+
 const A = ARTICULACOES;
+
+/** Ritmo da corrente por segmento, na ordem de CADEIA. */
+const CORRENTE = [
+  { dur: 6.5, fase: 0.0 },
+  { dur: 6.5, fase: 0.7 },
+  { dur: 6.5, fase: 1.6 },
+  { dur: 6.5, fase: 3.1 },
+  { dur: 7.0, fase: 0.3 },
+  { dur: 7.0, fase: 1.4 },
+  { dur: 7.0, fase: 2.4 },
+  { dur: 7.0, fase: 4.0 },
+];
 
 /** Ligacoes: cada par e' um segmento da cadeia. */
 const CADEIA: [Pt, Pt][] = [
@@ -187,6 +211,7 @@ const BRACO: Pt[] = [
 
 const PAPEL = "var(--color-paper)";
 const AZUL = "var(--color-accent-light)";
+const VERDE = "var(--color-action)";
 
 export function FiguraEsquematica({ className = "" }: { className?: string }) {
   return (
@@ -201,6 +226,9 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
+      {/* 3: a figura inteira respira; unico transform deste no'. Origem no
+          centro do viewBox para os pes nao sairem do chao visivelmente. */}
+      <g className="figura-respira" style={{ transformBox: "view-box", transformOrigin: "120px 300px" }}>
       {/* 2.5 eixo de prumo: do topo ao chao, com marcas nas duas cinturas */}
       <g data-camada="prumo" stroke={PAPEL}>
         <line x1={PRUMO} y1={4} x2={PRUMO} y2={556} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="3 6" />
@@ -222,6 +250,26 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
           <line key={i} x1={n(a.x)} y1={n(a.y)} x2={n(b.x)} y2={n(b.y)} />
         ))}
       </g>
+      {/* 3: corrente. Um ponto por segmento, nasce numa ponta e morre na outra
+          (translate + opacity); base em opacity 0, entao com movimento
+          reduzido nao existe. Fase escalonada ao longo de cada cadeia. */}
+      <g data-camada="corrente" fill={PAPEL} stroke="none">
+        {CADEIA.map(([a, b], i) => (
+          <circle
+            key={i}
+            className="corrente"
+            cx={n(a.x)}
+            cy={n(a.y)}
+            r={1.7}
+            style={{
+              ["--dx" as string]: `${n(b.x - a.x)}px`,
+              ["--dy" as string]: `${n(b.y - a.y)}px`,
+              ["--dur" as string]: `${CORRENTE[i].dur}s`,
+              ["--fase" as string]: `${CORRENTE[i].fase}s`,
+            }}
+          />
+        ))}
+      </g>
 
       {/* 2.2 coluna: 24 retangulos sobre a tangente da curva, discos como
           tracos entre eles, sacro como um retangulo inclinado */}
@@ -240,6 +288,16 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
                 rx={v.nivel === "c" ? 1.2 : 1.8}
                 fill={AZUL}
                 fillOpacity={0.9}
+              />
+              <rect
+                className="vertebra-acende"
+                x={n(cx - v.w / 2)}
+                y={n(v.y - v.h / 2)}
+                width={n(v.w)}
+                height={n(v.h)}
+                rx={v.nivel === "c" ? 1.2 : 1.8}
+                fill={PAPEL}
+                style={{ ["--fase" as string]: `${n(i * 0.16)}s` }}
               />
               {seg && (
                 <line
@@ -271,13 +329,42 @@ export function FiguraEsquematica({ className = "" }: { className?: string }) {
       <g data-camada="articulacoes">
         {(Object.keys(ARTICULACOES) as Articulacao[]).map((k) => {
           const p = ARTICULACOES[k];
+          const menor = k === "sacro" || k === "occipital";
+          const ritmo = SONAR[k];
           return (
             <g key={k} data-articulacao={k}>
-              <circle cx={p.x} cy={p.y} r={k === "sacro" || k === "occipital" ? 4.2 : 5.5} fill="var(--color-accent-deep)" fillOpacity={0.7} stroke={PAPEL} strokeOpacity={0.95} strokeWidth={1.3} />
-              <circle cx={p.x} cy={p.y} r={k === "sacro" || k === "occipital" ? 1.6 : 2} fill={PAPEL} />
+              {[0, 1 / 2].map((t) => (
+                <circle
+                  key={t}
+                  className="sonar-onda"
+                  cx={p.x}
+                  cy={p.y}
+                  r={menor ? 4.2 : 5.5}
+                  stroke={VERDE}
+                  strokeOpacity={0.75}
+                  strokeWidth={0.9}
+                  style={{
+                    transformBox: "fill-box",
+                    transformOrigin: "center",
+                    ["--escala" as string]: menor ? 3 : 3.4,
+                    ["--dur" as string]: `${ritmo.dur}s`,
+                    ["--fase" as string]: `${n(ritmo.fase + t * ritmo.dur)}s`,
+                  }}
+                />
+              ))}
+              <circle cx={p.x} cy={p.y} r={menor ? 4.2 : 5.5} fill="var(--color-accent-deep)" fillOpacity={0.7} stroke={PAPEL} strokeOpacity={0.95} strokeWidth={1.3} />
+              <circle
+                className="sonar-ponto"
+                cx={p.x}
+                cy={p.y}
+                r={menor ? 1.7 : 2.2}
+                fill={VERDE}
+                style={{ ["--dur" as string]: `${ritmo.dur}s`, ["--fase" as string]: `${ritmo.fase}s` }}
+              />
             </g>
           );
         })}
+      </g>
       </g>
     </svg>
   );
