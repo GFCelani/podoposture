@@ -64,18 +64,22 @@ export function Hero() {
 
           {/*
             Quebra escrita, nao emergente. O corpo do titulo e' um bloco por
-            linha, entao o navegador nao tem o que decidir: nao ha text-balance,
-            nao ha clamp por vw e nao ha corpo por altura de janela. Era esse
-            trio que fazia o mesmo titulo cair diferente em desktop e em laptop
-            (o @media max-height trocava o corpo por altura, e o balance
-            redistribuia as palavras em cada largura).
-            Corpo em degraus fixos por faixa; dentro de cada faixa a linha mais
-            larga cabe com folga sobre a fonte de fallback, entao a quebra
-            tambem nao muda no swap da Newsreader e a altura do bloco e' a
-            mesma antes e depois: linhas x corpo x entrelinha, sem CLS.
+            linha, entao o navegador nao tem o que decidir: nao ha text-balance
+            e nao ha clamp por vw. Era esse par que fazia o mesmo titulo cair
+            diferente em desktop e em laptop, porque redistribuia as palavras
+            em cada largura.
+            Corpo em degraus fixos por faixa; na janela baixa (laptop, ate
+            860px de altura) cada degrau desce um patamar: 50px em lg, 61px em
+            xl, contra 68 e 83 na janela alta. Foi pedido. Como a quebra e'
+            escrita, trocar o corpo por altura aqui nao mexe em onde as linhas
+            caem: muda a escala, nao a composicao.
+            Dentro de cada faixa a linha mais larga cabe com folga sobre a
+            fonte de fallback, entao a quebra tambem nao muda no swap da
+            Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
+            corpo x entrelinha, sem CLS.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <span className="block">
@@ -150,6 +154,16 @@ export function Hero() {
           Em 1280 para cima o teto e' 223 / 293 / 373, e a rampa e' que
           manda.
 
+          Na janela baixa a rampa toda sobe 80px (184 / 235 / 275 / 315),
+          porque foi pedido trazer a figura mais para a esquerda no laptop.
+          Em 1024 a soma de margem e peca passa da largura do campo, e o
+          shrink-0 na peca e' o que decide o desempate: em vez de a figura
+          encolher (o svg tem preserveAspectRatio, entao encolher a largura
+          reduz o desenho inteiro e ele deixa de bater com as outras faixas),
+          ela mantem o tamanho e transborda o inicio nominal do campo. Nao
+          encosta no titulo: o corpo tambem desceu um patamar nessa altura,
+          entao a linha mais larga acaba em 497 e a peca comeca em 618.
+
           A figura e' vertical (221 x 560), entao a escala vem da altura do
           hero, nao da largura do campo: altura = altura do hero menos 112px
           (56px acima e abaixo), teto de 760px; a largura segue a proporcao.
@@ -161,7 +175,7 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(184px,25vw_-_85px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
@@ -185,7 +199,7 @@ export function Hero() {
               </div>
             ))}
           </div>
-          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(44vw,200px)] lg:mx-0 lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto" />
+          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(44vw,200px)] lg:mx-0 lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto lg:shrink-0" />
         </div>
       </div>
     </section>
