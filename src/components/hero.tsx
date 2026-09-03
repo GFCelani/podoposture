@@ -13,7 +13,7 @@ import { PageGrid, SectionMark } from "./layers";
  * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
  * ficarem grandes ao lado de um titulo de 50/61px. A regra e' essa, e vale
  * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
- * Corpo 14px, caixa 22x10, o que da 46px de altura contra os 55 do degrau
+ * Corpo 15px, caixa 24x11, o que da 48px de altura contra os 55 do degrau
  * de desktop; a seta e' medida em em no proprio ButtonLink,
  * entao ela nao precisa de degrau proprio e nunca sobra na caixa menor.
  * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 68/83.
@@ -28,18 +28,19 @@ import { PageGrid, SectionMark } from "./layers";
  * Com pathLength="100" o dash e' contado em porcentagem do traco, e o atraso
  * negativo do ponto (-73% de 7s) o coloca na cabeca do segmento desenhado.
  *
- * Quatro passos em 560 x 46 unidades, e nao tres em 420. O numero de passos
- * define a razao do desenho, e a razao e' o que decide a altura: a peca e'
- * larga como o texto, entao a altura vem da largura. Com tres passos a mesma
- * largura daria uma faixa alta demais.
+ * Tres passos em 420 x 46 unidades. O numero de passos define a razao do
+ * desenho, e a razao e' o que decide a altura, porque a largura ja vem do
+ * texto: menos passos, passo mais largo e faixa mais alta. Tres da 61px de
+ * altura sob um titulo de 61px na janela de laptop; quatro davam 46, e foi
+ * pedido aumentar.
  */
 const TRACO_MARCHA =
-  "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H444 C454 40 456 16 466 15 C474 14 476 26 486 27 C496 28 498 13 506 13 C516 13 520 40 530 40 H560";
+  "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
 
 const ESCALA_BOTAO =
   "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
-  "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
-  "lg:[@media(max-height:860px)]:py-2.5 lg:[@media(max-height:860px)]:text-[0.875rem]";
+  "lg:[@media(max-height:860px)]:gap-3 lg:[@media(max-height:860px)]:px-6 " +
+  "lg:[@media(max-height:860px)]:py-[11px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
 export function Hero() {
   return (
@@ -167,20 +168,35 @@ export function Hero() {
               tinha altura fixa e sobrava largura, e o preserveAspectRatio
               padrao centrava o desenho na sobra: a curva nascia uns 50px a
               direita da margem do texto e acabava antes do fim da linha.
-              Nenhuma classe de altura aqui, por isso. */}
+              Nenhuma classe de altura aqui, por isso.
+
+              Sao dois tracos sobre a mesma geometria. O de baixo esta sempre
+              inteiro, apagado, e e' ele que garante o alinhamento visivel:
+              com um traco so, o dash apagava a ponta esquerda em parte do
+              ciclo e a curva parecia comecar longe da margem do texto,
+              mesmo com a caixa alinhada ao pixel. O de cima e' o segmento
+              que anda, e o ponto vai na cabeca dele. */}
             <svg
               aria-hidden="true"
-              viewBox="0 0 560 46"
+              viewBox="0 0 420 46"
               className="rule-in mt-8 h-auto w-full max-w-[440px] sm:max-w-none lg:mt-10 [@media(max-height:860px)]:mt-4"
               style={{ ["--in-delay" as string]: "760ms" }}
             >
+              <path
+                d={TRACO_MARCHA}
+                fill="none"
+                stroke="var(--color-accent-light)"
+                strokeOpacity={0.18}
+                strokeWidth={1.4}
+                strokeLinejoin="round"
+              />
               <path
                 className="traco-monitor"
                 pathLength={100}
                 d={TRACO_MARCHA}
                 fill="none"
                 stroke="var(--color-accent-light)"
-                strokeOpacity={0.55}
+                strokeOpacity={0.7}
                 strokeWidth={1.4}
                 strokeLinejoin="round"
               />
@@ -218,7 +234,12 @@ export function Hero() {
           Em 1280 para cima o teto e' 223 / 293 / 373, e a rampa e' que
           manda.
 
-          Na janela baixa a rampa toda sobe 80px (184 / 235 / 275 / 315),
+          Na janela baixa a margem tem rampa propria, mais inclinada que a
+          da janela alta: 180 / 255 / 305 / 360px em 1024 / 1280 / 1440 /
+          1600, contra 104 / 155 / 195 / 235. A inclinacao maior e' o que
+          permite trazer a peca bem para a esquerda nas larguras de laptop
+          (1440 e 1536) sem fechar a folga em 1024, que e' a largura onde o
+          campo e' estreito e a peca inteira ja nao caberia nele.
           porque foi pedido trazer a figura mais para a esquerda no laptop.
           Em 1024 a soma de margem e peca passa da largura do campo, e o
           shrink-0 na peca e' o que decide o desempate: em vez de a figura
@@ -228,8 +249,10 @@ export function Hero() {
 
           Nessa altura o campo deixa de ser a fronteira, porque o bloco de
           texto tambem andou 56px para a direita. Quem manda ali e' a folga
-          medida entre o fim da linha mais larga e a borda da peca: 49px em
-          1024, 142 em 1280, 213 em 1366. E' esse par de numeros, e nao o
+          medida entre o fim da linha mais larga e a borda da peca: 53px em
+          1024, 122 em 1280, 187 em 1366. Em 1024 quem chega mais perto da
+          peca nao e' o titulo, e' a curva de marcha, que acompanha a largura
+          do texto e para 20px antes dela. E' esse par de numeros, e nao o
           calc, que precisa ser reconferido se o corpo do titulo, o recuo do
           bloco ou a rampa de margem mudarem de novo.
 
@@ -244,7 +267,7 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(184px,25vw_-_85px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(150px,31.25vw_-_140px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
