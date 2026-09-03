@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { DevMedida } from "../components/dev-medida";
 
 // Newsreader e Public Sans sao variaveis: sem `weight`, o next/font baixa o
 // arquivo variavel e todos os pesos ficam disponiveis. Com `weight` explicito
@@ -67,6 +68,7 @@ export default function RootLayout({
         className={`${newsreader.variable} ${publicSans.variable} ${plexMono.variable} antialiased`}
       >
         {children}
+        <DevMedida />
       </body>
     </html>
   );
