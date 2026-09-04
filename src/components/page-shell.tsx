@@ -143,7 +143,7 @@ export function PageShell({
                   <Reveal>
                     <nav aria-label="Trilha de navegação" className="mb-8">
                       <ol
-                        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                        className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.6875rem] tracking-[0.16em] text-muted uppercase [overflow-wrap:anywhere]"
                         style={{ fontFamily: "var(--mono)" }}
                       >
                         <li>
@@ -191,12 +191,19 @@ export function PageShell({
                   </Reveal>
                 )}
 
-                {/* 4.2vw so ultrapassa o piso de 2rem a partir de 762px, entao o
+                {/* Abaixo de 360px o corpo desce para 26px: e' o degrau em que
+                    uma palavra so de 14 letras em caixa alta ("BAROPODOMETRIA",
+                    "TRIDIMENSIONAL", "NEUROMODULACAO") cabe nos 257px uteis do
+                    320 sem quebrar no meio. A 32px ela passava e empurrava a
+                    pagina 32px para o lado; o overflow-hidden de antes escondia
+                    isso em vez de resolver. O overflow-wrap fica como rede: se
+                    aparecer palavra maior, quebra em vez de vazar.
+                    4.2vw so ultrapassa o piso de 2rem a partir de 762px, entao o
                     titulo ficava congelado em 32px de 320 ate 768, a faixa
                     inteira de tablet com o corpo de telefone. A forma rem+vw
                     cresce desde 320 e chega ao teto por volta de 960. */}
                 <Reveal variante="cortina" delay={120}>
-                  <h1 className="max-w-[24ch] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong">
+                  <h1 className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] max-[359px]:text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong">
                     {titulo}
                   </h1>
                 </Reveal>

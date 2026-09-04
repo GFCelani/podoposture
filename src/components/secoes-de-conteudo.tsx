@@ -175,7 +175,7 @@ function Sumario({ secoes }: { secoes: Secao[] }) {
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="sublinha text-[1rem] leading-[1.4] text-ink transition-colors duration-[160ms] group-hover:text-accent">
+                    <span className="sublinha min-w-0 [overflow-wrap:anywhere] text-[1rem] leading-[1.4] text-ink transition-colors duration-[160ms] group-hover:text-accent">
                       {secao.titulo}
                     </span>
                   </a>

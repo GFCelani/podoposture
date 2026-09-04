@@ -32,7 +32,7 @@ export default function Home() {
         <Journal />
         <Gallery />
         <SeamRuler />
-        <SocialBand />
+        <SocialBand n="11" />
       </main>
       <SiteFooter />
       <FloatingWhatsApp />

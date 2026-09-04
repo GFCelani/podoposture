@@ -215,3 +215,140 @@ decisao editorial: subtitulos novos, escritos por ela.
 - `/home/f/cefaleia-cervicogênica-e-osteopatia` (134 palavras, 0 h2, 0 h3)
 
 Total: 1 pagina e 25 posts.
+
+## 5. Decisoes tomadas sem especificacao previa
+
+1. **A foto mora no hero, nao no meio do texto.** O briefing pedia a imagem
+   "onde o texto pede". A tabela de fotos ja casava assunto com pagina
+   (plataforma de pressao em baropodometria, e assim por diante); o lugar
+   escolhido foi a coluna direita do hero, porque e' onde a leitora decide
+   ficar, e porque uma so foto por pagina nao pode estar em dois lugares.
+   `SecoesDeConteudo` aceita um `intervalo` para inserir um bloco depois da
+   secao "como funciona" (`indiceParaImagem`), pronto para uma segunda foto
+   quando houver.
+2. **Sumario de secoes** como o bloco de fundo diferente das paginas de
+   tratamento. Precisava haver um bloco em `surface` no meio do `paper` para
+   o ritmo alternar; em vez de decoracao, entrou algo com funcao: os titulos
+   do texto, ancorados. So quando ha tres ou mais secoes.
+3. **Corte em h3** quando o texto tem um h2 de abertura e a estrutura em h3
+   (osteopatia, baropodometria, responsavel-tecnica, 4 posts). Cortar so em
+   h2 deixaria essas paginas num bloco de 600 palavras.
+4. **Pull quote so do que a autora ja destacou**: paragrafo inteiro em
+   negrito, terminando em ponto, sem "agende"/"entre em contato". Perguntas
+   de FAQ e chamadas de agenda ficaram de fora porque nao sao sintese. Sem
+   essa regra, "Sua jornada para o alivio da dor comeca aqui!" viraria pull
+   quote.
+5. **Convite nos posts.** O ConviteConsulta existia so nas 18 paginas; os 68
+   posts terminavam no "Leia tambem". E' texto que ja estava no site, nao
+   texto novo.
+6. **Capa do post com `fill` em caixa 16:10**, porque o JSON nao traz as
+   medidas da capa e `next/image` exige dimensao ou caixa. A caixa reserva o
+   espaco: CLS zero. Alt vazio de proposito: as capas sao pecas graficas com
+   o titulo do post embutido, e o titulo ja esta no h1.
+7. **"Saiba Mais" e o rotulo do grupo do menu** como unico texto das
+   relacionadas: os dois ja existem no site (12 "Saiba Mais" na home, os 4
+   grupos em nav.ts). Nenhum "veja tambem" foi escrito.
+8. **Faixa social sem o numeral "11"** nas internas: a sequencia 01 a 11 e'
+   da home; num documento com a propria numeracao o 11 solto nao contava
+   nada. A home continua com ele.
+9. **Cabecalho fixo compensado em `PageShell`** (respiro superior de 128 /
+   144 / 176px): consequencia do commit anterior que tirou o header do fluxo.
+10. **Saiu `foto-da-pagina.tsx` e `prose.tsx`**: a foto passou para o hero e
+    o texto para `secoes-de-conteudo.tsx`. Nada mais os importava.
+
+### Nao mudou (e precisa continuar assim)
+
+Rotas dinamicas, `middleware.ts`, `rotas.json` e o `prebuild`, `sitemap.ts`,
+`robots.ts`, os quatro JSON-LD. Todo o trabalho e' em componentes.
+
+## 6. Pendencias da cliente
+
+Duas, e as duas bloqueiam parte do acabamento. Nenhuma e' regressao deste
+trabalho.
+
+### 6.1 As sete fotografias
+
+A lista esta na secao 3. Enquanto elas nao chegam, as sete paginas mostram a
+placa de placeholder com o rotulo do que falta. O site nao parece quebrado,
+mas tambem nao mostra a clinica onde deveria.
+
+### 6.2 `/metodo-posture+` virou `/metodo-regulador` na origem
+
+Ao rodar `verificar_urls.py` contra o site em producao hoje (2026-09-04), a
+pagina `/metodo-posture+` **nao existe mais no GoDaddy**, e no lugar dela
+aparece `/metodo-regulador`. Sao 88 URLs la e 88 aqui; uma e' diferente.
+
+O conteudo local e' o da extracao de setembro, entao nao ha regressao: o que
+mudou foi a origem, depois que o conteudo foi copiado. O gate acusa isso como
+"1 com problema" e vai continuar acusando ate a decisao ser tomada.
+
+**Aguardando confirmacao da Claudia** sobre qual e' o nome atual da pagina,
+antes de o site ir ao dominio. Depois da resposta, o caminho e':
+
+1. `python scripts/extrair_paginas.py` para trazer o slug novo e o texto atual;
+2. `npm run rotas` (ou o `prebuild`) para regenerar `rotas.json`;
+3. decidir se `/metodo-posture+`, que e' a URL que o Google ja conhecia, vira
+   redirect 301 para a nova em `next.config.ts` — recomendado, porque e' o
+   unico jeito de a autoridade da URL antiga passar para a nova;
+4. rodar o gate de novo e exigir 88/88.
+
+Ate la o site serve `/metodo-posture+` com o texto de setembro, que e'
+exatamente o que ele fazia antes deste trabalho.
+
+## 7. Verificacao
+
+Tudo abaixo rodou contra o **build de producao** (`npm run build` +
+`next start`), nao contra o servidor de desenvolvimento.
+
+### 7.1 Varredura automatizada
+
+92 rotas (as 88 do site, mais tres paginas do indice e uma URL inexistente
+para conferir o 404) em 6 larguras: **552 verificacoes**. Por rota e largura:
+rolagem completa da pagina, depois medida de rolagem horizontal, ancoras,
+blocos de entrada pendentes, imagens sem dimensao, CLS e erros de console.
+
+| Criterio | Resultado |
+|---|---|
+| Rolagem horizontal em 320 / 390 / 768 / 1024 / 1280 / 1440 | 0 rotas |
+| CLS acima de 0,02 | 0 rotas |
+| Imagens sem dimensao ou caixa de proporcao | 0 |
+| Blocos de entrada que nao apareceram apos rolar | 0 |
+| Ancoras do sumario sem destino | 0 |
+| Links internos unicos conferidos | 75, **0 quebrados** |
+| Contraste abaixo de AA (amostra de 8 rotas, todo texto visivel) | 0 |
+| `prefers-reduced-motion: reduce`: elementos invisiveis sem rolar | 0 |
+| Erros de console | 0, fora dos dois casos abaixo |
+
+Dois apontamentos, os dois esperados:
+
+- `/home/f/chinelos-100%-personalizados-para-fascite-plantar` responde 500,
+  **aqui e na origem**: o `%` solto no slug nao e' escape valido. A forma
+  escapada, que e' a que o Google indexa, responde 200. Ja documentado no
+  README antes deste trabalho.
+- `/nao-existe-404` registra erro de console por ser 404 — que e' o
+  comportamento pedido no teste.
+
+### 7.2 Build e tipos
+
+`npm run build`: 94 paginas geradas, sem erro. `tsc --noEmit`: limpo.
+`eslint src`: limpo. O unico aviso do build e' a depreciacao de `middleware`,
+anterior a este trabalho e explicada em `src/middleware.ts`.
+
+### 7.3 Gate de migracao
+
+`python scripts/verificar_urls.py --alvo http://localhost:3001`, que percorre
+as 88 URLs do site antigo e compara o conteudo renderizado: **86/88 em 200**,
+1 com o mesmo comportamento da origem (o `%` acima) e 1 divergencia de
+estrutura da origem (`/metodo-regulador`, secao 6.2). Nenhuma pagina perdeu
+texto: a contagem de palavras subiu em todas, porque a casca passou a
+declarar trilha, sumario e navegacao relacionada.
+
+### 7.4 O que a verificacao NAO cobre
+
+- Lighthouse nao foi rodado neste trabalho. Os numeros de desempenho e
+  acessibilidade do `RELATORIO-CLIENTE.md` sao de 2026-09-03 e precisam ser
+  refeitos antes de virarem argumento comercial de novo.
+- O contraste foi medido em 8 rotas, nao nas 88: a paleta e' a mesma em todas
+  e o texto vem do mesmo componente, mas a amostra e' amostra.
+- Leitor de tela nao foi testado com software real, so a estrutura
+  (marcos, hierarquia de titulos, `aria-label`, trilha).

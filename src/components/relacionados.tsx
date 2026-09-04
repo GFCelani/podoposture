@@ -82,7 +82,7 @@ export function PaginasRelacionadas({ slug }: { slug: string }) {
                         className="block h-10 w-10 rounded-full border-[1.5px] border-accent/40"
                       />
                     )}
-                    <h3 className="mt-6 font-display text-[1.25rem] leading-[1.3] font-medium text-ink-strong group-hover:text-accent">
+                    <h3 className="mt-6 [overflow-wrap:anywhere] font-display text-[1.25rem] leading-[1.3] font-medium text-ink-strong group-hover:text-accent">
                       {item.label}
                     </h3>
                     <span className="sublinha mt-auto inline-flex items-center gap-2.5 self-start pt-6 text-[0.9375rem] text-accent">
@@ -156,7 +156,7 @@ export function PostsRelacionados({ posts }: { posts: Post[] }) {
                     >
                       {outro.date}
                     </time>
-                    <h3 className="mt-3 font-display text-[1.125rem] leading-[1.35] font-semibold text-ink-strong group-hover:text-accent">
+                    <h3 className="mt-3 [overflow-wrap:anywhere] font-display text-[1.125rem] leading-[1.35] font-semibold text-ink-strong group-hover:text-accent">
                       {outro.title}
                     </h3>
                   </Link>
