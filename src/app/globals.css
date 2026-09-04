@@ -889,9 +889,13 @@ a:focus-visible .marca-vertebra {
 
    O segundo seletor existe porque a maioria das 18 paginas de servico ABRE com
    titulo, e nesse caso o primeiro seletor nunca casava: o recurso de hierarquia
-   estava escrito e desligado justamente onde mais fazia falta. */
-.prosa > p:first-child,
-.prosa > :is(h2, h3):first-child + p {
+   estava escrito e desligado justamente onde mais fazia falta.
+
+   So na abertura (.prosa-abertura): com o documento dividido em secoes, cada
+   secao abre com titulo, e o seletor de antes faria o primeiro paragrafo de
+   TODA secao crescer. O degrau e' de entrada, entao vale uma vez. */
+.prosa-abertura > p:first-child,
+.prosa-abertura > :is(h2, h3):first-child + p {
   font-size: 1.25rem;
   line-height: 1.6;
   color: var(--color-ink-strong);
@@ -1109,5 +1113,68 @@ a:focus-visible .marca-vertebra {
 
   .prosa figcaption {
     padding-inline: 4rem;
+  }
+}
+
+/* ===========================================================================
+   .prosa em blocos: o que muda quando o documento deixa de ser um so.
+   Ver SecoesDeConteudo e lib/secoes.ts.
+   =========================================================================== */
+
+/* O titulo abre o bloco: a regua e o respiro de cima vem do contentor da
+   secao, nao do h2. Vale para h3 tambem, porque em parte das paginas o corte
+   e' em h3 e ali ele e' o titulo da secao, no corpo do h2. */
+.prosa-secao > :is(h2, h3):first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.prosa-secao > h3:first-child {
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  line-height: 1.2;
+}
+
+/* No ritmo corrido (post, institucional) a costura entre secoes e' um fio
+   fino na largura do texto, que e' o que a regua do h2 fazia antes. */
+.prosa-secao-fio {
+  border-top: 1px solid var(--color-rule);
+  padding-top: 1.6rem;
+}
+
+/* Na grade de secoes o texto encosta a esquerda da coluna, ao lado do
+   numeral; centrar a medida deixaria um vao entre os dois. */
+@media (min-width: 1024px) {
+  .prosa-na-grade {
+    margin-inline: 0;
+  }
+}
+
+/* Pull quote no lugar. E' a frase que a autora escreveu inteira em negrito
+   (lib/secoes.ts marca a primeira do documento): display, corpo maior, fio
+   vertical em accent. Nao sai da ordem de leitura; muda so o tratamento. */
+.prosa .destaque {
+  margin-top: 2.25em;
+  margin-bottom: 2.25em;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--color-accent);
+  font-family: var(--display);
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  color: var(--color-ink-strong);
+  text-wrap: balance;
+}
+
+.prosa .destaque strong {
+  font-weight: 500;
+  color: inherit;
+}
+
+@media (min-width: 1024px) {
+  .prosa .destaque {
+    /* pende um pouco para a esquerda, para dentro da goteira da coluna */
+    margin-left: -1.5rem;
+    padding-left: 1.5rem;
   }
 }

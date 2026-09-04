@@ -99,16 +99,45 @@ const FOTOS: Record<string, Foto> = {
   },
 };
 
+/**
+ * O que falta fotografar. Sete paginas nao tem cena honesta no acervo:
+ * nenhuma foto de atendimento, de aparelho de neuromodulacao ou da
+ * responsavel tecnica existe (AUDITORIA.md, itens 7 e 8). Cada rotulo aqui
+ * vira um PlaceholderFoto no lugar da foto e uma linha no pedido a cliente.
+ * Quando a foto chegar, ela entra em FOTOS e a linha sai daqui.
+ */
+const PLACEHOLDERS: Record<string, string> = {
+  "currículo-profissional": "retrato da responsável técnica",
+  "dor-lombar-crônica": "atendimento de dor lombar na maca",
+  "neuromodulação": "sessão de neuromodulação com o aparelho",
+  rpg: "sessão de RPG na sala de exame",
+  "tratamento-da-dor": "avaliação clínica da dor em consulta",
+  "tratamento-da-dtm": "avaliação da ATM em consulta",
+  "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
+};
+
 /* Os slugs chegam do JSON com acento. Normalizar as chaves uma vez evita a
    divergencia NFC/NFD entre Windows e Linux que ja custou caro nas rotas. */
 const POR_SLUG = new Map(
   Object.entries(FOTOS).map(([slug, foto]) => [slug.normalize("NFC"), foto]),
 );
+const PLACEHOLDER_POR_SLUG = new Map(
+  Object.entries(PLACEHOLDERS).map(([slug, rotulo]) => [
+    slug.normalize("NFC"),
+    rotulo,
+  ]),
+);
 
 export function ilustracaoDaPagina(slug: string): {
   glifo: string;
   foto?: Foto;
+  /** Rotulo do placeholder, quando a foto ainda nao existe. */
+  placeholder?: string;
 } {
   const chave = slug.normalize("NFC");
-  return { glifo: `/${chave}`, foto: POR_SLUG.get(chave) };
+  return {
+    glifo: `/${chave}`,
+    foto: POR_SLUG.get(chave),
+    placeholder: PLACEHOLDER_POR_SLUG.get(chave),
+  };
 }

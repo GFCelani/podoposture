@@ -91,6 +91,7 @@ export default async function IndiceDoBlog({
       <TrilhaJsonLd itens={[{ nome: TITULO, caminho: BLOG_INDEX }]} />
 
       <PageShell
+        tipo="institucional"
         titulo={categoria ?? "Conteúdos para compreender melhor o seu corpo"}
         subtitulo={
           categoria

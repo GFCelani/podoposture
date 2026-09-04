@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 export default function NaoEncontrada() {
   return (
     <PageShell
+      tipo="institucional"
       titulo="Não encontramos esta página"
       subtitulo="O endereço pode ter mudado. Abaixo estão as áreas do site — e, se preferir, fale direto com a clínica pelo WhatsApp."
     >
