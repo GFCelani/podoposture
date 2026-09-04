@@ -102,3 +102,116 @@ hoje" e' o estado ANTES deste trabalho.
 | 86 | `/home/f/período-de-adaptação-ao-uso-das-palmilhas-posturais` | Período de Adaptação ao uso das Palmilhas Posturais | 125 | 0/0 | capa + 1 no corpo | post | `app/home/f/[slug]/page.tsx` |
 | 87 | `/home/f/cefaleia-cervicogênica-e-osteopatia` | Cefaleia Cervicogênica e Osteopatia | 134 | 0/0 | capa + 1 no corpo | post | `app/home/f/[slug]/page.tsx` |
 
+
+## 2. Padroes definidos
+
+Documentados em comentario no topo de `src/components/page-shell.tsx`; este
+e' o resumo.
+
+### 2.1 Tres layouts
+
+| Tipo | Rotas | Hero | Corpo | Fecho |
+|---|---|---|---|---|
+| `tratamento` | 14 paginas de tratamento, tecnica e avaliacao | duas colunas: trilha, glifo, titulo, descricao; a direita a foto da pagina (ou placeholder) em moldura, com linhas de referencia e ponto de sonar | secoes numeradas (01, 02...) com numeral fixo numa coluna a esquerda; sumario ancorado em `bg-surface` com corte diagonal depois da abertura, quando ha 3+ secoes | paginas vizinhas do grupo do menu; convite |
+| `institucional` | quem somos, responsavel tecnica, curriculo, contato, indice do blog | o mesmo hero de duas colunas quando ha midia | corrido, sem numeral; cada secao abre com fio fino | vizinhas do grupo "A Clinica"; convite |
+| `post` | 68 artigos | coluna unica: trilha, data e tema em mono, titulo, resumo; a capa em moldura larga atravessa a costura do hero com o corpo | corrido, centrado na medida de leitura, fio fino por secao | "Leia tambem" (3 posts da mesma categoria); convite |
+
+### 2.2 Ritmo vertical
+
+hero (`surface`) > abertura (`paper`, primeiro paragrafo em corpo maior) >
+[sumario em `surface`, so tratamento] > secoes (`paper`, respiro fixo entre
+elas) > relacionadas (`paper`, fio acima) > convite (`surface`) > costura >
+faixa social > rodape.
+
+O corte das secoes e' o do proprio texto: a cada `<h2>` quando ha dois ou
+mais; senao a cada `<h3>` quando ha dois ou mais (7 documentos: osteopatia,
+baropodometria, responsavel-tecnica e 4 posts); senao nao ha corte. Nenhuma
+divisao foi inventada. Conferido nos 88 documentos: o texto sem tags e'
+byte a byte o mesmo antes e depois.
+
+### 2.3 Detalhe grafico
+
+Acento, nao moldura. Numeral mono com filete abre secao; fio de 1px separa
+bandas; linhas de referencia e ponto de sonar so no hero; a pull quote leva
+fio vertical em accent. Nada mais e' desenhado por cima do texto.
+
+Pull quote: e' a primeira frase do documento que a autora escreveu inteira
+em negrito, com 40 a 220 caracteres, terminando em ponto e sem chamada de
+agenda. Nao sai do lugar; muda o tratamento (display, corpo maior, fio).
+Ocorre em 6 documentos: `/neuromodulacao` e os posts neuralgia-occipital,
+bruxismo-sem-desgaste, o-melhor-tratamento-para-zumbido,
+tratamento-para-zumbido-como-a-neuromodulacao e dor-na-atm-bruxismo.
+
+### 2.4 Movimento
+
+Um so: `Reveal` (opacidade 0 para 1, 14px de subida, 750ms, curva de saida
+do site) por bloco, variante cortina para titulos. So `transform` e
+`opacity`. O repouso de movimento reduzido vive em CSS (`[data-motion]`, em
+globals.css), vale no primeiro quadro e nao depende do observer: com
+`prefers-reduced-motion: reduce` tudo nasce visivel.
+
+### 2.5 Medida de linha
+
+`.prosa`: 66ch no telefone, 68ch a partir de 768px, corpo 18/19px. Da
+entre 62 e 72 caracteres por linha. Nas paginas numeradas o texto ocupa 8
+das 12 colunas e encosta a esquerda, ao lado do numeral.
+
+## 3. Placeholders: o pedido de fotos para a cliente
+
+Sete paginas nao tem cena honesta no acervo (AUDITORIA.md, itens 7 e 8).
+Cada uma mostra, no lugar da foto do hero, uma placa na moldura do tema com
+o rotulo abaixo. Quando a foto chegar, entra em `FOTOS` e o rotulo sai de
+`PLACEHOLDERS`, os dois em `src/lib/ilustracao-da-pagina.ts`. Fotos em
+retrato (4:5), como as demais da galeria.
+
+| Pagina | O que falta fotografar |
+|---|---|
+| `/curriculo-profissional` | retrato da responsavel tecnica |
+| `/dor-lombar-cronica` | atendimento de dor lombar na maca |
+| `/neuromodulacao` | sessao de neuromodulacao com o aparelho |
+| `/rpg` | sessao de RPG na sala de exame |
+| `/tratamento-da-dor` | avaliacao clinica da dor em consulta |
+| `/tratamento-da-dtm` | avaliacao da ATM em consulta |
+| `/tratamento-do-zumbido` | aplicacao de neuromodulacao auricular |
+
+As outras 10 paginas de conteudo usam fotos reais da galeria, mapeadas por
+assunto (plataforma de pressao em baropodometria, materiais de acupuntura em
+acupuntura, corredor de marcha em palmilhas, e assim por diante). Os 68
+posts usam a propria capa. `/contato` tem a secao de contato com mapa.
+
+## 4. Paginas em que o texto nao permitiu hierarquia
+
+Sem dois titulos do mesmo nivel nao ha o que dividir, e dividir por
+paragrafo seria inventar secao. Estas rotas ficam com a abertura inteira num
+bloco so (primeiro paragrafo em corpo maior, entrada por scroll, fio de
+abertura), sem sumario nem numeral. Se a cliente quiser ritmo nelas, e'
+decisao editorial: subtitulos novos, escritos por ela.
+
+- `/rpg` (110 palavras, 0 titulos)
+- `/home/f/síndrome-de-takotsubo-quando-emoção-vira-doença-cardíaca-real` (544 palavras, 1 h2, 1 h3)
+- `/home/f/primavera-fígado-e-torcicolo-na-medicina-tradicional-chinesa` (458 palavras, 1 h2, 0 h3)
+- `/home/f/a-importância-das-reavaliações-no-tratamento-com-palmilhas` (208 palavras, 0 h2, 0 h3)
+- `/home/f/dismorfismo-podal-você-já-ouviu-falar` (214 palavras, 0 h2, 0 h3)
+- `/home/f/22-de-junho-—-dia-mundial-da-osteopatia` (175 palavras, 0 h2, 0 h3)
+- `/home/f/a-história-por-trás-da-neurosynapse` (274 palavras, 0 h2, 0 h3)
+- `/home/f/você-já-ouviu-falar-em-ondas-binaurais` (281 palavras, 0 h2, 0 h3)
+- `/home/f/eletroacupuntura-tdcs-o-cérebro-aprende-a-não-sentir-tanta-dor` (270 palavras, 0 h2, 0 h3)
+- `/home/f/chinelos-100%-personalizados-para-fascite-plantar` (304 palavras, 0 h2, 0 h3)
+- `/home/f/já-ouviu-falar-em-notalgia-parestésica` (475 palavras, 0 h2, 0 h3)
+- `/home/f/mecanismo-de-windlass` (138 palavras, 0 h2, 0 h3)
+- `/home/f/você-sabe-todos-os-sintomas-que-podem-estar-associados-à-dtm` (353 palavras, 0 h2, 0 h3)
+- `/home/f/entenda-sua-pisada-com-a-baropodometria` (267 palavras, 0 h2, 0 h3)
+- `/home/f/neuralgia-do-auriculotemporal` (192 palavras, 0 h2, 0 h3)
+- `/home/f/posturologia-e-as-emoções` (379 palavras, 0 h2, 0 h3)
+- `/home/f/relação-entre-dor-no-ombro-direito-e-o-fígado` (395 palavras, 0 h2, 0 h3)
+- `/home/f/palmilhas-personalizadas-para-pés-diabéticos` (370 palavras, 0 h2, 0 h3)
+- `/home/f/descubra-o-conforto-e-benefícios-das-palmilhas-personalizadas` (323 palavras, 0 h2, 0 h3)
+- `/home/f/neuromodulação-auricular-no-tratamento-do-zumbido` (106 palavras, 0 h2, 0 h3)
+- `/home/f/quando-usar-uma-palmilha-postural-personalizada` (286 palavras, 0 h2, 0 h3)
+- `/home/f/4-motivos-para-o-uso-da-flexo-distração-nas-patologias-discais` (241 palavras, 0 h2, 0 h3)
+- `/home/f/tendinite-do-calcâneo---causa-ou-consequência` (156 palavras, 0 h2, 0 h3)
+- `/home/f/exercícios-respiratórios-por-5-minutos-melhoram-humor-e-ansiedade` (387 palavras, 0 h2, 0 h3)
+- `/home/f/período-de-adaptação-ao-uso-das-palmilhas-posturais` (125 palavras, 0 h2, 0 h3)
+- `/home/f/cefaleia-cervicogênica-e-osteopatia` (134 palavras, 0 h2, 0 h3)
+
+Total: 1 pagina e 25 posts.
