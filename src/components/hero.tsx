@@ -85,7 +85,7 @@ export function Hero() {
           texto ja esta na goteira de 40px da grade). O preco e' que a
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[114px] lg:[@media(max-height:860px)]:pb-7">
         {/* O recuo extra na janela baixa e' o "tudo mais para a direita": vale
             para o numeral, o titulo, os botoes e a curva de marcha, e nao
             para a peca grafica, que e' absoluta e ancorada a direita. */}
@@ -266,7 +266,7 @@ export function Hero() {
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(150px,31.25vw_-_140px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
+          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:pt-[90px] lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(150px,31.25vw_-_140px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
         >
           {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
               0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
@@ -299,7 +299,7 @@ export function Hero() {
               </div>
             ))}
           </div>
-          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(44vw,200px)] lg:mx-0 lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto lg:shrink-0" />
+          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(48vw,224px)] lg:mx-0 lg:h-[min(calc(100svh-90px-64px),820px)] lg:w-auto lg:shrink-0" />
         </div>
       </div>
     </section>

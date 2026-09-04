@@ -153,9 +153,7 @@ export function SiteHeader() {
     // Sem backdrop-filter: ele tornaria o header bloco contentor dos
     // descendentes fixed e o drawer mobile nasceria com altura zero.
     <header
-      className={`sticky top-0 z-50 border-b bg-paper transition-[border-color,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] ${
-        rolou ? "border-rule shadow-plate" : "border-rule/60"
-      }`}
+      className="fixed inset-x-0 top-0 z-50 px-3 pt-4 lg:px-6 lg:pt-6"
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
@@ -164,29 +162,30 @@ export function SiteHeader() {
           camada dentro do header os fios passavam sobre o logo e o menu, ja
           que logo e nav sao estaticos e camada absoluta pinta depois. */}
       <div
-        className={`mx-auto flex max-w-[1240px] items-center justify-between px-6 transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-8 lg:px-10 ${
-          rolou ? "h-14 lg:h-[68px]" : "h-16 lg:h-[92px]"
+        className={`relative mx-auto flex h-16 max-w-none items-center justify-between rounded-[14px] border bg-paper px-5 transition-[max-width,border-color,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-7 lg:grid lg:h-[74px] lg:grid-cols-[1fr_auto_1fr] lg:px-7 ${
+          rolou
+            ? "border-rule shadow-lift lg:max-w-[1160px]"
+            : "border-rule/60 shadow-plate lg:max-w-[1359px]"
         }`}
       >
         <Link
           href="/home"
-          className="shrink-0 rounded-sm"
+          className="shrink-0 rounded-sm lg:justify-self-start"
           aria-label="Podoposture"
         >
-          <BrandMark
-            className={`w-auto transition-[height] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] ${
-              rolou ? "h-8 lg:h-10" : "h-[38px] lg:h-[52px]"
-            }`}
-          />
+          <BrandMark className="h-9 w-auto lg:h-10 xl:h-[42px]" />
         </Link>
 
         {/* Desktop */}
-        <nav aria-label="Principal" className="hidden lg:block">
-          <ul className="flex items-center gap-1">
+        <nav
+          aria-label="Principal"
+          className="hidden lg:block lg:justify-self-center"
+        >
+          <ul className="flex items-center gap-0 xl:gap-1">
             <li>
               <Link
                 href={NAV_HOME.href}
-                className="sublinha block rounded-sm px-3 py-2 text-[0.9375rem] text-ink transition-colors duration-[160ms] hover:text-accent"
+                className="sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
                 onMouseEnter={() => setOpen(null)}
               >
                 {NAV_HOME.label}
@@ -207,13 +206,13 @@ export function SiteHeader() {
                     }}
                     onFocus={() => setOpen(group.label)}
                     onClick={() => setOpen(isOpen ? null : group.label)}
-                    className={`sublinha flex items-center gap-1.5 rounded-sm px-3 py-2 text-[0.9375rem] transition-colors duration-[160ms] ${
+                    className={`sublinha flex items-center gap-1.5 rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] transition-colors duration-[160ms] ${
                       isOpen ? "text-accent" : "text-ink hover:text-accent"
                     }`}
                   >
                     <span
                       aria-hidden="true"
-                      className={`text-[0.5625rem] tracking-[0.16em] transition-colors duration-[160ms] ${
+                      className={`text-[0.5625rem] tracking-[0.16em] xl:text-[0.625rem] transition-colors duration-[160ms] ${
                         isOpen ? "text-accent" : "text-muted"
                       }`}
                       style={{ fontFamily: "var(--mono)" }}
@@ -243,29 +242,30 @@ export function SiteHeader() {
             <li>
               <Link
                 href={NAV_BLOG.href}
-                className="sublinha block rounded-sm px-3 py-2 text-[0.9375rem] text-ink transition-colors duration-[160ms] hover:text-accent"
+                className="sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
                 onMouseEnter={() => setOpen(null)}
               >
                 {NAV_BLOG.label}
               </Link>
             </li>
 
-            {/* Sempre visivel, em qualquer scroll, e sem mudar de estado.
-                Contorno em vez de preenchimento: le como controle sem
-                disputar com o verde do hero. O verde so aparece no hover,
-                pelo preenchimento que cresce do canto. */}
-            <li className="ml-3">
-              <a
-                href="https://wa.me/5521992035643"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-fill [--fill:var(--color-action)] inline-flex items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-4 py-2 text-[0.8125rem] font-medium text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0"
-              >
-                Falar Sobre o Meu Caso
-              </a>
-            </li>
           </ul>
         </nav>
+
+        {/* Sempre visivel, em qualquer scroll, e sem mudar de estado.
+            Contorno em vez de preenchimento: le como controle sem disputar
+            com o verde do hero. O verde so aparece no hover, pelo
+            preenchimento que cresce do canto. Fora da lista do menu porque a
+            coluna do meio e' so a navegacao: com o CTA dentro dela, o que
+            ficaria centrado na chapa era o conjunto, e nao as secoes. */}
+        <a
+          href="https://wa.me/5521992035643"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-fill [--fill:var(--color-action)] hidden items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-3 py-2 text-[0.75rem] xl:px-3.5 xl:py-2.5 xl:text-[0.875rem] font-medium whitespace-nowrap text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0 lg:inline-flex lg:justify-self-end"
+        >
+          Falar Sobre o Meu Caso
+        </a>
 
         {/* Painel do mega-menu: placa flutuante, nao faixa de ponta a ponta */}
         {activeGroup && (
@@ -368,36 +368,37 @@ export function SiteHeader() {
             />
           </span>
         </button>
-      </div>
 
-      {/* Fio de assinatura: hairline azul, com um pulso de luz verde
-          percorrendo a linha em loop */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden"
-      >
+        {/* Fio de assinatura: hairline azul, com um pulso de luz verde
+            percorrendo a linha em loop */}
         <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 22%, transparent) 30%, color-mix(in srgb, var(--color-accent) 22%, transparent) 70%, transparent 96%)",
-          }}
-        />
-        <div
-          className="fio-pulso absolute inset-y-0 w-[16%]"
-          style={{
-            background:
-              "linear-gradient(to right, transparent, color-mix(in srgb, var(--color-action) 68%, transparent) 50%, transparent)",
-          }}
-        />
-      </div>
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden rounded-b-[14px]"
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(to right, transparent 4%, color-mix(in srgb, var(--color-accent) 22%, transparent) 30%, color-mix(in srgb, var(--color-accent) 22%, transparent) 70%, transparent 96%)",
+            }}
+          />
+          <div
+            className="fio-pulso absolute inset-y-0 w-[16%]"
+            style={{
+              background:
+                "linear-gradient(to right, transparent, color-mix(in srgb, var(--color-action) 68%, transparent) 50%, transparent)",
+            }}
+          />
+        </div>
 
-      {/* Progresso de leitura: a mesma logica de medida do resto do site */}
-      <span
-        ref={progresso}
-        aria-hidden="true"
-        className="absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 bg-accent"
-      />
+        {/* Progresso de leitura: a mesma logica de medida do resto do site */}
+        <span
+          ref={progresso}
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 rounded-b-[14px] bg-accent"
+        />
+
+      </div>
 
       {/* Drawer mobile */}
       {drawer && (
@@ -412,9 +413,7 @@ export function SiteHeader() {
              Fixo em top-14 (56px), o drawer aberto sem rolagem ficava 8px
              debaixo do cabecalho de 64px — o primeiro item do menu nascia
              parcialmente coberto. */
-          className={`fixed inset-x-0 bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper transition-[top] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] focus:outline-none lg:hidden ${
-            rolou ? "top-14" : "top-16"
-          }`}
+          className="fixed inset-x-0 top-[80px] bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper focus:outline-none lg:hidden"
         >
           <nav aria-label="Principal" className="px-6 py-6">
             <div className="item-menu" style={{ ["--i" as string]: 0 }}>

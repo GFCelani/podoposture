@@ -42,7 +42,7 @@ export function PageShell({
           data-hero
           className="relative overflow-hidden border-b border-rule bg-surface"
         >
-          <div className="mx-auto max-w-[1240px] px-6 pt-20 pb-12 md:px-8 md:pt-24 md:pb-16 lg:px-10 lg:pt-32 lg:pb-20">
+          <div className="mx-auto max-w-[1240px] px-6 pt-36 pb-12 md:px-8 md:pt-40 md:pb-16 lg:px-10 lg:pt-[220px] lg:pb-20">
             {trilha && trilha.length > 0 && (
               <nav aria-label="Trilha de navegação" className="mb-8">
                 <ol className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">
