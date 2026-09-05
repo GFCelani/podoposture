@@ -58,7 +58,7 @@ export function Hero() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(105deg, #0d2536 0%, #143650 46%, #1e3d56 100%)",
+            "linear-gradient(105deg, #1e2e38 0%, #27404e 46%, #304c5a 100%)",
         }}
       >
         <FundoOndulado className="absolute inset-0" />

@@ -1,44 +1,61 @@
 @import "tailwindcss";
 
+/* PALETA "LINHO", temperatura quente (2026-09-05).
+   O azul anterior era saturado demais para uma clinica de dor cronica: quem
+   chega ja esta desconfortavel, e a pagina estimulava em vez de acalmar. A
+   recalibracao baixa a saturacao e esquenta os neutros. Papel de linho e
+   tinta com sombra quente sob um azul acinzentado: a pagina le como iluminada
+   por lampada, nao por monitor.
+   O verde de acao e o verde escuro do hover ficaram de fora por decisao: sao
+   a cor do logo e continuam restritos ao CTA de WhatsApp e ao acento
+   anatomico. O azul #0E71B4 sobrevive so dentro do SVG da marca, que nao
+   entrou na recalibracao porque e identidade, nao paleta de interface.
+   Vinte pares de texto medidos, todos AA. Os numeros nos comentarios abaixo
+   sao desta paleta; se um token mudar, remedir os dois lados do par. */
 @theme {
   /* Neutros */
-  --color-paper: #faf9f6;
-  --color-surface: #f1efea;
-  /* Tinta em dois pesos: corpo azulado suave (8.2 sobre paper) e strong
-     para titulo (13.3). O preto puro saiu da pagina. */
-  --color-ink: #2e4f6a;
-  --color-ink-strong: #102e46;
-  --color-muted: #4a5a68;
-  --color-rule: #dad7cf;
+  --color-paper: #faf8f3;
+  --color-surface: #f0ebe1;
+  /* Tinta em dois pesos: corpo azulado suave (6.94 sobre paper) e strong
+     para titulo (11.33). O preto puro saiu da pagina. */
+  --color-ink: #455869;
+  --color-ink-strong: #26384a;
+  /* Metadado em cinza quente, 6.44 sobre paper: e o unico neutro que nao
+     puxa para o azul, e e' o que da o registro de linho ao conjunto. */
+  --color-muted: #5f5a52;
+  --color-rule: #ddd6c8;
 
   /* Cor de acao — verde do logo. So em preenchimento de CTA primario
-     e nos discos da coluna do hero. Nunca como texto sobre claro. */
+     e nos discos da coluna do hero. Nunca como texto sobre claro.
+     Fora da recalibracao de 2026-09-05: nao muda com a paleta. */
   --color-action: #96bf0d;
   --color-action-deep: #4b6007;
 
-  /* Acento — azul do logo. Rotulos, reguas, links, secoes escuras. */
-  --color-accent: #0e71b4;
-  /* Tint do acento, para uso SO sobre o petroleo: o #0e71b4 da 2.8 la,
-     este da 5.9. Nao e cor nova, e o mesmo azul clareado. */
-  --color-accent-light: #5aa6da;
-  --color-accent-deep: #0d2536;
+  /* Acento — azul acinzentado. Rotulos, reguas, links, secoes escuras.
+     5.53 sobre paper, 4.94 sobre surface. */
+  --color-accent: #3a6a85;
+  /* Tint do acento, para uso SO sobre o petroleo: o #3a6a85 da 2.38 la,
+     este da 7.17. Nao e cor nova, e o mesmo azul clareado. */
+  --color-accent-light: #a2becd;
+  --color-accent-deep: #1e2e38;
   /* Petroleo suavizado das secoes escuras fora do hero. Contraste:
-     paper 10.7, on-deep-muted 5.4, ambos AA. */
-  --color-deep-calm: #1e3d56;
+     paper 8.58, on-deep-muted 5.26, ambos AA. */
+  --color-deep-calm: #304c5a;
   /* O hero clareia ate o teto do contraste: com este tom o texto mono
-     on-deep-muted ainda da 4.85 (AA para corpo) e o h1 da 9.7. Um degrau
-     acima (#244B62) derruba o mono para 4.42 e sai de AA. */
-  --color-hero: #20455a;
+     on-deep-muted ainda da 4.52 (AA para corpo) e o h1 da 7.37. Um degrau
+     acima (#3d5e70) derruba o mono para 4.00 e sai de AA. */
+  --color-hero: #375666;
 
-  /* Texto sobre o petroleo. Contraste sobre #0D2536:
-     paper 14.94, on-deep-muted 7.48. */
-  --color-on-deep-muted: #a6b5bf;
+  /* Texto sobre o petroleo, em cinza quente. Contraste sobre #1E2E38:
+     paper 13.16, on-deep-muted 8.08. */
+  --color-on-deep-muted: #c1c6c4;
 
-  /* Profundidade. Quatro degraus, e nada fora deles. */
-  --shadow-tag: 0 10px 30px -22px rgb(13 37 54 / 0.7);
-  --shadow-plate: 0 16px 38px -30px rgb(13 37 54 / 0.55);
-  --shadow-lift: 0 22px 46px -26px rgb(13 37 54 / 0.6);
-  --shadow-float: 0 22px 48px -30px rgb(13 37 54 / 0.5);
+  /* Profundidade. Quatro degraus, e nada fora deles.
+     A cor da sombra e o petroleo da paleta, nao um azul solto. */
+  --shadow-tag: 0 10px 30px -22px rgb(30 46 56 / 0.7);
+  --shadow-plate: 0 16px 38px -30px rgb(30 46 56 / 0.55);
+  --shadow-lift: 0 22px 46px -26px rgb(30 46 56 / 0.6);
+  --shadow-float: 0 22px 48px -30px rgb(30 46 56 / 0.5);
 
   /* Raio. Tres degraus, e nada fora deles.
      sm  etiqueta, chip, numero em placa
@@ -152,8 +169,8 @@ body {
 }
 
 .grade[data-grade="deep"] {
-  --fio-forte: rgb(250 249 246 / 0.07);
-  --fio-fino: rgb(250 249 246 / 0.03);
+  --fio-forte: rgb(250 248 243 / 0.07);
+  --fio-fino: rgb(250 248 243 / 0.03);
 }
 
 /* Fios de coluna so onde forem pedidos: hoje, so no hero. Abaixo dele fica
@@ -175,7 +192,7 @@ body {
 }
 
 .grade[data-grade="deep"][data-crescente] {
-  --fio-fino: rgb(250 249 246 / 0.038);
+  --fio-fino: rgb(250 248 243 / 0.038);
 }
 
 @media (min-width: 1024px) {

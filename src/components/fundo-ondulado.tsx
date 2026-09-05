@@ -63,16 +63,25 @@ const DPR_MAXIMO = 1.5;
 const INSTANTE_PARADO = 2.1;
 
 /* Paleta do hero. sRGB em hex, convertida para linear no envio.
-   Um passo mais calma que a do site: o petroleo puxa um pouco para o azul,
-   e a crista troca o acento eletrico (#0E71B4) por um azul-aco dessaturado,
-   ainda azul (matiz ~200), que clareia sem vibrar. Papel sobre a crista da
-   5,3: AA para corpo de texto em qualquer pixel. */
-const C1 = "#10293b"; // petroleo, um passo mais azul: esquerda, sob o texto
-// #183B55 e nao #1B4460: sob o numeral mono em on-deep-muted o pior pixel e'
-// este azul trazido por dobra, e com #1B4460 o contraste parava em 4,60,
-// limite sem margem. Um passo mais escuro poe o limite em ~4,9.
-const C2 = "#183b55"; // azul profundo: direita
-const C3 = "#2c6e8e"; // azul-aco, cristas
+   Estas tres cores NAO saem dos tokens: vivem aqui porque vao para uniformes
+   do shader, entao qualquer recalibracao da paleta tem de passar por este
+   bloco tambem. Sao a versao "Linho" (2026-09-05), um passo mais quente e
+   mais escura que a paleta clara da pagina.
+   Medidas de par isolado: papel sobre a crista da 4,54 e o mono da 3,12.
+   O mono contra a crista e' o unico par abaixo de 4,5 da pagina, e e' assim
+   de proposito: a crista so aparece nas dobras e nunca cobre uma linha
+   inteira, e fechar esse par em 4,5 escurece o plano ate matar o relevo, que
+   e' a textura do fundo. O piso anterior deste par era 2,68.
+   O par isolado e' o pior caso teorico, nao o que a pagina entrega. Medido
+   por pixel no quadro renderizado, sob as caixas reais do texto (Range.
+   getClientRects, nao a caixa do elemento, que e' mais larga que os glifos e
+   pega a figura anatomica): numeral 5,24 e titulo 8,43. A crista nao alcanca
+   a coluna de texto. Se o bloco de texto andar para a direita, remedir. */
+const C1 = "#20313b"; // petroleo quente: esquerda, sob o texto
+// O pior pixel sob o numeral mono nao e' a crista, e' este azul de base
+// trazido por dobra: com ele o mono fica em 5,51, com margem.
+const C2 = "#2c4959"; // azul profundo: direita
+const C3 = "#447083"; // azul-aco quente, cristas
 
 const VERTEX = /* glsl */ `
 precision highp float;

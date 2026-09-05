@@ -11,11 +11,11 @@ type Variant = "primary" | "secondary" | "secondary-deep" | "tertiary";
  * clique (afunda no active). O terciario nao desenha caixa: e' link, e leva
  * sublinhado permanente para nao depender do hover para se anunciar.
  *
- * Contraste medido sobre --paper #FAF9F6:
- *   primario   ink #0D2536 sobre acao #96BF0D .......... 7.31
- *   primario   hover papel sobre acao-deep #4B6007 ..... 6.70
- *   secundario accent #0E71B4 sobre papel ............. 4.94
- *   terciario  accent sobre papel ...................... 4.94
+ * Contraste medido sobre --paper #FAF8F3 (paleta Linho, 2026-09-05):
+ *   primario   ink-strong #26384A sobre acao #96BF0D ... 5.58
+ *   primario   hover papel sobre acao-deep #4B6007 ..... 6.65
+ *   secundario accent #3A6A85 sobre papel .............. 5.53
+ *   terciario  accent sobre papel ...................... 5.53
  */
 const BASE =
   "group/btn inline-flex items-center gap-3 text-[0.9375rem] transition-[transform,box-shadow,background-color,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)]";
