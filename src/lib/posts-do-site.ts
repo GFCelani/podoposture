@@ -5,6 +5,7 @@ import { listarPublicados } from "./painel-db";
 import { rotuloDaData } from "./painel-tipos";
 import {
   BRUTOS_DO_JSON,
+  MAPA_ASCII_POSTS,
   hrefDoPost,
   paraPost,
   type Post,
@@ -74,9 +75,21 @@ export async function todosOsPosts(): Promise<Post[]> {
   return (await todosOsBrutos()).map(paraPost);
 }
 
-/** O post de um endereco, venha ele de onde vier. */
+/**
+ * O post de um endereco, venha ele de onde vier.
+ *
+ * O `MAPA_ASCII_POSTS` nao e detalhe: 59 dos 68 posts migrados tem acento no
+ * slug, e o Next 16.3.4 nao serve rota com caractere nao-ASCII (#73965). A rota
+ * gerada e a versao sem acento, e o middleware reescreve a URL bonita para ela
+ * — entao o que chega aqui e a chave ASCII, e sem traduzir de volta nenhum
+ * desses 59 posts e encontrado.
+ *
+ * Esta traducao existia em `buscarPost` e se perdeu quando esta funcao foi
+ * escrita. O gate de migracao acusou: 59 URLs indexadas dando 404.
+ */
 export async function buscarPostDoSite(slug: string): Promise<PostBruto | undefined> {
-  const alvo = slug.normalize("NFC");
+  const real = MAPA_ASCII_POSTS.get(slug) ?? slug;
+  const alvo = real.normalize("NFC");
   return (await todosOsBrutos()).find((p) => p.slug.normalize("NFC") === alvo);
 }
 
