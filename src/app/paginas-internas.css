@@ -1,0 +1,1164 @@
+/* ===========================================================================
+   PAGINAS INTERNAS: o sistema de blocos (components/blocos.tsx,
+   components/secoes-de-conteudo.tsx, lib/blocos.ts). Importado por
+   globals.css; os tokens vem do @theme de la.
+
+   Grade: 1 coluna no telefone, 6 a partir de 768, 12 a partir de 1024.
+   A lateral esquerda (colunas 1-2 em lg) leva o fio de prumo, o ponto de
+   sonar e o numeral da secao. O corpo da secao (3-12) e' uma grade propria
+   de 10 colunas, e cada tipo de bloco tem a sua largura: prosa em 6,
+   citacao ao lado em 3, listas e grades em 10. A citacao que segue uma
+   prosa cai ao lado dela pela auto-colocacao da grade (coluna 8 depois da
+   coluna 1 fica na mesma linha). Toda cor vem dos tokens de @theme.
+   =========================================================================== */
+
+.pi-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 24px;
+}
+
+.pi-corpo-sec {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px 24px;
+  align-content: start;
+}
+
+.pi-faixa[data-tom="paper"] > .pi-wrap {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+.pi-faixa[data-tom="paper"][data-continua] > .pi-wrap {
+  padding-top: 8px;
+}
+
+.pi-faixa[data-tom="surface"] > .pi-wrap,
+.pi-faixa[data-tom="deep"] > .pi-wrap {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+
+.pi-faixa[data-tom="deep"] {
+  color: var(--color-paper);
+}
+
+/* Secao de uma linha (titulo e uma frase): metade do respiro, senao tres
+   delas seguidas viram tres telas quase vazias. */
+.pi-faixa[data-tom="paper"][data-curta] > .pi-wrap {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+/* ---- lateral: prumo, ponto, numeral --------------------------------------- */
+
+.pi-prumo {
+  display: none;
+}
+
+.pi-marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  color: var(--color-muted);
+}
+
+.pi-faixa[data-tom="deep"] .pi-marca {
+  color: var(--color-on-deep-muted);
+}
+
+.pi-ponto {
+  position: relative;
+  display: block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+
+.pi-fio {
+  display: block;
+  height: 1px;
+  width: 40px;
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.pi-faixa[data-tom="deep"] .pi-fio {
+  background: color-mix(in srgb, var(--color-accent-light) 45%, transparent);
+}
+
+.pi-lateral {
+  margin-bottom: 24px;
+}
+
+/* ---- titulo de secao ------------------------------------------------------ */
+
+.pi-h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 1.35rem + 1.6vw, 2.375rem);
+  line-height: 1.15;
+  letter-spacing: -0.018em;
+  color: var(--color-ink-strong);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  scroll-margin-top: 6rem;
+}
+
+.pi-faixa[data-tom="deep"] .pi-h2 {
+  color: var(--color-paper);
+}
+
+.pi-h2-caixa {
+  font-size: clamp(1.375rem, 1.15rem + 0.8vw, 1.625rem);
+}
+
+.pi-h2-corrido {
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  line-height: 1.2;
+}
+
+/* ---- abertura: entrada em duas medidas, ancorada a esquerda --------------- */
+
+.pi-abertura > .pi-wrap {
+  padding-top: 56px;
+  padding-bottom: 40px;
+}
+
+.pi-lead p {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.625rem);
+  line-height: 1.5;
+  color: var(--color-ink-strong);
+  text-wrap: pretty;
+}
+
+.pi-apoio {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-rule);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--color-ink);
+}
+
+.pi-apoio > * + * {
+  margin-top: 1.2em;
+}
+
+/* ---- sumario: banda em superficie, itens em fila --------------------------- */
+
+.pi-sumario > .pi-wrap {
+  padding-top: 48px;
+  padding-bottom: 40px;
+}
+
+.pi-sumario ol {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0 32px;
+}
+
+.pi-sumario li {
+  border-top: 1px solid var(--color-rule);
+}
+
+.pi-sumario a {
+  display: block;
+  min-height: 44px;
+  padding: 14px 0 12px;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.pi-sumario .n {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+}
+
+.pi-sumario .t {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 1rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* ---- citacao: pull quote ao lado da prosa ---------------------------------- */
+
+.pi-citacao blockquote,
+.pi-citacao > p {
+  margin: 0;
+  padding-left: 20px;
+  border-left: 2px solid var(--color-accent);
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--color-ink-strong);
+  text-wrap: balance;
+}
+
+.pi-citacao strong {
+  font-weight: 500;
+  color: inherit;
+}
+
+.pi-citacao blockquote p {
+  margin: 0;
+}
+
+.pi-citacao blockquote p + p {
+  margin-top: 0.8em;
+}
+
+/* ---- listas: cartoes, compacta, caixa -------------------------------------- */
+
+.pi-lista ul,
+.pi-lista ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pi-cartoes ul,
+.pi-cartoes ol {
+  display: grid;
+  gap: 12px;
+  counter-reset: cartao;
+}
+
+.pi-cartoes li {
+  position: relative;
+  padding: 18px 20px 18px 24px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-tag);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--color-ink);
+  overflow-wrap: break-word;
+}
+
+.pi-cartoes li::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 18px;
+  width: 3px;
+  height: 22px;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-accent);
+}
+
+/* lista ordenada: o numeral em mono no lugar do tique */
+.pi-cartoes.pi-ordenada li {
+  padding-left: 20px;
+  padding-top: 40px;
+}
+
+.pi-cartoes.pi-ordenada li::before {
+  counter-increment: cartao;
+  content: "0" counter(cartao);
+  left: 20px;
+  top: 16px;
+  width: auto;
+  height: auto;
+  background: none;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+}
+
+.pi-cartoes li strong,
+.pi-compacta li strong,
+.pi-caixa-lista li strong {
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.pi-compacta ul,
+.pi-compacta ol {
+  display: grid;
+  gap: 0 32px;
+  counter-reset: item;
+}
+
+/* O marcador e' absoluto, nao um item de grid ou flex: com display grid ou
+   flex no li, "<strong>Rotulo:</strong> texto" virava dois itens anonimos e o
+   texto caia na coluna do marcador, uma palavra por linha. */
+.pi-compacta li {
+  position: relative;
+  padding: 11px 0 11px 20px;
+  border-top: 1px solid var(--color-rule);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  overflow-wrap: break-word;
+}
+
+.pi-compacta li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(11px + 0.6em);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.pi-compacta.pi-ordenada li {
+  padding-left: 40px;
+}
+
+.pi-compacta.pi-ordenada li::before {
+  counter-increment: item;
+  content: "0" counter(item);
+  top: calc(11px + 0.4em);
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+}
+
+.pi-caixa {
+  padding: 24px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+}
+
+.pi-caixa .pi-marca {
+  margin-bottom: 20px;
+}
+
+.pi-caixa-lista {
+  margin-top: 20px;
+}
+
+.pi-caixa-lista ul,
+.pi-caixa-lista ol {
+  list-style: disc;
+  padding-left: 1.2rem;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+
+.pi-caixa-lista ol {
+  list-style: decimal;
+}
+
+.pi-caixa-lista li + li {
+  margin-top: 0.7em;
+}
+
+.pi-caixa-lista li::marker {
+  color: var(--color-accent);
+}
+
+/* ---- lista rotulada: passos numerados e fichas ----------------------------- */
+
+.pi-rotulo p {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--color-accent);
+}
+
+.pi-rotulo strong {
+  font-weight: 400;
+  color: inherit;
+}
+
+.pi-passos ul,
+.pi-passos ol {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  counter-reset: passo;
+}
+
+.pi-passos li {
+  position: relative;
+  padding: 16px 0 16px 52px;
+  border-top: 1px solid var(--color-rule);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--color-ink);
+}
+
+.pi-passos li:last-child {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.pi-passos li::before {
+  counter-increment: passo;
+  content: "0" counter(passo);
+  position: absolute;
+  left: 0;
+  top: calc(16px + 0.45em);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+}
+
+.pi-passos li strong,
+.pi-ficha li strong {
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}
+
+.pi-fichas {
+  display: grid;
+  gap: 16px;
+}
+
+.pi-ficha {
+  padding: 22px 24px 8px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-plate);
+}
+
+.pi-ficha ul,
+.pi-ficha ol {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.pi-ficha li {
+  position: relative;
+  padding: 12px 0 12px 20px;
+  border-top: 1px solid var(--color-rule);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+
+.pi-ficha li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(12px + 0.55em);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+/* ---- fotografias de apoio -------------------------------------------------- */
+
+.pi-fotos {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.pi-fotos figure {
+  position: relative;
+  margin: 0;
+}
+
+.pi-fotos > .grande {
+  grid-column: 1 / -1;
+}
+
+.pi-moldura {
+  padding: 8px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  background: var(--color-paper);
+  box-shadow: var(--shadow-plate);
+}
+
+.pi-moldura img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  filter: saturate(0.9);
+  background: var(--color-surface);
+}
+
+.pi-fotos .grande img {
+  aspect-ratio: 16 / 10;
+}
+
+.pi-fotos .pequena img {
+  aspect-ratio: 4 / 5;
+}
+
+.pi-fotos figcaption {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 4px 4px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+}
+
+.pi-fotos figcaption::before {
+  content: "";
+  flex: none;
+  width: 24px;
+  height: 1px;
+  margin-top: 0.5em;
+  background: var(--color-rule);
+}
+
+.pi-linhas {
+  display: none;
+}
+
+/* ---- azulejos: mapa de rotulos, uma fonte e um tamanho so ------------------ */
+
+.pi-azulejos {
+  display: grid;
+  gap: 12px;
+}
+
+.pi-azulejo {
+  position: relative;
+  min-height: 92px;
+  padding: 20px 20px 18px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
+}
+
+.pi-faixa[data-tom="deep"] .pi-azulejo {
+  border-color: rgb(252 253 254 / 0.14);
+}
+
+.pi-azulejo > * {
+  margin: 0;
+  font-family: var(--text);
+  font-weight: 500;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  letter-spacing: 0;
+  color: var(--color-ink-strong);
+}
+
+.pi-faixa[data-tom="deep"] .pi-azulejo > * {
+  color: var(--color-paper);
+}
+
+.pi-azulejo strong {
+  font-weight: 500;
+  color: inherit;
+}
+
+/* o tique marca os azulejos de titulo (regiao); os de queixa ficam sem */
+.pi-azulejo > :is(h3, h4)::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  width: 28px;
+  height: 2px;
+  background: var(--color-accent);
+}
+
+.pi-faixa[data-tom="deep"] .pi-azulejo > :is(h3, h4)::before {
+  background: var(--color-accent-light);
+}
+
+.pi-figura {
+  display: none;
+}
+
+.pi-figura svg {
+  display: block;
+  width: auto;
+  height: clamp(300px, 52vh, 520px);
+  margin: 0 auto;
+}
+
+/* ---- protocolo: linhas numeradas ------------------------------------------- */
+
+.pi-protocolo {
+  counter-reset: programa;
+}
+
+.pi-prot-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px 24px;
+  padding: 22px 0;
+  border-top: 1px solid var(--color-rule);
+}
+
+.pi-prot-linha:last-child {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.pi-prot-linha::before {
+  counter-increment: programa;
+  content: "0" counter(programa);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  color: var(--color-accent);
+  padding-top: 0.5em;
+}
+
+.pi-prot-titulo > * {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--color-ink-strong);
+  overflow-wrap: anywhere;
+}
+
+.pi-prot-corpo > * {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--color-ink);
+}
+
+/* ---- placa de contato ------------------------------------------------------ */
+
+.pi-placa {
+  display: grid;
+  gap: 32px;
+  padding: 32px 28px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+}
+
+.pi-texto > div > :is(h3, h4) {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--color-ink-strong);
+}
+
+.pi-texto p {
+  margin: 16px 0 0;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--color-ink);
+}
+
+.pi-texto > div:first-child > p {
+  margin-top: 0;
+}
+
+.pi-dado {
+  padding-top: 24px;
+  border-top: 1px solid var(--color-rule);
+}
+
+.pi-dado p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+
+.pi-dado > div + div {
+  margin-top: 10px;
+}
+
+.pi-dado .pi-num p {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--color-ink-strong);
+}
+
+.pi-dado .pi-num strong {
+  font-weight: 400;
+  color: inherit;
+}
+
+.pi-dado .pi-fecho {
+  margin-top: 22px;
+}
+
+.pi-dado .pi-fecho p {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  color: var(--color-ink-strong);
+}
+
+.pi-dado .pi-fecho strong {
+  font-weight: 500;
+  color: inherit;
+}
+
+/* ---- referencias ----------------------------------------------------------- */
+
+.pi-referencias ol,
+.pi-referencias ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: ref;
+}
+
+.pi-referencias li {
+  position: relative;
+  padding: 10px 0 10px 32px;
+  border-top: 1px solid var(--color-rule);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.pi-referencias li:last-child {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.pi-referencias li::before {
+  counter-increment: ref;
+  content: counter(ref, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 10px;
+  color: var(--color-accent);
+}
+
+.pi-referencias a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+.pi-referencias a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---- corrido: post --------------------------------------------------------- */
+
+.pi-corrido {
+  max-width: 800px;
+  margin-inline: auto;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--color-rule);
+}
+
+.pi-corrido > * + * {
+  margin-top: 1.6rem;
+}
+
+.pi-corrido .prosa {
+  margin-inline: 0;
+  max-width: none;
+}
+
+/* Abertura em coluna de leitura: sem o fio de costura, que e' das secoes. */
+.pi-corrido-abertura {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.pi-corrido-abertura .pi-lead p {
+  font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.5rem);
+}
+
+/* Resto da abertura em grade: blocos empilhados, mesma medida da prosa. */
+.pi-resto > * + * {
+  margin-top: 1.6rem;
+}
+
+.pi-resto .prosa {
+  margin-inline: 0;
+}
+
+/* ===========================================================================
+   768: seis colunas
+   =========================================================================== */
+@media (min-width: 768px) {
+  .pi-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .pi-corpo-sec {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .pi-lateral {
+    grid-column: 1 / -1;
+  }
+
+  .pi-faixa[data-tom="paper"] > .pi-wrap {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .pi-faixa[data-tom="paper"][data-continua] > .pi-wrap {
+    padding-top: 8px;
+  }
+
+  .pi-abertura > .pi-wrap {
+    padding-top: 64px;
+    padding-bottom: 48px;
+  }
+
+  .pi-col-lead {
+    grid-column: 1 / 6;
+  }
+
+  .pi-col-apoio {
+    grid-column: 3 / 7;
+  }
+
+  .pi-col-resto,
+  .pi-col-toda {
+    grid-column: 1 / -1;
+  }
+
+  .pi-sumario-marca,
+  .pi-sumario-lista {
+    grid-column: 1 / -1;
+  }
+
+  .pi-sumario ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pi-col-titulo,
+  .pi-col-prosa,
+  .pi-col-largo,
+  .pi-col-par,
+  .pi-col-caixa,
+  .pi-esq,
+  .pi-fotos {
+    grid-column: 1 / -1;
+  }
+
+  .pi-col-citacao {
+    grid-column: 2 / 7;
+  }
+
+  .pi-col-azulejos {
+    grid-column: 1 / 5;
+  }
+
+  .pi-figura {
+    display: block;
+    grid-column: 5 / 7;
+  }
+
+  .pi-figura-in {
+    position: sticky;
+    top: 8rem;
+  }
+
+  .pi-cartoes ul,
+  .pi-cartoes ol,
+  .pi-azulejos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pi-compacta ul,
+  .pi-compacta ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pi-caixa-lista ul,
+  .pi-caixa-lista ol {
+    columns: 2;
+    column-gap: 32px;
+  }
+
+  .pi-caixa-lista li {
+    break-inside: avoid;
+  }
+
+  .pi-fichas[data-qtd="2"],
+  .pi-fichas[data-qtd="3"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pi-prot-linha {
+    grid-template-columns: 40px minmax(0, 2fr) minmax(0, 3fr);
+  }
+
+  .pi-placa {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 40px;
+  }
+
+  .pi-dado {
+    padding: 0 0 0 32px;
+    border-top: 0;
+    border-left: 1px solid var(--color-rule);
+  }
+}
+
+/* ===========================================================================
+   1024: doze colunas, lateral com prumo, corpo em dez
+   =========================================================================== */
+@media (min-width: 1024px) {
+  .pi-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  /* O fio de prumo: linha pontilhada na abscissa do ponto de sonar, de cima
+     a baixo da faixa. Cada faixa desenha o seu segmento na mesma x, entao o
+     fio parece continuo atraves das bandas. */
+  .pi-prumo {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(40px + 4.5px);
+    width: 1px;
+    pointer-events: none;
+    opacity: 0.32;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-accent) 0 3px,
+      transparent 3px 8px
+    );
+  }
+
+  .pi-faixa[data-tom="deep"] .pi-prumo {
+    opacity: 0.35;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-accent-light) 0 3px,
+      transparent 3px 8px
+    );
+  }
+
+  .pi-lateral {
+    grid-column: 1 / 3;
+    margin-bottom: 0;
+  }
+
+  .pi-lateral-in {
+    position: sticky;
+    top: 9rem;
+  }
+
+  .pi-corpo-sec {
+    grid-column: 3 / 13;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 36px 24px;
+  }
+
+  .pi-faixa[data-tom="paper"] > .pi-wrap {
+    padding-top: 88px;
+    padding-bottom: 88px;
+  }
+
+  .pi-faixa[data-tom="paper"][data-continua] > .pi-wrap {
+    padding-top: 8px;
+  }
+
+  .pi-faixa[data-tom="paper"][data-curta] > .pi-wrap {
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .pi-faixa[data-tom="surface"] > .pi-wrap,
+  .pi-faixa[data-tom="deep"] > .pi-wrap {
+    padding-top: 96px;
+    padding-bottom: 104px;
+  }
+
+  .pi-abertura > .pi-wrap {
+    padding-top: 80px;
+    padding-bottom: 56px;
+  }
+
+  .pi-col-lead {
+    grid-column: 1 / 8;
+  }
+
+  .pi-col-apoio {
+    grid-column: 9 / 13;
+    margin-top: 0.35em;
+  }
+
+  .pi-col-resto {
+    grid-column: 1 / 9;
+  }
+
+  .pi-col-toda {
+    grid-column: 1 / -1;
+  }
+
+  .pi-sumario > .pi-wrap {
+    padding-top: 64px;
+    padding-bottom: 48px;
+  }
+
+  .pi-sumario-marca {
+    grid-column: 1 / 3;
+  }
+
+  .pi-sumario-lista {
+    grid-column: 3 / 13;
+  }
+
+  .pi-sumario ol {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0 24px;
+    margin-top: 0;
+  }
+
+  .pi-col-titulo {
+    grid-column: 1 / 11;
+  }
+
+  .pi-col-prosa {
+    grid-column: 1 / 7;
+  }
+
+  .pi-col-citacao {
+    grid-column: 8 / 11;
+    align-self: start;
+    position: sticky;
+    top: 9rem;
+  }
+
+  .pi-col-largo {
+    grid-column: 1 / 11;
+  }
+
+  .pi-col-par {
+    grid-column: 1 / 7;
+  }
+
+  .pi-col-caixa {
+    grid-column: 8 / 11;
+    align-self: start;
+  }
+
+  .pi-caixa-lista ul,
+  .pi-caixa-lista ol {
+    columns: auto;
+  }
+
+  .pi-esq {
+    grid-column: 1 / 6;
+  }
+
+  .pi-esq > * + * {
+    margin-top: 40px;
+  }
+
+  .pi-fotos {
+    grid-column: 6 / 11;
+    align-self: start;
+  }
+
+  /* Linhas de referencia do hero, atras das fotografias. */
+  .pi-linhas {
+    display: block;
+    position: absolute;
+    top: -24px;
+    bottom: -24px;
+    left: -24px;
+    right: -24px;
+    pointer-events: none;
+  }
+
+  .pi-linhas > div {
+    position: absolute;
+    left: 0;
+    right: 0;
+  }
+
+  .pi-linhas .estende {
+    height: 1px;
+    width: 100%;
+    background: var(--color-rule);
+  }
+
+  .pi-linhas .tique {
+    position: absolute;
+    top: -1px;
+    right: 0;
+    width: 14px;
+    height: 1.4px;
+    background: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  }
+
+  .pi-col-azulejos {
+    grid-column: 1 / 8;
+  }
+
+  .pi-azulejos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .pi-figura {
+    grid-column: 8 / 11;
+  }
+
+  .pi-fichas[data-qtd="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pi-compacta ul,
+  .pi-compacta ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pi-prot-linha {
+    grid-template-columns: 40px minmax(0, 5fr) minmax(0, 6fr);
+    padding: 26px 0;
+  }
+
+  .pi-placa {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    gap: 48px;
+    padding: 48px;
+  }
+
+  .pi-dado {
+    padding-left: 40px;
+  }
+}

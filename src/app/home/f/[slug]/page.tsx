@@ -119,7 +119,7 @@ export default async function PostDoBlog({
            logo acima; repeti-lo no alt leria duas vezes no leitor de tela. */
         capa={post.capa ? { src: post.capa, alt: "" } : undefined}
       >
-        <SecoesDeConteudo html={post.html} />
+        <SecoesDeConteudo html={post.html} tipo="post" />
         <PostsRelacionados posts={relacionados} />
         <ConviteConsulta />
       </PageShell>

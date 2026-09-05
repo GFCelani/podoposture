@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./paginas-internas.css";
 
 /* PALETA VIVA, base #0E7BB4 (2026-09-05, substitui a "Linho").
    A paleta anterior era dessaturada demais e o site lia como desbotado. A

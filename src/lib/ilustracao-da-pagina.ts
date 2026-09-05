@@ -128,6 +128,37 @@ const PLACEHOLDER_POR_SLUG = new Map(
   ]),
 );
 
+/**
+ * Fotografias de apoio, distribuidas no corpo da pagina (ver
+ * SecoesDeConteudo). A mesma regra da foto do hero, aplicada por trecho: a
+ * foto entra ao lado do passo que descreve o que ela mostra. Por isso a
+ * tabela e' por pagina e por enquanto so tem uma entrada: a avaliacao da
+ * dor lista anamnese, padrao postural e pisada, e o acervo tem o escritorio
+ * das anamneses, o painel postural e a plataforma de pressao. As legendas
+ * sao as mesmas das fotos acima; nenhuma foi escrita para aqui.
+ */
+const APOIO: Record<string, Foto[]> = {
+  "tratamento-da-dor": [
+    {
+      src: `${GALERIA}/escritorio.webp`,
+      alt: "Escritório da clínica, com mesa de trabalho e certificados na parede.",
+      legenda: "O escritório onde são feitas as anamneses e a leitura dos exames.",
+      largura: 960,
+      altura: 1200,
+    },
+    FOTOS.posturologia,
+    FOTOS.baropodometria,
+  ],
+};
+
+const APOIO_POR_SLUG = new Map(
+  Object.entries(APOIO).map(([slug, fotos]) => [slug.normalize("NFC"), fotos]),
+);
+
+export function fotosDeApoio(slug: string): Foto[] | undefined {
+  return APOIO_POR_SLUG.get(slug.normalize("NFC"));
+}
+
 export function ilustracaoDaPagina(slug: string): {
   glifo: string;
   foto?: Foto;

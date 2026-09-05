@@ -9,7 +9,7 @@ import { PageShell, type TipoDePagina } from "@/components/page-shell";
 import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
-import { ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
+import { fotosDeApoio, ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
 import {
   SLUGS_A_GERAR,
   buscarPagina,
@@ -162,7 +162,11 @@ export default async function Pagina({
         {eContato ? (
           <Contact numero={null} comoSecao={false} />
         ) : (
-          <SecoesDeConteudo html={pagina.html} numerar={tipo === "tratamento"} />
+          <SecoesDeConteudo
+            html={pagina.html}
+            tipo={tipo}
+            apoio={fotosDeApoio(pagina.slug)}
+          />
         )}
         <PaginasRelacionadas slug={pagina.slug} />
         <ConviteConsulta />
