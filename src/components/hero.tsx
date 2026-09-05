@@ -11,12 +11,15 @@ import { SectionMark } from "./layers";
  * vw.
  * Na janela baixa (laptop, ate 860px de altura) os botoes descem junto com
  * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
- * ficarem grandes ao lado de um titulo de 50/61px. A regra e' essa, e vale
+ * ficarem grandes ao lado de um titulo de 44/52px. A regra e' essa, e vale
  * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
  * Corpo 15px, caixa 24x11, o que da 48px de altura contra os 55 do degrau
  * de desktop; a seta e' medida em em no proprio ButtonLink,
  * entao ela nao precisa de degrau proprio e nunca sobra na caixa menor.
- * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 68/83.
+ * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 56/64.
+ * O botao NAO desceu junto com o titulo em 2026-09-05: a forma, o raio e o
+ * corpo do rotulo ficaram como estavam, por pedido. Se um dia descer, e' esta
+ * proporcao que precisa ser reconferida, nao o corpo isolado.
  */
 /**
  * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
@@ -35,6 +38,18 @@ import { SectionMark } from "./layers";
  */
 const TRACO_MARCHA =
   "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
+
+/**
+ * As tres linhas que atravessam o campo da peca grafica, com a abordagem que
+ * cada uma marca na figura. A altura e' que amarra o par: 24% cai nos ombros,
+ * 50% na pelve, 76% nos joelhos. Nao e' rotulo decorativo, e' legenda de
+ * diagrama, entao mexer na altura sem mexer no nome quebra a correspondencia.
+ */
+const LINHAS_DE_REFERENCIA = [
+  { y: 24, abordagem: "Posturologia", marca: "prumo e níveis" },
+  { y: 50, abordagem: "Osteopatia", marca: "coluna" },
+  { y: 76, abordagem: "Acupuntura", marca: "pontos" },
+] as const;
 
 const ESCALA_BOTAO =
   "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
@@ -86,17 +101,22 @@ export function Hero() {
             diferente em desktop e em laptop, porque redistribuia as palavras
             em cada largura.
             Corpo em degraus fixos por faixa; na janela baixa (laptop, ate
-            860px de altura) cada degrau desce um patamar: 50px em lg, 61px em
-            xl, contra 68 e 83 na janela alta. Foi pedido. Como a quebra e'
+            860px de altura) cada degrau desce um patamar: 44px em lg, 52px em
+            xl, contra 56 e 64 na janela alta. Foi pedido. Como a quebra e'
             escrita, trocar o corpo por altura aqui nao mexe em onde as linhas
             caem: muda a escala, nao a composicao.
+            Os degraus desceram um patamar em 2026-09-05 (eram 34/40/64/68/83
+            e 50/61), para o titulo parar de ler como cartaz e abrir espaco
+            para o subtitulo. So o corpo mudou: entrelinha, tracking, peso e a
+            quebra escrita sao os mesmos, entao a composicao e' a de antes em
+            outra escala.
             Dentro de cada faixa a linha mais larga cabe com folga sobre a
             fonte de fallback, entao a quebra tambem nao muda no swap da
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
             corpo x entrelinha, sem CLS.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <span className="block">
@@ -109,6 +129,39 @@ export function Hero() {
             <span className="block">com resultados </span>
             <span className="block">rápidos e eficazes</span>
           </h1>
+
+          {/*
+            Subtitulo: quem responde, com que titulos, e onde. Sao dados
+            verificaveis do proprio site (site.ts para o endereco e o nome,
+            pagina do Curriculo Profissional para os titulos do COFFITO), nao
+            argumento de venda: nada de selo, badge ou numero sem fonte.
+            Entra FORA do embrulho da acao, e nao dentro: o embrulho e'
+            fit-content sobre a fila de botoes, e e' dele que a curva de
+            marcha tira a medida. Um paragrafo largo la dentro esticaria a
+            curva ate a largura da coluna.
+            A medida vai em ch, nao em px, para a linha ficar no confortavel
+            de leitura em qualquer degrau de corpo.
+
+            PENDENTE: falta o tempo de pratica clinica, que fecharia o
+            paragrafo em "..., Rio de Janeiro, com N anos de pratica clinica."
+            O site se contradiz hoje (30 anos na secao 03, "quase 30 anos" na
+            pagina da responsavel tecnica, "quase tres decadas" no curriculo) e
+            nao ha ano de formatura em lugar nenhum. Numero exato vem da
+            clinica; ate la o paragrafo fecha em Copacabana, sem arredondar
+            nada. Ver tambem a Regua30 em illustrations.tsx, que desenha 30
+            tracos a partir da mesma copy.
+          */}
+          <p
+            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-deep-muted lg:mt-[26px] lg:max-w-[56ch] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
+            style={{ ["--in-delay" as string]: "420ms" }}
+          >
+            <span className="font-medium text-paper">
+              Dra. Claudia Meirelles
+            </span>
+            , fisioterapeuta especialista em Osteopatia e Acupuntura pelo
+            COFFITO. Osteopatia, posturologia e acupuntura em Copacabana, Rio
+            de Janeiro.
+          </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
               sobre a fila em linha), e e' dela que a curva de marcha tira a
@@ -203,12 +256,21 @@ export function Hero() {
 
           As constantes do calc saem da geometria medida do titulo, e sao a
           soma "recuo do contentor + 40 de padding + linha mais larga + 24
-          de folga". A linha mais larga muda no degrau de corpo: 621px em lg
-          (68px), 758px em xl (83px). O recuo do contentor e'
+          de folga". Foram calculadas sobre o titulo de 68/83px: 621px de
+          linha mais larga em lg e 758px em xl. O recuo do contentor e'
           max(0, (100vw - 1340) / 2), zero ate 1340 e crescente depois; por
           isso ele entra no calc de xl, que e' a unica faixa que atravessa
-          esse limite (1280 sem recuo, 1440 com 50). Se o corpo do titulo
-          ou o max-w do contentor mudar, estes dois calc mudam junto.
+          esse limite (1280 sem recuo, 1440 com 50).
+
+          Em 2026-09-05 o titulo desceu para 56/64px e a linha mais larga
+          encolheu junto, para 511px em lg e 584px em xl. Os dois calc ficaram
+          como estavam, de proposito: o campo e' ancorado a direita
+          (inset-y-0 right-0) e a peca e' posicionada por justify-end mais
+          padding-right, entao a borda ESQUERDA do campo nao decide onde a
+          figura cai. Com o titulo menor o campo so ficou mais estreito do que
+          precisaria, e a folga entre texto e peca aumentou. Quem mexer aqui
+          precisa saber que o par constante/corpo esta desencontrado de
+          proposito, e que a conta certa hoje seria 575 em lg e 648 em xl.
 
           A margem direita afasta a peca da borda da janela: 104 / 155 / 195 /
           235px em 1024 / 1280 / 1440 / 1600. E' o que traz a figura para a
@@ -258,13 +320,24 @@ export function Hero() {
               claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na peca: atravessam a figura e
               seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
               entram no titulo porque o campo comeca depois dele. Atras da
-              peca. Sem rotulo. Abaixo de lg o campo e' estreito e entra no
-              fluxo; ali as linhas so poluiriam. */}
+              peca. Abaixo de lg o campo e' estreito e entra no
+              fluxo; ali as linhas so poluiriam.
+
+              Desde 2026-09-05 cada linha leva o nome da abordagem que ela
+              marca na figura, e as tres alturas deixaram de ser arbitrarias:
+              24% cai nos ombros (o prumo e os niveis da posturologia), 50% na
+              pelve (a coluna da osteopatia) e 76% nos joelhos (os pontos da
+              acupuntura). Se as porcentagens mudarem, o rotulo passa a apontar
+              para outra coisa e o par tem de ser refeito junto.
+              O campo inteiro e' aria-hidden, entao o rotulo nao e' lido em voz
+              alta: quem nomeia as tres abordagens para o leitor de tela e' o
+              subtitulo, por extenso e em prosa. E' tambem o que cobre o
+              telefone, onde estas linhas nao existem. */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 hidden lg:block"
           >
-            {[24, 50, 76].map((y, i) => (
+            {LINHAS_DE_REFERENCIA.map(({ y, abordagem, marca }, i) => (
               <div
                 key={y}
                 className="rule-in absolute right-9 left-0"
@@ -281,6 +354,13 @@ export function Hero() {
                   }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
+                <span className="absolute right-0 bottom-[7px] font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-on-deep-muted uppercase">
+                  {abordagem}
+                  <span className="mx-1.5 opacity-75">·</span>
+                  <span className="tracking-[0.04em] text-paper normal-case">
+                    {marca}
+                  </span>
+                </span>
               </div>
             ))}
           </div>
