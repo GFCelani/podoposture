@@ -13,13 +13,14 @@ import { SectionMark } from "./layers";
  * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
  * ficarem grandes ao lado de um titulo de 44/52px. A regra e' essa, e vale
  * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
- * Corpo 15px, caixa 24x11, o que da 48px de altura contra os 55 do degrau
- * de desktop; a seta e' medida em em no proprio ButtonLink,
- * entao ela nao precisa de degrau proprio e nunca sobra na caixa menor.
- * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 56/64.
- * O botao NAO desceu junto com o titulo em 2026-09-05: a forma, o raio e o
- * corpo do rotulo ficaram como estavam, por pedido. Se um dia descer, e' esta
- * proporcao que precisa ser reconferida, nao o corpo isolado.
+ * O simbolo e' medido em em no proprio ButtonLink, entao ele nao precisa de
+ * degrau proprio e nunca sobra na caixa menor.
+ * Os dois botoes desceram um degrau em 2026-09-05 (a pedido): corpo de 17
+ * para 16px e caixa de 32x16 para 28x13 na janela alta, caixa de 24x11 para
+ * 22x10 na janela baixa. Corpo e caixa descem juntos de proposito; reduzir so
+ * a caixa aperta o rotulo e reduzir so o corpo deixa a caixa folgada. A forma
+ * e o raio ficaram como estavam. Referencia da proporcao no desktop: rotulo
+ * de 16px sob titulo de 56/64.
  */
 /**
  * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
@@ -52,9 +53,9 @@ const LINHAS_DE_REFERENCIA = [
 ] as const;
 
 const ESCALA_BOTAO =
-  "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
-  "lg:[@media(max-height:860px)]:gap-3 lg:[@media(max-height:860px)]:px-6 " +
-  "lg:[@media(max-height:860px)]:py-[11px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
+  "lg:gap-3.5 lg:px-7 lg:py-[13px] lg:text-[1rem] " +
+  "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
+  "lg:[@media(max-height:860px)]:py-[10px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
 export function Hero() {
   return (
@@ -142,14 +143,17 @@ export function Hero() {
             A medida vai em ch, nao em px, para a linha ficar no confortavel
             de leitura em qualquer degrau de corpo.
 
-            PENDENTE: falta o tempo de pratica clinica, que fecharia o
-            paragrafo em "..., Rio de Janeiro, com N anos de pratica clinica."
-            O site se contradiz hoje (30 anos na secao 03, "quase 30 anos" na
-            pagina da responsavel tecnica, "quase tres decadas" no curriculo) e
-            nao ha ano de formatura em lugar nenhum. Numero exato vem da
-            clinica; ate la o paragrafo fecha em Copacabana, sem arredondar
-            nada. Ver tambem a Regua30 em illustrations.tsx, que desenha 30
-            tracos a partir da mesma copy.
+            O tempo de pratica clinica estava pendente e a clinica confirmou
+            em 2026-09-05: 30 anos. Entra colado na credencial, e nao no fim do
+            paragrafo, porque o tempo e' da pessoa e nao da cidade; e entra com
+            as MESMAS palavras da secao 03 ("com 30 anos de experiencia
+            clinica"), nao com uma segunda formulacao do mesmo dado, porque as
+            duas ficam visiveis na mesma pagina. A Regua30 em illustrations.tsx
+            desenha 30 tracos a partir deste numero: se ele mudar, ela muda
+            junto.
+            As outras duas formas que sobraram do site antigo ("quase 30 anos"
+            na pagina da responsavel tecnica, "quase tres decadas" no
+            curriculo) sao copy da cliente e continuam como estao.
           */}
           <p
             className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-deep-muted lg:mt-[26px] lg:max-w-[56ch] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
@@ -159,8 +163,10 @@ export function Hero() {
               Dra. Claudia Meirelles
             </span>
             , fisioterapeuta especialista em Osteopatia e Acupuntura pelo
-            COFFITO. Osteopatia, posturologia e acupuntura em Copacabana, Rio
-            de Janeiro.
+            COFFITO, com{" "}
+            <span className="text-paper">30 anos de experiência clínica</span>.
+            Osteopatia, posturologia e acupuntura em Copacabana, Rio de
+            Janeiro.
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
@@ -183,6 +189,7 @@ export function Hero() {
               <ButtonLink
                 href="https://wa.me/5521992035643"
                 variant="primary"
+                icone="balao"
                 className={ESCALA_BOTAO}
               >
                 Envie uma mensagem
@@ -190,6 +197,7 @@ export function Hero() {
               <ButtonLink
                 href="/tratamento-da-dor"
                 variant="secondary-deep"
+                icone="pergunta"
                 className={ESCALA_BOTAO}
               >
                 Quero mais informações
