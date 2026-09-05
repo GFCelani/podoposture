@@ -173,7 +173,15 @@ export function SiteHeader() {
           className="shrink-0 rounded-sm lg:justify-self-start"
           aria-label="Podoposture"
         >
-          <BrandMark className="h-9 w-auto lg:h-10 xl:h-[42px]" />
+          {/* A marca cresceu de 36/40/42 para 44/48/54 (2026-09-05). O teto nao
+              e' o cabecalho, e' a largura de 1024: la o menu completo ocupa
+              577px, o CTA 159, e o contentor da' 905. Com 48 de altura a marca
+              mede 145 de largura e sobram 31px de folga entre as tres pecas;
+              com 54 sobrariam 13, e com 58 o menu encostaria. Em 1280 a folga
+              com 54 e' de 92px. Se o menu ganhar item ou o CTA mudar de
+              rotulo, e' o numero de 1024 que tem de ser remedido antes de
+              crescer mais. */}
+          <BrandMark className="h-11 w-auto lg:h-12 xl:h-[54px]" />
         </Link>
 
         {/* Desktop */}
