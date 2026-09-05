@@ -156,7 +156,11 @@ export function PageShell({
                         </li>
                         {trilha.map((item, i) => (
                           <li key={item.nome} className="flex items-center gap-x-3">
-                            <span aria-hidden="true" className="text-rule">
+                            {/* A barra e' glifo, nao filete: em text-rule ela
+                                ficava em 1.24 sobre o papel. O token de
+                                metadado da 4.96 e mantem a barra subordinada
+                                ao nome da pagina. */}
+                            <span aria-hidden="true" className="text-muted">
                               /
                             </span>
                             {item.href && i < trilha.length - 1 ? (

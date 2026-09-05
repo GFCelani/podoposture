@@ -51,7 +51,8 @@ export default function NaoEncontrada() {
           <Link href="/" className="text-accent underline underline-offset-4">
             Voltar ao início
           </Link>
-          <span aria-hidden="true" className="mx-4 text-rule">
+          {/* Glifo, nao filete: ver a mesma barra na migalha do page-shell. */}
+          <span aria-hidden="true" className="mx-4 text-muted">
             /
           </span>
           <Link

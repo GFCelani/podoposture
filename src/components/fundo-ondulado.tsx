@@ -65,23 +65,29 @@ const INSTANTE_PARADO = 2.1;
 /* Paleta do hero. sRGB em hex, convertida para linear no envio.
    Estas tres cores NAO saem dos tokens: vivem aqui porque vao para uniformes
    do shader, entao qualquer recalibracao da paleta tem de passar por este
-   bloco tambem. Sao a versao "Linho" (2026-09-05), um passo mais quente e
-   mais escura que a paleta clara da pagina.
-   Medidas de par isolado: papel sobre a crista da 4,54 e o mono da 3,12.
-   O mono contra a crista e' o unico par abaixo de 4,5 da pagina, e e' assim
-   de proposito: a crista so aparece nas dobras e nunca cobre uma linha
-   inteira, e fechar esse par em 4,5 escurece o plano ate matar o relevo, que
-   e' a textura do fundo. O piso anterior deste par era 2,68.
-   O par isolado e' o pior caso teorico, nao o que a pagina entrega. Medido
-   por pixel no quadro renderizado, sob as caixas reais do texto (Range.
-   getClientRects, nao a caixa do elemento, que e' mais larga que os glifos e
-   pega a figura anatomica): numeral 5,24 e titulo 8,43. A crista nao alcanca
-   a coluna de texto. Se o bloco de texto andar para a direita, remedir. */
-const C1 = "#20313b"; // petroleo quente: esquerda, sob o texto
-// O pior pixel sob o numeral mono nao e' a crista, e' este azul de base
-// trazido por dobra: com ele o mono fica em 5,51, com margem.
-const C2 = "#2c4959"; // azul profundo: direita
-const C3 = "#447083"; // azul-aco quente, cristas
+   bloco tambem. Sao a paleta viva de #0E7BB4 (2026-09-05).
+
+   A animacao varia entre os dois azuis da base: #0E7BB4 no campo aberto e
+   #1E8FC4 nas cristas. O que NAO varia entre eles e' a esquerda, sob a coluna
+   de texto, e essa e' a unica concessao da fase: com #0E7BB4 ali o mono
+   on-deep-muted cairia para 2,4 e o texto do botao de contorno para 4,57 no
+   melhor pixel e abaixo disso no resto. Escurecer o fundo daquele bloco, em
+   vez de clarear o texto, e' a regra do pedido, e C1 e' exatamente o
+   mecanismo que o plano ja tinha para isso: ele e' a cor da esquerda, e o
+   shader mistura C1 -> C2 na horizontal (smoothstep em vPos.x). O texto mora
+   na faixa de C1; o azul vivo comeca depois dele. */
+const C1 = "#083650"; // azul profundo: esquerda, sob a coluna de texto
+// A direita e' o azul principal da paleta, sem alteracao: e' o campo aberto,
+// onde nao ha texto nenhum.
+const C2 = "#0e7bb4"; // azul principal: direita
+const C3 = "#1e8fc4"; // acento vivo: cristas
+/* Medidas de par isolado sobre C1: mono 7,30 e papel 12,47.
+   Sobre a crista o mono daria 2,09, e por isso a crista nao pode alcancar a
+   coluna de texto. Ela nao alcanca: medido por pixel no quadro renderizado,
+   sob as caixas reais dos glifos (Range.getClientRects, nao a caixa do
+   elemento, que e' mais larga que o texto e pega a figura anatomica). Se o
+   bloco de texto andar para a direita, ou se o relevo do plano crescer, este
+   par tem de ser remedido antes de qualquer coisa. */
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -180,7 +186,16 @@ uniform vec3 uC2;
 uniform vec3 uC3;
 
 void main() {
-  vec3 base = mix(uC1, uC2, smoothstep(-3.0, 3.0, vPos.x));
+  // A base tambem ramifica por x de TELA, e nao por x do plano, pelo mesmo
+  // motivo que a crista ja fazia: em perspectiva uma dobra de x positivo do
+  // plano pode cair na metade esquerda da janela, onde o texto mora, e trazer
+  // o azul claro para debaixo dele. Com a rampa por tela a faixa do texto fica
+  // presa em uC1 e o azul principal comeca depois dela.
+  // Os limites sao medidos, nao escolhidos: -0.05 e' onde termina o glifo mais
+  // a direita do subtitulo em 1440, e 1.35 mantem a zona dos rotulos das
+  // linhas de referencia (x de tela 0.63 a 0.93) escura o bastante para o
+  // on-deep-muted passar AA sobre ela.
+  vec3 base = mix(uC1, uC2, smoothstep(-0.05, 1.35, vTelaX));
   // As cristas puxam para o acento, com menos peso na faixa da janela onde
   // o texto mora (esquerda). A rampa e' por posicao na TELA, nao no plano:
   // atenuando por x do plano, uma dobra de x positivo trazida pela

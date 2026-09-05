@@ -1,61 +1,88 @@
 @import "tailwindcss";
 
-/* PALETA "LINHO", temperatura quente (2026-09-05).
-   O azul anterior era saturado demais para uma clinica de dor cronica: quem
-   chega ja esta desconfortavel, e a pagina estimulava em vez de acalmar. A
-   recalibracao baixa a saturacao e esquenta os neutros. Papel de linho e
-   tinta com sombra quente sob um azul acinzentado: a pagina le como iluminada
-   por lampada, nao por monitor.
-   O verde de acao e o verde escuro do hover ficaram de fora por decisao: sao
-   a cor do logo e continuam restritos ao CTA de WhatsApp e ao acento
-   anatomico. O azul #0E71B4 sobrevive so dentro do SVG da marca, que nao
-   entrou na recalibracao porque e identidade, nao paleta de interface.
-   Vinte pares de texto medidos, todos AA. Os numeros nos comentarios abaixo
-   sao desta paleta; se um token mudar, remedir os dois lados do par. */
+/* PALETA VIVA, base #0E7BB4 (2026-09-05, substitui a "Linho").
+   A paleta anterior era dessaturada demais e o site lia como desbotado. A
+   base passa a ser o azul do proprio logo, e a familia inteira foi
+   reconstruida no matiz dele: os escuros deixaram de ser petroleo acinzentado
+   e viraram azul profundo, e os neutros sairam do quente (papel de linho,
+   cinza amarelado) para o frio, senao ficariam parecendo sujos ao lado do
+   azul vivo.
+
+   O TETO QUE DEFINE TODO O RESTO: #0E7BB4 e' claro. Como texto ele so alcanca
+   4.5 contra fundo de luminancia 0.965 ou mais, ou seja, praticamente branco.
+   Duas consequencias, e as duas estao aplicadas abaixo:
+     1. o papel subiu para quase branco (#fcfdfe), porque e' sobre ele que o
+        acento precisa passar;
+     2. dentro da banda de superficie, que e' tintada, o token do acento desce
+        um degrau (ver a regra .bg-surface adiante). Sem isso o link naquela
+        banda ficaria em 4.08.
+   Como FUNDO o #0E7BB4 aceita texto em papel a 4.57, e por isso o texto claro
+   sobre ele e' sempre 100% de opacidade. Nada de papel a 70% ou 80% sobre
+   azul: onde isso existia, subiu para 100%.
+
+   O #1E8FC4 e' o acento e o segundo tom da animacao do hero. Com papel ele da
+   3.57 e REPROVA para corpo: nunca recebe paragrafo, lista ou bloco de
+   leitura. So aparece como crista do plano animado e como grifo, ambos
+   graficos.
+
+   O verde #96bf0d e o #4b6007 do hover ficaram fora, como sempre: sao a cor
+   do logo e seguem restritos ao CTA de WhatsApp e ao acento anatomico.
+
+   Vinte e um pares de texto medidos, todos AA. Os numeros nos comentarios
+   abaixo sao desta paleta; se um token mudar, remedir os dois lados do par. */
 @theme {
-  /* Neutros */
-  --color-paper: #faf8f3;
-  --color-surface: #f0ebe1;
-  /* Tinta em dois pesos: corpo azulado suave (6.94 sobre paper) e strong
-     para titulo (11.33). O preto puro saiu da pagina. */
-  --color-ink: #455869;
-  --color-ink-strong: #26384a;
-  /* Metadado em cinza quente, 6.44 sobre paper: e o unico neutro que nao
-     puxa para o azul, e e' o que da o registro de linho ao conjunto. */
-  --color-muted: #5f5a52;
-  --color-rule: #ddd6c8;
+  /* Neutros frios. O papel esta quase no branco por obrigacao de contraste,
+     nao por gosto: e' o unico fundo em que o acento passa como texto. */
+  --color-paper: #fcfdfe;
+  --color-surface: #eaf1f5;
+  /* Tinta em dois pesos, agora puxando para o azul da base: corpo 9.50 sobre
+     paper, strong para titulo 13.86. O preto puro continua fora da pagina. */
+  --color-ink: #2a4859;
+  --color-ink-strong: #0e2e42;
+  /* Metadado em cinza-azulado, 5.15 sobre paper e 4.59 sobre surface. Era
+     cinza quente na paleta anterior e destoava do azul novo. */
+  --color-muted: #55707e;
+  --color-rule: #cbdbe5;
 
   /* Cor de acao — verde do logo. So em preenchimento de CTA primario
      e nos discos da coluna do hero. Nunca como texto sobre claro.
-     Fora da recalibracao de 2026-09-05: nao muda com a paleta. */
+     Fora da recalibracao: nao muda com a paleta. */
   --color-action: #96bf0d;
   --color-action-deep: #4b6007;
 
-  /* Acento — azul acinzentado. Rotulos, reguas, links, secoes escuras.
-     5.53 sobre paper, 4.94 sobre surface. */
-  --color-accent: #3a6a85;
-  /* Tint do acento, para uso SO sobre o petroleo: o #3a6a85 da 2.38 la,
-     este da 7.17. Nao e cor nova, e o mesmo azul clareado. */
-  --color-accent-light: #a2becd;
-  --color-accent-deep: #1e2e38;
-  /* Petroleo suavizado das secoes escuras fora do hero. Contraste:
-     paper 8.58, on-deep-muted 5.26, ambos AA. */
-  --color-deep-calm: #304c5a;
-  /* O hero clareia ate o teto do contraste: com este tom o texto mono
-     on-deep-muted ainda da 4.52 (AA para corpo) e o h1 da 7.37. Um degrau
-     acima (#3d5e70) derruba o mono para 4.00 e sai de AA. */
-  --color-hero: #375666;
+  /* Acento — o azul principal do site. Rotulos, reguas, links, preenchimentos.
+     4.57 sobre paper como texto, e 4.57 como fundo com texto em papel. Os dois
+     numeros sao o mesmo par, e sao o piso da paleta: nao ha folga para
+     escurecer o papel nem para clarear este azul. */
+  --color-accent: #0e7bb4;
+  /* Acento vivo. Segundo tom da animacao do hero e cor de grifo. NUNCA recebe
+     texto de corpo: com papel da 3.57. Sobre papel, como grafico, da 3.57 e
+     passa no minimo de 3.0. */
+  --color-accent-vivid: #1e8fc4;
+  /* Tint do acento, para uso SO sobre as bandas escuras: o #0e7bb4 la daria
+     2.4, este da 8.06 sobre o petroleo e 5.13 sobre o fundo do hero. Nao e
+     cor nova, e o mesmo azul clareado. */
+  --color-accent-light: #8cc9ea;
+  --color-accent-deep: #062c42;
+  /* Azul profundo das secoes escuras fora do hero (rodape, galeria,
+     "compreender antes de tratar", fotos-que-faltam). Leva texto de CORPO em
+     on-deep-muted, e e' por isso que ele nao pode ser o #0e7bb4: contraste
+     paper 10.53, on-deep-muted 6.17, tint 5.96. */
+  --color-deep-calm: #0a425f;
+  /* O hero clareia ate o teto do contraste: com este tom o mono
+     on-deep-muted ainda da 5.31 e o h1 da 9.07. */
+  --color-hero: #0c4c6e;
 
-  /* Texto sobre o petroleo, em cinza quente. Contraste sobre #1E2E38:
-     paper 13.16, on-deep-muted 8.08. */
-  --color-on-deep-muted: #c1c6c4;
+  /* Texto sobre as bandas escuras, em azul-claro dessaturado. Contraste sobre
+     o petroleo #062C42: paper 14.25, on-deep-muted 8.35. */
+  --color-on-deep-muted: #a9c9dc;
 
   /* Profundidade. Quatro degraus, e nada fora deles.
-     A cor da sombra e o petroleo da paleta, nao um azul solto. */
-  --shadow-tag: 0 10px 30px -22px rgb(30 46 56 / 0.7);
-  --shadow-plate: 0 16px 38px -30px rgb(30 46 56 / 0.55);
-  --shadow-lift: 0 22px 46px -26px rgb(30 46 56 / 0.6);
-  --shadow-float: 0 22px 48px -30px rgb(30 46 56 / 0.5);
+     A cor da sombra e o azul profundo da paleta, nao um azul solto. */
+  --shadow-tag: 0 10px 30px -22px rgb(6 44 66 / 0.7);
+  --shadow-plate: 0 16px 38px -30px rgb(6 44 66 / 0.55);
+  --shadow-lift: 0 22px 46px -26px rgb(6 44 66 / 0.6);
+  --shadow-float: 0 22px 48px -30px rgb(6 44 66 / 0.5);
 
   /* Raio. Tres degraus, e nada fora deles.
      sm  etiqueta, chip, numero em placa
@@ -122,6 +149,19 @@ body {
   outline-color: var(--color-accent-light);
 }
 
+/* O acento um degrau mais escuro dentro da banda de superficie.
+   #0e7bb4 como texto precisa de fundo quase branco: sobre o papel ele da 4.57,
+   mas sobre a superficie tintada cai para 4.08 e reprova. Em vez de clarear a
+   superficie ate ela sumir como banda (precisaria de #fafcfd, a um passo do
+   papel), o token do acento desce aqui. Como e' o token que muda, e nao uma
+   classe, a troca alcanca sozinha todo texto, filete, borda e preenchimento
+   que usa o acento dentro da banda: nao ha lista de excecoes para manter.
+   Sobre a superficie este tom da 5.28, e sobre os cartoes em papel dentro da
+   banda da 5.90. */
+.bg-surface {
+  --color-accent: #0b6a9c;
+}
+
 /* ===============================================================
    GRADE DE FUNDO — uma geometria so, no nivel da pagina.
    Origem e passo saem da largura da janela, nunca do contentor da
@@ -169,8 +209,8 @@ body {
 }
 
 .grade[data-grade="deep"] {
-  --fio-forte: rgb(250 248 243 / 0.07);
-  --fio-fino: rgb(250 248 243 / 0.03);
+  --fio-forte: rgb(252 253 254 / 0.07);
+  --fio-fino: rgb(252 253 254 / 0.03);
 }
 
 /* Fios de coluna so onde forem pedidos: hoje, so no hero. Abaixo dele fica
@@ -192,7 +232,7 @@ body {
 }
 
 .grade[data-grade="deep"][data-crescente] {
-  --fio-fino: rgb(250 248 243 / 0.038);
+  --fio-fino: rgb(252 253 254 / 0.038);
 }
 
 @media (min-width: 1024px) {

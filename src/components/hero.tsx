@@ -73,7 +73,7 @@ export function Hero() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(105deg, #1e2e38 0%, #27404e 46%, #304c5a 100%)",
+            "linear-gradient(105deg, #083650 0%, #0a5c86 46%, #0e7bb4 100%)",
         }}
       >
         <FundoOndulado className="absolute inset-0" />
@@ -354,12 +354,17 @@ export function Hero() {
                   }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
-                <span className="absolute right-0 bottom-[7px] font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-on-deep-muted uppercase">
+                {/* Papel, nao on-deep-muted: estes rotulos moram na metade
+                    direita da janela, que na paleta viva e' o azul principal
+                    #0E7BB4. Ali o on-deep-muted fica em 3,1 e reprova; o papel
+                    a 100% da 4,9. A hierarquia entre a abordagem e o que ela
+                    marca passa a ser de caixa e de espacejamento, e nao de
+                    cor: versal com 0.14em contra caixa baixa com 0.04em.
+                    Nenhum texto claro sobre azul leva opacidade reduzida. */}
+                <span className="absolute right-0 bottom-[7px] font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-paper uppercase">
                   {abordagem}
-                  <span className="mx-1.5 opacity-75">·</span>
-                  <span className="tracking-[0.04em] text-paper normal-case">
-                    {marca}
-                  </span>
+                  <span className="mx-1.5">·</span>
+                  <span className="tracking-[0.04em] normal-case">{marca}</span>
                 </span>
               </div>
             ))}

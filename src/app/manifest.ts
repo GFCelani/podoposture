@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: DESCRICAO_PADRAO,
     start_url: "/",
     display: "browser",
-    background_color: "#faf8f3",
-    theme_color: "#3a6a85",
+    background_color: "#fcfdfe",
+    theme_color: "#0e7bb4",
     lang: "pt-BR",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
   };
