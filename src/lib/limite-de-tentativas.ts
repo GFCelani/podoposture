@@ -39,6 +39,16 @@ export function ipDaRequisicao(cabecalhos: Headers): string | null {
     const encaminhado = cabecalhos.get("x-forwarded-for");
     if (encaminhado) {
       const partes = encaminhado.split(",").map((p) => p.trim()).filter(Boolean);
+      if (partes.length < saltos) {
+        // Menos entradas do que os saltos configurados: ou PROXY_HOPS esta
+        // errado, ou alguem removeu cabecalho no caminho. Recusar e o certo,
+        // mas em silencio isso degradaria para o balde comum, muito mais
+        // frouxo, sem ninguem perceber.
+        console.error(
+          `[painel] PROXY_HOPS=${saltos} mas x-forwarded-for trouxe ${partes.length} entrada(s)`,
+        );
+        return null;
+      }
       // Contado da direita: os saltos da esquerda sao os que o cliente escreveu.
       return partes[partes.length - saltos] ?? null;
     }

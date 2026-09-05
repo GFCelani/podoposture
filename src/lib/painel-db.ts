@@ -9,6 +9,23 @@ import {
   type DadosDoPost,
   type PostDoPainel,
 } from "./painel-tipos";
+import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS } from "./posts";
+
+/**
+ * Enderecos que os 68 posts migrados ja ocupam.
+ *
+ * Entram os dois lados: o slug real (com acento) e a rota ASCII que o build
+ * gera para ele. Sem isto, um texto novo chamado "Dor lombar cronica" nasceria
+ * com o slug `dor-lombar-cronica`, que e exatamente a rota ASCII de um post
+ * indexado — e como a busca traduz ASCII de volta para o acentuado antes de
+ * procurar, o endereco continuaria servindo o texto ANTIGO. O post novo sumiria
+ * sem erro nenhum, e o sitemap passaria a anunciar uma URL que mostra outra
+ * coisa. Achado por auditoria cega.
+ */
+const ENDERECOS_JA_OCUPADOS = new Set<string>([
+  ...BRUTOS_DO_JSON.map((p) => p.slug.normalize("NFC")),
+  ...MAPA_ASCII_POSTS.keys(),
+]);
 
 /**
  * A primeira peca de banco do repositorio.
@@ -194,6 +211,7 @@ async function slugLivre(base: string, idAtual?: string): Promise<string> {
   const raiz = base || "post";
   for (let n = 1; n <= 49; n += 1) {
     const tentativa = juntarSlug(raiz, n === 1 ? "" : `-${n}`);
+    if (ENDERECOS_JA_OCUPADOS.has(tentativa.normalize("NFC"))) continue;
     const [existe] = await sql<{ id: string }[]>`
       SELECT id FROM posts WHERE slug = ${tentativa} LIMIT 1`;
     if (!existe || existe.id === idAtual) return tentativa;
@@ -276,12 +294,12 @@ export async function guardarImagem(
 
 export async function buscarImagem(
   id: string,
-): Promise<{ bytes: Buffer; tamanho: number } | null> {
+): Promise<{ bytes: Buffer; largura: number; altura: number } | null> {
   if (!bancoConfigurado()) return null;
   await garantirTabelas();
   const sql = conectar();
-  const [linha] = await sql<{ bytes: Buffer; tamanho: number }[]>`
-    SELECT bytes, tamanho FROM imagens WHERE id = ${id} LIMIT 1`;
+  const [linha] = await sql<{ bytes: Buffer; largura: number; altura: number }[]>`
+    SELECT bytes, largura, altura FROM imagens WHERE id = ${id} LIMIT 1`;
   return linha ?? null;
 }
 

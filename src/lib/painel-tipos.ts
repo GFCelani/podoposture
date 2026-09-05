@@ -1,3 +1,7 @@
+import { lerNomeDoArquivo } from "./imagem-webp";
+
+export const PREFIXO_IMAGEM = "/img/post/";
+
 /**
  * O contrato do post escrito pelo painel.
  *
@@ -128,8 +132,13 @@ export function validarPost(dados: DadosDoPost): ErrosPost {
     erros.categoria = "Escolha um dos temas da lista.";
 
   // A capa e opcional: sem ela o blog usa a de reserva, como ja faz com os
-  // posts antigos que vieram sem imagem.
-  if (dados.capa && !dados.capa.startsWith("/img/post/"))
+  // posts antigos que vieram sem imagem. Quando existe, passa pelo MESMO leitor
+  // de nome que a rota de imagem usa — conferir so o prefixo deixava passar
+  // `/img/post/"><svg onload=...`, que ia direto para o <Image> do indice do
+  // blog e para o JSON-LD.
+  if (dados.capa && !lerNomeDoArquivo(dados.capa.replace(PREFIXO_IMAGEM, "")))
+    erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
+  else if (dados.capa && !dados.capa.startsWith(PREFIXO_IMAGEM))
     erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
 
   if (!dados.corpo) erros.corpo = "Escreva o texto do post.";

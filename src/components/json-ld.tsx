@@ -19,13 +19,28 @@ import {
 
 type Json = Record<string, unknown>;
 
+/**
+ * JSON dentro de <script> precisa do "<" escapado.
+ *
+ * `JSON.stringify` escapa aspas e barra invertida, mas nao "<". O analisador de
+ * HTML nao sabe que esta dentro de JSON: ele fecha a tag no primeiro `</script`
+ * que encontrar, e o que vier depois vira marcacao de verdade. Um titulo com
+ * `</script><script>...` sairia daqui como script executavel numa pagina
+ * publica e indexada.
+ *
+ * O comentario que estava aqui dizia "nao ha entrada de usuario neste caminho".
+ * Era verdade enquanto a unica fonte era o extrator Python. O painel abriu uma
+ * segunda fonte — titulo, resumo e capa vem do banco — e a frase virou mentira
+ * sem que uma linha deste arquivo mudasse. Achado por auditoria cega.
+ *
+ * `<` e a mesma coisa que "<" para quem le o JSON, entao nada muda para o
+ * buscador.
+ */
 function JsonLd({ dados }: { dados: Json }) {
   return (
     <script
       type="application/ld+json"
-      // conteudo proprio, montado em build a partir de constantes tipadas —
-      // nao ha entrada de usuario neste caminho
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(dados) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(dados).replace(/</g, "\\u003c") }}
     />
   );
 }

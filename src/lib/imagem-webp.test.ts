@@ -15,8 +15,22 @@ function base(fourcc: string, tamanho = 64): Uint8Array {
     for (let i = 0; i < texto.length; i += 1) b[em + i] = texto.charCodeAt(i);
   };
   escrever("RIFF", 0);
+  // Tamanho declarado do RIFF = arquivo menos os 8 bytes do proprio cabecalho.
+  // Estava faltando aqui, e por isso estas amostras nem eram WebP validos.
+  const declarado = tamanho - 8;
+  b[4] = declarado & 0xff;
+  b[5] = (declarado >>> 8) & 0xff;
+  b[6] = (declarado >>> 16) & 0xff;
+  b[7] = (declarado >>> 24) & 0xff;
   escrever("WEBP", 8);
   escrever(fourcc, 12);
+  return b;
+}
+
+/** Um WebP cujo cabecalho mente sobre o tamanho do arquivo. */
+function tamanhoMentiroso(): Uint8Array {
+  const b = vp8(100, 100);
+  b[4] = 0x10; // declara bem menos do que o arquivo tem
   return b;
 }
 
@@ -88,6 +102,7 @@ describe("dimensoesDoWebp", () => {
     ["curto demais", new Uint8Array(12)],
     ["vazio", new Uint8Array(0)],
     ["com perdas sem a marca", (() => { const b = vp8(10, 10); b[23] = 0; return b; })()],
+    ["tamanho do RIFF nao bate com o arquivo", tamanhoMentiroso()],
     ["sem perdas sem assinatura", (() => { const b = vp8l(10, 10); b[20] = 0; return b; })()],
   ])("recusa: %s", (_nome, bytes) => {
     expect(dimensoesDoWebp(bytes)).toBeNull();

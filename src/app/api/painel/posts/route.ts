@@ -81,7 +81,6 @@ export async function POST(req: Request) {
       revalidatePath(BLOG_INDEX);
       revalidatePath(hrefDoPost(post.slug));
       revalidatePath("/");
-    revalidatePath("/sitemap.xml");
       // O sitemap tambem e montado no build: sem isto, o post existe, abre
       // pela URL e nunca e anunciado ao buscador.
       revalidatePath("/sitemap.xml");

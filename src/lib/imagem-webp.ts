@@ -50,6 +50,14 @@ export function dimensoesDoWebp(bytes: Uint8Array): Dimensoes | null {
   if (quatroCaracteres(bytes, 0) !== "RIFF") return null;
   if (quatroCaracteres(bytes, 8) !== "WEBP") return null;
 
+  // O tamanho declarado no cabecalho RIFF tem de descrever o arquivo inteiro.
+  // Sem esta conferencia, `RIFF....WEBPVP8X` + 18 bytes de medida + qualquer
+  // coisa ate o teto era aceito e guardado: armazenamento arbitrario para quem
+  // ja tem a senha. Nenhum WebP de verdade falha aqui.
+  const declarado =
+    (bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24)) >>> 0;
+  if (declarado !== bytes.length - 8) return null;
+
   const bloco = quatroCaracteres(bytes, 12);
   let largura = 0;
   let altura = 0;
