@@ -9,7 +9,8 @@ import { useEffect, useRef } from "react";
  * por um gradiente.
  *
  * A receita, lida do shader deles em runtime (2026-09-04):
- *   - plano 10 x 10 de frente para a camera, a 1,5 de distancia, fov 45;
+ *   - plano de frente para a camera, a 1,5 de distancia, fov 45 (la 10 x 10;
+ *     aqui 20 x 20, ver LADO);
  *   - a projecao assume um aspecto muito maior que o do canvas, e e' esse
  *     esticamento vertical que alonga as ondas. Aqui o esticamento e'
  *     mantido constante (ESTICAMENTO), entao o desenho tem a mesma proporcao
@@ -41,20 +42,37 @@ import { useEffect, useRef } from "react";
  * aba oculta o laco para; ao voltar, retoma de onde estava.
  */
 
-const VELOCIDADE = 0.3;
+/* Velocidade do Vinclo e' 0,3; aqui 0,07, quase cinco vezes mais lento. O
+   registro e' clinico e o pedido foi calma: a onda leva mais de um minuto
+   para atravessar a tela. */
+const VELOCIDADE = 0.07;
 const DENSIDADE = 1.5;
-const FORCA = 1.2;
+const FORCA = 1.0;
+/** Tempo, em segundos, para a forca subir de 0 a 1 no carregamento. */
+const SUBIDA = 3.2;
+/** Lado do plano. O Vinclo usa 10; com o relevo empurrando vertices para longe
+    da camera, a borda de um plano de 10 recuava para dentro da janela e
+    mostrava o fundo do canvas. Com 20 sobra margem ate em tela larga; a regiao
+    visivel e' a mesma. */
+const LADO = 20;
 /** Aspecto assumido pela projecao / aspecto real do canvas. Medido no Vinclo: 4,43 / (1440/1280) = 3,94. */
 const ESTICAMENTO = 3.94;
-const SEGMENTOS = 96;
+const SEGMENTOS = 128;
 const DPR_MAXIMO = 1.5;
 /** Instante do quadro unico de movimento reduzido. */
 const INSTANTE_PARADO = 2.1;
 
-/* Paleta do hero. sRGB em hex, convertida para linear no envio. */
-const C1 = "#0d2536"; // petroleo: esquerda, sob o texto
-const C2 = "#1e3d56"; // azul profundo: direita
-const C3 = "#0e71b4"; // acento: cristas
+/* Paleta do hero. sRGB em hex, convertida para linear no envio.
+   Um passo mais calma que a do site: o petroleo puxa um pouco para o azul,
+   e a crista troca o acento eletrico (#0E71B4) por um azul-aco dessaturado,
+   ainda azul (matiz ~200), que clareia sem vibrar. Papel sobre a crista da
+   5,3: AA para corpo de texto em qualquer pixel. */
+const C1 = "#10293b"; // petroleo, um passo mais azul: esquerda, sob o texto
+// #183B55 e nao #1B4460: sob o numeral mono em on-deep-muted o pior pixel e'
+// este azul trazido por dobra, e com #1B4460 o contraste parava em 4,60,
+// limite sem margem. Um passo mais escuro poe o limite em ~4,9.
+const C2 = "#183b55"; // azul profundo: direita
+const C3 = "#2c6e8e"; // azul-aco, cristas
 
 const VERTEX = /* glsl */ `
 precision highp float;
@@ -158,12 +176,12 @@ void main() {
   // o texto mora (esquerda). A rampa e' por posicao na TELA, nao no plano:
   // atenuando por x do plano, uma dobra de x positivo trazida pela
   // perspectiva ainda chegava a 3,6 de contraste sob o numeral mono em 1440.
-  // O piso de 0,20 e o inicio da rampa em -0,2 sao medidos: com 0,25 o
-  // on-deep-muted ficava em 4,55 no pior quadro, margem fina demais para uma
-  // animacao que nao repete; com 0,20 fica em ~5. Vales ficam na cor base:
+  // O piso de 0,12 e o inicio da rampa em -0,2 sao medidos: com 0,20 o
+  // on-deep-muted ficava em 4,47 no pior quadro em 1440 (a base mais azul
+  // subiu o piso); com 0,12 fica em ~5,2. Vales ficam na cor base:
   // extrapolar para baixo de zero (como o Vinclo faz para cima) subtrai azul
   // e sai da paleta, num escuro esverdeado.
-  float peso = 0.20 + 0.80 * smoothstep(-0.2, 0.6, vTelaX);
+  float peso = 0.12 + 0.88 * smoothstep(-0.2, 0.6, vTelaX);
   float t = clamp(vPos.z, 0.0, 1.0) * peso;
   vec3 cor = mix(base, uC3, t);
   // volta para sRGB: o mix acima e' em linear, como no Three
@@ -246,6 +264,10 @@ export function FundoOndulado({ className = "" }: { className?: string }) {
     gl.useProgram(prog);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
+    // Fundo do canvas na cor base: se algum pixel ficar sem plano, e'
+    // petroleo, nunca preto.
+    const [r, g, b] = linear(C1).map((v) => Math.pow(v, 1 / 2.2));
+    gl.clearColor(r, g, b, 1);
 
     // Plano 10 x 10 em SEGMENTOS x SEGMENTOS, indexado.
     const n = SEGMENTOS + 1;
@@ -253,8 +275,8 @@ export function FundoOndulado({ className = "" }: { className?: string }) {
     for (let j = 0; j < n; j++) {
       for (let i = 0; i < n; i++) {
         const k = (j * n + i) * 3;
-        posicoes[k] = (i / SEGMENTOS) * 10 - 5;
-        posicoes[k + 1] = (j / SEGMENTOS) * 10 - 5;
+        posicoes[k] = (i / SEGMENTOS) * LADO - LADO / 2;
+        posicoes[k + 1] = (j / SEGMENTOS) * LADO - LADO / 2;
         posicoes[k + 2] = 0;
       }
     }
@@ -318,7 +340,7 @@ export function FundoOndulado({ className = "" }: { className?: string }) {
     const desenhar = (tempo: number, carga: number) => {
       gl.uniform1f(uTime, tempo);
       gl.uniform1f(uLoad, carga);
-      gl.clear(gl.DEPTH_BUFFER_BIT);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
       if (primeiro) {
         primeiro = false;
@@ -330,9 +352,9 @@ export function FundoOndulado({ className = "" }: { className?: string }) {
       pedido = 0;
       if (!inicio) inicio = agora;
       const t = acumulado + (agora - inicio) / 1000;
-      // a forca sobe de 0 a 1 em 1,4s, como o uLoadingTime do Vinclo:
-      // o plano nasce liso e ondula
-      const carga = Math.min(1, t / 1.4);
+      // a forca sobe de 0 a 1 em SUBIDA segundos, como o uLoadingTime do
+      // Vinclo: o plano nasce liso e ondula
+      const carga = Math.min(1, t / SUBIDA);
       const eased = 1 - Math.pow(1 - carga, 3);
       desenhar(t, eased);
       if (visivel && !document.hidden) pedido = requestAnimationFrame(quadro);
