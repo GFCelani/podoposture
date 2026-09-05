@@ -45,9 +45,12 @@ export type Post = {
 export const PREFIXO_POST = "/home/f/";
 export const BLOG_INDEX = "/nosso-blog";
 
-const BRUTOS = (dados as PostBruto[])
+/** Os 68 migrados. Exportado porque `posts-do-site.ts` os une aos do painel. */
+export const BRUTOS_DO_JSON = (dados as PostBruto[])
   .slice()
   .sort((a, b) => b.dataISO.localeCompare(a.dataISO));
+
+const BRUTOS = BRUTOS_DO_JSON;
 
 /**
  * Capas de reserva.
@@ -61,12 +64,26 @@ const CAPAS_RESERVA = Array.from(
   (_, i) => `/img/blog/${String(i + 1).padStart(2, "0")}.webp`,
 );
 
+/**
+ * Qual capa de reserva cabe a um post sem imagem.
+ *
+ * Derivada do slug, e nao da posicao na lista. Enquanto a lista era so o JSON,
+ * posicao servia; agora que posts novos entram pela data e empurram os outros,
+ * o indice mudaria a capa de artigos antigos a cada publicacao — o leitor que
+ * voltasse encontraria outra ilustracao no mesmo texto.
+ */
+function capaDeReserva(slug: string): string {
+  let soma = 0;
+  for (let i = 0; i < slug.length; i += 1) soma = (soma * 31 + slug.charCodeAt(i)) >>> 0;
+  return CAPAS_RESERVA[soma % CAPAS_RESERVA.length];
+}
+
 export function hrefDoPost(slug: string): string {
   // encodeURIComponent preserva o slug acentuado como o Google ja o conhece
   return `${PREFIXO_POST}${encodeURIComponent(slug)}`;
 }
 
-function paraPost(bruto: PostBruto, indice: number): Post {
+export function paraPost(bruto: PostBruto): Post {
   return {
     slug: bruto.slug,
     date: bruto.dataRotulo,
@@ -75,7 +92,7 @@ function paraPost(bruto: PostBruto, indice: number): Post {
     title: bruto.titulo,
     excerpt: bruto.resumo || null,
     href: hrefDoPost(bruto.slug),
-    cover: bruto.capa || CAPAS_RESERVA[indice % CAPAS_RESERVA.length],
+    cover: bruto.capa || capaDeReserva(bruto.slug),
   };
 }
 

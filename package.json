@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "rotas": "node scripts/gerar-mapa-de-rotas.mjs",
-    "verificar-urls": "python scripts/verificar_urls.py --alvo http://localhost:3000"
+    "verificar-urls": "python scripts/verificar_urls.py --alvo http://localhost:3000",
+    "test": "vitest run",
+    "senha": "node scripts/gerar-senha.mjs"
   },
   "dependencies": {
     "markdown-it": "^15.0.1",

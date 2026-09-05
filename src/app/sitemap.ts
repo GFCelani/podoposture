@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 
 import { PAGINAS_DINAMICAS } from "@/lib/pages";
-import { BLOG_INDEX, TODOS_OS_POSTS } from "@/lib/posts";
+import { BLOG_INDEX } from "@/lib/posts";
+import { todosOsPosts } from "@/lib/posts-do-site";
 import { SITE_URL, urlAbsoluta } from "@/lib/site";
 
 /**
@@ -11,9 +12,14 @@ import { SITE_URL, urlAbsoluta } from "@/lib/site";
  * cobrir as mesmas 88 (20 paginas + 68 posts): qualquer uma que fique de fora e
  * uma URL que o Google conhece e deixa de encontrar. O gate de migracao em
  * scripts/verificar_urls.py compara as duas listas.
+ *
+ * Passou a ser assincrono quando o painel entrou: alem dos 68 do repositorio,
+ * ele agora precisa listar o que a clinica publicar daqui em diante. Sem isso,
+ * post novo existiria no site e nunca seria anunciado ao buscador.
  */
-export default function sitemap(): MetadataRoute.Sitemap {
-  const maisRecente = TODOS_OS_POSTS[0]?.dateISO;
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const posts_ = await todosOsPosts();
+  const maisRecente = posts_[0]?.dateISO;
 
   const home = {
     url: SITE_URL,
@@ -38,7 +44,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const posts = TODOS_OS_POSTS.map((post) => ({
+  const posts = posts_.map((post) => ({
     url: urlAbsoluta(post.href),
     lastModified: new Date(post.dateISO),
     changeFrequency: "yearly" as const,

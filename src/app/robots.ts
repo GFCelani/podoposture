@@ -26,6 +26,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
+      // O painel nao e segredo por estar fora do indice — quem protege e a
+      // senha. Isto so evita que ele apareca numa busca e convide tentativa.
+      disallow: ["/publicar", "/api/"],
     },
     sitemap: urlAbsoluta("/sitemap.xml"),
     host: SITE_URL,

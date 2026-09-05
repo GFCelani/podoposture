@@ -9,10 +9,10 @@ import { Conteudo } from "@/components/prose";
 import {
   BLOG_INDEX,
   SLUGS_DE_POST_A_GERAR,
-  buscarPost,
   hrefDoPost,
   postsRelacionados,
 } from "@/lib/posts";
+import { buscarPostDoSite } from "@/lib/posts-do-site";
 
 /**
  * Os 68 posts do blog.
@@ -24,11 +24,26 @@ import {
  * um. Se um dia valer a pena, e uma mudanca isolada e reversivel.
  */
 
+/**
+ * Os 68 do repositorio continuam sendo gerados no build — sao eles que o Google
+ * ja conhece, e nenhum depende do banco estar de pe para existir.
+ */
 export function generateStaticParams() {
   return SLUGS_DE_POST_A_GERAR.map((slug) => ({ slug }));
 }
 
-export const dynamicParams = false;
+/**
+ * Era `false`, e por isso um post publicado pelo painel dava 404 ate o proximo
+ * build — que ninguem aqui consegue disparar. Com `true`, um endereco fora da
+ * lista e renderizado sob demanda; se nao existir em nenhuma das duas fontes, a
+ * propria pagina chama `notFound()` logo abaixo, entao continua havendo 404 de
+ * verdade para endereco inventado.
+ *
+ * Os slugs criados pelo painel nascem sem acento, o que os mantem longe do bug
+ * do Next com segmento nao-ASCII (#73965) sem depender do mapa de rotas, que so
+ * e gerado no build.
+ */
+export const dynamicParams = true;
 
 export async function generateMetadata({
   params,
@@ -36,7 +51,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = buscarPost(slug);
+  const post = await buscarPostDoSite(slug);
   if (!post) return {};
 
   const caminho = hrefDoPost(post.slug);
@@ -70,7 +85,7 @@ export default async function PostDoBlog({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = buscarPost(slug);
+  const post = await buscarPostDoSite(slug);
   if (!post) notFound();
 
   const caminho = hrefDoPost(post.slug);
