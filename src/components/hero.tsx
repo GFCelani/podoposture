@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { ButtonLink } from "./button-link";
 import { FiguraEsquematica } from "./figura-esquematica";
-import { PageGrid, SectionMark } from "./layers";
+import { FundoOndulado } from "./fundo-ondulado";
+import { SectionMark } from "./layers";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -47,37 +47,22 @@ export function Hero() {
       data-tone="deep"
       className="relative overflow-hidden bg-accent-deep text-paper"
     >
-      {/* Camada 0: fundo copiado do preview p3-fotografia. A foto deixa de
-          ser textura quase apagada e vira o fundo real: sem opacidade
-          reduzida e sem dessaturacao. Por cima, o scrim de dois gradientes
-          do p3, em accent-deep, que e' o que garante a leitura do texto.
-          A camada de luz de janela (ambar) saiu junto: ela nao existe no p3,
-          e mante-la faria o fundo nao bater com a referencia. */}
-      <div aria-hidden="true" className="absolute inset-0">
-        <Image
-          src="/img/clinica-podoposture-5.webp"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[34%_45%]"
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background: [
-              "linear-gradient(to top, rgb(13 37 54 / 0.95) 0%, rgb(13 37 54 / 0.9) 42%, rgb(13 37 54 / 0.55) 72%, rgb(13 37 54 / 0.35) 100%)",
-              "linear-gradient(to right, rgb(13 37 54 / 0.92) 0%, rgb(13 37 54 / 0.6) 46%, rgb(13 37 54 / 0.28) 100%)",
-            ].join(", "),
-          }}
-        />
+      {/* Camada 0: o fundo. Um plano deformado por ruido, na tecnica do hero
+          do Vinclo (ver fundo-ondulado.tsx), sobre um gradiente CSS nas mesmas
+          tres cores. O gradiente e' o que existe antes do primeiro quadro, sem
+          WebGL e sem JavaScript; o canvas aparece por cima em 600ms quando
+          desenha. A fotografia e o scrim sairam com ele, e a grade de papel
+          milimetrado tambem: nesta banda o relevo do fundo ja e' a textura. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(105deg, #0d2536 0%, #143650 46%, #1e3d56 100%)",
+        }}
+      >
+        <FundoOndulado className="absolute inset-0" />
       </div>
-
-      {/* Camada 1: a grade da pagina, em rampa da esquerda para a direita.
-          Mesma geometria das demais bandas; o que muda e' o peso, que some
-          atras do titulo e chega cheio sobre a area da imagem. Sem os fios
-          de coluna. */}
-      <PageGrid tone="deep" crescente />
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do
           resto da pagina: 1340 em lg. E' o que traz o bloco de texto para a

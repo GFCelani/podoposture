@@ -1178,3 +1178,26 @@ a:focus-visible .marca-vertebra {
     padding-left: 1.5rem;
   }
 }
+
+/* ===========================================================================
+   FUNDO ONDULADO (hero). O canvas nasce invisivel sobre o gradiente CSS e
+   aparece quando o primeiro quadro sai (data-pronto): e' a capa do Vinclo
+   sem elemento extra. Repouso no estilo base: sem JS nada muda e o gradiente
+   fica. Com movimento reduzido o canvas ja nasce visivel, com o quadro unico
+   que o componente desenha; a transicao seria a unica animacao restante.
+   =========================================================================== */
+.fundo-ondulado {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.fundo-ondulado[data-pronto] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fundo-ondulado {
+    opacity: 1;
+    transition: none;
+  }
+}
