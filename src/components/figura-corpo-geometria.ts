@@ -333,22 +333,6 @@ function montarPerfil(): Vista {
   };
 }
 
-/**
- * Trama de leitura: as alturas das linhas que atravessam o corpo na camada
- * "faixas". Cobrem o intervalo do corpo (24,2 a 534,7) com passo constante;
- * o recorte pelo contorno e' feito no desenho, por clipPath, entao aqui basta
- * a altura de cada uma.
- *
- * O passo e' contado para a figura PEQUENA, que e' onde a trama vive: 16
- * unidades dao 32 linhas, e numa figura de 234px de altura elas caem a 6,7px
- * uma da outra. Passo menor (11) foi testado e fecha a trama: de longe vira
- * uma mancha cinza dentro do contorno em vez de linhas.
- */
-export const FAIXAS_Y: number[] = Array.from(
-  { length: Math.floor((534.7 - 24.2) / 16) + 1 },
-  (_, i) => Number((30 + i * 16).toFixed(1)),
-).filter((y) => y < 530);
-
 export type NomeVista = "frontal" | "perfil";
 
 /** As cinco camadas do desenho, na ordem em que sao pintadas. */
@@ -357,8 +341,7 @@ export type CamadaFigura =
   | "silhueta"
   | "coluna"
   | "cadeia"
-  | "articulacoes"
-  | "faixas";
+  | "articulacoes";
 
 export const VISTAS: Record<NomeVista, Vista> = {
   frontal: montarFrontal(),

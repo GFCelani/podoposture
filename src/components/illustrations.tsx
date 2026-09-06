@@ -2,11 +2,7 @@
  * Ilustracoes vetoriais da pagina: o conteudo da copy desenhado, nao
  * ornamento. Todas no mesmo idioma do campo de aprumo: traco continuo fino,
  * pontos de medicao, azul do acento sobre papel, papel sobre petroleo.
- * Desenhos gerados por pontos + Catmull-Rom, espelhados por codigo.
- *
- * A figura humana NAO mora aqui: e' um componente proprio (figura-corpo.tsx),
- * unico no projeto. A silhueta que existia neste arquivo era de uma versao
- * inicial do site, com proporcoes erradas, e foi descartada em 2026-09-06.
+ * Silhuetas geradas por pontos + Catmull-Rom, espelhadas por codigo.
  */
 
 const n = (v: number) => Number(v.toFixed(1));
@@ -28,6 +24,190 @@ function curva(pts: Pt[], fechar = false): string {
   }
   if (fechar) d += " Z";
   return d;
+}
+
+/* ================================================================
+   02 — SILHUETA DE AVALIACAO
+   "avaliacao cuidadosa do corpo como um todo": corpo em pe, frontal,
+   com os pontos de avaliacao acendendo em sequencia.
+   ================================================================ */
+
+/**
+ * Metade direita do contorno, do topo da cabeca ao centro da base.
+ *
+ * Redesenhada em 2026-09-06: a versao anterior tinha as proporcoes erradas
+ * (pescoco fino demais, tronco comprido, pernas curtas e finas, quadril
+ * largo, bracos passando do meio da coxa). As alturas e larguras agora saem
+ * de medida, nao de estimativa: foram lidas no contorno vetorizado do hero
+ * (silhueta-corpo-path.ts, que veio de uma referencia fotografica) em
+ * fracoes da altura do corpo, e reescaladas para os 390 desta caixa (topo da
+ * cabeca em y 14, planta em y 404). Marcos usados, em fracao da altura:
+ *
+ *   queixo 0,12   ombros 0,18   deltoide 0,20   axila 0,29
+ *   cintura 0,38  quadril 0,50  virilha 0,55   joelho 0,75
+ *   tornozelo 0,90                            planta 1,00
+ *
+ * Larguras que importam, em unidades desta caixa: pescoco 27 (era 16),
+ * biacromial 102, cintura 62, quadril 76 (quadril sobre ombro = 0,75, e nao
+ * 0,88), coxa 36 (era 24), joelho 24, panturrilha 27, tornozelo 14.
+ *
+ * O DESENHO continua sendo o desta secao, nao o do hero: poucos pontos com
+ * Catmull-Rom, sem dedos, sem polegar, sem virilha desenhada, traco mais
+ * grosso e em currentColor. O que foi emprestado do hero e' a proporcao, que
+ * nao pertence a estilo nenhum.
+ */
+const MEIA_SILHUETA: Pt[] = [
+  { x: 100, y: 14 },
+  { x: 108, y: 15 },
+  { x: 117, y: 27 },
+  { x: 119, y: 44 },
+  { x: 116, y: 55 },
+  // pescoco
+  { x: 112, y: 66 },
+  { x: 113, y: 74 },
+  // trapezio e deltoide
+  { x: 126, y: 80 },
+  { x: 144, y: 87 },
+  { x: 153, y: 96 },
+  // braco, face externa
+  { x: 159, y: 114 },
+  { x: 161, y: 134 },
+  { x: 158, y: 157 },
+  { x: 155, y: 178 },
+  { x: 154, y: 198 },
+  { x: 152, y: 212 },
+  { x: 150, y: 223 },
+  { x: 144, y: 227 },
+  // braco, face interna, subindo ate a axila
+  { x: 139, y: 221 },
+  { x: 141, y: 199 },
+  { x: 143, y: 174 },
+  { x: 144, y: 152 },
+  { x: 140, y: 128 },
+  // tronco
+  { x: 132, y: 146 },
+  { x: 130, y: 164 },
+  { x: 133, y: 188 },
+  { x: 136, y: 211 },
+  // perna, face externa
+  { x: 137, y: 229 },
+  { x: 137, y: 249 },
+  { x: 134, y: 269 },
+  { x: 131, y: 288 },
+  { x: 134, y: 307 },
+  { x: 135, y: 327 },
+  { x: 131, y: 347 },
+  { x: 127, y: 367 },
+  { x: 126, y: 385 },
+  { x: 132, y: 398 },
+  { x: 136, y: 404 },
+  // planta e face interna, subindo ate a virilha
+  { x: 108, y: 404 },
+  { x: 108, y: 393 },
+  { x: 112, y: 380 },
+  { x: 112, y: 360 },
+  { x: 109, y: 336 },
+  { x: 110, y: 312 },
+  { x: 108, y: 288 },
+  { x: 106, y: 268 },
+  { x: 102, y: 248 },
+  { x: 100, y: 229 },
+];
+
+
+function espelhar(pts: Pt[]): Pt[] {
+  return pts.map((p) => ({ x: 200 - p.x, y: p.y }));
+}
+
+const SILHUETA_D =
+  curva(MEIA_SILHUETA) +
+  " " +
+  curva(espelhar(MEIA_SILHUETA).reverse()).replace(/^M/, "L");
+
+/**
+ * Pontos de avaliacao, na ordem em que acendem. Cada um cai onde a nova
+ * silhueta poe a estrutura que ele nomeia: o cervical no pescoco, os ombros
+ * dentro do deltoide, a pelve na altura do quadril mais largo, os joelhos e
+ * os pes no eixo de cada perna. Mexer na silhueta sem mexer aqui tira os
+ * pontos do lugar.
+ */
+const PONTOS_AVALIACAO: { x: number; y: number; nivel: string }[] = [
+  { x: 100, y: 70, nivel: "cervical" },
+  { x: 141, y: 92, nivel: "ombro-d" },
+  { x: 59, y: 92, nivel: "ombro-e" },
+  { x: 100, y: 212, nivel: "pelve" },
+  { x: 123, y: 307, nivel: "joelho-d" },
+  { x: 77, y: 307, nivel: "joelho-e" },
+  { x: 122, y: 396, nivel: "pe-d" },
+  { x: 78, y: 396, nivel: "pe-e" },
+];
+
+export function FigurePoints({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 200 430"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {/* fio de prumo do idioma da casa */}
+      <line
+        x1={100}
+        y1={4}
+        x2={100}
+        y2={426}
+        stroke="currentColor"
+        strokeOpacity={0.3}
+        strokeWidth={1}
+        strokeDasharray="3 6"
+      />
+      {/* niveis horizontais nos pontos centrais */}
+      {[70, 92, 212, 307, 396].map((y) => (
+        <line
+          key={y}
+          x1={14}
+          y1={y}
+          x2={186}
+          y2={y}
+          stroke="currentColor"
+          strokeOpacity={0.16}
+          strokeWidth={1}
+          strokeDasharray="1 5"
+        />
+      ))}
+      {/* contorno do corpo se desenhando na entrada */}
+      <path
+        className="traco-desenha"
+        d={SILHUETA_D}
+        fill="currentColor"
+        fillOpacity={0.05}
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength={1}
+      />
+      {/* pontos acendendo em sequencia, do alto para a base */}
+      {PONTOS_AVALIACAO.map((p, i) => (
+        <g
+          key={p.nivel}
+          className="ponto-avaliacao"
+          style={{ ["--seq" as string]: i }}
+        >
+          <circle cx={p.x} cy={p.y} r={3} fill="currentColor" />
+          <circle
+            className="ponto-anel"
+            cx={p.x}
+            cy={p.y}
+            r={7}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.2}
+          />
+        </g>
+      ))}
+    </svg>
+  );
 }
 
 /* ================================================================
