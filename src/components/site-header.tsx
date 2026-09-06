@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
 import { BrandMark } from "./brand-mark";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [rolou, setRolou] = useState(false);
@@ -14,6 +17,35 @@ export function SiteHeader() {
   const progresso = useRef<HTMLSpanElement>(null);
   const botaoDrawer = useRef<HTMLButtonElement>(null);
   const painelDrawer = useRef<HTMLDivElement>(null);
+
+  /* A marca leva ao inicio SEMPRE, inclusive na propria home. Navegar para a
+     rota em que ja se esta e' no-op no roteador: o clique no logo, que e' o
+     gesto universal de "volta ao comeco", nao fazia nada em toda a home. Aqui
+     o clique passa a ser rolagem ate o topo, que e' onde o hero abre.
+     Modificador de teclado e botao do meio ficam de fora para nao roubar o
+     "abrir em nova aba". O hash sai da URL junto: sem isso, quem chegou por
+     /#contato continuaria com a ancora no endereco depois de voltar ao topo. */
+  const irParaOInicio = useCallback(
+    (evento: MouseEvent<HTMLAnchorElement>) => {
+      if (pathname !== "/") return;
+      if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) {
+        return;
+      }
+      evento.preventDefault();
+      setDrawer(false);
+      setOpen(null);
+      window.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+      if (window.location.hash) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    },
+    [pathname],
+  );
 
   const cancelClose = useCallback(() => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -169,9 +201,10 @@ export function SiteHeader() {
         }`}
       >
         <Link
-          href="/home"
+          href="/"
+          onClick={irParaOInicio}
           className="shrink-0 rounded-sm lg:justify-self-start"
-          aria-label="Podoposture"
+          aria-label="Podoposture, ir para o início"
         >
           {/* A marca cresceu de 36/40/42 para 44/48/54 (2026-09-05). O teto nao
               e' o cabecalho, e' a largura de 1024: la o menu completo ocupa
