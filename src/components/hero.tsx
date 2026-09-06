@@ -74,16 +74,14 @@ export function Hero() {
           precisar voltar). A foto e' a mesma que o hero tinha antes daquele
           plano, no mesmo enquadramento.
 
-          O fundo e' #124A48, o petroleo esverdeado da paleta calma, no mesmo
-          valor do azul #08496b que ele substituiu em 2026-09-06: a foto e a
-          opacidade nao mudaram, so o matiz. A cor precisa ser escura assim
+          O fundo e' #08496b. A cor precisa ser escura assim
           porque a foto CLAREIA o fundo (a luminancia media dela e' maior que
           a do fundo), e nao escurece: num tom claro o hero reprovaria AA
           antes mesmo de a foto entrar. Os dois numeros, cor e opacidade,
           foram escolhidos juntos: ver o preview em _previews/hero-foto.
 
           A foto entra com priority porque e' o LCP da home. */}
-      <div aria-hidden="true" className="absolute inset-0 bg-[#124A48]">
+      <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
         <Image
           src="/img/clinica-podoposture-5.webp"
           alt=""

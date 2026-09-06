@@ -15,14 +15,15 @@ type Icone = "seta" | "balao" | "pergunta";
  * Contraste medido sobre --paper #FBF8F3 (paleta calma, 2026-09-06):
  *   primario   ink-strong #20231F sobre acao #96BF0D ... 7.38
  *   primario   hover papel sobre acao-deep #4B6007 ..... 6.66
- *   secundario accent #156B6C sobre papel .............. 5.91
- *   secundario hover papel sobre o acento preenchido ... 5.91
- *   terciario  accent sobre papel ...................... 5.91
+ *   secundario accent #0B6A9C sobre papel .............. 5.57
+ *   secundario hover papel sobre o acento preenchido ... 5.57
+ *   terciario  accent sobre papel ...................... 5.57
  *
- * Na paleta anterior estes tres pares viviam em 4.57, o piso de AA, porque o
- * acento era um azul claro. O petroleo esverdeado devolveu folga: sobre a
- * superficie de areia o mesmo botao mede 5.20, entao a excecao que baixava o
- * token do acento dentro daquela banda deixou de existir.
+ * Na paleta de papel quase branco estes tres pares viviam em 4.57, o piso de
+ * AA, com o acento em #0E7BB4. Com o papel de linho aquele tom cai para 4.39
+ * e reprova, entao o token de TEXTO do acento e' o mesmo azul um degrau mais
+ * fundo; sobre a superficie de areia o mesmo botao mede 4.90. O #0E7BB4
+ * continua na pagina como accent-vivid, onde nao recebe texto.
  */
 const BASE =
   "group/btn inline-flex items-center gap-3 text-[0.9375rem] transition-[transform,box-shadow,background-color,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)]";
