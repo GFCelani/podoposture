@@ -75,9 +75,9 @@ export function UnderstandFirst() {
             <Reveal delay={200}>
               <FiguraCorpo
                 vista="frontal"
-                camadas={["prumo", "silhueta", "cadeia", "articulacoes"]}
-                fase={1.1}
-                opacidade={0.9}
+                camadas={["silhueta", "faixas"]}
+                peso={2.4}
+                opacidade={0.92}
                 className="secao-corpo-figura"
               />
             </Reveal>

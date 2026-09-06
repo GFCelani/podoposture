@@ -499,7 +499,7 @@ body {
    =============================================================== */
 
 .secao-corpo {
-  --fig-h: clamp(320px, 42vh, 400px);
+  --fig-h: clamp(190px, 30vh, 230px);
   --fig-w: calc(var(--fig-h) * 221 / 560);
 }
 
@@ -516,10 +516,10 @@ body {
 
 @media (min-width: 1024px) {
   .secao-corpo {
-    /* casa com a altura do bloco de texto ao lado (medido: 433px em 1440,
-       417px em 1280, 452px em 1024) e cresce um degrau alem dele, para a
-       figura ter presenca de banda em vez de boiar na coluna */
-    --fig-h: clamp(440px, 58vh, 560px);
+    /* um terco da figura do hero (686px em 1440): apoia o texto, nao disputa
+       com ele. A banda deixa de ser dimensionada pela figura e volta a ser
+       dimensionada pelo bloco de texto, que e' o assunto da secao. */
+    --fig-h: clamp(210px, 26vh, 250px);
   }
 
   .secao-corpo-figura {
@@ -543,6 +543,29 @@ body {
       transparent 3px 8px
     );
     opacity: 0.28;
+  }
+}
+
+/* Trama de leitura da figura pequena (camada "faixas"): cada linha anda um
+   pouco para o lado e clareia; o atraso cresce com o indice, entao a onda
+   desce o corpo. Repouso no estilo base, e a linha parada continua visivel
+   (a trama E' o desenho), entao com movimento reduzido fica tudo no lugar. */
+.faixa-leitura {
+  opacity: 1;
+  transform: translateX(0);
+  animation: faixa-leitura 6.5s var(--ease-ciclo) infinite;
+  animation-delay: calc(var(--seq, 0) * -0.11s + var(--fase, 0s));
+}
+
+@keyframes faixa-leitura {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(7px);
   }
 }
 

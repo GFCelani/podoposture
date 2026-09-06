@@ -1,6 +1,7 @@
 import {
   arredondar as n,
   type CamadaFigura,
+  FAIXAS_Y,
   type NomeVista,
   VISTAS,
 } from "./figura-corpo-geometria";
@@ -24,9 +25,22 @@ import {
  *
  *   vista       "frontal" (padrao) ou "perfil".
  *   camadas     quais desenhar, em qualquer ordem: "prumo", "silhueta",
- *               "coluna", "cadeia", "articulacoes". Padrao: todas. A ordem
- *               de pintura e' fixa (prumo atras, articulacoes na frente),
- *               nao a do array.
+ *               "coluna", "cadeia", "articulacoes", "faixas". Padrao: as
+ *               cinco primeiras. A ordem de pintura e' fixa (prumo atras,
+ *               articulacoes na frente), nao a do array.
+ *
+ *               Ha dois vocabularios internos, e eles nao se misturam:
+ *               - o CLINICO (coluna, cadeia, articulacoes, prumo), que e' o
+ *                 do hero: o corpo lido por segmentos e pontos;
+ *               - a TRAMA ("faixas"), que e' o da secao 04: o corpo lido em
+ *                 linhas, sem nenhum ponto de referencia anatomico, com
+ *                 movimento proprio (onda que atravessa a trama de cima a
+ *                 baixo, ver .faixa-leitura em globals.css). Existe para
+ *                 que a mesma silhueta possa aparecer duas vezes na mesma
+ *                 pagina sem que a segunda leia como copia da primeira.
+ *   peso        multiplicador da espessura de TODO traco. A figura pequena
+ *               precisa de traco proporcionalmente mais grosso: em 230px de
+ *               altura, o 1,4 do contorno cai para 0,57px de tela e some.
  *   animar      movimento continuo (respiracao, varredura da coluna,
  *               corrente da cadeia, sonar das articulacoes). Padrao true.
  *               Com false a figura fica parada e completa: os nos que so
@@ -66,6 +80,7 @@ export function FiguraCorpo({
   camadas = TODAS,
   animar = true,
   fase = 0,
+  peso = 1,
   opacidade,
   className = "",
 }: {
@@ -73,6 +88,7 @@ export function FiguraCorpo({
   camadas?: readonly CamadaFigura[];
   animar?: boolean;
   fase?: number;
+  peso?: number;
   opacidade?: number;
   className?: string;
 }) {
@@ -80,6 +96,10 @@ export function FiguraCorpo({
   const tem = (c: CamadaFigura) => camadas.includes(c);
   /** Fase de cada animacao, ja deslocada. */
   const f = (base: number) => `${n(base + fase)}s`;
+  /** Espessura, ja multiplicada pelo peso. */
+  const e = (base: number) => n(base * peso);
+  /** Recorte do contorno, para a trama nao vazar do corpo. */
+  const recorte = `recorte-corpo-${vista}`;
 
   return (
     <svg
@@ -119,7 +139,7 @@ export function FiguraCorpo({
               x2={v.prumo}
               y2={556}
               strokeOpacity={0.5}
-              strokeWidth={1}
+              strokeWidth={e(1)}
               strokeDasharray="3 6"
             />
             {v.niveis.map((y) => (
@@ -130,7 +150,7 @@ export function FiguraCorpo({
                 x2={v.prumo + 16}
                 y2={y}
                 strokeOpacity={0.45}
-                strokeWidth={1}
+                strokeWidth={e(1)}
               />
             ))}
             <line
@@ -139,7 +159,7 @@ export function FiguraCorpo({
               x2={v.chao[1]}
               y2={542}
               strokeOpacity={0.3}
-              strokeWidth={1}
+              strokeWidth={e(1)}
             />
           </g>
         )}
@@ -147,16 +167,58 @@ export function FiguraCorpo({
         {/* Silhueta: contorno vetorizado, traco fino e preenchimento quase
             transparente, mais os tracos internos no mesmo peso. */}
         {tem("silhueta") && (
-          <g data-camada="silhueta" stroke={PAPEL} strokeOpacity={0.85} strokeWidth={1.4}>
+          <g data-camada="silhueta" stroke={PAPEL} strokeOpacity={0.85} strokeWidth={e(1.4)}>
             <path d={v.silhueta} fill={PAPEL} fillOpacity={0.04} />
             {v.detalhe && <path d={v.detalhe} fill="none" />}
           </g>
         )}
 
+        {/* Trama de leitura: o corpo lido em linhas, sem ponto anatomico
+            nenhum. As linhas atravessam a caixa inteira e sao recortadas
+            pelo contorno; cada uma anda um pouco para o lado e clareia, com
+            atraso crescente de cima para baixo, entao uma onda desce pelo
+            corpo em vez de qualquer coisa pulsar no lugar. E' o vocabulario
+            oposto ao do hero, de proposito. */}
+        {tem("faixas") && (
+          <>
+            <defs>
+              <clipPath id={recorte}>
+                <path d={v.silhueta} />
+              </clipPath>
+            </defs>
+            <g data-camada="faixas" clipPath={`url(#${recorte})`} stroke={AZUL}>
+              {FAIXAS_Y.map((y, i) => {
+                /* Uma em cada quatro e' mestra, como a curva de nivel cotada
+                   de um mapa: e' o que faz a trama ter leitura em vez de
+                   virar hachura uniforme. */
+                const mestra = i % 4 === 0;
+                return (
+                  <line
+                    key={y}
+                    className={animar ? "faixa-leitura" : undefined}
+                    x1={-6}
+                    y1={y}
+                    x2={v.largura + 6}
+                    y2={y}
+                    strokeWidth={e(mestra ? 1.9 : 1.3)}
+                    strokeOpacity={mestra ? 0.9 : 0.5}
+                    strokeDasharray={mestra ? undefined : "3.5 4.5"}
+                    style={
+                      animar
+                        ? { ["--seq" as string]: i, ["--fase" as string]: `${n(fase)}s` }
+                        : undefined
+                    }
+                  />
+                );
+              })}
+            </g>
+          </>
+        )}
+
         {/* Cadeia: liga as articulacoes entre si e a coluna */}
         {tem("cadeia") && (
           <>
-            <g data-camada="cadeia" stroke={PAPEL} strokeOpacity={0.35} strokeWidth={0.9}>
+            <g data-camada="cadeia" stroke={PAPEL} strokeOpacity={0.35} strokeWidth={e(0.9)}>
               {v.cadeia.map((c, i) => (
                 <line key={i} x1={n(c.a.x)} y1={n(c.a.y)} x2={n(c.b.x)} y2={n(c.b.y)} />
               ))}
@@ -234,7 +296,7 @@ export function FiguraCorpo({
                 y2={n(d.y)}
                 stroke={AZUL}
                 strokeOpacity={0.55}
-                strokeWidth={1}
+                strokeWidth={e(1)}
                 transform={`rotate(${n(d.giro)} ${n(d.x)} ${n(d.y)})`}
               />
             ))}
@@ -284,7 +346,7 @@ export function FiguraCorpo({
                   fillOpacity={0.7}
                   stroke={PAPEL}
                   strokeOpacity={0.95}
-                  strokeWidth={1.3}
+                  strokeWidth={e(1.3)}
                 />
                 <circle
                   className={animar ? "sonar-ponto" : undefined}
