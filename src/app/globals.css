@@ -491,6 +491,62 @@ body {
 }
 
 /* ===============================================================
+   SECAO 04 — a figura do projeto na banda "Compreender Antes de Tratar".
+   A altura da figura e' a medida da banda: e' dela que sai a largura (a
+   figura tem 221 x 560 de viewBox) e e' por ela que o fio de prumo da
+   secao e' posicionado, para o fio cair no eixo do corpo em vez de correr
+   solto a 10% da borda. Ver understand-first.tsx.
+   =============================================================== */
+
+.secao-corpo {
+  --fig-h: clamp(320px, 42vh, 400px);
+  --fig-w: calc(var(--fig-h) * 221 / 560);
+}
+
+.secao-corpo-figura {
+  display: block;
+  height: var(--fig-h);
+  width: auto;
+  margin: 0 auto;
+}
+
+.secao-corpo-prumo {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .secao-corpo {
+    /* casa com a altura do bloco de texto ao lado (medido: 433px em 1440,
+       417px em 1280, 452px em 1024) e cresce um degrau alem dele, para a
+       figura ter presenca de banda em vez de boiar na coluna */
+    --fig-h: clamp(440px, 58vh, 560px);
+  }
+
+  .secao-corpo-figura {
+    margin: 0;
+  }
+
+  /* O eixo da figura, continuado para cima e para baixo. Ancorado na borda
+     direita do CONTENTOR: padding + meia largura da figura, que esta
+     encostada nessa borda. O contentor tem a altura da banda inteira, entao
+     inset-y zero ja atravessa tudo. */
+  .secao-corpo-prumo {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    right: calc(40px + var(--fig-w) / 2);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-accent-light) 0 3px,
+      transparent 3px 8px
+    );
+    opacity: 0.28;
+  }
+}
+
+/* ===============================================================
    MARCA
    =============================================================== */
 
@@ -806,51 +862,6 @@ a:focus-visible .marca-vertebra {
    ILUSTRACOES — animacoes do desenho clinico.
    Repouso = estado final; tudo decorativo some ou para no reduce.
    =============================================================== */
-
-/* Contorno que se desenha uma vez na entrada (pathLength=1 no path). */
-.traco-desenha {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  animation: traco-desenha 2.4s var(--ease-saida) backwards;
-  animation-delay: 0.3s;
-}
-
-@keyframes traco-desenha {
-  from {
-    stroke-dashoffset: 1;
-    fill-opacity: 0;
-  }
-}
-
-/* Pontos de avaliacao acendendo em sequencia, ciclo continuo. */
-.ponto-avaliacao {
-  opacity: 1;
-}
-
-.ponto-avaliacao .ponto-anel {
-  opacity: 0.25;
-  transform: none;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: ponto-acende 6.4s var(--ease-ciclo) infinite;
-  animation-delay: calc(var(--seq, 0) * 0.55s + 2s);
-}
-
-@keyframes ponto-acende {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(1);
-  }
-  5% {
-    opacity: 1;
-    transform: scale(1.5);
-  }
-  14% {
-    opacity: 0.25;
-    transform: scale(1);
-  }
-}
 
 /* Cursor da regua de 30: percorre e recomeca. Repouso no fim do curso. */
 .cursor-regua {

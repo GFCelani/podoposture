@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import type { Bloco } from "@/lib/blocos";
 import type { Foto } from "@/lib/ilustracao-da-pagina";
-import { FiguraEsquematica } from "./figura-esquematica";
+import { FiguraCorpo } from "./figura-corpo";
 import { PageGrid } from "./layers";
 import { Reveal } from "./reveal";
 
@@ -329,7 +329,7 @@ export function FiguraLateral() {
   return (
     <div className="pi-figura" aria-hidden="true">
       <div className="pi-figura-in">
-        <FiguraEsquematica className="pi-figura-svg" />
+        <FiguraCorpo vista="frontal" className="pi-figura-svg" />
       </div>
     </div>
   );

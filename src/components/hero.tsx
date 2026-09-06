@@ -1,6 +1,5 @@
 import { ButtonLink } from "./button-link";
-import { FiguraEsquematica } from "./figura-esquematica";
-import { FiguraPerfil } from "./figura-perfil";
+import { FiguraCorpo } from "./figura-corpo";
 import { FundoOndulado } from "./fundo-ondulado";
 import { SectionMark } from "./layers";
 
@@ -330,8 +329,9 @@ export function Hero() {
               </div>
             ))}
             <div className="hero-par">
-              <FiguraEsquematica className="rule-in hero-figura" />
-              <FiguraPerfil className="rule-in hero-figura" />
+              <FiguraCorpo vista="frontal" className="rule-in hero-figura" />
+              {/* fase propria: as duas nao pulsam em unissono */}
+              <FiguraCorpo vista="perfil" fase={2.3} className="rule-in hero-figura" />
             </div>
           </div>
         </div>

@@ -2,7 +2,11 @@
  * Ilustracoes vetoriais da pagina: o conteudo da copy desenhado, nao
  * ornamento. Todas no mesmo idioma do campo de aprumo: traco continuo fino,
  * pontos de medicao, azul do acento sobre papel, papel sobre petroleo.
- * Silhuetas geradas por pontos + Catmull-Rom, espelhadas por codigo.
+ * Desenhos gerados por pontos + Catmull-Rom, espelhados por codigo.
+ *
+ * A figura humana NAO mora aqui: e' um componente proprio (figura-corpo.tsx),
+ * unico no projeto. A silhueta que existia neste arquivo era de uma versao
+ * inicial do site, com proporcoes erradas, e foi descartada em 2026-09-06.
  */
 
 const n = (v: number) => Number(v.toFixed(1));
@@ -24,138 +28,6 @@ function curva(pts: Pt[], fechar = false): string {
   }
   if (fechar) d += " Z";
   return d;
-}
-
-/* ================================================================
-   02 — SILHUETA DE AVALIACAO
-   "avaliacao cuidadosa do corpo como um todo": corpo em pe, frontal,
-   com os pontos de avaliacao acendendo em sequencia.
-   ================================================================ */
-
-/** Metade direita do contorno, do topo da cabeca ao centro da base. */
-const MEIA_SILHUETA: Pt[] = [
-  { x: 100, y: 14 },
-  { x: 117, y: 20 },
-  { x: 122, y: 38 },
-  { x: 116, y: 56 },
-  { x: 108, y: 64 },
-  { x: 108, y: 76 },
-  { x: 128, y: 82 },
-  { x: 148, y: 92 },
-  { x: 157, y: 110 },
-  { x: 162, y: 144 },
-  { x: 166, y: 182 },
-  { x: 171, y: 222 },
-  { x: 169, y: 244 },
-  { x: 158, y: 246 },
-  { x: 152, y: 226 },
-  { x: 147, y: 188 },
-  { x: 142, y: 150 },
-  { x: 139, y: 124 },
-  { x: 136, y: 160 },
-  { x: 138, y: 196 },
-  { x: 142, y: 232 },
-  { x: 138, y: 262 },
-  { x: 130, y: 300 },
-  { x: 126, y: 336 },
-  { x: 124, y: 372 },
-  { x: 126, y: 392 },
-  { x: 138, y: 398 },
-  { x: 138, y: 404 },
-  { x: 112, y: 404 },
-  { x: 108, y: 380 },
-  { x: 108, y: 344 },
-  { x: 106, y: 308 },
-  { x: 100, y: 270 },
-];
-
-function espelhar(pts: Pt[]): Pt[] {
-  return pts.map((p) => ({ x: 200 - p.x, y: p.y }));
-}
-
-const SILHUETA_D =
-  curva(MEIA_SILHUETA) +
-  " " +
-  curva(espelhar(MEIA_SILHUETA).reverse()).replace(/^M/, "L");
-
-/** Pontos de avaliacao, na ordem em que acendem. */
-const PONTOS_AVALIACAO: { x: number; y: number; nivel: string }[] = [
-  { x: 100, y: 74, nivel: "cervical" },
-  { x: 138, y: 92, nivel: "ombro-d" },
-  { x: 62, y: 92, nivel: "ombro-e" },
-  { x: 100, y: 226, nivel: "pelve" },
-  { x: 122, y: 306, nivel: "joelho-d" },
-  { x: 78, y: 306, nivel: "joelho-e" },
-  { x: 122, y: 396, nivel: "pe-d" },
-  { x: 78, y: 396, nivel: "pe-e" },
-];
-
-export function FigurePoints({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 200 430"
-      className={className}
-      aria-hidden="true"
-      focusable="false"
-    >
-      {/* fio de prumo do idioma da casa */}
-      <line
-        x1={100}
-        y1={4}
-        x2={100}
-        y2={426}
-        stroke="currentColor"
-        strokeOpacity={0.3}
-        strokeWidth={1}
-        strokeDasharray="3 6"
-      />
-      {/* niveis horizontais nos pontos centrais */}
-      {[74, 92, 226, 306, 396].map((y) => (
-        <line
-          key={y}
-          x1={14}
-          y1={y}
-          x2={186}
-          y2={y}
-          stroke="currentColor"
-          strokeOpacity={0.16}
-          strokeWidth={1}
-          strokeDasharray="1 5"
-        />
-      ))}
-      {/* contorno do corpo se desenhando na entrada */}
-      <path
-        className="traco-desenha"
-        d={SILHUETA_D}
-        fill="currentColor"
-        fillOpacity={0.05}
-        stroke="currentColor"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        pathLength={1}
-      />
-      {/* pontos acendendo em sequencia, do alto para a base */}
-      {PONTOS_AVALIACAO.map((p, i) => (
-        <g
-          key={p.nivel}
-          className="ponto-avaliacao"
-          style={{ ["--seq" as string]: i }}
-        >
-          <circle cx={p.x} cy={p.y} r={3} fill="currentColor" />
-          <circle
-            className="ponto-anel"
-            cx={p.x}
-            cy={p.y}
-            r={7}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.2}
-          />
-        </g>
-      ))}
-    </svg>
-  );
 }
 
 /* ================================================================
