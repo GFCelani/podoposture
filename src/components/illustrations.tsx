@@ -48,8 +48,14 @@ function curva(pts: Pt[], fechar = false): string {
  *   tornozelo 0,90                            planta 1,00
  *
  * Larguras que importam, em unidades desta caixa: pescoco 27 (era 16),
- * biacromial 102, cintura 62, quadril 76 (quadril sobre ombro = 0,75, e nao
+ * biacromial 104, cintura 62, quadril 76 (quadril sobre ombro = 0,73, e nao
  * 0,88), coxa 36 (era 24), joelho 24, panturrilha 27, tornozelo 14.
+ *
+ * O braco tem quatro medidas diferentes, e nao uma so: biceps 23, cotovelo
+ * 24, antebraco 20, punho 13, e a mao volta a 14. Sem essa variacao ele sai
+ * como um tubo, que foi o defeito da primeira correcao. Ele tambem desce
+ * levemente afastado do tronco, com um vao de cerca de 5 unidades constante
+ * da axila ao punho: colado, a fenda fecha e a mao funde no quadril.
  *
  * O DESENHO continua sendo o desta secao, nao o do hero: poucos pontos com
  * Catmull-Rom, sem dedos, sem polegar, sem virilha desenhada, traco mais
@@ -65,29 +71,31 @@ const MEIA_SILHUETA: Pt[] = [
   // pescoco
   { x: 112, y: 66 },
   { x: 113, y: 74 },
-  // trapezio e deltoide
-  { x: 126, y: 80 },
-  { x: 144, y: 87 },
-  { x: 153, y: 96 },
-  // braco, face externa
-  { x: 159, y: 114 },
-  { x: 161, y: 134 },
-  { x: 158, y: 157 },
-  { x: 155, y: 178 },
-  { x: 154, y: 198 },
-  { x: 152, y: 212 },
-  { x: 150, y: 223 },
-  { x: 144, y: 227 },
+  // trapezio ate o acromio
+  { x: 124, y: 79 },
+  { x: 140, y: 86 },
+  { x: 151, y: 93 },
+  // braco, face externa: deltoide, biceps, cotovelo, antebraco, punho, mao
+  { x: 158, y: 106 },
+  { x: 161, y: 126 },
+  { x: 162, y: 144 },
+  { x: 160, y: 167 },
+  { x: 158, y: 190 },
+  { x: 154, y: 209 },
+  { x: 156, y: 221 },
+  { x: 150, y: 233 },
   // braco, face interna, subindo ate a axila
-  { x: 139, y: 221 },
-  { x: 141, y: 199 },
-  { x: 143, y: 174 },
-  { x: 144, y: 152 },
-  { x: 140, y: 128 },
+  { x: 142, y: 228 },
+  { x: 141, y: 211 },
+  { x: 138, y: 190 },
+  { x: 136, y: 167 },
+  { x: 139, y: 146 },
+  { x: 138, y: 130 },
   // tronco
-  { x: 132, y: 146 },
-  { x: 130, y: 164 },
-  { x: 133, y: 188 },
+  { x: 135, y: 139 },
+  { x: 133, y: 150 },
+  { x: 130, y: 166 },
+  { x: 133, y: 189 },
   { x: 136, y: 211 },
   // perna, face externa
   { x: 137, y: 229 },
@@ -133,8 +141,8 @@ const SILHUETA_D =
  */
 const PONTOS_AVALIACAO: { x: number; y: number; nivel: string }[] = [
   { x: 100, y: 70, nivel: "cervical" },
-  { x: 141, y: 92, nivel: "ombro-d" },
-  { x: 59, y: 92, nivel: "ombro-e" },
+  { x: 144, y: 99, nivel: "ombro-d" },
+  { x: 56, y: 99, nivel: "ombro-e" },
   { x: 100, y: 212, nivel: "pelve" },
   { x: 123, y: 307, nivel: "joelho-d" },
   { x: 77, y: 307, nivel: "joelho-e" },
@@ -162,7 +170,7 @@ export function FigurePoints({ className }: { className?: string }) {
         strokeDasharray="3 6"
       />
       {/* niveis horizontais nos pontos centrais */}
-      {[70, 92, 212, 307, 396].map((y) => (
+      {[70, 99, 212, 307, 396].map((y) => (
         <line
           key={y}
           x1={14}
