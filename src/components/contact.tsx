@@ -1,18 +1,15 @@
+import {
+  EMAIL,
+  ENDERECO,
+  HORARIO,
+  MAPS_DIRECOES,
+  MAPS_EMBED,
+  TELEFONES,
+  WHATSAPP,
+} from "@/lib/site";
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
-
-const ADDRESS =
-  "Avenida Nossa Senhora de Copacabana, 928 - sala 501 - Copacabana, Rio de Janeiro - RJ, Brasil";
-
-const MAP_QUERY = encodeURIComponent(
-  "Avenida Nossa Senhora de Copacabana, 928, Copacabana, Rio de Janeiro",
-);
-
-const PHONES = [
-  { label: "+ 55 21 2255-4845", href: "tel:552122554845", note: null },
-  { label: "+ 55 21 99203-5643", href: "tel:5521992035643", note: "WhatsApp" },
-];
 
 /**
  * Na home e' a secao 08 de uma sequencia; na rota /contato e' a pagina inteira.
@@ -75,7 +72,7 @@ export function Contact({
 
             <Reveal delay={260}>
               <div className="mt-12">
-                <ButtonLink href="https://wa.me/5521992035643" variant="primary">
+                <ButtonLink href={WHATSAPP} variant="primary">
                   Envie uma mensagem
                 </ButtonLink>
               </div>
@@ -89,7 +86,7 @@ export function Contact({
                 className="mt-12 h-px w-full max-w-[26rem] bg-rule"
               />
               <ul className="mt-8 space-y-6">
-                {PHONES.map((phone) => (
+                {TELEFONES.map((phone) => (
                   <li key={phone.href} className="flex items-baseline gap-4">
                     <span
                       aria-hidden="true"
@@ -102,9 +99,9 @@ export function Contact({
                     >
                       {phone.label}
                     </a>
-                    {phone.note && (
+                    {phone.nota && (
                       <span className="text-[0.8125rem] text-muted">
-                        {phone.note}
+                        {phone.nota}
                       </span>
                     )}
                   </li>
@@ -125,11 +122,11 @@ export function Contact({
                   </dt>
                   <dd className="mt-1 pl-12">
                     <a
-                      href="mailto:contatopodoposture@gmail.com"
+                      href={`mailto:${EMAIL}`}
                       className="sublinha inline-flex min-h-[28px] items-center text-[1.0625rem] tracking-[0.02em] break-all text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                       style={{ fontFamily: "var(--mono)" }}
                     >
-                      contatopodoposture@gmail.com
+                      {EMAIL}
                     </a>
                   </dd>
                 </div>
@@ -143,7 +140,7 @@ export function Contact({
                     Horário de atendimento
                   </dt>
                   <dd className="mt-1 pl-12 text-[1.0625rem] text-ink">
-                    Segunda a sexta-feira, das 8h às 19h
+                    {HORARIO}
                   </dd>
                 </div>
               </dl>
@@ -202,8 +199,8 @@ export function Contact({
 
                   <div className="absolute inset-0 overflow-hidden rounded-lg border border-rule bg-surface shadow-plate min-[390px]:inset-5 min-[390px]:rounded-full">
                     <iframe
-                      title={`Mapa: ${ADDRESS}`}
-                      src={`https://www.google.com/maps?q=${MAP_QUERY}&z=14&output=embed`}
+                      title={`Mapa: ${ENDERECO.completo}`}
+                      src={MAPS_EMBED}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 saturate-[1.2]"
@@ -224,28 +221,52 @@ export function Contact({
                   >
                     Termos
                   </a>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${MAP_QUERY}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="sublinha inline-flex min-h-[28px] items-center rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
-                  >
-                    Como chegar
-                  </a>
                 </p>
               </div>
             </Reveal>
             <Reveal delay={330}>
               <div className="mt-3 rounded-lg border border-rule bg-paper p-8 shadow-plate">
-                <address
-                  className="text-[0.9375rem] leading-[1.75] text-ink not-italic"
-                  style={{ fontFamily: "var(--mono)" }}
+                {/* A ficha inteira e' o alvo do "como chegar": quem le um
+                    endereco num site de clinica esta quase sempre indo para o
+                    mapa, e obrigar a mirar no link de 11px do rodape do disco
+                    era um alvo pequeno para o gesto mais comum da secao. */}
+                <a
+                  href={MAPS_DIRECOES}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group/end block rounded-sm"
                 >
-                  {ADDRESS}
-                </address>
+                  <address
+                    className="text-[0.9375rem] leading-[1.75] text-ink not-italic transition-colors duration-[160ms] group-hover/end:text-ink-strong"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    {ENDERECO.rua}
+                    <br />
+                    {ENDERECO.sala}
+                    <br />
+                    {ENDERECO.local}
+                  </address>
+                  <span className="mt-4 inline-flex items-center gap-2 text-[0.8125rem] tracking-[0.02em] text-accent transition-colors duration-[160ms] group-hover/end:text-accent-deep">
+                    Como chegar
+                    <svg
+                      width="13"
+                      height="9"
+                      viewBox="0 0 13 9"
+                      aria-hidden="true"
+                      className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/end:translate-x-1"
+                    >
+                      <path
+                        d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.2"
+                      />
+                    </svg>
+                  </span>
+                </a>
 
                 <p className="mt-7 text-[0.9375rem] leading-[1.7] text-ink">
-                  Estamos a 11 minutos da estação Cantagalo do metrô.
+                  {ENDERECO.referencia}
                 </p>
 
               </div>

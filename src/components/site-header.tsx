@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
+import { ENDERECO, MAPS_DIRECOES, TELEFONES } from "@/lib/site";
 import { BrandMark } from "./brand-mark";
 
 export function SiteHeader() {
@@ -456,7 +457,7 @@ export function SiteHeader() {
              parcialmente coberto. */
           className="fixed inset-x-0 top-[80px] bottom-0 z-40 overflow-y-auto border-t border-rule bg-paper focus:outline-none lg:hidden"
         >
-          <nav aria-label="Principal" className="px-6 py-6">
+          <nav aria-label="Principal" className="px-6 pt-6 pb-14">
             <div className="item-menu" style={{ ["--i" as string]: 0 }}>
               <Link
                 href={NAV_HOME.href}
@@ -545,6 +546,73 @@ export function SiteHeader() {
               >
                 {NAV_BLOG.label}
               </Link>
+            </div>
+
+            {/* Endereco e telefone no fim do menu. No telefone o menu e' a
+                unica navegacao visivel, e quem abre um menu de clinica para
+                procurar onde ela fica nao devia ter de fechar o menu, rolar
+                sete secoes e so entao achar. E' a mesma ficha do rodape. */}
+            <div
+              className="item-menu mt-8"
+              style={{ ["--i" as string]: NAV_GROUPS.length + 2 }}
+            >
+              <p
+                className="text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                style={{ fontFamily: "var(--mono)" }}
+              >
+                Onde estamos
+              </p>
+              <a
+                href={MAPS_DIRECOES}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setDrawer(false)}
+                className="group/end mt-3 block rounded-sm"
+              >
+                <address className="font-display text-[1rem] leading-[1.5] font-medium text-ink-strong not-italic">
+                  {ENDERECO.rua}
+                  <br />
+                  {ENDERECO.sala}
+                  <br />
+                  {ENDERECO.local}
+                </address>
+                <span className="mt-3 inline-flex items-center gap-2 text-[0.875rem] text-accent">
+                  Como chegar
+                  <svg
+                    width="13"
+                    height="9"
+                    viewBox="0 0 13 9"
+                    aria-hidden="true"
+                    className="transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover/end:translate-x-1"
+                  >
+                    <path
+                      d="M0 4.5h11M7.6 1 11.4 4.5 7.6 8"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.2"
+                    />
+                  </svg>
+                </span>
+              </a>
+
+              <ul className="mt-6 space-y-1">
+                {TELEFONES.map((phone) => (
+                  <li key={phone.href} className="flex items-baseline gap-3">
+                    <a
+                      href={phone.href}
+                      className="sublinha inline-flex min-h-[32px] items-center text-[1rem] tracking-[0.02em] text-accent"
+                      style={{ fontFamily: "var(--mono)" }}
+                    >
+                      {phone.label}
+                    </a>
+                    {phone.nota && (
+                      <span className="text-[0.8125rem] text-muted">
+                        {phone.nota}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
           </nav>
         </div>

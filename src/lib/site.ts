@@ -72,3 +72,40 @@ export const SAME_AS = Object.values(REDES);
 export function urlAbsoluta(caminho: string): string {
   return `${SITE_URL}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
 }
+
+/**
+ * Endereco, contato e horario em forma de apresentacao.
+ *
+ * CLINICA acima e' o dado estruturado que alimenta o JSON-LD; isto aqui e' o
+ * mesmo endereco na forma em que ele aparece na tela. Estavam soltos dentro
+ * de contact.tsx, e o rodape nao tinha endereco nenhum: o visitante que
+ * procurava onde a clinica fica precisava atravessar sete secoes da home ate
+ * a secao 08. Uma fonte so, para as duas pecas nunca divergirem.
+ */
+export const ENDERECO = {
+  /* Espaco duro antes do numero: no menu do telefone a linha quebra, e sem
+     ele o "928" cai sozinho numa linha, orfao do proprio logradouro. */
+  rua: "Avenida Nossa Senhora de Copacabana,\u00A0928",
+  sala: "Sala 501, Copacabana",
+  local: "Rio de Janeiro, RJ",
+  completo:
+    "Avenida Nossa Senhora de Copacabana, 928 - sala 501 - Copacabana, Rio de Janeiro - RJ, Brasil",
+  referencia: "Estamos a 11 minutos da estação Cantagalo do metrô.",
+} as const;
+
+const MAPS_BUSCA = encodeURIComponent(
+  "Avenida Nossa Senhora de Copacabana, 928, Copacabana, Rio de Janeiro",
+);
+
+/** Enquadramento z=14: ver a nota do mapa em contact.tsx. */
+export const MAPS_EMBED = `https://www.google.com/maps?q=${MAPS_BUSCA}&z=14&output=embed`;
+export const MAPS_DIRECOES = `https://www.google.com/maps/dir/?api=1&destination=${MAPS_BUSCA}`;
+
+export const TELEFONES = [
+  { label: "+ 55 21 2255-4845", href: "tel:552122554845", nota: null },
+  { label: "+ 55 21 99203-5643", href: "tel:5521992035643", nota: "WhatsApp" },
+] as const;
+
+export const WHATSAPP = "https://wa.me/5521992035643";
+export const EMAIL = "contatopodoposture@gmail.com";
+export const HORARIO = "Segunda a sexta-feira, das 8h às 19h";
