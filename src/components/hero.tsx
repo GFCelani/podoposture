@@ -1,6 +1,7 @@
+import Image from "next/image";
+
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
-import { FundoOndulado } from "./fundo-ondulado";
 import { SectionMark } from "./layers";
 
 /**
@@ -66,21 +67,31 @@ export function Hero() {
       data-tone="deep"
       className="relative overflow-hidden bg-accent-deep text-paper"
     >
-      {/* Camada 0: o fundo. Um plano deformado por ruido, na tecnica do hero
-          do Vinclo (ver fundo-ondulado.tsx), sobre um gradiente CSS nas mesmas
-          tres cores. O gradiente e' o que existe antes do primeiro quadro, sem
-          WebGL e sem JavaScript; o canvas aparece por cima em 600ms quando
-          desenha. A fotografia e o scrim sairam com ele, e a grade de papel
-          milimetrado tambem: nesta banda o relevo do fundo ja e' a textura. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(105deg, #083650 0%, #0a5c86 46%, #0e7bb4 100%)",
-        }}
-      >
-        <FundoOndulado className="absolute inset-0" />
+      {/* Camada 0: o fundo. Cor chapada, sem degrade e sem movimento, com a
+          fotografia da sala de atendimento por cima em opacidade baixa.
+          Substituiu, em 2026-09-06, o plano deformado por ruido em WebGL
+          (fundo-ondulado.tsx, removido; esta no historico do git se um dia
+          precisar voltar). A foto e' a mesma que o hero tinha antes daquele
+          plano, no mesmo enquadramento.
+
+          O azul e' #08496b, e nao o #0E7BB4 da base viva: sobre o vivo o
+          titulo mede 4,57 e o subtitulo 2,68, ou seja, o hero reprovaria AA
+          antes mesmo de a foto entrar. A foto so piora o quadro, porque a
+          luminancia media dela (0,23) e' maior que a do azul, entao ela
+          clareia o fundo em vez de escurecer. Os dois numeros, azul e
+          opacidade, foram escolhidos juntos: ver o preview em
+          _previews/hero-foto, que varre cinco azuis contra nove opacidades.
+
+          A foto entra com priority porque e' o LCP da home. */}
+      <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
+        <Image
+          src="/img/clinica-podoposture-5.webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[34%_45%] opacity-[0.18]"
+        />
       </div>
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do
@@ -95,7 +106,7 @@ export function Hero() {
             para a peca grafica, que e' absoluta e ancorada a direita. */}
         <div className="relative z-10 lg:col-span-9 lg:[@media(max-height:860px)]:pl-14">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
-            <SectionMark n="01" tone="deep" destaque />
+            <SectionMark n="01" tone="deep" destaque sobreFoto />
           </div>
 
           {/*
@@ -159,7 +170,7 @@ export function Hero() {
             curriculo) sao copy da cliente e continuam como estao.
           */}
           <p
-            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-deep-muted lg:mt-[26px] lg:max-w-[56ch] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
+            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[56ch] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
             <span className="font-medium text-paper">

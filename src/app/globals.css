@@ -78,6 +78,14 @@
      o petroleo #062C42: paper 14.25, on-deep-muted 8.35. */
   --color-on-deep-muted: #a9c9dc;
 
+  /* Texto secundario do HERO, e so dele. Desde 2026-09-06 o hero tem uma
+     fotografia sob o texto, e a foto clareia o fundo: o on-deep-muted cai
+     para 4,00 ali e reprova AA, enquanto continua em 5,3 nas outras bandas
+     escuras, que sao cor chapada. Um degrau de luz a mais resolve sem mexer
+     no azul nem na opacidade da foto: 4,90 no pior pixel medido, contra os
+     4,5 exigidos. Nao usar fora do hero. */
+  --color-on-hero: #c7dce9;
+
   /* Profundidade. Quatro degraus, e nada fora deles.
      A cor da sombra e o azul profundo da paleta, nao um azul solto. */
   --shadow-tag: 0 10px 30px -22px rgb(6 44 66 / 0.7);
@@ -1347,28 +1355,5 @@ a:focus-visible .marca-vertebra {
     /* pende um pouco para a esquerda, para dentro da goteira da coluna */
     margin-left: -1.5rem;
     padding-left: 1.5rem;
-  }
-}
-
-/* ===========================================================================
-   FUNDO ONDULADO (hero). O canvas nasce invisivel sobre o gradiente CSS e
-   aparece quando o primeiro quadro sai (data-pronto): e' a capa do Vinclo
-   sem elemento extra. Repouso no estilo base: sem JS nada muda e o gradiente
-   fica. Com movimento reduzido o canvas ja nasce visivel, com o quadro unico
-   que o componente desenha; a transicao seria a unica animacao restante.
-   =========================================================================== */
-.fundo-ondulado {
-  opacity: 0;
-  transition: opacity 0.6s ease;
-}
-
-.fundo-ondulado[data-pronto] {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fundo-ondulado {
-    opacity: 1;
-    transition: none;
   }
 }
