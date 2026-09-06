@@ -12,18 +12,17 @@ type Icone = "seta" | "balao" | "pergunta";
  * clique (afunda no active). O terciario nao desenha caixa: e' link, e leva
  * sublinhado permanente para nao depender do hover para se anunciar.
  *
- * Contraste medido sobre --paper #FCFDFE (paleta viva, 2026-09-05):
- *   primario   ink-strong #0E2E42 sobre acao #96BF0D ... 6.56
- *   primario   hover papel sobre acao-deep #4B6007 ..... 6.93
- *   secundario accent #0E7BB4 sobre papel .............. 4.57
- *   secundario hover papel sobre o acento preenchido ... 4.57
- *   terciario  accent sobre papel ...................... 4.57
+ * Contraste medido sobre --paper #FBF8F3 (paleta calma, 2026-09-06):
+ *   primario   ink-strong #20231F sobre acao #96BF0D ... 7.38
+ *   primario   hover papel sobre acao-deep #4B6007 ..... 6.66
+ *   secundario accent #156B6C sobre papel .............. 5.91
+ *   secundario hover papel sobre o acento preenchido ... 5.91
+ *   terciario  accent sobre papel ...................... 5.91
  *
- * Os 4.57 sao o piso da paleta inteira: #0E7BB4 e' claro, e como texto ele so
- * passa AA contra fundo quase branco. Dentro da banda de superficie o token do
- * acento desce um degrau sozinho (regra .bg-surface em globals.css), e la o
- * mesmo botao mede 5.28. Se o papel escurecer um passo, estes tres pares caem
- * abaixo de 4.5 juntos.
+ * Na paleta anterior estes tres pares viviam em 4.57, o piso de AA, porque o
+ * acento era um azul claro. O petroleo esverdeado devolveu folga: sobre a
+ * superficie de areia o mesmo botao mede 5.20, entao a excecao que baixava o
+ * token do acento dentro daquela banda deixou de existir.
  */
 const BASE =
   "group/btn inline-flex items-center gap-3 text-[0.9375rem] transition-[transform,box-shadow,background-color,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)]";
