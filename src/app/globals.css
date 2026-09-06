@@ -378,6 +378,119 @@ body {
 }
 
 /* ===============================================================
+   HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
+   Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
+   =============================================================== */
+
+.hero-campo {
+  --hero-folga: 24px; /* entre o texto e o campo */
+  --hero-respiro: 24px; /* entre o campo e a borda da janela */
+  --hero-vao: 32px; /* entre as duas figuras */
+  --hero-reserva: 0px; /* faixa a direita reservada aos rotulos (xl) */
+  --hero-texto-dir: 0px; /* borda visual do bloco de texto, por faixa */
+  --hero-reducao: 0.92; /* "um pouco menores" (2026-09-06) */
+  /* abaixo de lg: duas figuras lado a lado no que sobra de largura
+     (221 + 118 de viewBox por 560, mais 40 de vao), teto de 405px */
+  --hero-fig-h: calc(min(calc((100vw - 88px) * 560 / 339), 440px) * var(--hero-reducao));
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.hero-quadro {
+  position: relative;
+  height: var(--hero-fig-h);
+}
+
+.hero-par {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  height: var(--hero-fig-h);
+}
+
+.hero-figura {
+  display: block;
+  height: var(--hero-fig-h);
+  width: auto;
+}
+
+.hero-linha,
+.hero-rotulo {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hero-campo {
+    --hero-texto-dir: 624px;
+    --hero-campo-w: calc(100vw - var(--hero-texto-dir) - var(--hero-folga) - var(--hero-respiro));
+    --hero-fig-h: calc(
+      min(
+          calc(100svh - 90px - 64px),
+          820px,
+          calc((var(--hero-campo-w) - var(--hero-vao) - var(--hero-reserva)) * 560 / 339)
+        ) *
+        var(--hero-reducao)
+    );
+    --hero-par-w: calc(var(--hero-fig-h) * 339 / 560 + var(--hero-vao));
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: calc(var(--hero-texto-dir) + var(--hero-folga));
+    margin: 0;
+    padding-top: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-height: 860px) {
+    .hero-campo {
+      --hero-texto-dir: 616px;
+    }
+  }
+
+  .hero-quadro {
+    width: 100%;
+  }
+
+  /* o par centrado no campo (descontada a faixa dos rotulos), como conjunto */
+  .hero-par {
+    position: absolute;
+    top: 0;
+    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
+    gap: var(--hero-vao);
+  }
+
+  .hero-linha {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 36px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .hero-campo {
+    --hero-respiro: 40px;
+    --hero-vao: 40px;
+    --hero-reserva: 150px;
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 657px);
+  }
+
+  @media (max-height: 860px) {
+    .hero-campo {
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 616px);
+    }
+  }
+
+  .hero-rotulo {
+    display: flex;
+  }
+}
+
+/* ===============================================================
    MARCA
    =============================================================== */
 

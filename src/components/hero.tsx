@@ -1,5 +1,6 @@
 import { ButtonLink } from "./button-link";
 import { FiguraEsquematica } from "./figura-esquematica";
+import { FiguraPerfil } from "./figura-perfil";
 import { FundoOndulado } from "./fundo-ondulado";
 import { SectionMark } from "./layers";
 
@@ -41,15 +42,18 @@ const TRACO_MARCHA =
   "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
 
 /**
- * As tres linhas que atravessam o campo da peca grafica, com a abordagem que
- * cada uma marca na figura. A altura e' que amarra o par: 24% cai nos ombros,
- * 50% na pelve, 76% nos joelhos. Nao e' rotulo decorativo, e' legenda de
- * diagrama, entao mexer na altura sem mexer no nome quebra a correspondencia.
+ * As tres linhas que atravessam o campo das figuras, com a abordagem que
+ * cada uma marca. A altura e' o y da articulacao no viewBox de 560 das duas
+ * figuras (as duas tem o mesmo y de corpo, ver silhueta-perfil-path.ts), e
+ * vira porcentagem do quadro que tem exatamente a altura delas: 149,5 cai
+ * nos ombros, 309,5 na pelve (quadril), 408 nos joelhos, nas duas figuras.
+ * Nao e' rotulo decorativo, e' legenda de diagrama: mexer no y sem mexer no
+ * nome quebra a correspondencia.
  */
 const LINHAS_DE_REFERENCIA = [
-  { y: 24, abordagem: "Posturologia", marca: "prumo e níveis" },
-  { y: 50, abordagem: "Osteopatia", marca: "coluna" },
-  { y: 76, abordagem: "Acupuntura", marca: "pontos" },
+  { y: 149.5, abordagem: "Posturologia", marca: "prumo e níveis" },
+  { y: 309.5, abordagem: "Osteopatia", marca: "coluna" },
+  { y: 408, abordagem: "Acupuntura", marca: "pontos" },
 ] as const;
 
 const ESCALA_BOTAO =
@@ -258,99 +262,56 @@ export function Hero() {
         </div>
 
         {/*
-          O campo da peca grafica: contrapeso do bloco de titulo. A peca nao
-          passa por baixo do texto: o campo comeca 24px depois do fim da
-          linha mais larga do titulo e vai ate a borda da janela.
+          O campo das duas figuras: contrapeso do bloco de titulo. Frontal a
+          esquerda, perfil a direita com as costas voltadas para ela (a
+          curvatura da coluna fica no meio do par). Layout em globals.css
+          (.hero-campo e filhos), porque e' um sistema de variaveis por
+          faixa, nao uma pilha de classes:
 
-          As constantes do calc saem da geometria medida do titulo, e sao a
-          soma "recuo do contentor + 40 de padding + linha mais larga + 24
-          de folga". Foram calculadas sobre o titulo de 68/83px: 621px de
-          linha mais larga em lg e 758px em xl. O recuo do contentor e'
-          max(0, (100vw - 1340) / 2), zero ate 1340 e crescente depois; por
-          isso ele entra no calc de xl, que e' a unica faixa que atravessa
-          esse limite (1280 sem recuo, 1440 com 50).
-
-          Em 2026-09-05 o titulo desceu para 56/64px e a linha mais larga
-          encolheu junto, para 511px em lg e 584px em xl. Os dois calc ficaram
-          como estavam, de proposito: o campo e' ancorado a direita
-          (inset-y-0 right-0) e a peca e' posicionada por justify-end mais
-          padding-right, entao a borda ESQUERDA do campo nao decide onde a
-          figura cai. Com o titulo menor o campo so ficou mais estreito do que
-          precisaria, e a folga entre texto e peca aumentou. Quem mexer aqui
-          precisa saber que o par constante/corpo esta desencontrado de
-          proposito, e que a conta certa hoje seria 575 em lg e 648 em xl.
-
-          A margem direita afasta a peca da borda da janela: 104 / 155 / 195 /
-          235px em 1024 / 1280 / 1440 / 1600. E' o que traz a figura para a
-          esquerda. O piso de 104 nao e' escolha de gosto: em 1024 o campo
-          tem 339px e a figura 223, entao a margem so pode chegar a 116
-          antes de a peca alcancar o inicio do campo e entrar no titulo.
-          Em 1280 para cima o teto e' 223 / 293 / 373, e a rampa e' que
-          manda.
-
-          Na janela baixa a margem tem rampa propria, mais inclinada que a
-          da janela alta: 180 / 255 / 305 / 360px em 1024 / 1280 / 1440 /
-          1600, contra 104 / 155 / 195 / 235. A inclinacao maior e' o que
-          permite trazer a peca bem para a esquerda nas larguras de laptop
-          (1440 e 1536) sem fechar a folga em 1024, que e' a largura onde o
-          campo e' estreito e a peca inteira ja nao caberia nele.
-          porque foi pedido trazer a figura mais para a esquerda no laptop.
-          Em 1024 a soma de margem e peca passa da largura do campo, e o
-          shrink-0 na peca e' o que decide o desempate: em vez de a figura
-          encolher (o svg tem preserveAspectRatio, entao encolher a largura
-          reduz o desenho inteiro e ele deixa de bater com as outras faixas),
-          ela mantem o tamanho e transborda o inicio nominal do campo.
-
-          Nessa altura o campo deixa de ser a fronteira, porque o bloco de
-          texto tambem andou 56px para a direita. Quem manda ali e' a folga
-          medida entre o fim da linha mais larga e a borda da peca: 53px em
-          1024, 122 em 1280, 187 em 1366. Em 1024 quem chega mais perto da
-          peca nao e' o titulo, e' a curva de marcha, que acompanha a largura
-          do texto e para 20px antes dela. E' esse par de numeros, e nao o
-          calc, que precisa ser reconferido se o corpo do titulo, o recuo do
-          bloco ou a rampa de margem mudarem de novo.
-
-          A figura e' vertical (221 x 560), entao a escala vem da altura do
-          hero, nao da largura do campo: altura = altura do hero menos 112px
-          (56px acima e abaixo), teto de 760px; a largura segue a proporcao.
-          O campo sempre sobra em largura, entao a folga com o titulo fica
-          acima do minimo medido (23px) em todas as faixas.
-
-          Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
-          limitada a min(44vw, 200px): 141px em 320, 172 em 390, 200 em 768.
+          - O campo comeca na borda VISUAL do bloco de texto (o fim do
+            paragrafo, que e' o elemento mais largo) mais 24px, e vai ate o
+            respiro da borda da janela. A borda do texto e' constante por
+            faixa (624 / 616 / 657 / 616px em lg alta, lg baixa, xl alta, xl
+            baixa; em xl soma o recuo do contentor). Medida por Range nos nos
+            de texto, nao pela caixa da coluna: as linhas do titulo sao
+            blocos da largura da coluna inteira. Se o corpo do titulo, a
+            medida do paragrafo ou o recuo do bloco mudarem, remedir.
+          - As duas figuras tem UMA expressao de altura, entao sao sempre
+            exatamente iguais: o menor entre a altura util da janela, 820px e
+            o que cabe na largura do campo com as duas lado a lado (221 + 118
+            de viewBox por 560), descontados o vao e a faixa dos rotulos;
+            tudo vezes 0,92 (pedido: "um pouco menores"). 686px em 1440 x
+            900, 500px em 1024 x 768.
+          - O par e' centrado no campo como conjunto, descontada a faixa de
+            150px reservada aos rotulos a direita (so em xl).
+          - Abaixo de lg o par entra no fluxo depois da curva de marcha,
+            centrado, altura pela largura que sobra, teto de 405px.
         */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:pt-[90px] lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(150px,31.25vw_-_140px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
-        >
-          {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
-              0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
-              claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na peca: atravessam a figura e
-              seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
-              entram no titulo porque o campo comeca depois dele. Atras da
-              peca. Abaixo de lg o campo e' estreito e entra no
-              fluxo; ali as linhas so poluiriam.
+        <div aria-hidden="true" className="hero-campo pointer-events-none">
+          <div className="hero-quadro">
+            {/* Linhas de referencia: 1px em papel a 0,3, com o traco curto de
+                14px x 1,4px na ponta direita, mais claro; recolhem e voltam a
+                partir da esquerda (so scaleX). Atravessam as duas figuras e
+                seguem ate 36px da borda da janela. Nunca entram no titulo
+                porque o campo comeca depois dele. Atras das figuras.
 
-              Desde 2026-09-05 cada linha leva o nome da abordagem que ela
-              marca na figura, e as tres alturas deixaram de ser arbitrarias:
-              24% cai nos ombros (o prumo e os niveis da posturologia), 50% na
-              pelve (a coluna da osteopatia) e 76% nos joelhos (os pontos da
-              acupuntura). Se as porcentagens mudarem, o rotulo passa a apontar
-              para outra coisa e o par tem de ser refeito junto.
-              O campo inteiro e' aria-hidden, entao o rotulo nao e' lido em voz
-              alta: quem nomeia as tres abordagens para o leitor de tela e' o
-              subtitulo, por extenso e em prosa. E' tambem o que cobre o
-              telefone, onde estas linhas nao existem. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden lg:block"
-          >
+                O rotulo e' empilhado (abordagem sobre o fio, o que ela marca
+                sob ele) e so existe a partir de xl, na faixa reservada: em lg
+                as duas figuras ocupam o campo inteiro e nao sobra vao para
+                nome sem cruzar corpo. Abaixo de lg nao ha linhas.
+
+                Papel, nao on-deep-muted: os rotulos moram na metade direita
+                da janela, sobre o azul principal, onde o on-deep-muted
+                reprova (3,1) e o papel a 100% passa (4,9). A hierarquia
+                entre a abordagem e a marca e' de caixa e espacejamento.
+                O campo inteiro e' aria-hidden: quem nomeia as tres abordagens
+                para o leitor de tela e' o subtitulo, em prosa. */}
             {LINHAS_DE_REFERENCIA.map(({ y, abordagem, marca }, i) => (
               <div
                 key={y}
-                className="rule-in absolute right-9 left-0"
+                className="hero-linha rule-in"
                 style={{
-                  top: `${y}%`,
+                  top: `${((y / 560) * 100).toFixed(2)}%`,
                   ["--in-delay" as string]: `${760 + i * 140}ms`,
                 }}
               >
@@ -362,22 +323,17 @@ export function Hero() {
                   }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
-                {/* Papel, nao on-deep-muted: estes rotulos moram na metade
-                    direita da janela, que na paleta viva e' o azul principal
-                    #0E7BB4. Ali o on-deep-muted fica em 3,1 e reprova; o papel
-                    a 100% da 4,9. A hierarquia entre a abordagem e o que ela
-                    marca passa a ser de caixa e de espacejamento, e nao de
-                    cor: versal com 0.14em contra caixa baixa com 0.04em.
-                    Nenhum texto claro sobre azul leva opacidade reduzida. */}
-                <span className="absolute right-0 bottom-[7px] font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-paper uppercase">
-                  {abordagem}
-                  <span className="mx-1.5">·</span>
-                  <span className="tracking-[0.04em] normal-case">{marca}</span>
+                <span className="hero-rotulo absolute -top-6 right-0 flex-col items-end font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-paper uppercase">
+                  <span>{abordagem}</span>
+                  <span className="mt-[7px] tracking-[0.04em] normal-case">{marca}</span>
                 </span>
               </div>
             ))}
+            <div className="hero-par">
+              <FiguraEsquematica className="rule-in hero-figura" />
+              <FiguraPerfil className="rule-in hero-figura" />
+            </div>
           </div>
-          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(48vw,224px)] lg:mx-0 lg:h-[min(calc(100svh-90px-64px),820px)] lg:w-auto lg:shrink-0" />
         </div>
       </div>
     </section>
