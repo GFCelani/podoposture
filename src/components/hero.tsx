@@ -167,18 +167,44 @@ export function Hero() {
             na pagina da responsavel tecnica, "quase tres decadas" no
             curriculo) sao copy da cliente e continuam como estao.
           */}
+          {/*
+            Quebra escrita em quatro linhas, a partir de sm. Antes eram tres
+            linhas que o navegador decidia sozinho, e o bloco saia com 617px
+            de largura contra 585 do titulo: 105%, nem igual nem
+            decisivamente menor, que e' a distancia que le como descuido.
+            Em quatro linhas o mesmo texto cai em 437 / 452 / 460 / 397 e o
+            paragrafo passa a ser uma coluna de leitura a 58% do titulo, com
+            medida de ~55 caracteres.
+            As quebras foram escolhidas enumerando todas as particoes das 26
+            palavras e minimizando a fracao da caixa que sobra vazia; nao ha
+            text-balance aqui, que decide por heuristica propria e varia entre
+            maquinas. A copy e' a mesma, palavra por palavra: so muda onde a
+            linha corta.
+            Abaixo de sm o <br> some e o texto volta a fluir sozinho: na
+            coluna do telefone a linha mais larga das quatro (388px em 16px)
+            nao caberia, e escrever quebra que nao cabe e' pior que nao
+            escrever.
+            A medida de 480px e' guarda, nao forma: quem desenha a borda sao
+            as quebras. Ela existe para o bloco nunca quebrar sozinho se a
+            fonte de fallback medir diferente.
+          */}
           <p
-            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[56ch] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
+            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
             <span className="font-medium text-paper">
               Dra. Claudia Meirelles
             </span>
-            , fisioterapeuta especialista em Osteopatia e Acupuntura pelo
+            , fisioterapeuta especialista
+            <br className="hidden sm:inline" /> em Osteopatia e Acupuntura pelo
             COFFITO, com{" "}
-            <span className="text-paper">30 anos de experiência clínica</span>.
-            Osteopatia, posturologia e acupuntura em Copacabana, Rio de
-            Janeiro.
+            <span className="text-paper">
+              30
+              <br className="hidden sm:inline" /> anos de experiência clínica
+            </span>
+            . Osteopatia, posturologia
+            <br className="hidden sm:inline" /> e acupuntura em Copacabana, Rio
+            de Janeiro.
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
@@ -276,14 +302,17 @@ export function Hero() {
           (.hero-campo e filhos), porque e' um sistema de variaveis por
           faixa, nao uma pilha de classes:
 
-          - O campo comeca na borda VISUAL do bloco de texto (o fim do
-            paragrafo, que e' o elemento mais largo) mais 24px, e vai ate o
-            respiro da borda da janela. A borda do texto e' constante por
-            faixa (624 / 616 / 657 / 616px em lg alta, lg baixa, xl alta, xl
-            baixa; em xl soma o recuo do contentor). Medida por Range nos nos
-            de texto, nao pela caixa da coluna: as linhas do titulo sao
-            blocos da largura da coluna inteira. Se o corpo do titulo, a
-            medida do paragrafo ou o recuo do bloco mudarem, remedir.
+          - O campo comeca na borda VISUAL do bloco de texto mais 24px, e vai
+            ate o respiro da borda da janela. A borda e' constante por faixa
+            (569 / 571 / 625 / 571px em lg alta, lg baixa, xl alta, xl baixa;
+            em xl soma o recuo do contentor). Medida por Range nos nos de
+            texto, nao pela caixa da coluna: as linhas do titulo sao blocos da
+            largura da coluna inteira. Se o corpo do titulo, a medida do
+            paragrafo ou o recuo do bloco mudarem, remedir.
+            Qual peca e' a mais larga MUDA por faixa, e por isso as quatro sao
+            medidas separadas: com a credencial em quatro linhas ela deixou de
+            ser a peca mais larga em toda faixa. Hoje quem manda e' o titulo
+            em xl e a fila de botoes em lg.
           - As duas figuras tem UMA expressao de altura, entao sao sempre
             exatamente iguais: o menor entre a altura util da janela, 820px e
             o que cabe na largura do campo com as duas lado a lado (221 + 118

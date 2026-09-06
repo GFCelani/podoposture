@@ -434,7 +434,7 @@ body {
 
 @media (min-width: 1024px) {
   .hero-campo {
-    --hero-texto-dir: 624px;
+    --hero-texto-dir: 569px;
     --hero-campo-w: calc(100vw - var(--hero-texto-dir) - var(--hero-folga) - var(--hero-respiro));
     --hero-fig-h: calc(
       min(
@@ -458,7 +458,7 @@ body {
 
   @media (max-height: 860px) {
     .hero-campo {
-      --hero-texto-dir: 616px;
+      --hero-texto-dir: 571px;
     }
   }
 
@@ -487,12 +487,12 @@ body {
     --hero-respiro: 40px;
     --hero-vao: 40px;
     --hero-reserva: 150px;
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 657px);
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 625px);
   }
 
   @media (max-height: 860px) {
     .hero-campo {
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 616px);
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 571px);
     }
   }
 
