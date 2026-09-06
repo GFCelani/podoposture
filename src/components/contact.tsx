@@ -177,6 +177,12 @@ export function Contact({
               entra o arco inteiro de Copacabana com Ipanema, o Arpoador e a
               Lagoa, entao da para situar o endereco na Zona Sul sem o pino
               perder a leitura.
+
+              O mapa vai com a cor propria do Google, nao dessaturado: ele e' a
+              unica imagem de rua da pagina, e verde de parque com azul de mar
+              e' o que faz a Zona Sul ser reconhecida de relance. A saturacao
+              sobe um pouco acima do embed cru para o mapa nao apagar ao lado
+              da banda de areia.
             */}
             <Reveal delay={240}>
               <div className="relative mx-auto w-full max-w-[420px] lg:max-w-none">
@@ -200,7 +206,7 @@ export function Contact({
                       src={`https://www.google.com/maps?q=${MAP_QUERY}&z=14&output=embed`}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
-                      className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 grayscale-[0.7]"
+                      className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 saturate-[1.2]"
                     />
                   </div>
                 </div>

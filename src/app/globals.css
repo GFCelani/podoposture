@@ -7,7 +7,7 @@
    mais quente. O que mudou, e por que:
 
      1. O branco frio saiu. O papel virou linho (#FBF8F3) e a superficie
-        virou areia (#F1E9DD). Sao os dois fundos que ocupam quase toda a
+        virou areia (#F5EFE6). Sao os dois fundos que ocupam quase toda a
         pagina, entao e' deles que vem a temperatura; nenhuma cor de destaque
         faria esse trabalho.
      2. A tinta e o metadado deixaram de puxar para o azul e passaram a puxar
@@ -18,10 +18,10 @@
         esverdeado e foi descartada: o pedido era aquecer os neutros, nao
         trocar a cor do site. O que mudou no azul foi so o degrau do token de
         TEXTO, e por obrigacao de contraste: #0E7BB4 sobre o linho da 4.39 e
-        sobre a areia da 3.87, os dois abaixo de AA. Ele agora e' o
+        sobre a areia da 4.07, os dois abaixo de AA. Ele agora e' o
         accent-vivid, onde nunca recebe texto de corpo (grifo, grafico,
         preenchimento), e o accent de texto e' o mesmo azul um degrau mais
-        fundo, #0B6A9C, que da 5.57 no linho e 4.90 na areia. E' o tom que a
+        fundo, #0B6A9C, que da 5.57 no linho e 5.17 na areia. E' o tom que a
         paleta anterior ja usava dentro da banda de superficie, pela mesma
         razao; a diferenca entre os dois a olho e' de um degrau.
      4. As bandas escuras continuam azuis, como eram.
@@ -36,6 +36,14 @@
    caiu de 6.93 para 6.66, que segue muito acima dos 4.5 e por isso ficou como
    estava, ja que o verde e' do logo e nao acompanha o papel.
 
+   AREIA MAIS CLARA (2026-09-06). A superficie subiu de #F1E9DD para #F5EFE6 a
+   pedido: a banda secundaria estava puxando escuro demais para o papel quente.
+   Como todo texto sobre ela e' escuro, clarear so aumentou contraste, e nenhum
+   par precisou de ajuste; os numeros de surface abaixo ja sao os novos. O que
+   a mudanca cobra e' a distancia para o papel, que caiu de 1.14 para 1.08: a
+   alternancia de bandas continua legivel porque cada corte tem fio de rule.
+   Se a superficie subir mais um degrau, a alternancia deixa de existir.
+
    Vinte e seis pares de texto medidos, todos AA; os numeros nos comentarios
    abaixo sao desta paleta. Se um token mudar, remedir os dois lados do par.
    O unico par que perdeu margem foi papel sobre action-deep, o hover do
@@ -45,12 +53,12 @@
   /* Neutros quentes. O papel e' linho e a superficie e' areia: e' aqui que
      mora a temperatura da pagina inteira. */
   --color-paper: #FBF8F3;
-  --color-surface: #F1E9DD;
+  --color-surface: #F5EFE6;
   /* Tinta em dois pesos, puxando para o verde-oliva escuro: corpo 10.70 sobre
      paper, strong para titulo 15.00. O preto puro continua fora da pagina. */
   --color-ink: #3A3B33;
   --color-ink-strong: #20231F;
-  /* Metadado em marrom-acinzentado, 5.62 sobre paper e 4.94 sobre surface. */
+  /* Metadado em marrom-acinzentado, 5.62 sobre paper e 5.21 sobre surface. */
   --color-muted: #6A6355;
   --color-rule: #DED2C0;
 
@@ -62,13 +70,13 @@
 
   /* Acento — o azul do site, no degrau que serve de TEXTO. Rotulos, reguas,
      links, preenchimentos. 5.57 sobre paper e 5.57 como fundo com texto em
-     papel; sobre a superficie de areia da 4.90, entao ele serve nas duas
+     papel; sobre a superficie de areia da 5.17, entao ele serve nas duas
      bandas claras sem excecao. */
   --color-accent: #0B6A9C;
   /* Acento vivo — o #0E7BB4, o tom que o site sempre teve. Cor de grifo, de
      grafico e segundo tom de qualquer par de acento. NUNCA recebe texto de
-     corpo: sobre o linho da 4.39, que passa no minimo de 3.0 para grafico e
-     reprova para texto. E' esta linha que o mantem fora do texto. */
+     corpo: sobre o linho da 4.39 e sobre a areia da 4.07, os dois passam no
+     minimo de 3.0 para grafico e reprovam para texto. E' esta linha que o mantem fora do texto. */
   --color-accent-vivid: #0E7BB4;
   /* Tint do acento, para uso SO sobre as bandas escuras: o azul do acento la
      seria invisivel, este da 8.06 sobre o petroleo e 5.96 sobre o deep-calm.
