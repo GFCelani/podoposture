@@ -113,6 +113,26 @@ export function Hero() {
             e nao ha clamp por vw. Era esse par que fazia o mesmo titulo cair
             diferente em desktop e em laptop, porque redistribuia as palavras
             em cada largura.
+
+            Cinco linhas em TODA faixa desde 2026-09-07. Antes "Integracao" e
+            "terapeutica" so se separavam abaixo de sm, e de sm para cima elas
+            dividiam a primeira linha: 584,6px contra 465 / 392 / 456 das
+            outras tres em 64px. A primeira linha saia 119,5px alem da segunda
+            e "terapeutica" avancava para fora da massa do bloco.
+            Isso NAO se resolve mudando onde a linha corta em quatro linhas.
+            Enumerando as 56 particoes das nove palavras em quatro linhas, a
+            que estava no ar ja era a de menor variacao: qualquer outra piora.
+            A razao e' aritmetica da copy, nao escolha de quebra: a primeira
+            linha so pode medir 278,1 / 584,6 / 787,2 / 1062,5px, e quatro
+            linhas iguais pediriam 484,1. Nenhuma das quatro chega perto.
+            Em cinco linhas os dois numeros caem juntos, em toda faixa: a
+            variacao de 192,5 para 187,0 e a saliencia da linha mais longa
+            sobre a segunda de 119,5 para 8,8 (numeros de 64px). E' tambem a
+            quebra que o telefone ja usava, entao desktop e telefone passam a
+            ter a MESMA composicao, que era o defeito que este comentario
+            reclamava desde o inicio.
+            O preco e' uma linha a mais de altura no desktop; foi conferido
+            que a dobra continua comportando o bloco na janela baixa.
             Corpo em degraus fixos por faixa; na janela baixa (laptop, ate
             860px de altura) cada degrau desce um patamar: 44px em lg, 52px em
             xl, contra 56 e 64 na janela alta. Foi pedido. Como a quebra e'
@@ -126,16 +146,15 @@ export function Hero() {
             Dentro de cada faixa a linha mais larga cabe com folga sobre a
             fonte de fallback, entao a quebra tambem nao muda no swap da
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
-            corpo x entrelinha, sem CLS.
+            corpo x entrelinha, sem CLS. Com cinco linhas a folga aumentou: a
+            linha mais larga caiu de 584,6 para 465,1px em 64px.
           */}
           <h1
             className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
-            <span className="block">
-              <span className="block sm:inline">Integração </span>
-              <span className="block sm:inline">terapêutica </span>
-            </span>
+            <span className="block">Integração </span>
+            <span className="block">terapêutica </span>
             <span className="block">
               <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
             </span>
@@ -304,15 +323,15 @@ export function Hero() {
 
           - O campo comeca na borda VISUAL do bloco de texto mais 24px, e vai
             ate o respiro da borda da janela. A borda e' constante por faixa
-            (569 / 571 / 625 / 571px em lg alta, lg baixa, xl alta, xl baixa;
+            (569 / 571 / 569 / 571px em lg alta, lg baixa, xl alta, xl baixa;
             em xl soma o recuo do contentor). Medida por Range nos nos de
             texto, nao pela caixa da coluna: as linhas do titulo sao blocos da
             largura da coluna inteira. Se o corpo do titulo, a medida do
             paragrafo ou o recuo do bloco mudarem, remedir.
-            Qual peca e' a mais larga MUDA por faixa, e por isso as quatro sao
-            medidas separadas: com a credencial em quatro linhas ela deixou de
-            ser a peca mais larga em toda faixa. Hoje quem manda e' o titulo
-            em xl e a fila de botoes em lg.
+            Qual peca e' a mais larga MUDA a cada mexida, e por isso as quatro
+            sao medidas separadas. A credencial deixou de mandar quando foi
+            para quatro linhas; o titulo deixou de mandar quando foi para
+            cinco. Hoje quem manda e' a fila de botoes, nas quatro.
           - As duas figuras tem UMA expressao de altura, entao sao sempre
             exatamente iguais: o menor entre a altura util da janela, 820px e
             o que cabe na largura do campo com as duas lado a lado (221 + 118

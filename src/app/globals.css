@@ -487,7 +487,7 @@ body {
     --hero-respiro: 40px;
     --hero-vao: 40px;
     --hero-reserva: 150px;
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 625px);
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 569px);
   }
 
   @media (max-height: 860px) {
