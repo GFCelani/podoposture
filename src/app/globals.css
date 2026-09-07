@@ -311,6 +311,25 @@ body {
   }
 }
 
+/* Pulso que percorre um fio (secao Metodo RegulaDOR). O path leva
+   pathLength="100", entao o tracejado e' em porcentagem: 12 de traco, 88 de
+   vao, e o offset anda de 100 a 0, o que move o segmento no sentido do
+   desenho. O fio inteiro e' outro path, por baixo: no movimento reduzido a
+   animacao para no primeiro quadro e o pulso vira um traco curto parado
+   sobre um fio que ja esta inteiro. */
+.leitura-pulso {
+  stroke-dasharray: 12 88;
+  stroke-dashoffset: 100;
+  animation: leitura-pulso var(--dur, 7s) linear infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes leitura-pulso {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
 /* A figura esquematica do hero. Um transform por no', repouso no estilo
    base; o que nao deve existir com movimento reduzido nasce em opacity 0. */
 
