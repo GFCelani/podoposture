@@ -45,7 +45,7 @@ export function TreatmentCards() {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-20 lg:py-24">
         <Reveal>
-          <SectionMark n="07" />
+          <SectionMark n="06" />
         </Reveal>
 
         <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">

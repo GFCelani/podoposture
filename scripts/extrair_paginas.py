@@ -45,26 +45,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 ORIGEM = RAIZ / ".cache" / "godaddy" / "paginas"
 DESTINO = RAIZ / "src" / "content" / "pages.json"
 
-# Aberturas escritas pela cliente DEPOIS da migracao, que nao existem no
-# GoDaddy. Entram por cima do que a fonte traz, para que rodar o script de
-# novo nao apague copy nova. Verbatim: nada aqui e' revisado.
-ABERTURAS_DA_CLIENTE: dict[str, dict] = {
-    "tratamento-da-dor": {
-        "titulo": "Quando a dor persiste, é preciso entender o que a mantém.",
-        "abertura": {
-            "subtitulo": (
-                "Avaliação e tratamento individualizado da dor, coluna e "
-                "alterações funcionais, integrando experiência clínica, "
-                "biomecânica e neurociência."
-            ),
-            "identificacao": [
-                "Dra. Claudia Meirelles • Osteopatia • Acupuntura • Posturologia • Neuromodulação",
-                "Copacabana - Rio de Janeiro",
-            ],
-        },
-    },
-}
-
 # Widgets que carregam conteudo editorial; o resto e cromo repetido em toda pagina.
 WIDGETS_CONTEUDO = {"content", "about", "introduction", "featured", "html", "contact"}
 # O rodape ja e barrado pelo filtro estrutural, agora que a profundidade de
@@ -435,25 +415,16 @@ def main() -> int:
         if registro:
             relatorio.append((slug, registro))
 
-        pagina = {
-            "slug": slug,
-            "titulo": titulo,
-            **extrair_meta(bruto),
-            "html": corpo,
-            "palavras": len(so_texto(corpo).split()),
-            "cortadosDoMenu": cortados,
-        }
-        cliente = ABERTURAS_DA_CLIENTE.get(slug)
-        if cliente:
-            # a ordem das chaves fica a mesma do JSON versionado: titulo,
-            # abertura, e so depois os metadados da fonte
-            pagina = {
+        paginas.append(
+            {
                 "slug": slug,
-                "titulo": cliente["titulo"],
-                "abertura": cliente["abertura"],
-                **{k: v for k, v in pagina.items() if k not in ("slug", "titulo")},
+                "titulo": titulo,
+                **extrair_meta(bruto),
+                "html": corpo,
+                "palavras": len(so_texto(corpo).split()),
+                "cortadosDoMenu": cortados,
             }
-        paginas.append(pagina)
+        )
 
     paginas.sort(key=lambda p: p["slug"])
     DESTINO.parent.mkdir(parents=True, exist_ok=True)

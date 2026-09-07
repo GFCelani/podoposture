@@ -87,10 +87,7 @@ export type Capa = {
 export function PageShell({
   tipo,
   titulo,
-  tituloLinhas,
   subtitulo,
-  subtituloLinhas,
-  identificacao,
   trilha,
   glifo,
   midia,
@@ -100,14 +97,7 @@ export function PageShell({
 }: {
   tipo: TipoDePagina;
   titulo: string;
-  /** Quebra escrita do titulo (ver lib/abertura.ts). Com ela o h1 sai sem
-      text-balance: uma linha por item, a partir de sm. */
-  tituloLinhas?: string[];
   subtitulo?: string | null;
-  /** Quebra escrita do subtitulo, mesma regra. */
-  subtituloLinhas?: string[];
-  /** Linhas de identificacao em mono sob o subtitulo (quem atende, onde). */
-  identificacao?: string[];
   /** Ultimo item e a pagina atual, sem link. */
   trilha?: { nome: string; href?: string }[];
   /** Chave de GLYPHS ("/osteopatia"). Sem ela o cabecalho vai so com o titulo. */
@@ -216,32 +206,17 @@ export function PageShell({
                     titulo ficava congelado em 32px de 320 ate 768, a faixa
                     inteira de tablet com o corpo de telefone. A forma rem+vw
                     cresce desde 320 e chega ao teto por volta de 960. */}
-                {/* Com quebra escrita (tituloLinhas) o balance sai: sao
-                    decisoes concorrentes, e a escrita vence. Abaixo de sm as
-                    linhas voltam a fluir, pelo mesmo motivo do hero: a linha
-                    mais larga nao cabe na coluna do telefone, e quebra
-                    escrita que nao cabe e' pior que nenhuma. */}
                 <Reveal variante="cortina" delay={120}>
-                  <h1
-                    className={`max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] max-[359px]:text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] text-ink-strong${
-                      tituloLinhas ? "" : " text-balance"
-                    }`}
-                  >
-                    {tituloLinhas ? <Linhas linhas={tituloLinhas} /> : titulo}
+                  <h1 className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] max-[359px]:text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong">
+                    {titulo}
                   </h1>
                 </Reveal>
 
                 {subtitulo && (
                   <Reveal delay={220}>
                     <p className="mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
-                      {subtituloLinhas ? <Linhas linhas={subtituloLinhas} /> : subtitulo}
+                      {subtitulo}
                     </p>
-                  </Reveal>
-                )}
-
-                {identificacao && identificacao.length > 0 && (
-                  <Reveal delay={300}>
-                    <Identificacao linhas={identificacao} />
                   </Reveal>
                 )}
               </div>
@@ -291,73 +266,6 @@ export function PageShell({
       <SiteFooter />
       <FloatingWhatsApp />
     </>
-  );
-}
-
-/**
- * Quebra escrita: um bloco por linha a partir de sm, texto corrido abaixo.
- * O espaco depois de cada linha e' o que mantem o texto copiado igual ao
- * original quando os blocos viram inline.
- */
-function Linhas({ linhas }: { linhas: string[] }) {
-  return (
-    <>
-      {linhas.map((linha, i) => (
-        <span key={linha} className="sm:block">
-          {linha}
-          {i < linhas.length - 1 ? " " : ""}
-        </span>
-      ))}
-    </>
-  );
-}
-
-/**
- * Quem atende e onde, em mono sob o subtitulo. Cada linha e' um <p>; dentro
- * dela, cada trecho separado por " • " vira um pedaco indivisivel que leva o
- * proprio bullet, entao a linha so pode quebrar ENTRE trechos e o bullet
- * fecha a linha de cima em vez de abrir a de baixo sozinho. O texto no DOM
- * continua o da cliente, caractere por caractere: os espacos entre os
- * pedacos sao os espacos originais. Nada de uppercase: a caixa e' a escrita.
- */
-function Identificacao({ linhas }: { linhas: string[] }) {
-  return (
-    <div className="mt-7 max-w-[62ch] md:mt-8">
-      <span aria-hidden="true" className="mb-5 block h-px w-14 bg-accent/30" />
-      {linhas.map((linha) => {
-        const trechos = linha.split(" • ");
-        return (
-          <p
-            key={linha}
-            /* 0.04em, e nao o 0.16em da trilha: com 80 caracteres a linha
-               de credenciais mede 614px e cabe inteira na coluna de 645 em
-               md e em xl; com o tracking da trilha ela media 653 e sobrava
-               "Neuromodulação" sozinha na segunda linha. Em lg a coluna tem
-               532 e a linha quebra de qualquer jeito: o balance e' para ela
-               quebrar em duas metades (37 + 42 caracteres) e nao em quatro
-               credenciais mais uma orfa. Aqui balance nao briga com quebra
-               escrita, porque nao ha quebra escrita: os pedacos ja decidem
-               onde e' permitido cortar. */
-            className="text-[0.75rem] leading-[1.9] tracking-[0.04em] text-balance text-muted"
-            style={{ fontFamily: "var(--mono)" }}
-          >
-            {trechos.map((trecho, i) =>
-              i < trechos.length - 1 ? (
-                /* o espaco fica FORA do nowrap: e' ele que da a
-                   oportunidade de quebra entre um pedaco e o seguinte */
-                <span key={trecho}>
-                  <span className="whitespace-nowrap">{trecho} •</span>{" "}
-                </span>
-              ) : (
-                <span key={trecho} className="whitespace-nowrap">
-                  {trecho}
-                </span>
-              ),
-            )}
-          </p>
-        );
-      })}
-    </div>
   );
 }
 

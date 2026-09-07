@@ -6,7 +6,6 @@ import { Gallery } from "@/components/gallery";
 import { Hero } from "@/components/hero";
 import { Journal } from "@/components/journal";
 import { SeamRuler } from "@/components/layers";
-import { MetodoRegulador } from "@/components/metodo-regulador";
 import { ServicesGrid } from "@/components/services-grid";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -27,14 +26,13 @@ export default function Home() {
         <UnderstandFirst />
         <SeamRuler />
         <Approach />
-        <MetodoRegulador />
         <TreatmentCards />
         <ServicesGrid />
         <Contact />
         <Journal />
         <Gallery />
         <SeamRuler />
-        <SocialBand n="12" />
+        <SocialBand n="11" />
       </main>
       <SiteFooter />
       <FloatingWhatsApp />

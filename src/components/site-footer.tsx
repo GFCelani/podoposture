@@ -51,7 +51,7 @@ export function SiteFooter() {
             Procurar onde a clinica fica e' o segundo motivo de visita depois
             de marcar consulta, e o rodape e' o primeiro lugar onde se procura
             isso: ate aqui ele so tinha links, e o endereco vivia sozinho na
-            secao 09 da home, oito secoes abaixo da dobra. */}
+            secao 08 da home, sete secoes abaixo da dobra. */}
         <div className="grid gap-12 border-b border-white/[0.14] pb-12 lg:grid-cols-12 lg:gap-x-6">
           <div className="lg:col-span-6">
             <Rotulo>Onde estamos</Rotulo>

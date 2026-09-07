@@ -79,8 +79,8 @@ export function urlAbsoluta(caminho: string): string {
  * CLINICA acima e' o dado estruturado que alimenta o JSON-LD; isto aqui e' o
  * mesmo endereco na forma em que ele aparece na tela. Estavam soltos dentro
  * de contact.tsx, e o rodape nao tinha endereco nenhum: o visitante que
- * procurava onde a clinica fica precisava atravessar oito secoes da home ate
- * a secao 09. Uma fonte so, para as duas pecas nunca divergirem.
+ * procurava onde a clinica fica precisava atravessar sete secoes da home ate
+ * a secao 08. Uma fonte so, para as duas pecas nunca divergirem.
  */
 export const ENDERECO = {
   /* Espaco duro antes do numero: no menu do telefone a linha quebra, e sem
