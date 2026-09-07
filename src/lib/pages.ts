@@ -17,6 +17,17 @@ export type Pagina = {
   slug: string;
   /** <h1> da fonte. E o titulo exibido; nao se repete dentro do corpo. */
   titulo: string;
+  /**
+   * Abertura escrita pela cliente depois da migracao (ver
+   * ABERTURAS_DA_CLIENTE em scripts/extrair_paginas.py). Quando existe, o
+   * subtitulo visivel e' este, e nao a descricao de <meta>; a descricao
+   * continua sendo a do site antigo, que e' copy de busca, nao de tela.
+   */
+  abertura?: {
+    subtitulo: string;
+    /** Linhas de identificacao sob o subtitulo, em mono. */
+    identificacao: string[];
+  };
   /** <title> que a pagina tinha no GoDaddy, guardado como referencia. */
   tituloOriginal: string;
   descricaoOriginal: string;

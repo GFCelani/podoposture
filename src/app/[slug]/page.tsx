@@ -9,6 +9,7 @@ import { PageShell, type TipoDePagina } from "@/components/page-shell";
 import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
+import { quebrasDaAbertura } from "@/lib/abertura";
 import { fotosDeApoio, ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
 import {
   SLUGS_A_GERAR,
@@ -128,6 +129,11 @@ export default async function Pagina({
   const ilustracao = ilustracaoDaPagina(pagina.slug);
   const tipo = tipoDaPagina(pagina.slug);
   const eContato = pagina.slug === "contato";
+  /* Subtitulo visivel: o que a cliente escreveu para a abertura, quando
+     existe; senao a descricao de <meta>, como nas demais paginas. A
+     descricao e o JSON-LD nao mudam com a abertura: sao copy de busca. */
+  const subtitulo = pagina.abertura?.subtitulo ?? descricao;
+  const quebras = quebrasDaAbertura(pagina.slug, titulo, subtitulo);
 
   const midia = ilustracao.foto ? (
     <FotoEmMoldura foto={ilustracao.foto} />
@@ -150,7 +156,10 @@ export default async function Pagina({
       <PageShell
         tipo={tipo}
         titulo={titulo}
-        subtitulo={descricao}
+        tituloLinhas={quebras.titulo}
+        subtitulo={subtitulo}
+        subtituloLinhas={quebras.subtitulo}
+        identificacao={pagina.abertura?.identificacao}
         trilha={[{ nome: titulo }]}
         glifo={ilustracao.glifo}
         midia={eContato ? undefined : midia}
