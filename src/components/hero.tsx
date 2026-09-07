@@ -127,6 +127,16 @@ export function Hero() {
             fonte de fallback, entao a quebra tambem nao muda no swap da
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
             corpo x entrelinha, sem CLS.
+
+            A virgula depois de "efetiva" virou "e" em 2026-09-07. A quebra
+            NAO precisou mudar: enumerando as 84 particoes das dez palavras em
+            quatro linhas, esta continua sendo a de menor irregularidade
+            (17,6%), como ja era com a virgula. E a troca melhora o bloco
+            sozinha, porque engorda justamente a segunda linha: em 64px ela
+            passa de 465,1 para 493,7px, e a primeira linha, que e' a mais
+            longa, deixa de sair 119,5px alem dela para sair 90,9.
+            A linha mais larga continua sendo "Integracao terapeutica" com os
+            mesmos 584,6px, entao --hero-texto-dir nao precisou ser remedido.
           */}
           <h1
             className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
@@ -137,7 +147,7 @@ export function Hero() {
               <span className="block sm:inline">terapêutica </span>
             </span>
             <span className="block">
-              <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
+              <mark className="marca-grifo">efetiva</mark> e inovadora{" "}
             </span>
             <span className="block">com resultados </span>
             <span className="block">rápidos e eficazes</span>
