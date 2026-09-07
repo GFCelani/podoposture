@@ -3,8 +3,8 @@ import { Reveal } from "./reveal";
 import { SocialLinks } from "./social-links";
 
 /**
- * O numeral e' da sequencia da home (01 a 11). Nas paginas internas a faixa
- * fecha um documento que tem a propria numeracao de secoes, e um "11" solto
+ * O numeral e' da sequencia da home (01 a 12). Nas paginas internas a faixa
+ * fecha um documento que tem a propria numeracao de secoes, e um "12" solto
  * ali nao conta nada: sem `n`, a faixa vai so com o fio e o titulo.
  */
 export function SocialBand({ n }: { n?: string }) {

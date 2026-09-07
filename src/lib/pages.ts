@@ -17,6 +17,17 @@ export type Pagina = {
   slug: string;
   /** <h1> da fonte. E o titulo exibido; nao se repete dentro do corpo. */
   titulo: string;
+  /**
+   * Abertura escrita pela cliente depois da migracao (ver
+   * ABERTURAS_DA_CLIENTE em scripts/extrair_paginas.py). Quando existe, o
+   * subtitulo visivel e' este, e nao a descricao de <meta>; a descricao
+   * continua sendo a do site antigo, que e' copy de busca, nao de tela.
+   */
+  abertura?: {
+    subtitulo: string;
+    /** Linhas de identificacao sob o subtitulo, em mono. */
+    identificacao: string[];
+  };
   /** <title> que a pagina tinha no GoDaddy, guardado como referencia. */
   tituloOriginal: string;
   descricaoOriginal: string;
@@ -67,6 +78,26 @@ export function buscarPagina(slug: string): Pagina | undefined {
 
 export function tituloDaPagina(pagina: Pagina): string {
   return pagina.titulo || pagina.tituloOriginal || pagina.slug;
+}
+
+/**
+ * O mesmo titulo na forma de ROTULO: aba do navegador, trilha e nome em
+ * dados estruturados. A diferenca e' o ponto final, que sai.
+ *
+ * Nao e' edicao de copy, e' convencao de formato. O titulo da pagina de dor
+ * e' uma frase inteira escrita pela cliente e termina em ponto, como frase;
+ * no corpo da pagina ele continua exatamente assim. Mas "... o que a
+ * mantem. | Podoposture" poe um ponto no meio do titulo da aba, e uma trilha
+ * de navegacao e' uma lista de nomes, nao de frases: ali o ponto le como
+ * erro de montagem, nao como pontuacao da autora.
+ *
+ * So o ponto final sai, e so quando e' o ultimo caractere. Interrogacao e
+ * exclamacao ficam: elas mudam o que o rotulo diz ("O Que e Zumbido?" e' uma
+ * pergunta em qualquer contexto), enquanto o ponto e' o unico sinal que so
+ * marca fim de frase. Reticencias tambem ficam, pelo mesmo motivo.
+ */
+export function rotuloDaPagina(pagina: Pagina): string {
+  return tituloDaPagina(pagina).replace(/(?<!\.\.)\.$/, "");
 }
 
 /** Descricao para <meta>: a do site antigo quando existe, senao o 1o paragrafo. */

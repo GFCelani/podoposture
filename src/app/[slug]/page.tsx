@@ -9,11 +9,13 @@ import { PageShell, type TipoDePagina } from "@/components/page-shell";
 import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
+import { quebrasDaAbertura } from "@/lib/abertura";
 import { fotosDeApoio, ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
 import {
   SLUGS_A_GERAR,
   buscarPagina,
   descricaoDaPagina,
+  rotuloDaPagina,
   tituloDaPagina,
 } from "@/lib/pages";
 
@@ -58,26 +60,30 @@ export async function generateMetadata({
   const pagina = buscarPagina(slug);
   if (!pagina) return {};
 
-  const titulo = tituloDaPagina(pagina);
+  /* Rotulo, e nao titulo: na aba o nome da pagina e' colado a marca pelo
+     template ("... | Podoposture"), e o ponto final ficaria no meio da
+     linha. Ver rotuloDaPagina. O corpo da pagina continua com a frase
+     inteira, ponto incluido. */
+  const rotulo = rotuloDaPagina(pagina);
   const descricao = descricaoDaPagina(pagina);
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
 
   return {
-    title: titulo,
+    title: rotulo,
     description: descricao,
     alternates: { canonical: caminho },
     openGraph: {
       type: "article",
       locale: "pt_BR",
       siteName: "Podoposture",
-      title: titulo,
+      title: rotulo,
       description: descricao,
       url: caminho,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: titulo }],
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: rotulo }],
     },
     twitter: {
       card: "summary_large_image",
-      title: titulo,
+      title: rotulo,
       description: descricao,
       images: ["/og.png"],
     },
@@ -123,11 +129,19 @@ export default async function Pagina({
   if (!pagina) notFound();
 
   const titulo = tituloDaPagina(pagina);
+  /* Na trilha e nos dados estruturados o titulo entra como nome de item de
+     lista, nao como frase: sem o ponto final. So o h1 leva a frase inteira. */
+  const rotulo = rotuloDaPagina(pagina);
   const descricao = descricaoDaPagina(pagina);
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
   const ilustracao = ilustracaoDaPagina(pagina.slug);
   const tipo = tipoDaPagina(pagina.slug);
   const eContato = pagina.slug === "contato";
+  /* Subtitulo visivel: o que a cliente escreveu para a abertura, quando
+     existe; senao a descricao de <meta>, como nas demais paginas. A
+     descricao e o JSON-LD nao mudam com a abertura: sao copy de busca. */
+  const subtitulo = pagina.abertura?.subtitulo ?? descricao;
+  const quebras = quebrasDaAbertura(pagina.slug, titulo, subtitulo);
 
   const midia = ilustracao.foto ? (
     <FotoEmMoldura foto={ilustracao.foto} />
@@ -137,9 +151,9 @@ export default async function Pagina({
 
   return (
     <>
-      <TrilhaJsonLd itens={[{ nome: titulo, caminho }]} />
+      <TrilhaJsonLd itens={[{ nome: rotulo, caminho }]} />
       <PaginaMedicaJsonLd
-        titulo={titulo}
+        titulo={rotulo}
         descricao={descricao}
         caminho={caminho}
       />
@@ -150,8 +164,11 @@ export default async function Pagina({
       <PageShell
         tipo={tipo}
         titulo={titulo}
-        subtitulo={descricao}
-        trilha={[{ nome: titulo }]}
+        tituloLinhas={quebras.titulo}
+        subtitulo={subtitulo}
+        subtituloLinhas={quebras.subtitulo}
+        identificacao={pagina.abertura?.identificacao}
+        trilha={[{ nome: rotulo }]}
         glifo={ilustracao.glifo}
         midia={eContato ? undefined : midia}
       >

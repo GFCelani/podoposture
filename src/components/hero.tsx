@@ -226,7 +226,7 @@ export function Hero() {
               presa a largura do bloco. */}
           <div className="sm:w-fit">
             {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
-              o primario e' o par completo da secao 08, rotulo e destino; o
+              o primario e' o par completo da secao 09, rotulo e destino; o
               secundario
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}

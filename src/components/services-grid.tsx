@@ -26,10 +26,10 @@ export function ServicesGrid() {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-20 lg:py-24">
         <Reveal>
-          <SectionMark n="07" />
+          <SectionMark n="08" />
         </Reveal>
 
-        {/* O "07" e' um numeral, nao um nome: sem um h2 a secao entrava no
+        {/* O "08" e' um numeral, nao um nome: sem um h2 a secao entrava no
             sumario do leitor de tela como doze h3 soltos, sem dizer do que
             eram. Fica invisivel porque esta banda e a de tratamentos formam
             um par de grades sem titulo aparente — o rotulo e' para quem nao

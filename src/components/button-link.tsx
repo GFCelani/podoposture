@@ -121,6 +121,39 @@ const ICONES: Record<Icone, React.ReactNode> = {
   ),
 };
 
+/**
+ * O mesmo botao sem destino. Um so caso hoje: o Metodo RegulaDOR, cuja
+ * pagina ainda nao existe. Nao e' <a> sem href nem <button disabled>: e' um
+ * <button> com aria-disabled, que continua na ordem de foco e e' lido como
+ * "desativado" pelo leitor de tela, em vez de desaparecer dele. Nada de
+ * texto extra no rotulo: o estado se diz pela forma.
+ *
+ * A forma e' a do nivel correspondente com o preenchimento apagado: mesma
+ * caixa, mesmo raio, mesma borda, mas a borda a meia forca, sem sombra, sem
+ * subida no hover e sem o circulo que cresce. O rotulo desce um degrau de
+ * cor e o cursor e' o de texto parado, nao o de proibido: proibido diz
+ * "voce errou", e aqui ninguem errou, so nao ha para onde ir ainda.
+ *
+ * Contraste do rotulo inativo, medido:
+ *   secondary-deep  on-deep-muted #A9C9DC sobre deep-calm #0A425F ... 6.17
+ *   secondary       muted #6A6355 sobre papel ...................... 5.62
+ *   primary         ink-strong sobre action a 55% no papel ......... > 7
+ *   tertiary        muted sobre papel .............................. 5.62
+ * Componente inativo esta isento do minimo de AA pelo proprio criterio
+ * (1.4.3), mas os pares foram escolhidos para passar mesmo assim.
+ */
+/* Sem o group/btn de BASE: e' ele que faz a seta deslizar no hover, e um
+   botao parado nao aponta para lugar nenhum. */
+const BASE_INATIVO =
+  "inline-flex cursor-default items-center gap-3 text-[0.9375rem]";
+
+const INATIVOS: Record<Variant, string> = {
+  primary: `${BASE_INATIVO} rounded-md border-[1.5px] border-action-deep/15 bg-action/55 px-7 py-3.5 font-medium text-ink-strong`,
+  secondary: `${BASE_INATIVO} rounded-md border-[1.5px] border-rule bg-paper px-7 py-3.5 text-muted`,
+  "secondary-deep": `${BASE_INATIVO} rounded-md border-[1.5px] border-paper/25 px-7 py-3.5 text-on-deep-muted`,
+  tertiary: `${BASE_INATIVO} items-baseline gap-2.5 py-2 -my-2 text-muted`,
+};
+
 export function ButtonLink({
   href,
   children,
@@ -128,21 +161,34 @@ export function ButtonLink({
   icone = "seta",
   className = "",
 }: {
-  href: string;
+  /** null = sem destino ainda: o botao nasce inativo (ver INATIVOS). */
+  href: string | null;
   children: React.ReactNode;
   variant?: Variant;
   /** O simbolo a direita do rotulo. Ver ICONES. */
   icone?: Icone;
   className?: string;
 }) {
-  const external = href.startsWith("http") || href.startsWith("tel:");
-
   const content = (
     <>
       {children}
       {ICONES[icone]}
     </>
   );
+
+  if (href === null) {
+    return (
+      <button
+        type="button"
+        aria-disabled="true"
+        className={`${INATIVOS[variant]}${className ? ` ${className}` : ""}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  const external = href.startsWith("http") || href.startsWith("tel:");
 
   const cls = `${VARIANTS[variant]}${className ? ` ${className}` : ""}`;
 
