@@ -312,112 +312,43 @@ body {
 }
 
 /* ===============================================================
-   PLACA DE LEITURA — a figura da secao 06 (Metodo RegulaDOR).
-   Cinco movimentos, todos em transform e opacity, nada mais. O
-   repouso de cada um esta no ESTILO BASE da classe, nunca no
-   keyframe 100%: com movimento reduzido as animacoes colapsam para
-   a base, e a placa fica parada, inteira e legivel.
+   FIGURA DA SECAO 06 — seis entradas, um ponto, uma saida.
+   Um movimento so: a luz percorre as entradas uma a uma e o pulso
+   sai depois da sexta. Transform e opacity, nada mais. O repouso
+   de cada animacao esta no ESTILO BASE, nunca no keyframe 100%:
+   com movimento reduzido tudo para visivel e completo.
    =============================================================== */
 
-/* O sinal de um canal corre exatamente um azulejo da propria onda, e
-   o azulejo e' periodico: o salto do fim do laco cai sobre uma copia
-   identica e nao se ve. Cada canal traz o seu --dur, entao os seis
-   correm em velocidades diferentes, como sinais que nao sao o mesmo. */
-.placa-corre {
-  animation: placa-corre var(--dur, 12s) linear infinite;
-}
-
-@keyframes placa-corre {
-  to {
-    transform: translateX(var(--passo));
-  }
-}
-
-/* A leitura caminha pelos canais, um por vez, na ordem. Base opaca:
-   parada, os seis aparecem lidos. */
-.placa-passo {
+/* A leitura caminha pelas entradas, uma por vez, na ordem. Base opaca:
+   parada, as seis aparecem lidas. */
+.leitura-passo {
   opacity: 1;
-  animation: placa-passo var(--ciclo, 8.4s) ease-in-out infinite;
+  animation: leitura-passo var(--ciclo, 7.8s) ease-in-out infinite;
   animation-delay: var(--fase, 0s);
 }
 
-@keyframes placa-passo {
+@keyframes leitura-passo {
   0%,
   100% {
-    opacity: 0.42;
+    opacity: 0.4;
   }
   5% {
     opacity: 1;
   }
-  16% {
-    opacity: 0.42;
+  17% {
+    opacity: 0.4;
   }
 }
 
-/* O no' do canal cresce no instante em que ele e' lido. */
-.placa-no {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: placa-no var(--ciclo, 8.4s) ease-in-out infinite;
-  animation-delay: var(--fase, 0s);
-}
-
-@keyframes placa-no {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  5% {
-    transform: scale(1.9);
-  }
-  16% {
-    transform: scale(1);
-  }
-}
-
-.placa-giro {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: placa-giro var(--dur, 22s) linear infinite;
-}
-
-@keyframes placa-giro {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Anel que emana do ponto de leitura. Base invisivel de proposito: os
-   aneis parados por baixo e que desenham o ponto, e este so acrescenta
-   o pulso. Sem ele, nada falta. */
-.placa-emana {
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  animation: placa-emana var(--dur, 5.6s) cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
-}
-
-@keyframes placa-emana {
-  0% {
-    opacity: 0.75;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2.6);
-  }
-}
-
-/* O pulso da conduta sai da leitura depois que os seis canais foram
-   lidos e vai ate o alvo. Parado, fica na saida da coluna, como a
-   marca de onde a linha comeca. */
-.placa-saida {
+/* O pulso da conduta sai do ponto depois que as seis entradas foram lidas.
+   Parado, fica na saida do ponto, como a marca de onde a linha comeca. */
+.leitura-saida {
   opacity: 1;
-  animation: placa-saida var(--ciclo, 8.4s) linear infinite;
+  animation: leitura-saida var(--ciclo, 7.8s) linear infinite;
   animation-delay: var(--fase, 0s);
 }
 
-@keyframes placa-saida {
+@keyframes leitura-saida {
   0% {
     opacity: 0;
     transform: translateX(0);
@@ -437,370 +368,24 @@ body {
   }
 }
 
-/* A figura esquematica do hero. Um transform por no', repouso no estilo
-   base; o que nao deve existir com movimento reduzido nasce em opacity 0. */
-
-/* O conjunto respira: escala minima, ciclo lento. */
-.figura-respira {
-  transform: scale(1);
-  animation: figura-respira 9s var(--ease-ciclo) infinite;
-  animation-delay: 1.2s;
-}
-
-@keyframes figura-respira {
-  50% {
-    transform: scale(1.012);
-  }
-}
-
-/* Corrente na cadeia: um ponto nasce numa ponta do segmento, corre ate a
-   outra e some; o resto do ciclo fica invisivel. --dx/--dy em px do
-   viewBox. */
-.corrente {
-  opacity: 0;
-  transform: translate(0, 0);
-  animation: corrente var(--dur, 6s) linear infinite;
-  animation-delay: var(--fase, 0s);
-}
-
-@keyframes corrente {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-  3% {
-    opacity: 0.9;
-  }
-  21% {
-    opacity: 0.9;
-  }
-  24%,
-  100% {
-    opacity: 0;
-    transform: translate(var(--dx), var(--dy));
-  }
-}
-
-/* Varredura da coluna: uma sobreposicao em papel por vertebra, que acende
-   por um instante; a fase cresce de cima para baixo, entao a onda desce. */
-.vertebra-acende {
-  opacity: 0;
-  animation: vertebra-acende 7s var(--ease-ciclo) infinite;
-  animation-delay: var(--fase, 0s);
-}
-
-@keyframes vertebra-acende {
-  4% {
-    opacity: 0.85;
-  }
-  13%,
-  100% {
-    opacity: 0;
-  }
-}
-
-/* Linhas de referencia do hero: recolhem a partir da esquerda e voltam, com
-   a ponta direita (o traco curto) parada. Origem a direita. */
-.estende {
-  transform: scaleX(1);
-  transform-origin: right center;
-  animation: estende var(--dur, 10s) var(--ease-ciclo) infinite;
-  animation-delay: var(--fase, 0s);
-}
-
-@keyframes estende {
-  50% {
-    transform: scaleX(0.42);
-  }
-}
-
-/* ===============================================================
-   HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
-   Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
-   =============================================================== */
-
-.hero-campo {
-  --hero-folga: 24px; /* entre o texto e o campo */
-  --hero-respiro: 24px; /* entre o campo e a borda da janela */
-  --hero-vao: 32px; /* entre as duas figuras */
-  --hero-reserva: 0px; /* faixa a direita reservada aos rotulos (xl) */
-  --hero-texto-dir: 0px; /* borda visual do bloco de texto, por faixa */
-  --hero-reducao: 0.92; /* "um pouco menores" (2026-09-06) */
-  /* abaixo de lg: duas figuras lado a lado no que sobra de largura
-     (221 + 118 de viewBox por 560, mais 40 de vao), teto de 405px */
-  --hero-fig-h: calc(min(calc((100vw - 88px) * 560 / 339), 440px) * var(--hero-reducao));
-  position: relative;
-  display: flex;
-  justify-content: center;
-  margin-top: 3rem;
-}
-
-.hero-quadro {
-  position: relative;
-  height: var(--hero-fig-h);
-}
-
-.hero-par {
-  display: flex;
-  align-items: flex-start;
-  gap: 40px;
-  height: var(--hero-fig-h);
-}
-
-.hero-figura {
-  display: block;
-  height: var(--hero-fig-h);
-  width: auto;
-}
-
-.hero-linha,
-.hero-rotulo {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .hero-campo {
-    --hero-texto-dir: 569px;
-    --hero-campo-w: calc(100vw - var(--hero-texto-dir) - var(--hero-folga) - var(--hero-respiro));
-    --hero-fig-h: calc(
-      min(
-          calc(100svh - 90px - 64px),
-          820px,
-          calc((var(--hero-campo-w) - var(--hero-vao) - var(--hero-reserva)) * 560 / 339)
-        ) *
-        var(--hero-reducao)
-    );
-    --hero-par-w: calc(var(--hero-fig-h) * 339 / 560 + var(--hero-vao));
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: calc(var(--hero-texto-dir) + var(--hero-folga));
-    margin: 0;
-    padding-top: 90px;
-    display: flex;
-    align-items: center;
-  }
-
-  @media (max-height: 860px) {
-    .hero-campo {
-      --hero-texto-dir: 571px;
-    }
-  }
-
-  .hero-quadro {
-    width: 100%;
-  }
-
-  /* o par centrado no campo (descontada a faixa dos rotulos), como conjunto */
-  .hero-par {
-    position: absolute;
-    top: 0;
-    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
-    gap: var(--hero-vao);
-  }
-
-  .hero-linha {
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 36px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .hero-campo {
-    --hero-respiro: 40px;
-    --hero-vao: 40px;
-    --hero-reserva: 150px;
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 625px);
-  }
-
-  @media (max-height: 860px) {
-    .hero-campo {
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 571px);
-    }
-  }
-
-  .hero-rotulo {
-    display: flex;
-  }
-}
-
-/* ===============================================================
-   MARCA
-   =============================================================== */
-
-/* Em repouso, uma onda percorre as 9 vertebras a cada 7s.
-   No hover do link, a onda para e todas crescem em cascata. */
-.marca-vertebra {
-  transform: none;
+/* Anel que emana do ponto. Base invisivel de proposito: o anel parado por
+   baixo e que desenha o ponto, e este so acrescenta o pulso. */
+.leitura-emana {
   transform-box: fill-box;
   transform-origin: center;
-  animation: marca-onda 7s var(--ease-ciclo) infinite;
-  animation-delay: calc(var(--v, 0) * 90ms);
-  transition: transform var(--dur-lenta) var(--ease-saida);
-  transition-delay: calc(var(--v, 0) * 26ms);
-}
-
-@keyframes marca-onda {
-  0%,
-  24%,
-  100% {
-    transform: translateX(0) scale(1);
-  }
-  9% {
-    transform: translateX(7px) scale(1.18);
-  }
-}
-
-a:hover .marca-vertebra,
-a:focus-visible .marca-vertebra {
-  animation-play-state: paused;
-  transform: scale(1.3);
-}
-
-/* ===============================================================
-   TIPOGRAFIA, ENTRADA E ESTADOS
-   =============================================================== */
-
-.marca-grifo {
-  background-color: transparent;
-  background-image: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--color-accent-light) 30%, transparent) 0 36%,
-    transparent 36%
-  );
-  box-shadow: inset 0 -2px 0 0 var(--color-accent-light);
-  color: inherit;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-
-.marca-grifo-claro {
-  background-image: linear-gradient(
-    to top,
-    color-mix(in srgb, var(--color-accent) 10%, transparent) 0 36%,
-    transparent 36%
-  );
-  box-shadow: inset 0 -2px 0 0 color-mix(in srgb, var(--color-accent) 40%, transparent);
-}
-
-/* Entrada por scroll.
-   O estado inicial vive dentro de `scripting: enabled` de proposito. Estes
-   elementos nasciam com opacity:0 e so recebiam .is-in via IntersectionObserver;
-   sem JS — ou antes de ele executar — a pagina inteira ficava invisivel, o que
-   atinge acessibilidade e rastreamento ao mesmo tempo. Fora dessa media query o
-   conteudo simplesmente aparece, que e a degradacao correta. */
-@media (scripting: enabled) {
-  .reveal {
-    opacity: 0;
-    transform: translateY(14px);
-    transition:
-      opacity 0.75s var(--ease-saida),
-      transform 0.75s var(--ease-saida);
-  }
-
-  .reveal.is-in {
-    opacity: 1;
-    transform: none;
-  }
-
-  /* Titulo: revela por cortina de baixo para cima, no idioma da regua. */
-  .reveal-cortina {
-    opacity: 0;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(8px);
-    transition:
-      opacity 0.5s var(--ease-saida),
-      clip-path 0.9s var(--ease-saida),
-      transform 0.9s var(--ease-saida);
-  }
-
-  .reveal-cortina.is-in {
-    opacity: 1;
-    clip-path: inset(0 0 -12% 0);
-    transform: none;
-  }
-}
-
-/* Sublinhado que cresce da esquerda. Link de texto e item de menu. */
-.sublinha {
-  background-image: linear-gradient(currentColor, currentColor);
-  background-repeat: no-repeat;
-  background-position: 0 calc(100% - 2px);
-  background-size: 0% 1px;
-  transition: background-size var(--dur-media) var(--ease-saida);
-}
-
-.sublinha:hover,
-.sublinha:focus-visible,
-.grupo-aberto > .sublinha {
-  background-size: 100% 1px;
-}
-
-/* ===============================================================
-   FIO DO HEADER — um pulso de luz verde percorre a linha da base,
-   em loop. Decorativo: em movimento reduzido nao aparece.
-   =============================================================== */
-
-.fio-pulso {
   opacity: 0;
-  transform: translateX(-30%);
-  animation: fio-pulso 14s linear infinite;
+  animation: leitura-emana 5.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
 }
 
-@keyframes fio-pulso {
+@keyframes leitura-emana {
   0% {
-    opacity: 0;
-    transform: translateX(-30%);
+    opacity: 0.7;
+    transform: scale(0.95);
   }
-  4% {
-    opacity: 1;
-  }
-  26% {
-    opacity: 1;
-  }
-  30%,
   100% {
     opacity: 0;
-    transform: translateX(430%);
+    transform: scale(2.4);
   }
-}
-
-/* ===============================================================
-   BOTAO — preenchimento que cresce do canto inferior esquerdo.
-   O ::before e' um circulo que escala; o conteudo fica acima dele.
-   =============================================================== */
-
-/* Em @layer components de proposito: fora de layer esta regra venceria os
-   utilitarios do Tailwind, e o `position: relative` daqui sobrescrevia o
-   `fixed` do botao flutuante, que nascia no fluxo no fim do documento. */
-@layer components {
-  .btn-fill {
-    position: relative;
-    z-index: 0;
-    overflow: hidden;
-  }
-}
-
-.btn-fill::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: -10%;
-  bottom: -10%;
-  width: 150%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--fill, var(--color-accent));
-  transform: translate(-40%, 55%) scale(0);
-  transition: transform var(--dur-lenta) var(--ease-saida);
-}
-
-.btn-fill:hover::before,
-.btn-fill:focus-visible::before {
-  transform: translate(-18%, 26%) scale(1.75);
 }
 
 /* ===============================================================
