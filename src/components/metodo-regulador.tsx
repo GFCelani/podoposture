@@ -1,5 +1,6 @@
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
+import { PlacaDeLeitura } from "./placa-de-leitura";
 import { Reveal } from "./reveal";
 
 /**
@@ -26,17 +27,28 @@ const BOTAO = "Conheça o Método RegulaDOR";
  * Secao 06 da home, entre a abordagem (05) e as condicoes tratadas (07).
  *
  * Banda escura, como a 04: e' a peca propria da clinica, e o valor de fundo
- * e' a alavanca mais barata de presenca. Para nao repetir a composicao da 04
- * (texto a esquerda, figura a direita), aqui a figura mora SOB o titulo, na
- * coluna esquerda, e o corpo inteiro vai para a direita.
+ * e' a alavanca mais barata de presenca.
  *
- * A figura e' o que o texto descreve: varios fatores (seis fios que entram
- * pela esquerda) convergem numa leitura (o ponto com sonar) da qual sai um
- * caminho so (o traco que segue para a direita). Nao tem rotulo de proposito:
- * qualquer palavra ali seria copy que a cliente nao escreveu. O movimento e'
- * um pulso que percorre cada fio ate o ponto, em fases diferentes; com
- * movimento reduzido os fios ficam inteiros e parados, porque o repouso vive
- * no traco base, nao na animacao.
+ * A secao tem tres faixas horizontais, e elas repetem de proposito a
+ * estrutura da propria placa:
+ *
+ *   1. cabecalho    numeral e titulo a esquerda, a frase de abertura a
+ *                   direita, alinhadas pela base. E' a unica linha da secao
+ *                   com dois pesos tipograficos diferentes lado a lado.
+ *   2. a placa      largura inteira da medida, sob um fio que atravessa a
+ *                   secao. Ela e' o centro, e ocupa o lugar de um centro.
+ *   3. corpo        o paragrafo do que a leitura organiza (esquerda) e o do
+ *                   que sai dela mais o botao (direita).
+ *
+ * A faixa 3 nao e' um paragrafo partido ao meio: sao os dois paragrafos que a
+ * cliente escreveu, e a divisao cai onde o texto ja virava, entre "organiza a
+ * avaliacao" e "a partir dessa leitura". As duas colunas fecham com alturas
+ * proximas, entao a secao nao termina com vao morto de um lado so.
+ *
+ * A versao anterior desta secao punha titulo e figura numa coluna e o texto
+ * na outra; a figura sobrava num vao e as duas colunas terminavam em alturas
+ * diferentes. Vao vazio nao se redistribui, se elimina: aqui cada faixa tem a
+ * altura do proprio conteudo e nenhuma precisa esperar pela vizinha.
  */
 export function MetodoRegulador() {
   return (
@@ -48,7 +60,8 @@ export function MetodoRegulador() {
       <PageGrid tone="deep" />
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
-        <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
+        {/* 1. cabecalho */}
+        <div className="lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-6">
           <div className="lg:col-span-5">
             <Reveal variante="cortina">
               <SectionMark n="06" tone="deep" />
@@ -61,38 +74,46 @@ export function MetodoRegulador() {
                 <span className="align-super text-[0.5em] tracking-normal">®</span>
               </h2>
             </Reveal>
-
-            <Reveal delay={200}>
-              <Leitura className="mt-12 w-full max-w-[440px] lg:mt-16" />
-            </Reveal>
           </div>
 
-          <div className="mt-14 lg:col-span-6 lg:col-start-7 lg:mt-0">
+          <div className="mt-10 lg:col-span-6 lg:col-start-7 lg:mt-0">
             <Reveal delay={120}>
               <p className="max-w-[26ch] font-display text-[clamp(1.5rem,2.6vw,2.125rem)] leading-[1.3] font-medium text-balance text-paper">
                 {ABERTURA}
               </p>
             </Reveal>
+          </div>
+        </div>
 
-            <Reveal delay={240}>
-              <div
-                aria-hidden="true"
-                className="mt-10 h-px w-full max-w-[420px] bg-paper/[0.14]"
-              />
-              <div className="mt-10 max-w-[58ch] space-y-6">
-                {CORPO.map((paragrafo) => (
-                  <p
-                    key={paragrafo}
-                    className="text-[1.0625rem] leading-[1.75] text-on-deep-muted"
-                  >
-                    {paragrafo}
-                  </p>
-                ))}
-              </div>
+        {/* 2. a placa, sob o fio que atravessa a secao */}
+        <Reveal delay={200}>
+          <div
+            aria-hidden="true"
+            className="mt-12 h-px w-full bg-paper/[0.14] lg:mt-16"
+          />
+        </Reveal>
+        <Reveal delay={260}>
+          <div className="mt-10 lg:mt-12">
+            <PlacaDeLeitura />
+          </div>
+        </Reveal>
+
+        {/* 3. corpo: o que entra na leitura, e o que sai dela */}
+        <div className="mt-14 lg:mt-16 lg:grid lg:grid-cols-12 lg:gap-x-6">
+          <div className="lg:col-span-6">
+            <Reveal delay={120}>
+              <p className="text-[1.0625rem] leading-[1.75] text-on-deep-muted">
+                {CORPO[0]}
+              </p>
             </Reveal>
+          </div>
 
-            <Reveal delay={360}>
-              <div className="mt-11">
+          <div className="mt-10 lg:col-span-5 lg:col-start-8 lg:mt-0">
+            <Reveal delay={200}>
+              <p className="text-[1.0625rem] leading-[1.75] text-on-deep-muted">
+                {CORPO[1]}
+              </p>
+              <div className="mt-9">
                 <ButtonLink href={DESTINO_DO_METODO} variant="secondary-deep">
                   {BOTAO}
                 </ButtonLink>
@@ -102,105 +123,5 @@ export function MetodoRegulador() {
         </div>
       </div>
     </section>
-  );
-}
-
-/**
- * Seis fios convergindo num ponto, e um traco saindo dele.
- *
- * Tudo em <path>, inclusive o traco reto: pathLength so vale em <path> no
- * Chrome, e e' com pathLength="100" que o pulso (.leitura-pulso) anda em
- * porcentagem do fio, com a mesma duracao em fios de comprimentos
- * diferentes. Cada fio tem uma fase, entao os pulsos chegam ao ponto em
- * momentos diferentes: e' a leitura juntando fatores, nao um flash.
- */
-const NO = { x: 252, y: 80 } as const;
-const ORIGENS = [14, 40, 66, 94, 120, 146] as const;
-
-function Leitura({ className = "" }: { className?: string }) {
-  return (
-    <div className={`relative ${className}`}>
-      <svg
-        viewBox="0 0 420 160"
-        aria-hidden="true"
-        className="block h-auto w-full overflow-visible"
-      >
-        {/* fios em repouso, inteiros */}
-        {ORIGENS.map((y) => (
-          <path
-            key={y}
-            d={`M0 ${y} C 112 ${y}, 140 ${NO.y}, ${NO.x} ${NO.y}`}
-            fill="none"
-            stroke="var(--color-paper)"
-            strokeOpacity="0.28"
-            strokeWidth="1.2"
-          />
-        ))}
-        <path
-          d={`M${NO.x} ${NO.y} H 404`}
-          fill="none"
-          stroke="var(--color-accent-light)"
-          strokeOpacity="0.55"
-          strokeWidth="1.6"
-        />
-
-        {/* pulsos: um segmento de 12% que percorre cada fio ate o ponto */}
-        {ORIGENS.map((y, i) => (
-          <path
-            key={`p${y}`}
-            d={`M0 ${y} C 112 ${y}, 140 ${NO.y}, ${NO.x} ${NO.y}`}
-            pathLength="100"
-            fill="none"
-            stroke="var(--color-accent-light)"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            className="leitura-pulso"
-            style={{
-              ["--dur" as string]: `${6.5 + (i % 3) * 0.9}s`,
-              ["--fase" as string]: `${-i * 1.15}s`,
-            }}
-          />
-        ))}
-        <path
-          d={`M${NO.x} ${NO.y} H 404`}
-          pathLength="100"
-          fill="none"
-          stroke="var(--color-paper)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          className="leitura-pulso"
-          style={{
-            ["--dur" as string]: "4.2s",
-            ["--fase" as string]: "-1.4s",
-          }}
-        />
-
-        {/* origens e destino */}
-        {ORIGENS.map((y) => (
-          <circle
-            key={`o${y}`}
-            cx="0"
-            cy={y}
-            r="2.6"
-            fill="var(--color-paper)"
-            fillOpacity="0.7"
-          />
-        ))}
-        <circle cx="410" cy={NO.y} r="4" fill="var(--color-accent-light)" />
-      </svg>
-
-      {/* o ponto da leitura, com o sonar das articulacoes do hero */}
-      <span
-        aria-hidden="true"
-        className="absolute block h-3 w-3 -translate-x-1/2 -translate-y-1/2"
-        style={{ left: `${(NO.x / 420) * 100}%`, top: `${(NO.y / 160) * 100}%` }}
-      >
-        <span
-          className="sonar-onda absolute inset-0 rounded-full border border-accent-light"
-          style={{ ["--escala" as string]: 4, ["--dur" as string]: "5s" }}
-        />
-        <span className="sonar-ponto absolute inset-0 rounded-full bg-accent-light" />
-      </span>
-    </div>
   );
 }

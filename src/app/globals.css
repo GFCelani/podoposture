@@ -311,22 +311,129 @@ body {
   }
 }
 
-/* Pulso que percorre um fio (secao Metodo RegulaDOR). O path leva
-   pathLength="100", entao o tracejado e' em porcentagem: 12 de traco, 88 de
-   vao, e o offset anda de 100 a 0, o que move o segmento no sentido do
-   desenho. O fio inteiro e' outro path, por baixo: no movimento reduzido a
-   animacao para no primeiro quadro e o pulso vira um traco curto parado
-   sobre um fio que ja esta inteiro. */
-.leitura-pulso {
-  stroke-dasharray: 12 88;
-  stroke-dashoffset: 100;
-  animation: leitura-pulso var(--dur, 7s) linear infinite;
+/* ===============================================================
+   PLACA DE LEITURA — a figura da secao 06 (Metodo RegulaDOR).
+   Cinco movimentos, todos em transform e opacity, nada mais. O
+   repouso de cada um esta no ESTILO BASE da classe, nunca no
+   keyframe 100%: com movimento reduzido as animacoes colapsam para
+   a base, e a placa fica parada, inteira e legivel.
+   =============================================================== */
+
+/* O sinal de um canal corre exatamente um azulejo da propria onda, e
+   o azulejo e' periodico: o salto do fim do laco cai sobre uma copia
+   identica e nao se ve. Cada canal traz o seu --dur, entao os seis
+   correm em velocidades diferentes, como sinais que nao sao o mesmo. */
+.placa-corre {
+  animation: placa-corre var(--dur, 12s) linear infinite;
+}
+
+@keyframes placa-corre {
+  to {
+    transform: translateX(var(--passo));
+  }
+}
+
+/* A leitura caminha pelos canais, um por vez, na ordem. Base opaca:
+   parada, os seis aparecem lidos. */
+.placa-passo {
+  opacity: 1;
+  animation: placa-passo var(--ciclo, 8.4s) ease-in-out infinite;
   animation-delay: var(--fase, 0s);
 }
 
-@keyframes leitura-pulso {
+@keyframes placa-passo {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  5% {
+    opacity: 1;
+  }
+  16% {
+    opacity: 0.42;
+  }
+}
+
+/* O no' do canal cresce no instante em que ele e' lido. */
+.placa-no {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: placa-no var(--ciclo, 8.4s) ease-in-out infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes placa-no {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  5% {
+    transform: scale(1.9);
+  }
+  16% {
+    transform: scale(1);
+  }
+}
+
+.placa-giro {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: placa-giro var(--dur, 22s) linear infinite;
+}
+
+@keyframes placa-giro {
   to {
-    stroke-dashoffset: -100;
+    transform: rotate(360deg);
+  }
+}
+
+/* Anel que emana do ponto de leitura. Base invisivel de proposito: os
+   aneis parados por baixo e que desenham o ponto, e este so acrescenta
+   o pulso. Sem ele, nada falta. */
+.placa-emana {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: placa-emana var(--dur, 5.6s) cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+@keyframes placa-emana {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* O pulso da conduta sai da leitura depois que os seis canais foram
+   lidos e vai ate o alvo. Parado, fica na saida da coluna, como a
+   marca de onde a linha comeca. */
+.placa-saida {
+  opacity: 1;
+  animation: placa-saida var(--ciclo, 8.4s) linear infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes placa-saida {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  4% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateX(var(--curso));
+  }
+  38%,
+  100% {
+    opacity: 0;
+    transform: translateX(var(--curso));
   }
 }
 
