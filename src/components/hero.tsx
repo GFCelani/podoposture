@@ -137,6 +137,17 @@ export function Hero() {
             longa, deixa de sair 119,5px alem dela para sair 90,9.
             A linha mais larga continua sendo "Integracao terapeutica" com os
             mesmos 584,6px, entao --hero-texto-dir nao precisou ser remedido.
+
+            Os numeros acima sao do corte de TEXTO da Newsreader, que era o
+            que o navegador recebia ate 2026-09-08, quando o eixo optico
+            entrou na configuracao da fonte (layout.tsx). No corte de display
+            o titulo sai mais largo: em 64px as quatro linhas passam a medir
+            615,3 / 517,7 / 413,3 / 478,7. A quebra escrita de novo NAO
+            precisou mudar: reenumeradas as 84 particoes com as metricas
+            novas, esta segue em primeiro lugar, com 17,7% contra 19,9% da
+            segunda colocada. Quem precisou de remedicao foi o
+            --hero-texto-dir, e so nas duas faixas xl; o porque esta no
+            comentario do bloco HERO em globals.css.
           */}
           <h1
             className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"

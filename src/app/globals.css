@@ -410,6 +410,28 @@ body {
 /* ===============================================================
    HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
    Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
+   ===============================================================
+
+   --hero-texto-dir e' MEDIDO, nao escolhido: e' a goteira esquerda mais a
+   maior largura de conteudo da coluna de texto naquela faixa. Quem manda
+   muda por faixa; em xl e' a primeira linha do titulo, em lg e' a curva de
+   marcha, e em xl baixo os dois empatam. Se o corpo do titulo, a quebra
+   escrita ou as metricas da Newsreader mudarem, remedir os quatro valores
+   antes de confiar neles.
+
+   Remedido em 2026-09-08, quando o eixo optico entrou no next/font (ver
+   layout.tsx). A largura da Newsreader nao anda em linha reta com o eixo:
+   medida por 100px de corpo, ela e' minima em opsz 20, sobe pouco ate ~40
+   (onde empata com o corte de texto que vinha sendo servido) e passa a
+   crescer dali para cima. Nos corpos do titulo isso da +0,6% em 44px,
+   +2,5% em 52, +3,4% em 56 e +5,2% em 64. Os dois valores de xl subiram,
+   porque neles quem manda e' o titulo: 625 -> 656 e 571 -> 583. Os dois de
+   lg ficaram, porque neles quem manda e' a curva de marcha, que nao depende
+   da fonte; em lg alto o titulo passou a encostar na borda (569,0 contra
+   569,7 da curva) em vez de sobrar 17px.
+   O preco esta em 1280 de largura, a unica faixa onde a altura das figuras
+   sai da largura do campo e nao da janela: elas descem de 609 para 562px.
+   Mais estreito seria o titulo entrar no campo das figuras.
    =============================================================== */
 
 .hero-campo {
@@ -506,12 +528,12 @@ body {
     --hero-respiro: 40px;
     --hero-vao: 40px;
     --hero-reserva: 150px;
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 625px);
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 656px);
   }
 
   @media (max-height: 860px) {
     .hero-campo {
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 571px);
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 583px);
     }
   }
 
