@@ -25,10 +25,10 @@ function naoEncontrado() {
 }
 
 /**
- * Serve a imagem de um post.
+ * Serve uma imagem enviada pelo painel, em WebP ou JPEG.
  *
- * Publica de proposito: e uma foto dentro de um artigo do blog, tem de abrir
- * para qualquer visitante.
+ * Publica de proposito: e uma foto dentro de um artigo do blog ou da pagina
+ * inicial, tem de abrir para qualquer visitante.
  */
 export async function GET(
   _req: Request,
@@ -43,21 +43,27 @@ export async function GET(
   const imagem = await buscarImagem(nome.resumo);
   if (!imagem) return naoEncontrado();
 
-  // As medidas do endereco tem de bater com as guardadas. Sem esta conferencia,
-  // o mesmo arquivo respondia em qualquer `-LxA.webp`: eram 10^8 chaves de
-  // cache para um objeto so, e — pior — a regra de imagem do Markdown escreve
-  // width/height a partir do nome, entao um par falso desfaria exatamente o
-  // CLS zero que este caminho existe para proteger.
-  if (nome.largura !== imagem.largura || nome.altura !== imagem.altura) {
+  // As medidas e o formato do endereco tem de bater com os guardados. Sem esta
+  // conferencia, o mesmo arquivo respondia em qualquer `-LxA.webp`: eram 10^8
+  // chaves de cache para um objeto so, e — pior — a regra de imagem do
+  // Markdown escreve width/height a partir do nome, entao um par falso desfaria
+  // exatamente o CLS zero que este caminho existe para proteger. Um JPEG pedido
+  // como `.webp` e o mesmo caso: dois enderecos para um objeto so.
+  if (
+    nome.largura !== imagem.largura ||
+    nome.altura !== imagem.altura ||
+    nome.tipo !== imagem.tipo
+  ) {
     return naoEncontrado();
   }
 
   // Content-Length nao e escrito a mao: o runtime calcula a partir do corpo.
   // Escrever a partir de outra coluna do banco arriscava resposta truncada se
-  // as duas divergissem algum dia.
+  // as duas divergissem algum dia. O Content-Type sai da coluna gravada quando
+  // o servidor reconheceu os bytes, e nao da extensao pedida.
   return new Response(new Uint8Array(imagem.bytes), {
     headers: {
-      "Content-Type": "image/webp",
+      "Content-Type": imagem.tipo,
       "Cache-Control": CACHE_ETERNO,
       "X-Content-Type-Options": "nosniff",
     },

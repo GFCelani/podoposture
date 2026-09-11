@@ -127,15 +127,34 @@ describe("nome publico do arquivo", () => {
   const resumo = "a".repeat(64);
 
   it("monta e desmonta sem perder nada", () => {
-    const nome = nomeDoArquivo(resumo, { largura: 1200, altura: 800 });
+    const nome = nomeDoArquivo(resumo, { largura: 1200, altura: 800 }, "image/webp");
     expect(nome).toBe(`${resumo}-1200x800.webp`);
-    expect(lerNomeDoArquivo(nome)).toEqual({ resumo, largura: 1200, altura: 800 });
+    expect(lerNomeDoArquivo(nome)).toEqual({
+      resumo,
+      largura: 1200,
+      altura: 800,
+      tipo: "image/webp",
+    });
+  });
+
+  it("JPEG ganha .jpg e volta como image/jpeg — e o que o Safari envia", () => {
+    const nome = nomeDoArquivo(resumo, { largura: 1600, altura: 1067 }, "image/jpeg");
+    expect(nome).toBe(`${resumo}-1600x1067.jpg`);
+    expect(lerNomeDoArquivo(nome)).toEqual({
+      resumo,
+      largura: 1600,
+      altura: 1067,
+      tipo: "image/jpeg",
+    });
   });
 
   it.each([
     "arquivo.webp",
     `${resumo}.webp`,
     `${resumo}-1200x800.png`,
+    `${resumo}-1200x800.jpeg`,
+    `${resumo}-1200x800.JPG`,
+    `${resumo}-1200x800.jpg.webp`,
     `${"z".repeat(64)}-1200x800.webp`, // 'z' nao e hexadecimal
     `${resumo}-0x800.webp`,
     `${resumo}-1200x99999.webp`,

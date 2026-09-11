@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 
+import type { TipoDeImagem } from "./imagem-webp";
 import {
   gerarSlug,
   juntarSlug,
@@ -52,7 +53,26 @@ export function bancoConfigurado(): boolean {
 
 let conexao: ReturnType<typeof postgres> | null = null;
 
-function conectar() {
+/**
+ * A conexao do site com o Postgres — uma so, compartilhada por todo modulo de
+ * banco.
+ *
+ * Exportada para que modulos novos (`conteudo-db.ts`, `numeros-db.ts`) usem a
+ * mesma conexao sem editar este arquivo. Regras para quem usa:
+ *
+ * - Nunca abrir outro `postgres(...)`. O limite de uma conexao por instancia e
+ *   o que impede o site de esgotar o banco; um segundo cliente dobraria isso
+ *   sem ninguem perceber.
+ * - Conferir `bancoConfigurado()` antes. Sem `DATABASE_URL` esta funcao LANCA,
+ *   e uma leitura publica sem essa conferencia derrubaria pagina e build.
+ * - Criar as proprias tabelas com `CREATE TABLE IF NOT EXISTS`, numa funcao
+ *   `garantir...` do proprio modulo, com a mesma trava de "uma vez por
+ *   instancia" que `garantirTabelas` usa aqui. Tabela nova nao entra neste
+ *   arquivo: cada modulo e dono do que cria.
+ * - Guardar o retorno numa variavel chamada `sql` e consultar so com ela como
+ *   tag de template. O teste de rotas protegidas procura exatamente essa tag.
+ */
+export function bancoDoPainel() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) throw new Error("DATABASE_URL ausente");
   conexao ??= postgres(url, {
@@ -72,13 +92,13 @@ let tabelasProntas = false;
 /**
  * Cria o que faltar. Idempotente, roda uma vez por instancia.
  *
- * Nao ha arquivo de migracao de proposito: sao quatro tabelas que nascem
- * prontas e nunca mudaram de forma. Um sistema de migracao aqui seria
- * cerimonia para um schema que cabe na tela.
+ * Nao ha arquivo de migracao de proposito: sao quatro tabelas que cabem na
+ * tela, e a unica mudanca de forma ate hoje (o formato da imagem) coube num
+ * ALTER idempotente. Um sistema de migracao aqui seria cerimonia.
  */
 async function garantirTabelas() {
   if (tabelasProntas) return;
-  const sql = conectar();
+  const sql = bancoDoPainel();
 
   await sql`
     CREATE TABLE IF NOT EXISTS posts (
@@ -108,6 +128,11 @@ async function garantirTabelas() {
       tamanho  INTEGER NOT NULL,
       criada_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
+  // O formato entrou depois, quando o Safari passou a mandar JPEG. Fica num
+  // ALTER, e nao no CREATE acima, para banco que ja tinha a tabela ganhar a
+  // coluna do mesmo jeito que banco novo; toda imagem antiga, que so podia ser
+  // WebP, fica certa pelo valor padrao.
+  await sql`ALTER TABLE imagens ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'image/webp'`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS painel_auditoria (
@@ -166,7 +191,7 @@ function paraPost(l: LinhaPost): PostDoPainel {
 export async function listarTodos(): Promise<PostDoPainel[]> {
   if (!bancoConfigurado()) return [];
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const linhas = await sql<LinhaPost[]>`
     SELECT * FROM posts ORDER BY COALESCE(publicado_em, criado_em) DESC`;
   return linhas.map(paraPost);
@@ -176,7 +201,7 @@ export async function listarTodos(): Promise<PostDoPainel[]> {
 export async function listarPublicados(): Promise<PostDoPainel[]> {
   if (!bancoConfigurado()) return [];
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const linhas = await sql<LinhaPost[]>`
     SELECT * FROM posts WHERE publicado = TRUE ORDER BY publicado_em DESC`;
   return linhas.map(paraPost);
@@ -185,7 +210,7 @@ export async function listarPublicados(): Promise<PostDoPainel[]> {
 export async function buscarPorSlug(slug: string): Promise<PostDoPainel | null> {
   if (!bancoConfigurado()) return null;
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const [linha] = await sql<LinhaPost[]>`
     SELECT * FROM posts WHERE slug = ${slug} AND publicado = TRUE LIMIT 1`;
   return linha ? paraPost(linha) : null;
@@ -194,7 +219,7 @@ export async function buscarPorSlug(slug: string): Promise<PostDoPainel | null> 
 export async function buscarPorId(id: string): Promise<PostDoPainel | null> {
   if (!bancoConfigurado()) return null;
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const [linha] = await sql<LinhaPost[]>`SELECT * FROM posts WHERE id = ${id} LIMIT 1`;
   return linha ? paraPost(linha) : null;
 }
@@ -207,7 +232,7 @@ export async function buscarPorId(id: string): Promise<PostDoPainel | null> {
  * titulo.
  */
 async function slugLivre(base: string, idAtual?: string): Promise<string> {
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const raiz = base || "post";
   for (let n = 1; n <= 49; n += 1) {
     const tentativa = juntarSlug(raiz, n === 1 ? "" : `-${n}`);
@@ -221,7 +246,7 @@ async function slugLivre(base: string, idAtual?: string): Promise<string> {
 
 export async function criarPost(dados: DadosDoPost): Promise<PostDoPainel> {
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const base = gerarSlug(dados.titulo);
 
   // Duas pessoas salvando ao mesmo tempo podem escolher o mesmo endereco entre
@@ -249,7 +274,7 @@ export async function atualizarPost(
   dados: DadosDoPost,
 ): Promise<PostDoPainel | null> {
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const atual = await buscarPorId(id);
   if (!atual) return null;
 
@@ -271,7 +296,7 @@ export async function atualizarPost(
 
 export async function apagarPost(id: string): Promise<boolean> {
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const linhas = await sql`DELETE FROM posts WHERE id = ${id} RETURNING id`;
   return linhas.length > 0;
 }
@@ -283,23 +308,24 @@ export async function guardarImagem(
   bytes: Uint8Array,
   largura: number,
   altura: number,
+  tipo: TipoDeImagem,
 ): Promise<void> {
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   await sql`
-    INSERT INTO imagens (id, bytes, largura, altura, tamanho)
-    VALUES (${id}, ${Buffer.from(bytes)}, ${largura}, ${altura}, ${bytes.byteLength})
+    INSERT INTO imagens (id, bytes, largura, altura, tamanho, tipo)
+    VALUES (${id}, ${Buffer.from(bytes)}, ${largura}, ${altura}, ${bytes.byteLength}, ${tipo})
     ON CONFLICT (id) DO NOTHING`;
 }
 
-export async function buscarImagem(
-  id: string,
-): Promise<{ bytes: Buffer; largura: number; altura: number } | null> {
+type ImagemGuardada = { bytes: Buffer; largura: number; altura: number; tipo: TipoDeImagem };
+
+export async function buscarImagem(id: string): Promise<ImagemGuardada | null> {
   if (!bancoConfigurado()) return null;
   await garantirTabelas();
-  const sql = conectar();
-  const [linha] = await sql<{ bytes: Buffer; largura: number; altura: number }[]>`
-    SELECT bytes, largura, altura FROM imagens WHERE id = ${id} LIMIT 1`;
+  const sql = bancoDoPainel();
+  const [linha] = await sql<ImagemGuardada[]>`
+    SELECT bytes, largura, altura, tipo FROM imagens WHERE id = ${id} LIMIT 1`;
   return linha ?? null;
 }
 
@@ -326,7 +352,7 @@ export async function registrarAuditoria(
   if (!bancoConfigurado()) return;
   try {
     await garantirTabelas();
-    const sql = conectar();
+    const sql = bancoDoPainel();
     await sql`
       INSERT INTO painel_auditoria (acao, detalhe, origem)
       VALUES (${acao}, ${detalhe}, ${origem ? origem.slice(0, MAX_ORIGEM) : null})`;
@@ -349,7 +375,7 @@ export async function registrarAuditoria(
 export async function listarAuditoria(limite = 40): Promise<LinhaAuditoria[]> {
   if (!bancoConfigurado()) return [];
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const linhas = await sql<{ acao: string; detalhe: string | null; origem: string | null; em: Date }[]>`
     SELECT acao, detalhe, origem, em FROM painel_auditoria ORDER BY id DESC LIMIT ${limite}`;
   return linhas.map((l) => ({ ...l, em: l.em.toISOString() }));
@@ -370,7 +396,7 @@ export async function contarERegistrarTentativa(
   janelaMs: number,
 ): Promise<number> {
   await garantirTabelas();
-  const sql = conectar();
+  const sql = bancoDoPainel();
   const desde = new Date(Date.now() - janelaMs);
 
   await sql`INSERT INTO painel_tentativas (chave) VALUES (${chave})`;
@@ -388,7 +414,7 @@ export async function contarERegistrarTentativa(
 export async function limparTentativas(chave: string): Promise<void> {
   try {
     await garantirTabelas();
-    const sql = conectar();
+    const sql = bancoDoPainel();
     await sql`DELETE FROM painel_tentativas WHERE chave = ${chave}`;
   } catch {
     // limpar e cortesia; falhar aqui nao pode impedir o login que ja deu certo

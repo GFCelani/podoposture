@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 import { lerBytesLimitados } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
-import { dimensoesDoWebp, nomeDoArquivo } from "@/lib/imagem-webp";
+import { dimensoesDoJpeg } from "@/lib/imagem-jpeg";
+import { dimensoesDoWebp, nomeDoArquivo, type Dimensoes, type TipoDeImagem } from "@/lib/imagem-webp";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { bancoConfigurado, guardarImagem, registrarAuditoria } from "@/lib/painel-db";
 
@@ -12,21 +13,30 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Recebe a imagem do post.
+ * Recebe uma imagem enviada pelo painel (capa, foto no texto, foto da home).
  *
- * O navegador ja manda WebP: o painel decodifica, reduz para no maximo 1600px
- * de largura e converte antes de enviar. Isso tira do servidor a necessidade de
- * processar imagem — nada de `sharp` numa funcao serverless — e faz o arquivo
- * que trafega ser o mesmo que sera servido.
+ * O navegador ja manda a imagem pronta: o painel decodifica, reduz a largura e
+ * converte para WebP antes de enviar (`src/lib/preparar-imagem.ts`). Onde o
+ * navegador nao sabe gerar WebP — o Safari —, ele manda JPEG. Isso tira do
+ * servidor a necessidade de processar imagem — nada de `sharp` numa funcao
+ * serverless — e faz o arquivo que trafega ser o mesmo que sera servido.
  *
- * O servidor nao acredita em nada disso. Ele confere os bytes magicos e le a
- * largura e a altura do proprio cabecalho do arquivo, porque essas medidas
- * viram parte do endereco publico, e endereco publico nao pode sair de um campo
- * que o cliente preenche.
+ * O servidor nao acredita em nada disso. Ele ignora o `Content-Type` do pedido,
+ * reconhece o formato pelos proprios bytes e le a largura e a altura do
+ * cabecalho do arquivo, porque formato e medidas viram parte do endereco
+ * publico, e endereco publico nao pode sair de um campo que o cliente preenche.
  */
 
-/** 1600px de WebP com qualidade 0,82 fica bem abaixo disso. */
+/** 1600px de WebP a 0,82 ou de JPEG a 0,85 fica bem abaixo disso. */
 const TAMANHO_MAXIMO = 3 * 1024 * 1024;
+
+function reconhecer(bytes: Uint8Array): (Dimensoes & { tipo: TipoDeImagem }) | null {
+  const webp = dimensoesDoWebp(bytes);
+  if (webp) return { ...webp, tipo: "image/webp" };
+  const jpeg = dimensoesDoJpeg(bytes);
+  if (jpeg) return { ...jpeg, tipo: "image/jpeg" };
+  return null;
+}
 
 export async function POST(req: Request) {
   const auth = await exigirSessao();
@@ -46,7 +56,7 @@ export async function POST(req: Request) {
       : NextResponse.json({ erro: "O envio foi interrompido." }, { status: 400 });
   }
 
-  const medida = dimensoesDoWebp(leitura.bytes);
+  const medida = reconhecer(leitura.bytes);
   if (!medida) {
     return NextResponse.json(
       { erro: "Arquivo não reconhecido. Envie uma imagem pelo próprio painel." },
@@ -55,10 +65,10 @@ export async function POST(req: Request) {
   }
 
   const resumo = createHash("sha256").update(leitura.bytes).digest("hex");
-  const arquivo = nomeDoArquivo(resumo, medida);
+  const arquivo = nomeDoArquivo(resumo, medida, medida.tipo);
 
   try {
-    await guardarImagem(resumo, leitura.bytes, medida.largura, medida.altura);
+    await guardarImagem(resumo, leitura.bytes, medida.largura, medida.altura, medida.tipo);
     await registrarAuditoria("imagem-enviada", arquivo, ipDaRequisicao(await headers()));
     return NextResponse.json(
       { url: `/img/post/${arquivo}`, largura: medida.largura, altura: medida.altura },

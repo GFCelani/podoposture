@@ -12,6 +12,10 @@ import {
   type ErrosPost,
   type PostDoPainel,
 } from "@/lib/painel-tipos";
+import { ErroAoEnviarImagem, enviarImagem as enviarAoServidor } from "@/lib/preparar-imagem";
+
+/** Largura de coluna de texto do blog com folga para tela de alta densidade. */
+const LARGURA_MAXIMA_DA_IMAGEM = 1600;
 
 /**
  * Onde o texto e escrito.
@@ -176,47 +180,9 @@ export function EditorDePost({
     setEnviandoImagem(true);
     setAviso(null);
     try {
-      // Reduzir e converter no navegador tira do servidor a necessidade de
-      // processar imagem, e o arquivo que trafega ja e o que sera servido.
-      const bitmap = await createImageBitmap(arquivo);
-      const escala = Math.min(1, 1600 / bitmap.width);
-      const largura = Math.max(1, Math.round(bitmap.width * escala));
-      const altura = Math.max(1, Math.round(bitmap.height * escala));
-
-      const tela = document.createElement("canvas");
-      tela.width = largura;
-      tela.height = altura;
-      const ctx = tela.getContext("2d");
-      if (!ctx) throw new Error("sem contexto de desenho");
-      ctx.drawImage(bitmap, 0, 0, largura, altura);
-      bitmap.close?.();
-
-      const webp: Blob = await new Promise((resolver, recusar) =>
-        tela.toBlob(
-          (b) => (b ? resolver(b) : recusar(new Error("conversão falhou"))),
-          "image/webp",
-          0.82,
-        ),
-      );
-
-      const resposta = await fetch("/api/painel/imagens", {
-        method: "POST",
-        headers: { "Content-Type": "image/webp" },
-        body: webp,
-      });
-
-      if (resposta.status === 401 || resposta.status === 403) {
-        setAviso("Sua sessão expirou. O texto continua guardado neste navegador.");
-        aoPerderSessao();
-        return;
-      }
-      if (!resposta.ok) {
-        const corpo = await resposta.json().catch(() => ({}));
-        setAviso(corpo?.erro ?? "Não foi possível enviar a imagem.");
-        return;
-      }
-
-      const { url } = await resposta.json();
+      // Reduzir, converter (WebP, ou JPEG no Safari) e enviar mora em
+      // src/lib/preparar-imagem.ts, compartilhado com a aba da pagina inicial.
+      const { url } = await enviarAoServidor(arquivo, LARGURA_MAXIMA_DA_IMAGEM);
       if (comoCapa) {
         setCampos((c) => ({ ...c, capa: url }));
         setSucesso("Imagem de capa definida.");
@@ -224,8 +190,15 @@ export function EditorDePost({
         inserir(`\n\n![descreva a imagem](${url})\n\n`);
         setSucesso("Imagem inserida. Troque o texto entre colchetes pela descrição dela.");
       }
-    } catch {
-      setAviso("Não foi possível preparar essa imagem. Tente outra, em JPG ou PNG.");
+    } catch (erro) {
+      if (erro instanceof ErroAoEnviarImagem && erro.sessaoPerdida) {
+        setAviso("Sua sessão expirou. O texto continua guardado neste navegador.");
+        aoPerderSessao();
+        return;
+      }
+      setAviso(
+        erro instanceof ErroAoEnviarImagem ? erro.message : "Não foi possível enviar a imagem.",
+      );
     } finally {
       setEnviandoImagem(false);
     }

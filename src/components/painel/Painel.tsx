@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel } from "@/lib/painel-tipos";
 import { BrandMark } from "../brand-mark";
+import { AbaTextos } from "./AbaTextos";
 import { EditorDePost } from "./EditorDePost";
 import { Entrar } from "./Entrar";
+import { AbaInicio } from "./inicio/AbaInicio";
+import { Numeros } from "./Numeros";
 
 /**
  * O painel inteiro.
@@ -15,93 +18,122 @@ import { Entrar } from "./Entrar";
  * venha ela de onde vier. O componente nao guarda "esta autenticado" em lugar
  * nenhum — ele so reage ao que o servidor responde.
  *
- * Depois de entrar, a primeira tela e a LISTA do que ja existe, e nao um
- * formulario em branco: quem volta uma vez por mes quer primeiro ver o que ja
- * escreveu (ver design-system/JOURNEY.md, loop de retorno).
+ * Depois de entrar, a primeira aba e "Seus textos", a LISTA do que ja existe, e
+ * nao um formulario em branco: quem volta uma vez por mes quer primeiro ver o
+ * que ja escreveu (ver design-system/JOURNEY.md, loop de retorno).
+ *
+ * Contrato de toda aba — props `{ aoPerderSessao: () => void }`:
+ *
+ * 1. A aba carrega os proprios dados ao montar. O painel nao busca nada por ela.
+ * 2. 401 ou 403 de qualquer rota chama `aoPerderSessao()`, e nada mais.
+ * 3. 503 (banco ou fonte de dados nao configurados) vira aviso DENTRO da aba.
+ *    Nao e sessao perdida: mandar para a senha faria ela digitar a senha certa
+ *    e voltar para o mesmo aviso, sem entender o que aconteceu.
+ * 4. As props chegam estaveis (memorizadas aqui), entao podem ir no array de
+ *    dependencias de um efeito sem recarregar a aba a cada troca de aba.
+ * 5. Depois da primeira visita, a aba continua montada, so escondida, ate o
+ *    painel sair da tela de abas. Assim uma edicao em curso nao some quando ela
+ *    olha outra aba. Efeito que roda sozinho (intervalo, repeticao) precisa
+ *    contar com isso.
  */
+
+type Aba = "textos" | "inicio" | "numeros";
+
+const ABAS: readonly { id: Aba; rotulo: string }[] = [
+  { id: "textos", rotulo: "Seus textos" },
+  { id: "inicio", rotulo: "Página inicial" },
+  { id: "numeros", rotulo: "Números" },
+];
 
 type Tela =
   | { nome: "carregando" }
   | { nome: "entrar" }
-  | { nome: "lista" }
-  | { nome: "editor"; post: PostDoPainel | null };
+  | { nome: "painel"; aba: Aba }
+  | { nome: "editor"; post: PostDoPainel | null; abaDeOrigem: Aba };
+
+const SESSAO_TERMINOU = "Sua sessão terminou. Digite a senha de novo para continuar de onde parou.";
+const SESSAO_TERMINOU_NO_TEXTO =
+  "Sua sessão terminou. O que você estava escrevendo continua guardado neste navegador: entre de novo e abra o mesmo texto.";
 
 export function Painel() {
   const [tela, setTela] = useState<Tela>({ nome: "carregando" });
-  const [posts, setPosts] = useState<PostDoPainel[]>([]);
-  const [semBanco, setSemBanco] = useState(false);
+  const [visitadas, setVisitadas] = useState<Aba[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Para onde voltar depois da senha: quem perdeu a sessao olhando os numeros
+  // nao deveria reaparecer na lista de textos.
+  const abaDeVolta = useRef<Aba>("textos");
 
-  const carregar = useCallback(async (): Promise<void> => {
+  const abrirPainel = useCallback((aba: Aba) => {
+    setVisitadas([aba]);
+    setTela({ nome: "painel", aba });
+  }, []);
+
+  /**
+   * Pergunta ao servidor se a sessao vale. A sonda tem rota propria e nao toca
+   * no banco: sessao e banco sao perguntas diferentes, e cada aba responde a
+   * sua (ver contrato acima).
+   */
+  const conferirSessao = useCallback(async (): Promise<void> => {
     try {
-      const resposta = await fetch("/api/painel/posts", { cache: "no-store" });
-
-      if (resposta.status === 401 || resposta.status === 403) {
-        setTela({ nome: "entrar" });
+      const resposta = await fetch("/api/painel/sessao", { cache: "no-store" });
+      if (resposta.ok) {
+        setAviso(null);
+        abrirPainel(abaDeVolta.current);
         return;
       }
       if (resposta.status === 503) {
-        const corpo = await resposta.json().catch(() => ({}));
-        setAviso(corpo?.erro ?? "Painel indisponível.");
-        setTela({ nome: "entrar" });
-        return;
+        setAviso("O painel ainda não foi configurado neste servidor. Avise quem cuida do site.");
+      } else if (resposta.status !== 401 && resposta.status !== 403) {
+        setAviso("Não foi possível abrir o painel agora. Tente de novo em alguns minutos.");
       }
-      if (!resposta.ok) {
-        setAviso("Não foi possível carregar os textos.");
-        setTela({ nome: "lista" });
-        return;
-      }
-
-      const corpo = await resposta.json();
-      setPosts(corpo.posts ?? []);
-      setSemBanco(Boolean(corpo.semBanco));
-      setAviso(null);
-      setTela({ nome: "lista" });
+      setTela({ nome: "entrar" });
     } catch {
-      setAviso("Sem conexão com o servidor.");
+      setAviso("Sem conexão com o servidor. Verifique a internet e tente de novo.");
       setTela({ nome: "entrar" });
     }
-  }, []);
+  }, [abrirPainel]);
 
   useEffect(() => {
-    let vivo = true;
-    void (async () => {
-      await carregar();
-      if (!vivo) return;
-    })();
-    return () => {
-      vivo = false;
-    };
-  }, [carregar]);
+    // O estado so muda depois da resposta de rede, nunca durante o efeito. A
+    // microtarefa deixa isso visivel para a regra react-hooks/set-state-in-effect,
+    // do mesmo jeito que o EditorDePost faz ao recuperar o rascunho.
+    queueMicrotask(() => void conferirSessao());
+  }, [conferirSessao]);
+
+  // A mensagem fica no painel, e nao em quem perdeu a sessao: quem perdeu e
+  // desmontado no mesmo instante, e um aviso guardado la nunca apareceria.
+  const perderSessao = useCallback((aba: Aba, mensagem: string) => {
+    abaDeVolta.current = aba;
+    setAviso(mensagem);
+    setTela({ nome: "entrar" });
+  }, []);
+
+  const perderSessaoEmTextos = useCallback(() => perderSessao("textos", SESSAO_TERMINOU), [perderSessao]);
+  const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU), [perderSessao]);
+  const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
+  const abrirEditor = useCallback((post: PostDoPainel | null) => {
+    setTela({ nome: "editor", post, abaDeOrigem: "textos" });
+  }, []);
 
   async function sair() {
     await fetch("/api/painel/sair", { method: "POST" }).catch(() => {});
-    setPosts([]);
+    abaDeVolta.current = "textos";
+    setAviso(null);
+    setVisitadas([]);
     setTela({ nome: "entrar" });
   }
 
-  async function abrirEditor(id?: string) {
-    if (!id) {
-      setTela({ nome: "editor", post: null });
-      return;
-    }
-    const resposta = await fetch(`/api/painel/posts/${id}`, { cache: "no-store" });
-    if (resposta.status === 401 || resposta.status === 403) {
-      setTela({ nome: "entrar" });
-      return;
-    }
-    if (!resposta.ok) {
-      setAviso("Não foi possível abrir esse texto.");
-      return;
-    }
-    const corpo = await resposta.json();
-    setTela({ nome: "editor", post: corpo.post });
+  function trocarAba(aba: Aba) {
+    setVisitadas((v) => (v.includes(aba) ? v : [...v, aba]));
+    setTela({ nome: "painel", aba });
   }
 
   if (tela.nome === "carregando") {
     return (
       <div className="mx-auto max-w-[26rem] px-6 py-24">
-        <p className="text-[1.0625rem] text-muted">Carregando…</p>
+        <p role="status" className="text-[1.0625rem] text-muted">
+          Carregando…
+        </p>
       </div>
     );
   }
@@ -114,32 +146,54 @@ export function Painel() {
             {aviso}
           </p>
         )}
-        <Entrar aoEntrar={() => void carregar()} />
+        <Entrar aoEntrar={() => void conferirSessao()} />
       </>
     );
   }
 
   if (tela.nome === "editor") {
+    // O editor ocupa a tela inteira, fora do cabecalho e das abas, de
+    // proposito: um clique numa aba ou em "Sair" no meio do texto desmontaria
+    // o editor sem passar pelo aviso do navegador de alteracao nao salva.
+    const { abaDeOrigem } = tela;
     return (
       <EditorDePost
         post={tela.post}
-        aoSalvar={() => void carregar()}
-        aoCancelar={() => setTela({ nome: "lista" })}
-        aoPerderSessao={() => setTela({ nome: "entrar" })}
+        aoSalvar={() => abrirPainel(abaDeOrigem)}
+        aoCancelar={() => abrirPainel(abaDeOrigem)}
+        aoPerderSessao={() => perderSessao(abaDeOrigem, SESSAO_TERMINOU_NO_TEXTO)}
       />
     );
   }
 
+  const { aba } = tela;
+
+  // Setas, Home e End movem entre as abas, como pede o padrao de abas do WAI-ARIA;
+  // Tab sai da fileira e entra no conteudo da aba aberta.
+  function aoTeclarNaAba(e: React.KeyboardEvent<HTMLButtonElement>) {
+    const atual = ABAS.findIndex((a) => a.id === aba);
+    let destino: number;
+    if (e.key === "ArrowRight") destino = (atual + 1) % ABAS.length;
+    else if (e.key === "ArrowLeft") destino = (atual - 1 + ABAS.length) % ABAS.length;
+    else if (e.key === "Home") destino = 0;
+    else if (e.key === "End") destino = ABAS.length - 1;
+    else return;
+    e.preventDefault();
+    const proxima = ABAS[destino].id;
+    trocarAba(proxima);
+    document.getElementById(`aba-${proxima}`)?.focus();
+  }
+
   return (
     <div className="mx-auto max-w-[52rem] px-6 py-12 lg:py-16">
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-rule pb-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <BrandMark className="h-8 w-auto" />
           <span
             className="text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
             style={{ fontFamily: "var(--mono)" }}
           >
-            Painel do blog
+            Painel do site
           </span>
         </div>
         <button
@@ -150,139 +204,60 @@ export function Painel() {
         </button>
       </header>
 
-      {aviso && (
-        <p role="alert" className="mt-6 rounded-md bg-surface px-4 py-3 text-[0.9375rem] text-ink">
-          {aviso}
-        </p>
-      )}
-
-      {semBanco && (
-        <p className="mt-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
-          O painel está funcionando, mas o banco de textos ainda não foi ligado neste
-          servidor. Assim que ele for configurado, os textos aparecem aqui.
-        </p>
-      )}
-
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">
-          Seus textos
-        </h1>
-        {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
-        <button
-          onClick={() => void abrirEditor()}
-          className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-6 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift"
-        >
-          Escrever texto
-        </button>
+      {/* frontend-refs: estado-por-elevacao-nao-matiz — a aba aberta se marca
+          por peso e fio escuro; o azul fica reservado a link e foco.
+          ui-ux-pro-max ux: Navigation/Active State */}
+      <div
+        role="tablist"
+        aria-label="Partes do painel"
+        className="mt-6 flex overflow-x-auto border-b border-rule"
+      >
+        {ABAS.map(({ id, rotulo }) => {
+          const selecionada = id === aba;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`aba-${id}`}
+              aria-selected={selecionada}
+              aria-controls={`quadro-${id}`}
+              tabIndex={selecionada ? 0 : -1}
+              onClick={() => trocarAba(id)}
+              onKeyDown={aoTeclarNaAba}
+              className={`-mb-px min-h-[44px] shrink-0 border-b-2 px-4 text-[0.9375rem] transition-colors duration-[160ms] ${
+                selecionada
+                  ? "border-ink-strong font-medium text-ink-strong"
+                  : "border-transparent text-muted hover:text-ink"
+              }`}
+            >
+              {rotulo}
+            </button>
+          );
+        })}
       </div>
 
-      {posts.length === 0 ? (
-        // ui-ux-pro-max ux: estado vazio que ensina o proximo passo, nunca em branco
-        <p className="mt-10 rounded-lg border border-rule bg-surface px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
-          Você ainda não escreveu nenhum texto por aqui.
-          <br />
-          Comece pelo botão <strong className="text-ink-strong">Escrever texto</strong>.
-        </p>
-      ) : (
-        <ul className="mt-8 divide-y divide-rule border-t border-rule">
-          {posts.map((post) => (
-            <LinhaDePost
-              key={post.id}
-              post={post}
-              aoEditar={() => void abrirEditor(post.id)}
-              aoApagar={() => void carregar()}
-              aoPerderSessao={() => setTela({ nome: "entrar" })}
-            />
-          ))}
-        </ul>
-      )}
-
-      <p className="mt-14 text-[0.875rem] leading-[1.6] text-muted">
-        Os 68 textos que já estavam no site continuam publicados normalmente — eles não
-        aparecem nesta lista porque fazem parte do próprio site, e não precisam de edição.
-      </p>
-    </div>
-  );
-}
-
-function LinhaDePost({
-  post,
-  aoEditar,
-  aoApagar,
-  aoPerderSessao,
-}: {
-  post: PostDoPainel;
-  aoEditar: () => void;
-  aoApagar: () => void;
-  aoPerderSessao: () => void;
-}) {
-  const [confirmando, setConfirmando] = useState(false);
-  const [apagando, setApagando] = useState(false);
-
-  async function apagar() {
-    // ui-ux-pro-max ux: Interaction/Confirmation Dialogs — o segundo clique e a
-    // confirmacao, e o botao diz o que vai acontecer em vez de abrir um modal.
-    if (!confirmando) {
-      setConfirmando(true);
-      return;
-    }
-    setApagando(true);
-    const resposta = await fetch(`/api/painel/posts/${post.id}`, { method: "DELETE" });
-    setApagando(false);
-    if (resposta.status === 401 || resposta.status === 403) {
-      aoPerderSessao();
-      return;
-    }
-    aoApagar();
-  }
-
-  return (
-    <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5">
-      <div className="min-w-0">
-        <p className="font-display text-[1.125rem] leading-[1.35] font-medium text-ink-strong">
-          {post.titulo}
-        </p>
-        <p className="mt-1 text-[0.875rem] text-muted">
-          {post.publicado ? (
-            <>
-              No ar ·{" "}
-              <a
-                href={`/home/f/${post.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="sublinha text-accent"
-              >
-                ver no site
-              </a>
-            </>
-          ) : (
-            <span className="text-[#8a6d1f]">Rascunho — ainda não está no site</span>
+      {ABAS.map(({ id }) => (
+        <div
+          key={id}
+          role="tabpanel"
+          id={`quadro-${id}`}
+          aria-labelledby={`aba-${id}`}
+          hidden={id !== aba}
+          tabIndex={0}
+          className="mt-10"
+        >
+          {visitadas.includes(id) && id === "textos" && (
+            <AbaTextos aoPerderSessao={perderSessaoEmTextos} aoAbrirEditor={abrirEditor} />
           )}
-          {" · "}
-          {post.categoria}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-3">
-        <button
-          onClick={aoEditar}
-          className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent"
-        >
-          Editar
-        </button>
-        <button
-          onClick={() => void apagar()}
-          onBlur={() => setConfirmando(false)}
-          disabled={apagando}
-          className={`min-h-[44px] rounded-md px-4 text-[0.9375rem] ${
-            confirmando
-              ? "border-[1.5px] border-[#8c2f2f] text-[#8c2f2f]"
-              : "text-muted hover:text-[#8c2f2f]"
-          }`}
-        >
-          {apagando ? "Apagando…" : confirmando ? "Confirmar exclusão" : "Apagar"}
-        </button>
-      </div>
-    </li>
+          {visitadas.includes(id) && id === "inicio" && (
+            <AbaInicio aoPerderSessao={perderSessaoEmInicio} />
+          )}
+          {visitadas.includes(id) && id === "numeros" && (
+            <Numeros aoPerderSessao={perderSessaoEmNumeros} />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

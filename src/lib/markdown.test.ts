@@ -90,6 +90,14 @@ describe("imagem", () => {
     expect(html).toContain('loading="lazy"');
   });
 
+  it("aceita o JPEG que o Safari envia no lugar do WebP", () => {
+    const jpg = `${"b".repeat(64)}-1600x1067.jpg`;
+    const html = markdownParaHtml(`![Consultório](/img/post/${jpg})`);
+    expect(html).toContain(`src="/img/post/${jpg}"`);
+    expect(html).toContain('width="1600"');
+    expect(html).toContain('height="1067"');
+  });
+
   it.each([
     ["externa", "https://terceiro.invalido/pixel.gif"],
     ["externa sem esquema", "//terceiro.invalido/pixel.gif"],

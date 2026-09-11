@@ -152,14 +152,24 @@ export function SiteFooter() {
           <SocialLinks tone="dark" className="shrink-0" />
         </div>
 
-        <p
-          className="mt-10 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
+        <div
+          className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
           style={{ fontFamily: "var(--mono)" }}
         >
-          {/* O ©2020 congelado veio do site antigo e era o defeito n1 da
-              AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
-          © {new Date().getFullYear()} Podoposture
-        </p>
+          <p>
+            {/* O ©2020 congelado veio do site antigo e era o defeito n1 da
+                AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
+            © {new Date().getFullYear()} Podoposture
+          </p>
+          {/* Discreto de proposito: e o endereco que a medicao de visitas
+              precisa ter publicado, nao um item de navegacao. */}
+          <Link
+            href="/privacidade"
+            className="sublinha inline-flex min-h-[44px] items-center rounded-sm transition-colors duration-[160ms] hover:text-paper"
+          >
+            Privacidade
+          </Link>
+        </div>
       </div>
     </footer>
   );

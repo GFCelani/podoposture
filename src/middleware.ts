@@ -73,5 +73,10 @@ export const config = {
   // excluir quase toda URL do site e o rewrite nunca rodava. Prefixo simples nao
   // tem essa armadilha, e tirar os assets daqui evita invocar a funcao de borda
   // em cada imagem.
-  matcher: ["/((?!_next/|img/).*)"],
+  //
+  // `api/cron/` tambem fica de fora: o agendador chama essas rotas por endereco
+  // ASCII fixo, nao ha nada a traduzir, e passar pela borda antes so acrescenta
+  // uma invocacao e um ponto a mais onde o cabecalho Authorization poderia se
+  // perder. Com barra no fim, para nao excluir uma pagina que comece por "cron".
+  matcher: ["/((?!_next/|img/|api/cron/).*)"],
 };

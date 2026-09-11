@@ -3,6 +3,7 @@ import { Newsreader, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { DevMedida } from "../components/dev-medida";
 
+import { AnalyticsDoSite } from "@/components/analytics";
 import { NegocioLocalJsonLd } from "@/components/json-ld";
 import {
   DESCRICAO_PADRAO,
@@ -94,6 +95,7 @@ export default function RootLayout({
         </a>
         <NegocioLocalJsonLd />
         {children}
+        <AnalyticsDoSite />
         <DevMedida />
       </body>
     </html>

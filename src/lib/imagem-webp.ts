@@ -14,12 +14,18 @@
  * `sharp` resolveria, mas custa uma dependencia nativa pesada numa funcao
  * serverless para ler 30 bytes de cabecalho. O formato e publico e estavel:
  * https://developers.google.com/speed/webp/docs/riff_container
+ *
+ * O JPEG, que o painel envia quando o navegador (Safari) nao gera WebP, tem o
+ * proprio leitor em `imagem-jpeg.ts`. O nome publico dos dois mora aqui.
  */
 
 export type Dimensoes = { largura: number; altura: number };
 
-/** Um WebP maior que isto e erro de quem enviou, nao foto de blog. */
-const LADO_MAXIMO = 8192;
+/** Os dois formatos que o painel envia e o site serve. */
+export type TipoDeImagem = "image/webp" | "image/jpeg";
+
+/** Uma imagem maior que isto e erro de quem enviou, nao foto de blog. */
+export const LADO_MAXIMO = 8192;
 
 function quatroCaracteres(bytes: Uint8Array, inicio: number): string {
   return String.fromCharCode(
@@ -92,8 +98,13 @@ export function dimensoesDoWebp(bytes: Uint8Array): Dimensoes | null {
   return { largura, altura };
 }
 
+const EXTENSAO: Record<TipoDeImagem, string> = {
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+};
+
 /**
- * Nome publico do arquivo: `<resumo>-<largura>x<altura>.webp`.
+ * Nome publico do arquivo: `<resumo>-<largura>x<altura>.webp` (ou `.jpg`).
  *
  * As medidas viajam no nome de proposito. Quem renderiza o Markdown le o
  * sufixo e escreve `width`/`height` no `<img>` sem consultar o banco — e o que
@@ -101,21 +112,24 @@ export function dimensoesDoWebp(bytes: Uint8Array): Dimensoes | null {
  *
  * O resumo e o sha256 do conteudo, entao o endereco muda quando o arquivo muda.
  * E o que torna verdadeiro o `Cache-Control: immutable` da rota que serve.
+ *
+ * A extensao sai do formato que o SERVIDOR reconheceu nos bytes, nunca do que
+ * o navegador declarou: e ela que decide o `Content-Type` na hora de servir.
  */
-export function nomeDoArquivo(resumo: string, d: Dimensoes): string {
-  return `${resumo}-${d.largura}x${d.altura}.webp`;
+export function nomeDoArquivo(resumo: string, d: Dimensoes, tipo: TipoDeImagem): string {
+  return `${resumo}-${d.largura}x${d.altura}.${EXTENSAO[tipo]}`;
 }
 
-const NOME = /^([0-9a-f]{64})-(\d{1,4})x(\d{1,4})\.webp$/;
+const NOME = /^([0-9a-f]{64})-(\d{1,4})x(\d{1,4})\.(webp|jpg)$/;
 
 /** Desmonta o nome publico. `null` se nao for um nome que nos emitimos. */
 export function lerNomeDoArquivo(
   nome: string,
-): { resumo: string; largura: number; altura: number } | null {
+): { resumo: string; largura: number; altura: number; tipo: TipoDeImagem } | null {
   const m = NOME.exec(nome);
   if (!m) return null;
   const largura = Number(m[2]);
   const altura = Number(m[3]);
   if (largura < 1 || altura < 1 || largura > LADO_MAXIMO || altura > LADO_MAXIMO) return null;
-  return { resumo: m[1], largura, altura };
+  return { resumo: m[1], largura, altura, tipo: m[4] === "jpg" ? "image/jpeg" : "image/webp" };
 }
