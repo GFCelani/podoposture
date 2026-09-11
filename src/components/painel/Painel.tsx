@@ -53,7 +53,11 @@ type Tela =
 
 const SESSAO_TERMINOU = "Sua sessão terminou. Digite a senha de novo para continuar de onde parou.";
 const SESSAO_TERMINOU_NO_TEXTO =
-  "Sua sessão terminou. O que você estava escrevendo continua guardado neste navegador: entre de novo e abra o mesmo texto.";
+  "Sua sessão terminou. O que você estava escrevendo continua guardado neste navegador: entre de novo e ele reabre sozinho.";
+// A aba Pagina inicial guarda uma copia por secao e reabre a secao depois da
+// senha; a frase generica calaria a promessa de que nada se perdeu.
+const SESSAO_TERMINOU_NA_PAGINA_INICIAL =
+  "Sua sessão terminou. O que você digitou continua guardado neste navegador: entre de novo para continuar de onde parou.";
 
 export function Painel() {
   const [tela, setTela] = useState<Tela>({ nome: "carregando" });
@@ -109,7 +113,7 @@ export function Painel() {
   }, []);
 
   const perderSessaoEmTextos = useCallback(() => perderSessao("textos", SESSAO_TERMINOU), [perderSessao]);
-  const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU), [perderSessao]);
+  const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
   const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
   const abrirEditor = useCallback((post: PostDoPainel | null) => {
     setTela({ nome: "editor", post, abaDeOrigem: "textos" });
