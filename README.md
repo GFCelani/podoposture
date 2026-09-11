@@ -107,6 +107,19 @@ não renderiza WebP em Open Graph, e o cartão sai sem imagem. O
 
 ## Escopo deliberadamente fora
 
-Sem Google Ads, Meta Pixel, GTM ou qualquer analytics novo. O GA4 existente da
-cliente (`G-3EQ3LHKN49`) e a verificação do Search Console são **preservados**,
-nunca substituídos.
+Sem Google Ads, Meta Pixel, GTM nem Google Analytics.
+
+**Correção de uma afirmação antiga deste arquivo.** Ele dizia que o GA4 da
+cliente (`G-3EQ3LHKN49`) estava preservado. Não está, e nunca esteve: nenhuma
+versão do código, em nenhum branch, instala a tag do GA4 (`git log --all -S
+G-3EQ3LHKN49` só encontra este README). O site novo não envia nada ao Google
+Analytics. Reinstalar o GA4 exige banner de consentimento, porque ele grava
+cookie de rastreamento e `/privacidade` hoje afirma que não há nenhum. É decisão
+da clínica, não do código.
+
+A verificação do Search Console continua: meta tag em `src/lib/site.ts`,
+redundante com a verificação por DNS.
+
+A medição que existe é a Web Analytics da Vercel (sem cookie, com o painel fora
+da contagem) somada ao Search Console, e as duas são lidas pela aba Números do
+painel. Detalhes em `README-painel.md` e em `/privacidade`.

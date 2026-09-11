@@ -103,6 +103,27 @@ O budget é numérico para ser contado de verdade no fim, com `webapp-testing`: 
 cliques do login até o post publicado, conferir que nenhum é mudo, e que o botão principal
 é o maior alvo da tela.
 
+**Estado em 11/09/2026** (integração do branch `claude/painel-completo`):
+
+Conferido:
+
+- `npm test` cobre o teste de rotas protegidas e as funções puras do fluxo (`painel-tipos`,
+  `recado-do-editor`, `limite-de-tentativas`). Um teste fora do repositório, contra o
+  Postgres de teste, cobre salvar, publicar e listar sem o corpo.
+- Por HTTP, com `next start` e o Postgres de teste: senha errada dá 401, senha certa dá 200
+  com cookie, pedido vindo de outro site dá 403, e `/api/painel/posts` responde 200 contando
+  os 68 textos do repositório.
+- Sem nenhuma variável de ambiente, `/nosso-blog` e três posts saem com o texto visível
+  idêntico ao de antes.
+
+Ainda não conferido, porque precisa de navegador:
+
+- a contagem de cliques do login até o post publicado;
+- sessão caída → senha → editor reaberto sozinho;
+- dois cliques para despublicar;
+- a prévia "Ver como vai ficar" renderizada. Ela mostra só o corpo, sem o título e a capa
+  do cabeçalho.
+
 ---
 
 # Jornada — aba "Página inicial" do painel (`/publicar`)
@@ -127,7 +148,7 @@ Não houve pergunta: a ação primária estava explícita no pedido.
 
 | Estágio | Peso | Por quê |
 |---|---|---|
-| **Avaliação** (achar o trecho e ver como fica) | **dominante** | São 14 seções; ela precisa achar o texto certo pelo que ele diz, não pelo nome técnico da seção, e ver a home de verdade antes de pôr no ar |
+| **Avaliação** (achar o trecho e ver como fica) | **dominante** | São 13 seções; ela precisa achar o texto certo pelo que ele diz, não pelo nome técnico da seção, e ver a home de verdade antes de pôr no ar |
 | **Ação** (trocar e publicar) | **dominante** | É onde um erro vai direto para a página mais vista do site |
 | Descoberta | leve | A aba mora ao lado de "Seus textos", que ela já usa |
 | Atração | não se aplica | Usuária cativa |
@@ -196,6 +217,36 @@ Com `webapp-testing` e o Postgres de teste: contar as interações de "aba abert
 "home publicada", conferir que publicar não aparece antes da prévia, que voltar ao original
 cabe em 2 interações, e que uma foto JPEG enviada aparece na prévia.
 
+**Estado em 11/09/2026** (integração do branch `claude/painel-completo`):
+
+Conferido:
+
+- Por HTTP, com `next start` e o Postgres de teste:
+  - sem sessão, a rota responde 401 e a prévia manda para `/publicar`;
+  - seção inexistente dá 404, campo obrigatório vazio dá 400 com o erro no próprio campo, e
+    ação inválida dá 400;
+  - publicar grava, e a home, que é estática, passa a mostrar o texto novo;
+  - o rascunho não aparece na home e aparece na prévia, que sai com `noindex`;
+  - descartar o rascunho mantém o publicado;
+  - voltar ao padrão devolve a home com texto idêntico ao de antes.
+- Sem nenhuma variável de ambiente, `/`, `/osteopatia`, `/contato` e
+  `/responsável-técnica` saem com o texto visível idêntico ao de antes da mudança, e `/`
+  continua estática no build.
+- São 13 seções, e não 14 como este contrato dizia antes.
+
+Ainda não conferido, porque precisa de navegador:
+
+- contagem de interações: ≤ 5 para texto e ≤ 6 para foto;
+- publicar ausente antes da prévia. Hoje isso só está garantido pela lógica do editor e pelo
+  compilador;
+- voltar ao original em ≤ 2 interações;
+- foco indo para o primeiro erro;
+- JPEG enviado pelo Safari aparecendo na prévia;
+- layout em 390 px;
+- aviso do navegador ao sair com alteração não salva;
+- seção reabrindo depois de a sessão cair;
+- o botão "Fechar a prévia e voltar ao painel" fechando a aba da prévia.
+
 ---
 
 # Jornada — aba "Números" do painel (`/publicar`)
@@ -257,6 +308,31 @@ abre Números no começo do mês → vê quem leu e de onde veio → escreve o p
         ↑                                                            │
         └────────────── no mês seguinte compara com este ────────────┘
 ```
+
+## Verificação
+
+Com `webapp-testing`: abrir a aba em 320, 390, 768 e 1440 px nos três estados (sem banco,
+fonte não ligada, com dados) e conferir que a resposta está no primeiro quadro, sem rolar.
+
+**Estado em 11/09/2026** (integração do branch `claude/painel-completo`):
+
+Conferido:
+
+- Testes das duas fontes com respostas no formato da documentação, e do arquivo diário
+  contra o Postgres de teste.
+- Por HTTP, com `next start` e o Postgres de teste:
+  - `/api/painel/numeros` sem sessão dá 401;
+  - com sessão dá 200 e marca as duas fontes como não configuradas;
+  - período inválido dá 400;
+  - `/api/cron/numeros` sem o segredo dá 401;
+  - com o segredo dá 200 e a situação de cada fonte.
+- No build, `/privacidade` sai estática e `/api/cron/numeros` dinâmica.
+
+Ainda não conferido:
+
+- a aba no navegador, nas quatro larguras e nos três estados;
+- a coleta contra as APIs reais, porque falta credencial. Não estão confirmados o formato
+  exato de `GSC_SITE_URL` nem o fuso em que a Vercel lê `since` e `until`.
 
 ---
 
