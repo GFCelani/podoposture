@@ -108,13 +108,15 @@ export function derivarContato(c: ConteudoContato): ContatoDoSite {
   // sala na busca o embed chegava a errar de quarteirao.
   const busca = encodeURIComponent(`${rua}, ${numero}, ${bairro}, ${cidade}`);
 
+  // "tel:" com "+": sem ele o celular trata os digitos como numero local e disca
+  // 552122554845, que nao completa no Brasil (seria preciso +55 ou 0 + operadora).
   return {
     whatsapp: linkDoWhatsapp(c.whatsapp),
     telefones: [
-      { label: `+ ${fixo.ddi} ${fixo.ddd} ${fixo.numero}`, href: `tel:${c.telefoneFixo}`, nota: null },
-      { label: `+ ${zap.ddi} ${zap.ddd} ${zap.numero}`, href: `tel:${c.whatsapp}`, nota: "WhatsApp" },
+      { label: `+ ${fixo.ddi} ${fixo.ddd} ${fixo.numero}`, href: `tel:+${c.telefoneFixo}`, nota: null },
+      { label: `+ ${zap.ddi} ${zap.ddd} ${zap.numero}`, href: `tel:+${c.whatsapp}`, nota: "WhatsApp" },
     ],
-    telefoneFixo: { curto: `(${fixo.ddd}) ${fixo.numero}`, href: `tel:${c.telefoneFixo}` },
+    telefoneFixo: { curto: `(${fixo.ddd}) ${fixo.numero}`, href: `tel:+${c.telefoneFixo}` },
     email: c.email,
     horario: c.horario,
     endereco: {

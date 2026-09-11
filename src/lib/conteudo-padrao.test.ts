@@ -49,8 +49,10 @@ const ANTES = {
   MAPS_DIRECOES:
     "https://www.google.com/maps/dir/?api=1&destination=Avenida%20Nossa%20Senhora%20de%20Copacabana%2C%20928%2C%20Copacabana%2C%20Rio%20de%20Janeiro",
   TELEFONES: [
-    { label: "+ 55 21 2255-4845", href: "tel:552122554845", nota: null },
-    { label: "+ 55 21 99203-5643", href: "tel:5521992035643", nota: "WhatsApp" },
+    // Os rotulos sao os de antes; o link ganhou o "+" do codigo do pais, sem o
+    // qual o celular discava os digitos como numero local e a chamada nao completava.
+    { label: "+ 55 21 2255-4845", href: "tel:+552122554845", nota: null },
+    { label: "+ 55 21 99203-5643", href: "tel:+5521992035643", nota: "WhatsApp" },
   ],
   WHATSAPP: "https://wa.me/5521992035643",
   EMAIL: "contatopodoposture@gmail.com",
@@ -76,7 +78,7 @@ describe("o contato derivado do padrao e o de antes, caractere por caractere", (
     expect(contato.email).toBe(ANTES.EMAIL);
     expect(contato.horario).toBe(ANTES.HORARIO);
     // o convite de fecho das paginas mostrava o fixo nesta forma, escrita a mao
-    expect(contato.telefoneFixo).toEqual({ curto: "(21) 2255-4845", href: "tel:552122554845" });
+    expect(contato.telefoneFixo).toEqual({ curto: "(21) 2255-4845", href: "tel:+552122554845" });
   });
 
   it("responsavel, redes na mesma ordem e descricao", () => {
