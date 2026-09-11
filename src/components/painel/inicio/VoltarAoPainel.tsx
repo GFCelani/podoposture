@@ -25,7 +25,7 @@ export function VoltarAoPainel() {
       onClick={aoVoltar}
       className="sublinha inline-flex min-h-[44px] items-center text-[0.9375rem] text-paper"
     >
-      Fechar a prévia e voltar ao painel
+      Fechar e voltar ao painel
     </button>
   );
 }

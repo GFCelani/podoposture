@@ -101,7 +101,11 @@ type PropsDoCampo<C extends Campo = Campo> = {
   campo: C;
   caminho: string;
   valor: unknown;
-  /** Valor do texto original no mesmo lugar; undefined dentro de lista (item nao tem par no original). */
+  /**
+   * Valor do texto original no mesmo lugar. Dentro de lista, o item da mesma
+   * posicao — so enquanto a lista tem o tamanho do original; depois de somar ou
+   * tirar item, a posicao ja nao aponta para o mesmo item e fica undefined.
+   */
   original?: unknown;
   rotulo: string;
 };
@@ -292,6 +296,33 @@ function CampoDeTexto({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
 
 /* ------------------------------------------------------------------ linhas */
 
+let contextoDeMedida: CanvasRenderingContext2D | null | undefined;
+
+/**
+ * Largura da linha em relacao a linha de referencia, medida com a fonte do
+ * titulo no canvas. Relativa, e nao em pixels: o canvas nem sempre usa o corte
+ * optico de display, e antes de a fonte carregar mede com a de reserva — as
+ * duas linhas sofrem o mesmo desvio, e a razao continua valendo.
+ */
+function larguraRelativa(linha: string, referencia: string): number | null {
+  if (typeof document === "undefined" || !linha.trim()) return null;
+  if (contextoDeMedida === undefined) {
+    try {
+      contextoDeMedida = document.createElement("canvas").getContext("2d");
+    } catch {
+      contextoDeMedida = null;
+    }
+  }
+  const ctx = contextoDeMedida;
+  if (!ctx) return null;
+  const familia = getComputedStyle(document.body).getPropertyValue("--font-newsreader").trim() || "Georgia, serif";
+  ctx.font = `500 64px ${familia}`;
+  // tracking de -0.025em do h1 do topo
+  const medir = (texto: string) => ctx.measureText(texto).width - 0.025 * 64 * Array.from(texto).length;
+  const base = medir(referencia);
+  return base > 0 ? medir(linha.trim()) / base : null;
+}
+
 /**
  * Linhas fixas: uma caixa por linha, porque a quebra escrita e a quebra que o
  * site mostra (o titulo do topo foi medido linha a linha).
@@ -322,6 +353,8 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
           const caminhoDaLinha = `${caminho}.${i}`;
           const idDaLinha = idDoCampo(editor.chave, caminhoDaLinha);
           const erroDaLinha = editor.erros[caminhoDaLinha];
+          const relativa = campo.medidaNaTela ? larguraRelativa(linha, campo.medidaNaTela.referencia) : null;
+          const larga = campo.medidaNaTela !== undefined && relativa !== null && relativa > campo.medidaNaTela.folga;
           return (
             // Posicao e a identidade da linha: sao fixas e nunca mudam de ordem.
             <div key={i}>
@@ -341,11 +374,19 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
                 }
                 onBlur={() => editor.sair(caminhoDaLinha)}
                 aria-invalid={erroDaLinha ? true : undefined}
-                aria-describedby={ids(`${idDaLinha}-contador`, erroDaLinha && `${idDaLinha}-erro`)}
+                aria-describedby={ids(`${idDaLinha}-contador`, larga && `${idDaLinha}-largura`, erroDaLinha && `${idDaLinha}-erro`)}
                 data-com-erro={erroDaLinha ? "" : undefined}
                 className={`${ENTRADA} mt-1`}
               />
               <Contador id={`${idDaLinha}-contador`} texto={linha} max={campo.maxPorLinha} />
+              {/* Aviso, e nao erro: a medida no navegador e aproximada, e so a
+                  pagina de como vai ficar num notebook tira a duvida. */}
+              {larga && (
+                <p id={`${idDaLinha}-largura`} className="mt-1 text-[0.8125rem] leading-[1.5] text-[#8a6d1f]">
+                  Esta linha pode ficar mais larga que o espaço ao lado das figuras (letras largas ou maiúsculas
+                  ocupam mais). Confira como vai ficar num notebook, ou use palavras mais curtas.
+                </p>
+              )}
               <MensagemDeErro id={`${idDaLinha}-erro`} erro={erroDaLinha} />
             </div>
           );
@@ -370,6 +411,10 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
   const erro = editor.erros[caminho];
   const itens: unknown[] = Array.isArray(valor) ? valor : [];
   const nomeDoItem = campo.rotuloDoItem.toLowerCase();
+  // O original de cada item, para voltar um campo so sem desfazer a lista
+  // inteira (JOURNEY: voltar ao original por campo). So com a lista do tamanho
+  // do original: com item somado ou tirado, a posicao ja nao e o mesmo item.
+  const originais = Array.isArray(original) && original.length === itens.length ? original : null;
 
   function mover(de: number, para: number, controle: "subir" | "descer") {
     editor.reestruturar(caminho, moverItem(itens, de, para));
@@ -424,7 +469,14 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
             return (
               // Chave pela posicao: dois itens podem ter o mesmo texto.
               <li key={i} id={`${id}-${i}-item`} className="rounded-md border border-rule bg-paper p-4 sm:p-5">
-                <CampoDoEditor campo={campo.item} caminho={`${caminho}.${i}`} valor={item} rotulo={numero} nivel={1} />
+                <CampoDoEditor
+                  campo={campo.item}
+                  caminho={`${caminho}.${i}`}
+                  valor={item}
+                  original={originais ? originais[i] : undefined}
+                  rotulo={numero}
+                  nivel={1}
+                />
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -588,12 +640,14 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
         <div className="min-w-0 flex-1">
           <p id={`${id}-recorte`} className={AJUDA}>
             {campo.recorte
-              ? `${campo.recorte.descricao} Ao lado, ela já aparece assim.`
+              ? `${campo.recorte.descricao} ${
+                  campo.recorte.proporcaoNoComputador ? "Ao lado, o recorte do celular." : "Ao lado, ela já aparece assim."
+                }`
               : "A foto aparece inteira, sem recorte."}{" "}
             Vale foto do celular ou do computador.
           </p>
           <label
-            className={`mt-3 inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent focus-within:border-accent hover:border-accent ${
+            className={`mt-3 inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent focus-within:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent hover:border-accent ${
               editor.bloqueado ? "cursor-default opacity-50" : "cursor-pointer"
             }`}
           >

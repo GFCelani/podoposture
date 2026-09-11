@@ -36,6 +36,10 @@ import {
   deixarSecaoParaReabrir,
   valorVazio,
   estadoEmPalavras,
+  enderecoDaPrevia,
+  explicacaoDePublicar,
+  explicacaoDeVoltarAoOriginal,
+  publicadoDiferenteDoPadrao,
 } from "./edicao";
 
 /**
@@ -281,6 +285,31 @@ describe("textos para a tela", () => {
     );
   });
 
+  it("o original de um item de grupo inclui a lista de paragrafos, e nao so titulo e botao", () => {
+    const servicos = DESCRITORES.servicos.campos.itens;
+    const primeiro = CONTEUDO_PADRAO.servicos.itens[0];
+    const texto = servicos.tipo === "lista" ? textoDoValor(servicos.item, primeiro) : "";
+    expect(texto).toContain(primeiro.titulo);
+    expect(texto).toContain(primeiro.corpo[0].slice(0, 30));
+  });
+
+  it("voltar ao original so aparece quando o publicado difere do padrao", () => {
+    const padrao = CONTEUDO_PADRAO["blog-secao"];
+    expect(publicadoDiferenteDoPadrao(estado(padrao, null, null))).toBe(false);
+    expect(publicadoDiferenteDoPadrao(estado(padrao, { ...padrao }, null))).toBe(false);
+    expect(publicadoDiferenteDoPadrao(estado(padrao, { titulo: "Outro" }, null))).toBe(true);
+  });
+
+  it("as confirmacoes dizem onde a mudanca aparece, e que voltar ao original muda o site sem ver antes", () => {
+    expect(explicacaoDePublicar("contato")).toBe(
+      "Esta versão vai para o site: em todas as páginas, para todo mundo. Para confirmar, clique outra vez em “Confirmar e publicar”.",
+    );
+    expect(explicacaoDeVoltarAoOriginal("contato")).toContain("em todas as páginas, para todo mundo");
+    expect(explicacaoDeVoltarAoOriginal("contato")).toContain("sem ver antes como fica");
+    expect(explicacaoDeVoltarAoOriginal("galeria")).toContain("na página inicial.");
+    expect(enderecoDaPrevia("contato-secao")).toBe("/publicar/previa?secao=contato-secao");
+  });
+
   it("resumo da secao e o comeco do texto no ar, cortado em palavra", () => {
     expect(resumoDaSecao("hero", CONTEUDO_PADRAO.hero)).toBe(
       "Integração terapêutica efetiva e inovadora com resultados rápidos e eficazes",
@@ -362,6 +391,27 @@ describe("copia no navegador", () => {
   it("copia de versao antiga nao leva campo que o descritor nao tem", () => {
     const base = paraEdicao("blog-secao", CONTEUDO_PADRAO["blog-secao"]);
     expect(aplicarCopia("blog-secao", base, { titulo: "Novo", campoVelho: "x" })).toEqual({ titulo: "Novo" });
+  });
+
+  it("copia guarda a referencia do servidor, e recuperar leva so o que ela mexeu", () => {
+    // Notebook: ela mexeu so no horario e fechou a aba. Celular: publicou um e-mail novo.
+    const quandoComecou = paraEdicao("contato", CONTEUDO_PADRAO.contato);
+    const noNotebook = { ...quandoComecou, horario: "Segunda a sábado, das 8h às 19h" };
+    const armazem = armazemDeTeste();
+    guardarCopiaLocal(armazem, "contato", noNotebook, new Date("2026-09-11T10:00:00Z"), quandoComecou);
+    const copia = lerCopiaLocal(armazem, "contato");
+    expect(copia?.base).toEqual(quandoComecou);
+
+    const servidorAgora = { ...quandoComecou, email: "novo@podoposture.com.br" };
+    const recuperado = aplicarCopia("contato", servidorAgora, copia!.dados, copia!.base);
+    expect(recuperado.horario).toBe("Segunda a sábado, das 8h às 19h");
+    expect(recuperado.email).toBe("novo@podoposture.com.br");
+  });
+
+  it("copia sem referencia (de antes desta versao do painel) continua recuperando tudo", () => {
+    const armazem = armazemDeTeste();
+    armazem.dados.set("podoposture_inicio:hero", JSON.stringify({ dados: { destaque: "x" }, guardadaEm: "" }));
+    expect(lerCopiaLocal(armazem, "hero")?.base).toBeUndefined();
   });
 
   it("secao para reabrir vale uma vez e so se for chave conhecida", () => {

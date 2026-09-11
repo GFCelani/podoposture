@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import {
   descartarRascunho,
   gravarRascunho,
+  lerSecao,
   publicarSecao,
   voltarAoPadrao,
   type LinhaDeConteudo,
@@ -92,10 +93,16 @@ export async function PUT(req: Request, ctx: Contexto) {
   }
   if (typeof bruto !== "object" || bruto === null || Array.isArray(bruto)) return requisicaoInvalida();
 
-  const { dados, acao } = bruto as { dados?: unknown; acao?: unknown };
+  const { dados, acao, versao } = bruto as { dados?: unknown; acao?: unknown; versao?: unknown };
   if (acao !== "rascunho" && acao !== "publicar") {
     return NextResponse.json({ erro: "Escolha entre salvar o rascunho e publicar." }, { status: 400 });
   }
+  // A versao que o editor carregou: data ISO, null (secao nunca salva) ou
+  // ausente (sem conferencia). Qualquer outra coisa e pedido torto.
+  if (versao !== undefined && versao !== null && (typeof versao !== "string" || Number.isNaN(Date.parse(versao)))) {
+    return requisicaoInvalida();
+  }
+  const versaoEsperada = versao as string | null | undefined;
 
   // A mesma validacao que o editor usa: o que passa aqui e o que a tela aceitou.
   const validacao = validarSecao(chave, dados);
@@ -109,8 +116,23 @@ export async function PUT(req: Request, ctx: Contexto) {
   try {
     const publicar = acao === "publicar";
     const linha = publicar
-      ? await publicarSecao(chave, validacao.dados)
-      : await gravarRascunho(chave, validacao.dados);
+      ? await publicarSecao(chave, validacao.dados, versaoEsperada)
+      : await gravarRascunho(chave, validacao.dados, versaoEsperada);
+
+    if (!linha) {
+      // Outra janela gravou depois que este editor carregou a secao: nada foi
+      // gravado. A secao atual volta junto, e o editor junta o que ela mudou
+      // com a versao nova em vez de apagar a publicacao da outra janela.
+      const atual = await lerSecao(chave);
+      return NextResponse.json(
+        {
+          erro: "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora.",
+          chave,
+          secao: estadoDaSecao(chave, atual),
+        },
+        { status: 409 },
+      );
+    }
 
     await registrarAuditoria(
       publicar ? "inicio-publicado" : "inicio-rascunho",

@@ -173,6 +173,12 @@ export type AcaoDaEscrita = "rascunho" | "publicar";
 export type CorpoDaEscrita<C extends ChaveDeSecao = ChaveDeSecao> = {
   dados: ConteudoDoSite[C];
   acao: AcaoDaEscrita;
+  /**
+   * `atualizadoEm` da secao que o editor carregou (null = nunca salva). Se o
+   * banco ja estiver em outra versao, a rota responde 409 com a secao atual em
+   * vez de gravar por cima do que outra janela publicou.
+   */
+  versao?: string | null;
 };
 
 /** `?alvo=` de DELETE: descartar o rascunho, ou tirar o publicado e voltar ao padrao. */
@@ -264,7 +270,18 @@ export type CampoTexto = CampoBase & {
 };
 export type CampoParagrafo = CampoBase & { tipo: "paragrafo"; max: number; opcional?: boolean };
 /** Quantidade EXATA de linhas; a quebra escrita e a do layout medido. */
-export type CampoLinhas = CampoBase & { tipo: "linhas"; quantidade: number; maxPorLinha: number };
+export type CampoLinhas = CampoBase & {
+  tipo: "linhas";
+  quantidade: number;
+  maxPorLinha: number;
+  /**
+   * Para o titulo cujo espaco foi medido em pixels, e nao em letras: o editor
+   * mede cada linha contra `referencia` (a linha mais larga de hoje, que cabe)
+   * e avisa acima de `folga` vezes ela. Contar caracteres nao basta: 22 letras
+   * largas (M, W, maiusculas) invadem as figuras ao lado.
+   */
+  medidaNaTela?: { referencia: string; folga: number };
+};
 export type CampoLista = CampoBase & {
   tipo: "lista";
   min: number;
@@ -278,8 +295,11 @@ export type CampoImagem = CampoBase & {
   larguraMinima: number;
   /** Teto do texto alternativo, em caracteres. */
   maxAlt: number;
-  /** Recorte que o site aplica (largura / altura), para o editor mostrar a previa. null = sem recorte. */
-  recorte: { proporcao: number; descricao: string } | null;
+  /**
+   * Recorte que o site aplica (largura / altura), para o editor mostrar a previa. null = sem recorte.
+   * `proporcaoNoComputador`: quando o recorte muda a partir de 1024px, o editor diz que o do lado e o do celular.
+   */
+  recorte: { proporcao: number; descricao: string; proporcaoNoComputador?: number } | null;
 };
 export type CampoDestino = CampoBase & { tipo: "destino"; aceita: readonly TipoDeDestino[] };
 export type CampoNumero = CampoBase & { tipo: "numero"; min: number; max: number };
@@ -335,6 +355,12 @@ const IMAGEM_4_5 = { proporcao: 4 / 5, descricao: "A foto é recortada em retrat
 const IMAGEM_4_3 = {
   proporcao: 4 / 3,
   descricao: "A foto é recortada em paisagem (4:3), pelo centro.",
+};
+/** Boas-vindas: welcome.tsx aplica 4:3 e, a partir de 1024px, 5:4. */
+const IMAGEM_4_3_E_5_4 = {
+  proporcao: 4 / 3,
+  proporcaoNoComputador: 5 / 4,
+  descricao: "A foto é recortada pelo centro: em paisagem (4:3) no celular e um pouco mais alta (5:4) no computador.",
 };
 
 /** Largura minima de foto: abaixo disso ela sai borrada nas colunas do site. */
@@ -479,6 +505,9 @@ export const DESCRITORES: Descritores = {
         rotulo: "Título",
         quantidade: 4,
         maxPorLinha: 22,
+        // "Integracao terapeutica" e a linha mais larga medida (615 px a 64 px);
+        // o campo das figuras comeca uns 40 px depois dela, dai a folga de 4%.
+        medidaNaTela: { referencia: "Integração terapêutica", folga: 1.04 },
         ajuda: "Quatro linhas, com até 22 caracteres cada. O título quebra exatamente onde você quebrar.",
       },
       destaque: {
@@ -540,7 +569,7 @@ export const DESCRITORES: Descritores = {
       titulo: { tipo: "texto", rotulo: "Título", max: 40 },
       paragrafo: { tipo: "paragrafo", rotulo: "Texto", max: 420 },
       local: { tipo: "texto", rotulo: "Linha do local", max: 60 },
-      imagem: campoImagem("Foto", IMAGEM_4_3),
+      imagem: campoImagem("Foto", IMAGEM_4_3_E_5_4),
     },
     regras: [],
   },
@@ -963,7 +992,9 @@ function validarImagem(
     medida = lerNomeDoArquivo(src.slice(PREFIXO_IMAGEM_ENVIADA.length));
   }
   if (!medida) {
-    erros[juntar(caminho, "src")] = "Escolha uma foto do site ou envie uma nova pelo painel.";
+    // Sem "escolha uma foto do site": o editor so oferece enviar arquivo. Para
+    // trazer de volta uma foto original, ha o "Usar o original" do proprio item.
+    erros[juntar(caminho, "src")] = "Envie uma foto pelo botão “Escolher foto”.";
   } else if (medida.largura < campo.larguraMinima) {
     erros[juntar(caminho, "src")] =
       `A foto precisa ter pelo menos ${campo.larguraMinima} pixels de largura (esta tem ${medida.largura}).`;

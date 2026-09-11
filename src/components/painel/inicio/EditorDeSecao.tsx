@@ -18,6 +18,7 @@ import { ErroAoEnviarImagem, enviarImagem } from "@/lib/preparar-imagem";
 
 import { CampoDoEditor, ContextoDoEditor, type AcoesDoEditor } from "./CamposDaSecao";
 import {
+  CANAL_DA_PAGINA_INICIAL,
   apagarCopiaLocal,
   aplicarCopia,
   armazemDoNavegador,
@@ -25,6 +26,9 @@ import {
   camposDaSecao,
   camposRelacionados,
   ehObjeto,
+  enderecoDaPrevia,
+  explicacaoDePublicar,
+  explicacaoDeVoltarAoOriginal,
   gravarCaminho,
   guardarCopiaLocal,
   idDoCampo,
@@ -33,6 +37,7 @@ import {
   lerCopiaLocal,
   mensagemDeFalha,
   paraEdicao,
+  publicadoDiferenteDoPadrao,
   semErrosEm,
   type DadosEmEdicao,
 } from "./edicao";
@@ -43,21 +48,26 @@ import {
  * O fluxo segue o friction budget do design-system/JOURNEY.md ("Pagina
  * inicial"), que e contrato:
  *
- * 1. **Publicar so depois de ver.** O botao de publicar nao existe ate a
- *    previa ser aberta com o texto que esta na tela; mudou depois, some de
- *    novo. A home e a pagina mais vista, e um titulo maior que o espaco so
- *    aparece com a pagina inteira na frente.
+ * 1. **Publicar so depois de ver.** O botao de publicar nao existe ate a pagina
+ *    de como vai ficar ser aberta com o texto que esta na tela; mudou depois,
+ *    some de novo. A home e a pagina mais vista, e um titulo maior que o espaco
+ *    so aparece com a pagina inteira na frente. A pagina mostra so o rascunho
+ *    DESTA secao: o que ela aprova e o que vai ao ar.
  * 2. **Publicar pede confirmacao** (segundo clique), e o aviso diz onde a
- *    mudanca vai aparecer. Ate publicar: secao → campo → previa → publicar →
- *    confirmar, 5 interacoes.
- * 3. **Nada escrito se perde.** Copia no navegador enquanto digita, gravada na
- *    hora se a sessao cair, e aviso do navegador antes de fechar a aba.
- * 4. **Um unico botao preenchido.** Antes da previa ele e "Ver como vai ficar",
- *    que e o proximo passo; depois dela, "Publicar no site". Os dois nunca
- *    aparecem preenchidos juntos.
+ *    mudanca vai aparecer. Ate publicar: secao → campo → ver como vai ficar →
+ *    publicar (na propria aba de como vai ficar, ou aqui) → confirmar, 5
+ *    interacoes.
+ * 3. **Nada escrito se perde, e nada de outra janela e apagado.** Copia no
+ *    navegador enquanto digita (com o que o servidor tinha quando ela comecou),
+ *    gravada na hora se a sessao cair ou o editor sair da tela, e aviso do
+ *    navegador antes de fechar a aba. Cada gravacao leva a versao que o editor
+ *    carregou: se outra janela publicou no meio, nada e gravado e o que ela
+ *    mudou e juntado com a versao nova.
+ * 4. **Um unico botao preenchido.** Antes de ver como vai ficar ele e "Ver como
+ *    vai ficar", que e o proximo passo; depois, "Publicar no site". Os dois
+ *    nunca aparecem preenchidos juntos.
  */
 
-const ENDERECO_DA_PREVIA = "/publicar/previa";
 /** Nome fixo: clicar de novo recarrega a mesma aba em vez de empilhar abas. */
 const NOME_DA_ABA_DA_PREVIA = "podoposture-previa";
 const ID_DO_AVISO = "inicio-aviso";
@@ -68,15 +78,12 @@ const CONTORNO =
   "min-h-[48px] rounded-md border-[1.5px] border-accent/45 px-6 text-[0.9375rem] text-accent hover:border-accent disabled:opacity-50";
 const DISCRETO = "min-h-[48px] rounded-md px-3 text-[0.9375rem] text-muted hover:text-[#8c2f2f] disabled:opacity-50";
 const CONFIRMANDO = "min-h-[48px] rounded-md border-[1.5px] border-[#8c2f2f] px-4 text-[0.9375rem] text-[#8c2f2f]";
+const NOTA = "mt-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink";
 
 type Confirmacao = "publicar" | "descartar" | "original";
 
 function baseDaSecao(chave: ChaveDeSecao, secao: EstadoDaSecao<unknown>): DadosEmEdicao {
   return paraEdicao(chave, secao.rascunho ?? secao.publicado ?? secao.padrao);
-}
-
-function primeiraMinuscula(texto: string): string {
-  return texto.charAt(0).toLowerCase() + texto.slice(1);
 }
 
 export function EditorDeSecao({
@@ -107,24 +114,28 @@ export function EditorDeSecao({
   const [inicio] = useState(() => {
     const salvo = baseDaSecao(chave, estado);
     const copia = lerCopiaLocal(armazemDoNavegador(), chave);
-    const recuperado = copia ? aplicarCopia(chave, salvo, copia.dados) : null;
+    // So os campos que ela mexeu: o que ela nao tocou segue a versao de agora
+    // do servidor, mesmo que a copia seja de antes de outra publicacao.
+    const recuperado = copia ? aplicarCopia(chave, salvo, copia.dados, copia.base) : null;
     const usarCopia = recuperado !== null && JSON.stringify(recuperado) !== JSON.stringify(salvo);
-    return { salvo, dados: usarCopia && recuperado ? recuperado : salvo, recuperado: usarCopia };
+    const mudouDepois = usarCopia && copia?.base !== undefined && JSON.stringify(copia.base) !== JSON.stringify(salvo);
+    return { salvo, dados: usarCopia && recuperado ? recuperado : salvo, recuperado: usarCopia, mudouDepois };
   });
 
   /** O que o servidor tem para esta secao, no formato do formulario. */
   const [salvo, setSalvo] = useState<DadosEmEdicao>(inicio.salvo);
   const [dados, setDados] = useState<DadosEmEdicao>(inicio.dados);
   const [recuperado, setRecuperado] = useState(inicio.recuperado);
+  const [mudouNoServidor, setMudouNoServidor] = useState(inicio.mudouDepois);
   const [erros, setErros] = useState<ErrosDeCampo>({});
   const [aviso, setAviso] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState<Confirmacao | null>(null);
   const [andamento, setAndamento] = useState<"previa" | Confirmacao | null>(null);
   const [enviandoEm, setEnviandoEm] = useState<string | null>(null);
-  /** O texto (JSON) que estava na tela quando a previa abriu. */
+  /** O texto (JSON) que estava na tela quando a pagina de como vai ficar abriu. */
   const [previaDe, setPreviaDe] = useState<string | null>(null);
-  /** Aba bloqueada pelo navegador: a previa sai por um link, e ela conta como vista quando o link e clicado. */
+  /** Aba bloqueada pelo navegador: a pagina sai por um link, e ela conta como vista quando o link e clicado. */
   const [linkDaPrevia, setLinkDaPrevia] = useState<string | null>(null);
   const emCurso = useRef(false);
   const raiz = useRef<HTMLDivElement>(null);
@@ -138,15 +149,36 @@ export function EditorDeSecao({
 
   /* -------- copia no navegador -------- */
 
+  // O ultimo estado, para quem roda fora da renderizacao: a copia gravada ao
+  // desmontar e o fim do envio de foto, que acontece segundos depois do clique.
+  const ultimo = useRef({ dados: inicio.dados, salvo: inicio.salvo, alterado: false });
+  /** Publicada ou descartada: sair do editor nao pode recriar a copia. */
+  const copiaResolvida = useRef(false);
+
+  useEffect(() => {
+    ultimo.current = { dados, salvo, alterado };
+  }, [dados, salvo, alterado]);
+
   useEffect(() => {
     const armazem = armazemDoNavegador();
     if (!alterado) {
       apagarCopiaLocal(armazem, chave);
       return;
     }
-    const id = setTimeout(() => guardarCopiaLocal(armazem, chave, dados), 600);
+    const id = setTimeout(() => guardarCopiaLocal(armazem, chave, dados, new Date(), salvo), 600);
     return () => clearTimeout(id);
-  }, [alterado, chave, dados]);
+  }, [alterado, chave, dados, salvo]);
+
+  useEffect(
+    () => () => {
+      // "Sair" e a troca para o editor de texto desmontam esta secao sem passar
+      // pelo aviso do navegador, e a copia automatica espera 600 ms: a ultima
+      // frase digitada se perdia. Ao sair da tela, a copia e gravada na hora.
+      if (copiaResolvida.current || !ultimo.current.alterado) return;
+      guardarCopiaLocal(armazemDoNavegador(), chave, ultimo.current.dados, new Date(), ultimo.current.salvo);
+    },
+    [chave],
+  );
 
   useEffect(() => {
     if (!alterado) return;
@@ -160,7 +192,7 @@ export function EditorDeSecao({
    * ultima palavra e clica em seguida perderia justamente essa palavra.
    */
   function guardarJa() {
-    if (alterado) guardarCopiaLocal(armazemDoNavegador(), chave, dados);
+    if (alterado) guardarCopiaLocal(armazemDoNavegador(), chave, dados, new Date(), salvo);
   }
 
   function perderSessao() {
@@ -172,6 +204,48 @@ export function EditorDeSecao({
     guardarJa();
     aoVoltar();
   }
+
+  /* -------- publicado pela aba de como vai ficar -------- */
+
+  const aoPublicarPelaPrevia = useRef<(secao: EstadoDaSecao<unknown>) => void>(() => {});
+  useEffect(() => {
+    aoPublicarPelaPrevia.current = (secao) => {
+      aoAtualizar(secao);
+      if (previaDe !== null && previaDe === textoAtual) {
+        copiaResolvida.current = true;
+        apagarCopiaLocal(armazemDoNavegador(), chave);
+        aoPublicar(`A seção “${descritor.rotulo}” foi publicada. Quem abrir o site a partir de agora já vê a versão nova.`);
+        return;
+      }
+      // Ela mudou algo depois de ver: o que foi publicado e a versao vista, e
+      // o que esta na tela continua aqui, sem ir para o site.
+      setSalvo(baseDaSecao(chave, secao));
+      setPreviaDe(null);
+      setLinkDaPrevia(null);
+      setSucesso(null);
+      setAviso(
+        "A versão que você viu na outra aba foi publicada. O que você mudou depois continua aqui, sem ir para o site: veja de novo como vai ficar para publicar.",
+      );
+    };
+  });
+
+  useEffect(() => {
+    if (typeof BroadcastChannel === "undefined") return;
+    let canal: BroadcastChannel;
+    try {
+      canal = new BroadcastChannel(CANAL_DA_PAGINA_INICIAL);
+    } catch {
+      return;
+    }
+    canal.onmessage = (evento: MessageEvent) => {
+      const mensagem: unknown = evento.data;
+      if (!ehObjeto(mensagem) || mensagem.tipo !== "publicada" || mensagem.chave !== chave || !ehObjeto(mensagem.secao)) {
+        return;
+      }
+      aoPublicarPelaPrevia.current(mensagem.secao as EstadoDaSecao<unknown>);
+    };
+    return () => canal.close();
+  }, [chave]);
 
   /* -------- escrever nos campos -------- */
 
@@ -217,6 +291,10 @@ export function EditorDeSecao({
     setEnviandoEm(caminho);
     setConfirmando(null);
     const caminhoDoArquivo = `${caminho}.src`;
+    const caminhoDoAlt = `${caminho}.alt`;
+    const antes = lerCaminho(dados, caminho);
+    const tinhaFoto = ehObjeto(antes) && typeof antes.src === "string" && antes.src !== "";
+    const descricaoAntes = ehObjeto(antes) && typeof antes.alt === "string" ? antes.alt : "";
     try {
       // Reduzir, converter (JPEG onde o navegador nao gera WebP) e enviar mora em
       // src/lib/preparar-imagem.ts, o mesmo do editor de post.
@@ -224,8 +302,15 @@ export function EditorDeSecao({
       // A regra da largura minima e a do contrato, conferida ja no envio: sem
       // isto a foto estreita so seria recusada no fim, ao publicar.
       const erroDaFoto = conferirCampo(campo, { src: enviada.url, alt: "foto" }, caminho).erros[caminhoDoArquivo];
-      // Pela forma funcional: durante o envio ela pode ter escrito a descricao,
-      // e o `dados` deste fechamento ainda e o de antes.
+      // Foto trocada leva junto a descricao da foto anterior, e a validacao so
+      // confere se ha descricao: a foto do consultorio ia ao ar lida como
+      // "recepcao com poltronas". Se ela nao reescreveu a descricao durante o
+      // envio, a descricao velha sai e o campo pede a da foto nova.
+      const agora = lerCaminho(ultimo.current.dados, caminho);
+      const descricaoAgora = ehObjeto(agora) && typeof agora.alt === "string" ? agora.alt : "";
+      const pedirDescricao = tinhaFoto && descricaoAntes !== "" && descricaoAgora === descricaoAntes;
+      // Pela forma funcional: durante o envio ela pode ter mexido em outro
+      // campo, e o `dados` deste fechamento ainda e o de antes.
       setDados((atuais) => {
         const anterior = lerCaminho(atuais, caminho);
         const base = ehObjeto(anterior) ? anterior : {};
@@ -234,15 +319,20 @@ export function EditorDeSecao({
           src: enviada.url,
           largura: enviada.largura,
           altura: enviada.altura,
+          ...(pedirDescricao ? { alt: "" } : {}),
         });
       });
       setErros((atuais) => {
         const saida = { ...atuais };
         delete saida[caminhoDoArquivo];
         if (erroDaFoto) saida[caminhoDoArquivo] = erroDaFoto;
+        if (pedirDescricao) saida[caminhoDoAlt] = "A descrição era da foto anterior. Descreva a foto nova em uma frase.";
         return saida;
       });
       setSucesso(null);
+      if (pedirDescricao) {
+        requestAnimationFrame(() => document.getElementById(idDoCampo(chave, caminhoDoAlt))?.focus());
+      }
     } catch (erro) {
       if (erro instanceof ErroAoEnviarImagem && erro.sessaoPerdida) {
         perderSessao();
@@ -274,7 +364,9 @@ export function EditorDeSecao({
 
   /**
    * Um pedido a rota da secao. Devolve a secao como ficou, ou null com o aviso
-   * ja escrito. 401/403 guarda a copia e devolve a tela para a senha.
+   * ja escrito. 401/403 guarda a copia e devolve a tela para a senha. 409 (a
+   * secao mudou em outra janela): nada foi gravado, e o que ela mudou e juntado
+   * com a versao nova.
    */
   async function pedir(
     metodo: "PUT" | "DELETE",
@@ -282,12 +374,13 @@ export function EditorDeSecao({
     alvo: AlvoDoDescarte | null,
   ): Promise<EstadoDaSecao<unknown> | null> {
     const endereco = `/api/painel/inicio/${encodeURIComponent(chave)}${alvo ? `?alvo=${alvo}` : ""}`;
+    const referencia = salvo;
     let resposta: Response;
     try {
       resposta = await fetch(endereco, {
         method: metodo,
         headers: corpo ? { "Content-Type": "application/json" } : undefined,
-        body: corpo ? JSON.stringify(corpo) : undefined,
+        body: corpo ? JSON.stringify({ ...corpo, versao: estado.atualizadoEm }) : undefined,
       });
     } catch {
       setAviso(mensagemDeFalha(0, null));
@@ -300,6 +393,23 @@ export function EditorDeSecao({
     }
 
     const lido: unknown = await resposta.json().catch(() => null);
+    const secaoDaResposta = ehObjeto(lido) && ehObjeto(lido.secao) ? (lido.secao as EstadoDaSecao<unknown>) : null;
+
+    if (resposta.status === 409) {
+      if (secaoDaResposta) {
+        aoAtualizar(secaoDaResposta);
+        const versaoNova = baseDaSecao(chave, secaoDaResposta);
+        setDados((atuais) => aplicarCopia(chave, versaoNova, atuais, referencia));
+        setSalvo(versaoNova);
+      }
+      setPreviaDe(null);
+      setLinkDaPrevia(null);
+      setAviso(
+        "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora para não apagar essa mudança. Juntamos o que você alterou com a versão mais nova: confira os campos e veja de novo como vai ficar.",
+      );
+      return null;
+    }
+
     if (!resposta.ok) {
       const errosDoServidor = ehObjeto(lido) && ehObjeto(lido.erros) ? lido.erros : null;
       if (errosDoServidor) {
@@ -313,13 +423,12 @@ export function EditorDeSecao({
       return null;
     }
 
-    const secao = ehObjeto(lido) && ehObjeto(lido.secao) ? (lido.secao as EstadoDaSecao<unknown>) : null;
-    if (!secao) {
+    if (!secaoDaResposta) {
       setAviso(mensagemDeFalha(502, null));
       return null;
     }
-    aoAtualizar(secao);
-    return secao;
+    aoAtualizar(secaoDaResposta);
+    return secaoDaResposta;
   }
 
   async function executar(qual: "previa" | Confirmacao, tarefa: () => Promise<void>) {
@@ -353,7 +462,7 @@ export function EditorDeSecao({
       janela = null;
     }
     try {
-      if (janela) janela.document.body.textContent = "Preparando a prévia…";
+      if (janela) janela.document.body.textContent = "Preparando a página…";
     } catch {
       // aba ja numa pagina que nao aceita escrita: a navegacao abaixo resolve
     }
@@ -371,15 +480,18 @@ export function EditorDeSecao({
       // foi digitado nesses segundos sumiria.
       setDados((atuais) => (atuais === enviado ? novo : atuais));
       setRecuperado(false);
+      setMudouNoServidor(false);
 
       if (janela && !janela.closed) {
         janela.opener = null;
-        janela.location.href = ENDERECO_DA_PREVIA;
+        janela.location.href = enderecoDaPrevia(chave);
         setPreviaDe(JSON.stringify(novo));
-        setSucesso("Rascunho salvo. A prévia abriu em outra aba: confira a página inteira e volte aqui para publicar.");
+        setSucesso(
+          "Rascunho salvo. A página abriu em outra aba: confira como vai ficar e publique por lá, ou volte aqui para publicar.",
+        );
       } else {
         setLinkDaPrevia(JSON.stringify(novo));
-        setSucesso("Rascunho salvo. Abra a prévia pelo link abaixo e volte aqui para publicar.");
+        setSucesso("Rascunho salvo. Abra a página pelo link abaixo para ver como vai ficar.");
       }
     });
   }
@@ -395,6 +507,7 @@ export function EditorDeSecao({
     void executar("publicar", async () => {
       const secao = await pedir("PUT", { dados: validos, acao: "publicar" }, null);
       if (!secao) return;
+      copiaResolvida.current = true;
       apagarCopiaLocal(armazemDoNavegador(), chave);
       aoPublicar(
         `A seção “${descritor.rotulo}” foi publicada. Quem abrir o site a partir de agora já vê a versão nova.`,
@@ -411,6 +524,7 @@ export function EditorDeSecao({
     const limpar = () => {
       setErros({});
       setRecuperado(false);
+      setMudouNoServidor(false);
       setPreviaDe(null);
       setLinkDaPrevia(null);
       apagarCopiaLocal(armazemDoNavegador(), chave);
@@ -478,20 +592,19 @@ export function EditorDeSecao({
   const padrao = ehObjeto(estado.padrao) ? estado.padrao : {};
   const rotuloDoDescarte = temRascunhoNoServidor ? "Descartar rascunho" : "Descartar alterações";
   const podeDescartar = temRascunhoNoServidor || alterado;
-  const podeVoltarAoOriginal = estado.publicado !== null;
+  // So quando o que esta no ar difere do original: senao o botao prometia
+  // mudar o site e nao mudava nada.
+  const podeVoltarAoOriginal = publicadoDiferenteDoPadrao(estado);
 
   let explicacaoDaConfirmacao: string | null = null;
   if (confirmando === "publicar") {
-    explicacaoDaConfirmacao = `Esta versão vai para o site: ${primeiraMinuscula(descritor.aparece)}${
-      descritor.global ? ", para todo mundo" : ""
-    }. Para confirmar, clique outra vez em “Confirmar e publicar”.`;
+    explicacaoDaConfirmacao = explicacaoDePublicar(chave);
   } else if (confirmando === "descartar") {
     explicacaoDaConfirmacao = `${
       temRascunhoNoServidor ? "O rascunho salvo e as alterações desta tela serão apagados." : "As alterações desta tela serão apagadas."
     } O que está no site não muda. Para confirmar, clique outra vez em “Confirmar descarte”.`;
   } else if (confirmando === "original") {
-    explicacaoDaConfirmacao =
-      "O texto original desta seção volta ao site agora, no lugar do que está publicado. Você pode publicar outra versão quando quiser. Para confirmar, clique outra vez em “Confirmar e voltar ao original”.";
+    explicacaoDaConfirmacao = explicacaoDeVoltarAoOriginal(chave);
   }
 
   return (
@@ -514,17 +627,35 @@ export function EditorDeSecao({
         </p>
 
         {chave === "hero" && (
-          <p className="mt-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
-            O título foi medido para caber ao lado das figuras: cada linha tem um limite de caracteres e
-            quebra exatamente onde você quebrar. Antes de publicar, confira a prévia numa tela de notebook
-            ou computador, não só no celular.
+          <>
+            <p className={NOTA}>
+              O título foi medido para caber ao lado das figuras: cada linha tem um limite de caracteres e
+              quebra exatamente onde você quebrar. Antes de publicar, confira como vai ficar numa tela de
+              notebook ou computador, não só no celular.
+            </p>
+            {/* Aviso honesto: public/og.png e uma captura fixa do topo, e o painel nao a refaz. */}
+            <p className={NOTA}>
+              A imagem que aparece quando alguém compartilha o site no WhatsApp ou nas redes continua a de
+              antes: ela não muda com o que você publicar aqui.
+            </p>
+          </>
+        )}
+
+        {chave === "contato" && (
+          // Aviso honesto: telefones escritos a mao no HTML de pages.json e de
+          // posts.json nao seguem este cadastro.
+          <p className={NOTA}>
+            Trocar um número aqui muda o cabeçalho, o rodapé, os botões e a página Contato. Os telefones que
+            estão escritos dentro dos textos antigos do blog e das páginas internas não mudam sozinhos.
           </p>
         )}
 
         {recuperado && (
-          <p className="mt-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
-            Recuperamos o que você estava editando neste navegador. Para ficar com o que está salvo, use
-            “{rotuloDoDescarte}” no fim da página.
+          <p role="status" className={NOTA}>
+            Recuperamos o que você estava editando neste navegador.
+            {mudouNoServidor &&
+              " Esta seção mudou no site depois disso: os campos que você não tinha mexido já vêm com a versão nova. Confira antes de publicar."}{" "}
+            Para ficar com o que está salvo, use “{rotuloDoDescarte}” no fim da página.
           </p>
         )}
 
@@ -538,8 +669,8 @@ export function EditorDeSecao({
           {semBanco ? (
             <p role="status" className="rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
               O banco de dados ainda não está ligado neste servidor. O que aparece aqui é o texto original do
-              site, e ver a prévia e publicar só funcionam depois que o banco for configurado. O que você
-              mudar fica guardado neste navegador. Avise quem cuida do site.
+              site, e ver como vai ficar e publicar só funcionam depois que o banco for configurado. O que
+              você mudar fica guardado neste navegador. Avise quem cuida do site.
             </p>
           ) : (
             <>
@@ -601,7 +732,7 @@ export function EditorDeSecao({
                       ? "Voltando ao original…"
                       : confirmando === "original"
                         ? "Confirmar e voltar ao original"
-                        : "Voltar ao texto original"}
+                        : "Voltar o site ao texto original"}
                   </button>
                 )}
               </div>
@@ -609,7 +740,7 @@ export function EditorDeSecao({
               {!podePublicar && (
                 <p id="inicio-dica-da-previa" className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
                   {previaDe !== null
-                    ? "Você mudou algo depois da prévia. Veja de novo como vai ficar para poder publicar."
+                    ? "Você mudou algo depois de ver como ia ficar. Veja de novo para poder publicar."
                     : "O botão de publicar aparece depois que você vê como vai ficar."}
                 </p>
               )}
@@ -648,7 +779,7 @@ export function EditorDeSecao({
           )}
           {linkDaPrevia !== null && (
             <a
-              href={ENDERECO_DA_PREVIA}
+              href={enderecoDaPrevia(chave)}
               target="_blank"
               rel="noopener"
               onClick={() => {
@@ -657,7 +788,7 @@ export function EditorDeSecao({
               }}
               className="sublinha mt-2 inline-flex min-h-[44px] items-center text-[0.9375rem] text-accent"
             >
-              Abrir a prévia em outra aba
+              Ver como vai ficar em outra aba
             </a>
           )}
         </div>

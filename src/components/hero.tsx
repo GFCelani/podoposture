@@ -226,7 +226,7 @@ export function Hero({ conteudo, whatsapp }: { conteudo: ConteudoHero; whatsapp:
             comentario do bloco HERO em globals.css.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <TituloEmLinhas linhas={conteudo.tituloLinhas} destaque={conteudo.destaque} />

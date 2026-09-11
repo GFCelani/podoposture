@@ -56,33 +56,57 @@ export type ConteudoDaPrevia = {
   conteudo: ConteudoDoSite;
   /** Frase pronta para a faixa da previa quando o rascunho nao pode ser lido. */
   aviso: string | null;
+  /** Secoes com rascunho que NAO entra nesta previa (so a secao pedida entra). */
+  outrosRascunhos: ChaveDeSecao[];
+  /** O rascunho da secao pedida, ja mesclado, e a versao da linha: o que a previa pode publicar. */
+  rascunhoDaSecao: { dados: unknown; versao: string | null } | null;
 };
 
 /**
  * Padrao ⊕ publicado ⊕ rascunho, para a previa. So a pagina da previa chama,
  * depois de conferir a sessao; sem `cache`, porque a previa e dinamica e cada
  * visita precisa ver o rascunho de agora.
+ *
+ * Com `soDaSecao`, so o rascunho dela entra; as outras secoes aparecem como
+ * estao no site. Com todos os rascunhos por cima, ela aprovava uma pagina que
+ * nao era a que ia ao ar: o numero novo de um rascunho de Contato aparecia na
+ * previa da Abertura, e publicar a Abertura levava o titulo novo com o numero
+ * antigo. Sem `soDaSecao` (endereco aberto a mao), entram todos.
  */
-export async function lerConteudoComRascunho(): Promise<ConteudoDaPrevia> {
+export async function lerConteudoComRascunho(soDaSecao: ChaveDeSecao | null = null): Promise<ConteudoDaPrevia> {
   if (!bancoConfigurado()) {
     return {
       conteudo: CONTEUDO_PADRAO,
-      aviso: "O banco de dados não está ligado neste servidor, então a prévia mostra o texto padrão.",
+      aviso: "O banco de dados não está ligado neste servidor, então esta página mostra o texto padrão.",
+      outrosRascunhos: [],
+      rascunhoDaSecao: null,
     };
   }
   try {
-    const { publicados, rascunhos } = await lerPublicadosERascunhos();
+    const { publicados, rascunhos, versoes } = await lerPublicadosERascunhos();
     const saida = {} as Record<ChaveDeSecao, unknown>;
+    const outrosRascunhos: ChaveDeSecao[] = [];
     for (const chave of CHAVES_DE_SECAO) {
       const publicado = mesclarSecao(chave, CONTEUDO_PADRAO[chave], publicados[chave]);
-      saida[chave] = mesclarSecao(chave, publicado, rascunhos[chave]);
+      const comRascunho = mesclarSecao(chave, publicado, rascunhos[chave]);
+      const entra = soDaSecao === null || chave === soDaSecao;
+      saida[chave] = entra ? comRascunho : publicado;
+      if (!entra && rascunhos[chave] !== undefined && JSON.stringify(comRascunho) !== JSON.stringify(publicado)) {
+        outrosRascunhos.push(chave);
+      }
     }
-    return { conteudo: saida as ConteudoDoSite, aviso: null };
+    const rascunhoDaSecao =
+      soDaSecao !== null && rascunhos[soDaSecao] !== undefined
+        ? { dados: saida[soDaSecao], versao: versoes[soDaSecao] ?? null }
+        : null;
+    return { conteudo: saida as ConteudoDoSite, aviso: null, outrosRascunhos, rascunhoDaSecao };
   } catch (erro) {
     console.error("[conteudo] falha ao ler o rascunho para a previa:", erro);
     return {
       conteudo: CONTEUDO_PADRAO,
-      aviso: "Não deu para ler os rascunhos agora, então a prévia mostra o texto padrão. Recarregue em instantes.",
+      aviso: "Não deu para ler os rascunhos agora, então esta página mostra o texto padrão. Recarregue em instantes.",
+      outrosRascunhos: [],
+      rascunhoDaSecao: null,
     };
   }
 }

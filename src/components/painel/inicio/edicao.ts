@@ -298,8 +298,10 @@ export function textoDoValor(campo: Campo, valor: unknown): string {
       return ehObjeto(valor) && typeof valor.alt === "string" ? valor.alt : "";
     case "grupo": {
       if (!ehObjeto(valor)) return "";
+      // A lista entra junto: sem ela, a "Lista original" dos servicos mostrava
+      // so titulo e botao, e o paragrafo que ela queria recuperar nao aparecia.
       return Object.entries(campo.campos)
-        .filter(([, sub]) => sub.tipo === "texto" || sub.tipo === "paragrafo")
+        .filter(([, sub]) => sub.tipo === "texto" || sub.tipo === "paragrafo" || sub.tipo === "lista")
         .map(([nome, sub]) => linhaUnica(textoDoValor(sub, valor[nome])))
         .filter(Boolean)
         .join(" · ");
@@ -380,6 +382,48 @@ export function estadoEmPalavras(estado: EstadoDaSecao<unknown>, temCopiaLocal: 
   return marcas;
 }
 
+/**
+ * O que esta no ar difere do texto original? So entao "voltar ao texto
+ * original" faz sentido: com o publicado igual ao padrao o botao prometia
+ * mudar o site e nao mudava nada.
+ */
+export function publicadoDiferenteDoPadrao(estado: EstadoDaSecao<unknown>): boolean {
+  return estado.publicado !== null && JSON.stringify(estado.publicado) !== JSON.stringify(estado.padrao);
+}
+
+function primeiraMinuscula(texto: string): string {
+  return texto.charAt(0).toLowerCase() + texto.slice(1);
+}
+
+function ondeAparece(chave: ChaveDeSecao): string {
+  const descritor = DESCRITORES[chave];
+  return `${primeiraMinuscula(descritor.aparece)}${descritor.global ? ", para todo mundo" : ""}`;
+}
+
+/** A confirmacao de publicar: onde a mudanca aparece. Usada no editor e na aba de como vai ficar. */
+export function explicacaoDePublicar(chave: ChaveDeSecao): string {
+  return `Esta versão vai para o site: ${ondeAparece(chave)}. Para confirmar, clique outra vez em “Confirmar e publicar”.`;
+}
+
+/**
+ * A confirmacao de voltar ao original, que muda o site na hora e sem ver antes
+ * como fica — e precisa dizer isso, e onde, como a de publicar diz.
+ */
+export function explicacaoDeVoltarAoOriginal(chave: ChaveDeSecao): string {
+  return `O texto original desta seção volta ao site agora, sem ver antes como fica: ${ondeAparece(chave)}. O que está publicado sai do ar. Para confirmar, clique outra vez em “Confirmar e voltar ao original”.`;
+}
+
+/** A aba de como vai ficar mostra so o rascunho desta secao (o resto como esta no site). */
+export function enderecoDaPrevia(chave: ChaveDeSecao): string {
+  return `/publicar/previa?secao=${encodeURIComponent(chave)}`;
+}
+
+/**
+ * Canal entre a aba de como vai ficar e o painel: publicar por la avisa o
+ * editor aberto, que senao seguiria achando que nada foi ao ar.
+ */
+export const CANAL_DA_PAGINA_INICIAL = "podoposture-inicio";
+
 /** Frase de falha ao salvar, com o que acontece com o texto e o proximo passo. */
 export function mensagemDeFalha(status: number, erroDoServidor: unknown): string {
   const doServidor = typeof erroDoServidor === "string" && erroDoServidor ? erroDoServidor : null;
@@ -408,7 +452,13 @@ const PREFIXO_DA_COPIA = "podoposture_inicio:";
 /** No `sessionStorage`: morre com a aba, entao nunca reabre uma secao dias depois. */
 const CHAVE_DE_REABRIR = "podoposture_inicio_reabrir";
 
-export type CopiaLocal = { dados: DadosEmEdicao; guardadaEm: string };
+/**
+ * `base` e o que o servidor tinha quando a copia nasceu. Com ela, recuperar
+ * leva so os campos que ela mexeu: sem ela, a copia guardava o formulario
+ * inteiro e, reaberta depois de uma publicacao em outro aparelho, devolvia
+ * tambem os campos que ela nem tocou — o e-mail antigo voltava ao site.
+ */
+export type CopiaLocal = { dados: DadosEmEdicao; base?: DadosEmEdicao; guardadaEm: string };
 
 export function armazemDoNavegador(): Armazem | null {
   try {
@@ -425,7 +475,11 @@ export function lerCopiaLocal(armazem: Armazem | null, chave: ChaveDeSecao): Cop
     if (!bruto) return null;
     const lido: unknown = JSON.parse(bruto);
     if (!ehObjeto(lido) || !ehObjeto(lido.dados)) return null;
-    return { dados: lido.dados, guardadaEm: typeof lido.guardadaEm === "string" ? lido.guardadaEm : "" };
+    return {
+      dados: lido.dados,
+      ...(ehObjeto(lido.base) ? { base: lido.base } : {}),
+      guardadaEm: typeof lido.guardadaEm === "string" ? lido.guardadaEm : "",
+    };
   } catch {
     // copia ilegivel nao pode impedir de abrir a secao
     return null;
@@ -437,9 +491,10 @@ export function guardarCopiaLocal(
   chave: ChaveDeSecao,
   dados: DadosEmEdicao,
   agora = new Date(),
+  base?: DadosEmEdicao,
 ): void {
   try {
-    const copia: CopiaLocal = { dados, guardadaEm: agora.toISOString() };
+    const copia: CopiaLocal = { dados, ...(base ? { base } : {}), guardadaEm: agora.toISOString() };
     armazem?.setItem(PREFIXO_DA_COPIA + chave, JSON.stringify(copia));
   } catch {
     // sem espaco no navegador: o texto segue na tela, so nao ha copia
@@ -458,11 +513,24 @@ export function apagarCopiaLocal(armazem: Armazem | null, chave: ChaveDeSecao): 
  * A copia recuperada por cima do que veio do servidor, campo de topo a campo
  * de topo. Chave que nao existe mais no descritor (copia de uma versao antiga
  * do painel) fica de fora, para nao ir parar no corpo enviado.
+ *
+ * Com `referencia` (o que o servidor tinha quando ela comecou a editar), so
+ * entram os campos que ela mudou em relacao a ela; o resto fica com o valor de
+ * agora do servidor. E a mesma juncao que o editor usa quando outra janela
+ * publicou no meio: o que ela alterou vai por cima da versao nova, e o que ela
+ * nao tocou segue a versao nova. Sem `referencia` (copia antiga), vai tudo.
  */
-export function aplicarCopia(chave: ChaveDeSecao, base: DadosEmEdicao, copia: DadosEmEdicao): DadosEmEdicao {
-  const saida: DadosEmEdicao = { ...base };
+export function aplicarCopia(
+  chave: ChaveDeSecao,
+  servidor: DadosEmEdicao,
+  copia: DadosEmEdicao,
+  referencia?: DadosEmEdicao,
+): DadosEmEdicao {
+  const saida: DadosEmEdicao = { ...servidor };
   for (const nome of Object.keys(camposDaSecao(chave))) {
-    if (nome in copia) saida[nome] = copia[nome];
+    if (!(nome in copia)) continue;
+    if (referencia && JSON.stringify(copia[nome]) === JSON.stringify(referencia[nome])) continue;
+    saida[nome] = copia[nome];
   }
   return saida;
 }

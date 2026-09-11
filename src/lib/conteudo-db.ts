@@ -90,25 +90,28 @@ export async function lerPublicados(): Promise<Record<string, unknown>> {
   }
 }
 
-/** Publicados e rascunhos numa consulta, para a previa. */
+/** Publicados, rascunhos e a versao de cada linha numa consulta, para a previa. */
 export async function lerPublicadosERascunhos(): Promise<{
   publicados: Record<string, unknown>;
   rascunhos: Record<string, unknown>;
+  versoes: Record<string, string>;
 }> {
-  if (!bancoConfigurado()) return { publicados: {}, rascunhos: {} };
+  if (!bancoConfigurado()) return { publicados: {}, rascunhos: {}, versoes: {} };
   const sql = bancoDoPainel();
   try {
-    const linhas = await sql<{ chave: string; publicado: unknown; rascunho: unknown }[]>`
-      SELECT chave, publicado, rascunho FROM conteudo_site`;
+    const linhas = await sql<{ chave: string; publicado: unknown; rascunho: unknown; atualizado_em: Date }[]>`
+      SELECT chave, publicado, rascunho, atualizado_em FROM conteudo_site`;
     const publicados: Record<string, unknown> = {};
     const rascunhos: Record<string, unknown> = {};
+    const versoes: Record<string, string> = {};
     for (const l of linhas) {
       if (l.publicado !== null) publicados[l.chave] = l.publicado;
       if (l.rascunho !== null) rascunhos[l.chave] = l.rascunho;
+      versoes[l.chave] = l.atualizado_em.toISOString();
     }
-    return { publicados, rascunhos };
+    return { publicados, rascunhos, versoes };
   } catch (erro) {
-    if (tabelaAusente(erro)) return { publicados: {}, rascunhos: {} };
+    if (tabelaAusente(erro)) return { publicados: {}, rascunhos: {}, versoes: {} };
     throw erro;
   }
 }
@@ -124,25 +127,54 @@ export async function listarSecoesSalvas(): Promise<Map<string, LinhaDeConteudo>
   return new Map(linhas.map((l) => [l.chave, paraLinha(l)]));
 }
 
+/** Uma secao salva, ou null se nunca foi salva. So o painel usa. */
+export async function lerSecao(chave: ChaveDeSecao): Promise<LinhaDeConteudo | null> {
+  await garantirTabelaDeConteudo();
+  const sql = bancoDoPainel();
+  const [linha] = await sql<LinhaCrua[]>`
+    SELECT chave, publicado, rascunho, atualizado_em, publicado_em FROM conteudo_site WHERE chave = ${chave}`;
+  return linha ? paraLinha(linha) : null;
+}
+
+/**
+ * A escrita so vale se a secao ainda estiver na versao que o editor carregou.
+ *
+ * Sem isto, uma aba aberta antes de outra publicar gravava a secao inteira por
+ * cima — o telefone novo publicado no celular voltava ao antigo no notebook, e
+ * a resposta 200 nao avisava ninguem. Em milissegundos: o banco guarda
+ * microssegundos e a versao viaja pelo `toISOString`, que corta em milissegundos.
+ * `versao` undefined = sem conferencia (quem chama sem saber a versao).
+ */
+function condicaoDeVersao(sql: ReturnType<typeof bancoDoPainel>, versao: string | null | undefined) {
+  return sql`${versao === undefined} OR date_trunc('milliseconds', conteudo_site.atualizado_em) IS NOT DISTINCT FROM ${versao ?? null}::timestamptz`;
+}
+
+/** null quando a secao ja nao esta na `versao` esperada: nada foi gravado. */
 export async function gravarRascunho(
   chave: ChaveDeSecao,
   dados: ConteudoDoSite[ChaveDeSecao],
-): Promise<LinhaDeConteudo> {
+  versao?: string | null,
+): Promise<LinhaDeConteudo | null> {
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
     INSERT INTO conteudo_site (chave, rascunho, atualizado_em)
     VALUES (${chave}, ${sql.json(dados as ParametroJson)}, NOW())
     ON CONFLICT (chave) DO UPDATE SET rascunho = EXCLUDED.rascunho, atualizado_em = NOW()
+    WHERE ${condicaoDeVersao(sql, versao)}
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
-  return paraLinha(linha);
+  return linha ? paraLinha(linha) : null;
 }
 
-/** Publicar zera o rascunho: o que estava em preparo acabou de ir ao ar. */
+/**
+ * Publicar zera o rascunho: o que estava em preparo acabou de ir ao ar.
+ * null quando a secao ja nao esta na `versao` esperada: nada foi gravado.
+ */
 export async function publicarSecao(
   chave: ChaveDeSecao,
   dados: ConteudoDoSite[ChaveDeSecao],
-): Promise<LinhaDeConteudo> {
+  versao?: string | null,
+): Promise<LinhaDeConteudo | null> {
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
@@ -150,8 +182,9 @@ export async function publicarSecao(
     VALUES (${chave}, ${sql.json(dados as ParametroJson)}, NULL, NOW(), NOW())
     ON CONFLICT (chave) DO UPDATE SET
       publicado = EXCLUDED.publicado, rascunho = NULL, atualizado_em = NOW(), publicado_em = NOW()
+    WHERE ${condicaoDeVersao(sql, versao)}
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
-  return paraLinha(linha);
+  return linha ? paraLinha(linha) : null;
 }
 
 /** null quando a secao nunca foi salva: nao havia rascunho para descartar. */

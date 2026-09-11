@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CHAVES_DE_SECAO,
   DESCRITORES,
+  ehChaveDeSecao,
   type ChaveDeSecao,
   type EstadoDaSecao,
   type RespostaDoInicio,
@@ -13,6 +14,7 @@ import { armazemDaAba } from "@/lib/recado-do-editor";
 
 import { EditorDeSecao } from "./EditorDeSecao";
 import {
+  CANAL_DA_PAGINA_INICIAL,
   armazemDoNavegador,
   deixarSecaoParaReabrir,
   ehObjeto,
@@ -109,6 +111,32 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
     );
   }, []);
 
+  useEffect(() => {
+    // Publicado pela aba de como vai ficar: a lista passa a mostrar a secao
+    // como ficou, sem esperar recarregar.
+    if (typeof BroadcastChannel === "undefined") return;
+    let canal: BroadcastChannel;
+    try {
+      canal = new BroadcastChannel(CANAL_DA_PAGINA_INICIAL);
+    } catch {
+      return;
+    }
+    canal.onmessage = (evento: MessageEvent) => {
+      const mensagem: unknown = evento.data;
+      if (
+        !ehObjeto(mensagem) ||
+        mensagem.tipo !== "publicada" ||
+        typeof mensagem.chave !== "string" ||
+        !ehChaveDeSecao(mensagem.chave) ||
+        !ehObjeto(mensagem.secao)
+      ) {
+        return;
+      }
+      atualizarSecao(mensagem.chave, mensagem.secao as EstadoDaSecao<unknown>);
+    };
+    return () => canal.close();
+  }, [atualizarSecao]);
+
   function abrir(chave: ChaveDeSecao) {
     setAviso(null);
     setAberta(chave);
@@ -123,23 +151,42 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
     requestAnimationFrame(() => document.getElementById(`inicio-secao-${chave}`)?.focus());
   }
 
+  // Regiao de status no mesmo lugar nas duas telas (editor e lista): o aviso de
+  // "foi publicada" entra junto com a troca para a lista, e um aviso que ja
+  // nasce escrito nem sempre e lido pelo leitor de tela. Aqui so o texto muda.
+  const regiaoDeStatus = (
+    <p
+      role="status"
+      className={
+        aviso?.tipo === "feito"
+          ? "mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] text-ink-strong"
+          : "sr-only"
+      }
+    >
+      {aviso?.tipo === "feito" ? aviso.texto : ""}
+    </p>
+  );
+
   if (aberta && resposta) {
     const chave = aberta;
     return (
-      <EditorDeSecao
-        key={chave}
-        chave={chave}
-        estado={resposta.secoes[chave]}
-        destinos={resposta.destinos}
-        semBanco={resposta.semBanco}
-        aoAtualizar={(secao) => atualizarSecao(chave, secao)}
-        aoPublicar={(mensagem) => fechar(chave, { tipo: "feito", texto: mensagem })}
-        aoVoltar={() => fechar(chave, null)}
-        aoPerderSessao={() => {
-          deixarSecaoParaReabrir(armazemDaAba(), chave);
-          aoPerderSessao();
-        }}
-      />
+      <>
+        {regiaoDeStatus}
+        <EditorDeSecao
+          key={chave}
+          chave={chave}
+          estado={resposta.secoes[chave]}
+          destinos={resposta.destinos}
+          semBanco={resposta.semBanco}
+          aoAtualizar={(secao) => atualizarSecao(chave, secao)}
+          aoPublicar={(mensagem) => fechar(chave, { tipo: "feito", texto: mensagem })}
+          aoVoltar={() => fechar(chave, null)}
+          aoPerderSessao={() => {
+            deixarSecaoParaReabrir(armazemDaAba(), chave);
+            aoPerderSessao();
+          }}
+        />
+      </>
     );
   }
 
@@ -147,6 +194,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
 
   return (
     <>
+      {regiaoDeStatus}
       {erroDaCarga && (
         <div role="alert" className="mb-6 rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] text-[#8c2f2f]">
           <p>{erroDaCarga}</p>
@@ -166,12 +214,6 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
           {aviso.texto}
         </p>
       )}
-      {aviso?.tipo === "feito" && (
-        <p role="status" className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] text-ink-strong">
-          {aviso.texto}
-        </p>
-      )}
-
       {resposta?.semBanco && (
         // frontend-refs: empty-state-microfunil — diz a causa e quem resolve
         <p className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
@@ -182,8 +224,8 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
 
       <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">Página inicial</h1>
       <p className="mt-3 max-w-[40rem] text-[1.0625rem] leading-[1.7] text-ink">
-        Escolha o que quer mudar. Nada vai para o site antes de você ver como fica e publicar, e cada seção
-        pode voltar ao texto original.
+        Escolha o que quer mudar. O que você escreve só vai para o site depois de você ver como fica e
+        publicar. Se precisar, cada seção pode voltar ao texto original de uma vez, direto no site.
       </p>
 
       {!resposta ? (
