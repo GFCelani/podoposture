@@ -36,8 +36,16 @@ export function generateStaticParams() {
   return SLUGS_A_GERAR.map((slug) => ({ slug }));
 }
 
-// qualquer slug fora da lista e 404 de verdade, nao uma pagina vazia
-export const dynamicParams = false;
+/**
+ * Era `false`, e isso derrubava as 18 paginas para 404 no primeiro
+ * `revalidatePath("/", "layout")` — que roda a cada publicacao na pagina
+ * inicial e em toda coleta da noite. Com os parametros dinamicos desligados, a
+ * pagina invalidada chega a regeneracao sem versao anterior e o Next responde
+ * 404, e o 404 fica em cache (medido com `next start`). Endereco inventado
+ * continua sendo 404: a pagina chama `notFound()` quando `buscarPagina` nao
+ * acha. O teste em src/lib/revalidacao.test.ts impede a volta do `false`.
+ */
+export const dynamicParams = true;
 
 /**
  * Tipo de pagina, pelo grupo do menu: o grupo "A Clinica" e' institucional,
@@ -67,7 +75,8 @@ export async function generateMetadata({
      linha. Ver rotuloDaPagina. O corpo da pagina continua com a frase
      inteira, ponto incluido. */
   const rotulo = rotuloDaPagina(pagina);
-  const descricao = descricaoDaPagina(pagina);
+  const { contato } = await lerConteudoDoSite();
+  const descricao = descricaoDaPagina(pagina, contato.descricaoParaBuscadores);
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
 
   return {
@@ -134,12 +143,12 @@ export default async function Pagina({
   /* Na trilha e nos dados estruturados o titulo entra como nome de item de
      lista, nao como frase: sem o ponto final. So o h1 leva a frase inteira. */
   const rotulo = rotuloDaPagina(pagina);
-  const descricao = descricaoDaPagina(pagina);
+  const conteudo = await lerConteudoDoSite();
+  const descricao = descricaoDaPagina(pagina, conteudo.contato.descricaoParaBuscadores);
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
   const ilustracao = ilustracaoDaPagina(pagina.slug);
   const tipo = tipoDaPagina(pagina.slug);
   const eContato = pagina.slug === "contato";
-  const conteudo = await lerConteudoDoSite();
   /* Subtitulo visivel: o que a cliente escreveu para a abertura, quando
      existe; senao a descricao de <meta>, como nas demais paginas. A
      descricao e o JSON-LD nao mudam com a abertura: sao copy de busca. */
