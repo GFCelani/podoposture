@@ -107,7 +107,11 @@ export default async function RootLayout({
         </a>
         <NegocioLocalJsonLd contato={contato} />
         {children}
-        <AnalyticsDoSite />
+        {/* So na Vercel: fora dela /_vercel/insights/script.js nao existe, e a
+            tag deixava 404 e erro de tipo MIME no console de toda pagina. Na
+            Vercel o erro so aparece enquanto o Web Analytics estiver desligado,
+            e liga-lo e o primeiro passo dos numeros (README-painel). */}
+        {process.env.VERCEL === "1" && <AnalyticsDoSite />}
         <DevMedida />
       </body>
     </html>

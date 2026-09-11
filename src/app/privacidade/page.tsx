@@ -59,10 +59,10 @@ export default function Privacidade() {
               sem cookie de terceiros e sem cadastro.
             </li>
             <li>
-              <strong>Ninguém é identificado.</strong> Não registramos nome, e-mail, telefone,
-              endereço de IP nem o caminho que uma pessoa específica fez no site. Para não contar a
-              mesma visita duas vezes, a Vercel calcula um código a partir do próprio acesso e o
-              descarta em 24 horas.
+              <strong>Ninguém é identificado.</strong> Na contagem de visitas não registramos nome,
+              e-mail, telefone, endereço de IP nem o caminho que uma pessoa específica fez no site.
+              Para não contar a mesma visita duas vezes, a Vercel calcula um código a partir do
+              próprio acesso e o descarta em 24 horas.
             </li>
             <li>
               <strong>Não seguimos ninguém em outros sites</strong>, e os números não são vendidos
@@ -70,7 +70,9 @@ export default function Privacidade() {
             </li>
             <li>
               A área em que a clínica publica os textos fica fora da contagem. O único cookie do
-              site é o de acesso a essa área, usado só pela equipe da clínica.
+              site é o de acesso a essa área, usado só pela equipe da clínica. Quem tenta entrar
+              nela tem o endereço de IP guardado, só para segurança: por até uma hora na contagem de
+              tentativas de senha, e no registro das últimas 2.000 ações dessa área.
             </li>
           </ul>
 
