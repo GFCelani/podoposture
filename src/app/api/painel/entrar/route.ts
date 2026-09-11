@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 
 import { lerCorpoLimitado } from "@/lib/corpo";
 import { pedidoVeioDaqui } from "@/lib/guarda";
-import { ipDaRequisicao, registrarTentativa } from "@/lib/limite-de-tentativas";
+import {
+  esquecerTentativas,
+  ipDaRequisicao,
+  registrarTentativa,
+} from "@/lib/limite-de-tentativas";
 import { registrarAuditoria } from "@/lib/painel-db";
 import { conferirSenha, hashConfigurado } from "@/lib/senha";
 import { criarBilhete, ehLocalhost, opcoesDoCookie, segredoConfigurado } from "@/lib/sessao";
@@ -110,6 +114,9 @@ export async function POST(req: Request) {
     value: criarBilhete(segredo),
   });
   await registrarAuditoria("login-ok", null, origem);
+  // Senha certa nao conta no limite. `limparTentativas` nunca lanca, entao um
+  // banco lento aqui atrasa a resposta mas nao desfaz o login que ja deu certo.
+  await esquecerTentativas(origem);
 
   return NextResponse.json({ ok: true });
 }

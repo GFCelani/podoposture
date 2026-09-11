@@ -1,6 +1,6 @@
 import "server-only";
 
-import { contarERegistrarTentativa, bancoConfigurado } from "./painel-db";
+import { contarERegistrarTentativa, bancoConfigurado, limparTentativas } from "./painel-db";
 
 /**
  * Quantas vezes se pode errar a senha, e com que identidade se conta.
@@ -118,6 +118,24 @@ export async function registrarTentativa(origem: string | null): Promise<Veredic
     limite,
     esperarSegundos: Math.ceil(JANELA_MS / 1000),
   };
+}
+
+/**
+ * Esquece as tentativas de quem acabou de acertar a senha.
+ *
+ * A tentativa e contada antes de conferir a senha (ver acima), entao sem isto
+ * entrar certo tambem gastava o limite: sessao que vence, celular e computador
+ * no mesmo dia, e em 15 minutos a dona da clinica ficava trancada fora com a
+ * senha certa na mao.
+ *
+ * So com identidade confiavel. O balde comum junta todo mundo sem origem
+ * conhecida; zera-lo porque ela entrou daria a quem tenta no mesmo balde um
+ * contador novo de graca.
+ */
+export async function esquecerTentativas(origem: string | null): Promise<void> {
+  if (!origem) return;
+  marcasEmMemoria.delete(origem);
+  if (bancoConfigurado()) await limparTentativas(origem);
 }
 
 /** So para os testes. */

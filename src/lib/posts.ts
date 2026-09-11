@@ -139,19 +139,28 @@ export function postsRelacionados(slug: string, quantos = 3): Post[] {
   return [...mesmaCategoria, ...complemento].slice(0, quantos);
 }
 
-/** Categorias com pelo menos um post, ordenadas por volume. */
-export const CATEGORIES: { label: string; href: string; total: number }[] =
-  Object.entries(
-    BRUTOS.reduce<Record<string, number>>((acc, post) => {
-      for (const categoria of post.categorias) {
-        acc[categoria] = (acc[categoria] ?? 0) + 1;
-      }
-      return acc;
-    }, {}),
-  )
+export type Tema = { label: string; href: string; total: number };
+
+/**
+ * Temas com pelo menos um post, ordenados por volume.
+ *
+ * Recebe as categorias de cada post, e nao os posts, para as duas fontes do
+ * blog contarem pela mesma regra: um post migrado pode ter varias categorias e
+ * conta em todas; o do painel tem uma so.
+ */
+export function temasComTotal(categoriasPorPost: readonly (readonly string[])[]): Tema[] {
+  const contagem: Record<string, number> = {};
+  for (const categorias of categoriasPorPost) {
+    for (const categoria of categorias) contagem[categoria] = (contagem[categoria] ?? 0) + 1;
+  }
+  return Object.entries(contagem)
     .map(([label, total]) => ({
       label,
       total,
       href: `${BLOG_INDEX}?categoria=${encodeURIComponent(label)}`,
     }))
     .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label, "pt-BR"));
+}
+
+/** Os temas so do repositorio. Pagina que le o banco usa `categoriasDoSite()`. */
+export const CATEGORIES: Tema[] = temasComTotal(BRUTOS.map((post) => post.categorias));

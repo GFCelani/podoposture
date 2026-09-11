@@ -5,10 +5,13 @@ import postgres from "postgres";
 
 import type { TipoDeImagem } from "./imagem-webp";
 import {
+  ehEstreia,
+  enderecoPodeMudar,
   gerarSlug,
   juntarSlug,
   type DadosDoPost,
   type PostDoPainel,
+  type ResumoDoPainel,
 } from "./painel-tipos";
 import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS } from "./posts";
 
@@ -171,7 +174,7 @@ type LinhaPost = {
   publicado_em: Date | null;
 };
 
-function paraPost(l: LinhaPost): PostDoPainel {
+function paraResumo(l: Omit<LinhaPost, "corpo">): ResumoDoPainel {
   return {
     id: l.id,
     slug: l.slug,
@@ -179,12 +182,15 @@ function paraPost(l: LinhaPost): PostDoPainel {
     resumo: l.resumo,
     categoria: l.categoria,
     capa: l.capa,
-    corpo: l.corpo,
     publicado: l.publicado,
     criadoEm: l.criado_em.toISOString(),
     atualizadoEm: l.atualizado_em.toISOString(),
     publicadoEm: l.publicado_em ? l.publicado_em.toISOString() : null,
   };
+}
+
+function paraPost(l: LinhaPost): PostDoPainel {
+  return { ...paraResumo(l), corpo: l.corpo };
 }
 
 /** Todos os posts do painel, publicados ou nao. So o painel usa. */
@@ -197,16 +203,25 @@ export async function listarTodos(): Promise<PostDoPainel[]> {
   return linhas.map(paraPost);
 }
 
-/** Os publicados — e o que o site mostra. */
-export async function listarPublicados(): Promise<PostDoPainel[]> {
+/**
+ * Os publicados, sem o corpo — e o que a listagem do site mostra.
+ *
+ * Sem o corpo de proposito: o indice do blog, a home e o sitemap leem esta
+ * lista, e nenhum deles mostra o texto. Carregar o corpo de todos para exibir
+ * titulo e resumo era a consulta mais cara do site, repetida a cada visita.
+ */
+export async function listarPublicadosSemCorpo(): Promise<ResumoDoPainel[]> {
   if (!bancoConfigurado()) return [];
   await garantirTabelas();
   const sql = bancoDoPainel();
-  const linhas = await sql<LinhaPost[]>`
-    SELECT * FROM posts WHERE publicado = TRUE ORDER BY publicado_em DESC`;
-  return linhas.map(paraPost);
+  const linhas = await sql<Omit<LinhaPost, "corpo">[]>`
+    SELECT id, slug, titulo, resumo, categoria, capa, publicado,
+           criado_em, atualizado_em, publicado_em
+    FROM posts WHERE publicado = TRUE ORDER BY publicado_em DESC`;
+  return linhas.map(paraResumo);
 }
 
+/** Um publicado, com o corpo — e o que a pagina do texto precisa. */
 export async function buscarPorSlug(slug: string): Promise<PostDoPainel | null> {
   if (!bancoConfigurado()) return null;
   await garantirTabelas();
@@ -227,9 +242,9 @@ export async function buscarPorId(id: string): Promise<PostDoPainel | null> {
 /**
  * Endereco livre, com desempate numerico.
  *
- * O slug de um post ja publicado nunca muda (ver `atualizarPost`): uma URL que
- * o Google indexou nao pode virar 404 porque alguem corrigiu uma palavra do
- * titulo.
+ * O slug de um post que ja foi publicado alguma vez nunca muda (ver
+ * `enderecoPodeMudar`): uma URL que o Google indexou nao pode virar 404 porque
+ * alguem corrigiu uma palavra do titulo.
  */
 async function slugLivre(base: string, idAtual?: string): Promise<string> {
   const sql = bancoDoPainel();
@@ -278,17 +293,24 @@ export async function atualizarPost(
   const atual = await buscarPorId(id);
   if (!atual) return null;
 
-  // Endereco so pode mudar enquanto o post e rascunho.
-  const podeTrocarEndereco = !atual.publicado && atual.titulo !== dados.titulo;
-  const slug = podeTrocarEndereco ? await slugLivre(gerarSlug(dados.titulo), id) : atual.slug;
-  const estreando = dados.publicado && !atual.publicado;
+  // As duas regras moram em painel-tipos.ts, onde tem teste: o endereco so
+  // muda enquanto o texto nunca foi ao ar, e a data e a da primeira publicacao.
+  const slug = enderecoPodeMudar(atual, dados.titulo)
+    ? await slugLivre(gerarSlug(dados.titulo), id)
+    : atual.slug;
 
+  // COALESCE, e nao so NOW(): se dois salvamentos cruzarem entre a leitura
+  // acima e esta escrita, o segundo ainda nao reescreve a data do primeiro.
   const [linha] = await sql<LinhaPost[]>`
     UPDATE posts SET
       slug = ${slug}, titulo = ${dados.titulo}, resumo = ${dados.resumo},
       categoria = ${dados.categoria}, capa = ${dados.capa}, corpo = ${dados.corpo},
       publicado = ${dados.publicado}, atualizado_em = NOW(),
-      publicado_em = ${estreando ? sql`NOW()` : sql`publicado_em`}
+      publicado_em = ${
+        ehEstreia(atual.publicadoEm, dados.publicado)
+          ? sql`COALESCE(publicado_em, NOW())`
+          : sql`publicado_em`
+      }
     WHERE id = ${id}
     RETURNING *`;
   return linha ? paraPost(linha) : null;
@@ -331,13 +353,6 @@ export async function buscarImagem(id: string): Promise<ImagemGuardada | null> {
 
 /* -------------------------------------------------------------- auditoria */
 
-export type LinhaAuditoria = {
-  acao: string;
-  detalhe: string | null;
-  origem: string | null;
-  em: string;
-};
-
 const MAX_ORIGEM = 45;
 const MAX_AUDITORIA = 2000;
 const PODAR_A_CADA = 100;
@@ -370,15 +385,6 @@ export async function registrarAuditoria(
   } catch (erro) {
     console.error("[painel] falha ao registrar auditoria:", erro);
   }
-}
-
-export async function listarAuditoria(limite = 40): Promise<LinhaAuditoria[]> {
-  if (!bancoConfigurado()) return [];
-  await garantirTabelas();
-  const sql = bancoDoPainel();
-  const linhas = await sql<{ acao: string; detalhe: string | null; origem: string | null; em: Date }[]>`
-    SELECT acao, detalhe, origem, em FROM painel_auditoria ORDER BY id DESC LIMIT ${limite}`;
-  return linhas.map((l) => ({ ...l, em: l.em.toISOString() }));
 }
 
 /* ------------------------------------------------------------- tentativas */

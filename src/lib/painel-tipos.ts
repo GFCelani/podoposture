@@ -50,8 +50,16 @@ export type PostDoPainel = DadosDoPost & {
   slug: string;
   criadoEm: string;
   atualizadoEm: string;
+  /** Data da PRIMEIRA publicacao. Continua preenchida se o texto sair do ar. */
   publicadoEm: string | null;
 };
+
+/**
+ * O post sem o corpo. E o que a listagem do site precisa: carregar ate 120 mil
+ * caracteres por texto so para mostrar titulo e resumo seria pagar a consulta
+ * mais cara a cada visita ao blog.
+ */
+export type ResumoDoPainel = Omit<PostDoPainel, "corpo">;
 
 export const LIMITE_SLUG = 80;
 
@@ -118,7 +126,7 @@ export function booleano(valor: unknown): boolean {
 export function validarPost(dados: DadosDoPost): ErrosPost {
   const erros: ErrosPost = {};
 
-  if (!dados.titulo) erros.titulo = "O post precisa de um título.";
+  if (!dados.titulo) erros.titulo = "O texto precisa de um título.";
   else if (dados.titulo.length > LIMITES_POST.titulo)
     erros.titulo = `Máximo de ${LIMITES_POST.titulo} caracteres.`;
   else if (/[\r\n]/.test(dados.titulo)) erros.titulo = "O título não pode ter quebras de linha.";
@@ -141,13 +149,99 @@ export function validarPost(dados: DadosDoPost): ErrosPost {
   else if (dados.capa && !dados.capa.startsWith(PREFIXO_IMAGEM))
     erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
 
-  if (!dados.corpo) erros.corpo = "Escreva o texto do post.";
+  if (!dados.corpo) erros.corpo = "Escreva o texto antes de salvar.";
   else if (dados.corpo.length < CORPO_MINIMO)
     erros.corpo = `Escreva um pouco mais — pelo menos ${CORPO_MINIMO} caracteres.`;
   else if (dados.corpo.length > LIMITES_POST.corpo)
     erros.corpo = `Texto longo demais (máximo ${LIMITES_POST.corpo.toLocaleString("pt-BR")} caracteres).`;
 
   return erros;
+}
+
+/**
+ * O erro de um campo so, para o aviso ao sair dele.
+ *
+ * Validar o formulario inteiro no `blur` do titulo mostrava "Escreva o texto"
+ * antes de ela sequer chegar ao corpo: um erro sobre o que ela ainda nem
+ * tentou fazer. Os outros campos ficam como estavam — nem ganham aviso novo,
+ * nem perdem um aviso que ainda vale.
+ */
+export function errosComCampo(
+  erros: ErrosPost,
+  dados: DadosDoPost,
+  campo: keyof DadosDoPost,
+): ErrosPost {
+  const novos = { ...erros };
+  delete novos[campo];
+  const mensagem = validarPost(dados)[campo];
+  if (mensagem) novos[campo] = mensagem;
+  return novos;
+}
+
+/**
+ * O endereco de um texto so muda enquanto ele NUNCA foi publicado.
+ *
+ * A regra olha `publicadoEm`, e nao `publicado`. Olhando `publicado`, bastava
+ * guardar como rascunho, corrigir uma palavra do titulo e publicar de novo para
+ * o endereco trocar: o link que o Google ja tinha guardado, e que alguem pode
+ * ter mandado por WhatsApp, virava 404 sem aviso nenhum.
+ */
+export function enderecoPodeMudar(
+  atual: Pick<PostDoPainel, "publicadoEm" | "titulo">,
+  novoTitulo: string,
+): boolean {
+  return atual.publicadoEm === null && atual.titulo !== novoTitulo;
+}
+
+/**
+ * A data de publicacao e a da primeira vez.
+ *
+ * Republicar depois de um rascunho nao reescreve a data: o texto nao pula para
+ * o topo do blog como se fosse novo, e a data que o buscador leu continua certa.
+ */
+export function ehEstreia(publicadoEmAtual: string | null, publicarAgora: boolean): boolean {
+  return publicarAgora && publicadoEmAtual === null;
+}
+
+/**
+ * Guardar como rascunho um texto que esta no ar tira ele do site. Isso pede
+ * um segundo clique; num rascunho, guardar nao tira nada de lugar nenhum.
+ */
+export function rascunhoPrecisaConfirmar(post: Pick<PostDoPainel, "publicado"> | null): boolean {
+  return post?.publicado === true;
+}
+
+/** A frase curta que aparece na lista depois de salvar. Diz o que mudou no site. */
+export function mensagemAoSalvar(publicarAgora: boolean, estavaNoAr: boolean): string {
+  if (publicarAgora) {
+    return estavaNoAr ? "Alterações publicadas no site." : "Texto publicado. Ele já está no site.";
+  }
+  return estavaNoAr
+    ? "Texto tirado do site e guardado como rascunho."
+    : "Rascunho guardado. Ele ainda não está no site.";
+}
+
+/**
+ * O aviso quando salvar falha, sempre com o proximo passo.
+ *
+ * A mensagem crua do servidor ("Nao foi possivel salvar o post.") diz o que deu
+ * errado e para ali. Quem acabou de escrever um texto inteiro precisa ouvir
+ * primeiro que ele nao se perdeu, e depois o que fazer.
+ */
+export function mensagemDeFalhaAoSalvar(status: number, doServidor: unknown): string {
+  const motivo =
+    typeof doServidor === "string" && doServidor ? doServidor : "Não foi possível salvar.";
+  if (status === 400) return motivo;
+  if (status === 404) {
+    return "Este texto foi apagado em outra janela. O que você escreveu continua nesta tela: copie antes de sair.";
+  }
+  if (status === 413) {
+    return "O texto ficou grande demais para salvar de uma vez. Ele continua aqui: divida em dois textos e tente de novo.";
+  }
+  if (status === 503) {
+    return `${motivo} O texto continua aqui. Avise quem cuida do site.`;
+  }
+  return `${motivo} O texto continua aqui; tente de novo em alguns minutos.`;
 }
 
 /** Converte o corpo cru da requisicao nos campos do post. */

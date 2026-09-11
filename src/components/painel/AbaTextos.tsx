@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { PostDoPainel } from "@/lib/painel-tipos";
+import { armazemDaAba, deixarRecado, tomarRecado } from "@/lib/recado-do-editor";
 
 /**
  * Aba "Seus textos": os posts escritos pelo painel.
@@ -10,7 +11,16 @@ import type { PostDoPainel } from "@/lib/painel-tipos";
  * E a entrada padrao do painel. Segue o contrato de aba descrito em
  * Painel.tsx; alem de `aoPerderSessao`, recebe `aoAbrirEditor`, porque o editor
  * ocupa a tela inteira e quem decide a tela e o painel.
+ *
+ * Ao montar, a aba le o recado que o editor deixou (ver `recado-do-editor.ts`):
+ * a confirmacao do que acabou de ser salvo, ou o texto que estava aberto quando
+ * a sessao caiu, que ela reabre sozinha.
  */
+
+type Aviso = { tipo: "erro" | "feito"; texto: string };
+
+const SEM_CONEXAO = "Sem conexão com o servidor. Verifique a internet e tente de novo.";
+
 export function AbaTextos({
   aoPerderSessao,
   aoAbrirEditor,
@@ -21,7 +31,12 @@ export function AbaTextos({
   const [posts, setPosts] = useState<PostDoPainel[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [semBanco, setSemBanco] = useState(false);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [doRepositorio, setDoRepositorio] = useState<number | null>(null);
+  // Falha ao carregar e falha de uma acao sao avisos separados: recarregar a
+  // lista depois de apagar nao pode apagar junto o aviso de que apagar falhou.
+  const [erroDaLista, setErroDaLista] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [abrindo, setAbrindo] = useState<string | null>(null);
 
   const carregar = useCallback(async (): Promise<void> => {
     try {
@@ -33,9 +48,9 @@ export function AbaTextos({
       }
       if (!resposta.ok) {
         const corpo = await resposta.json().catch(() => ({}));
-        setAviso(
+        setErroDaLista(
           resposta.status === 503 && typeof corpo?.erro === "string"
-            ? corpo.erro
+            ? `${corpo.erro} Avise quem cuida do site.`
             : "Não foi possível carregar os textos. Tente de novo em alguns minutos.",
         );
         return;
@@ -44,46 +59,101 @@ export function AbaTextos({
       const corpo = await resposta.json();
       setPosts(corpo.posts ?? []);
       setSemBanco(Boolean(corpo.semBanco));
-      setAviso(null);
+      setDoRepositorio(typeof corpo.doRepositorio === "number" ? corpo.doRepositorio : null);
+      setErroDaLista(null);
     } catch {
-      setAviso("Sem conexão com o servidor. Verifique a internet e tente de novo.");
+      setErroDaLista(SEM_CONEXAO);
     } finally {
       setCarregando(false);
     }
   }, [aoPerderSessao]);
 
+  /**
+   * Busca o texto completo e abre o editor. `reabrindo` e o caso da sessao que
+   * caiu com o texto aberto: se cair de novo aqui, o recado volta para o
+   * armazem, senao a proxima senha levaria para a lista e nao para o texto.
+   */
+  const abrirEditor = useCallback(
+    async (id: string | null, reabrindo = false): Promise<void> => {
+      if (!id) {
+        aoAbrirEditor(null);
+        return;
+      }
+      setAbrindo(id);
+      setAviso(null);
+      try {
+        const resposta = await fetch(`/api/painel/posts/${id}`, { cache: "no-store" });
+        if (resposta.status === 401 || resposta.status === 403) {
+          if (reabrindo) deixarRecado(armazemDaAba(), { tipo: "reabrir", id });
+          aoPerderSessao();
+          return;
+        }
+        if (resposta.status === 404) {
+          setAviso({
+            tipo: "erro",
+            texto: "Esse texto não existe mais: ele pode ter sido apagado em outra janela. A lista foi atualizada.",
+          });
+          void carregar();
+          return;
+        }
+        if (!resposta.ok) {
+          const corpo = await resposta.json().catch(() => ({}));
+          setAviso({
+            tipo: "erro",
+            texto:
+              resposta.status === 503 && typeof corpo?.erro === "string"
+                ? `${corpo.erro} Avise quem cuida do site.`
+                : "Não foi possível abrir esse texto agora. Tente de novo em alguns minutos.",
+          });
+          return;
+        }
+        const corpo = await resposta.json();
+        aoAbrirEditor(corpo.post);
+      } catch {
+        setAviso({ tipo: "erro", texto: SEM_CONEXAO });
+      } finally {
+        setAbrindo(null);
+      }
+    },
+    [aoAbrirEditor, aoPerderSessao, carregar],
+  );
+
   useEffect(() => {
-    // Mesmo motivo do efeito em Painel.tsx: o estado so muda depois da rede.
-    queueMicrotask(() => void carregar());
+    // Mesmo motivo do efeito em Painel.tsx: o estado so muda fora do corpo do
+    // efeito. O recado e lido na mesma microtarefa, e so uma vez: quem le apaga.
+    queueMicrotask(() => {
+      const recado = tomarRecado(armazemDaAba());
+      if (recado?.tipo === "salvo") setAviso({ tipo: "feito", texto: recado.mensagem });
+      if (recado?.tipo === "reabrir") void abrirEditor(recado.id, true);
+      void carregar();
+    });
+  }, [abrirEditor, carregar]);
+
+  const aoApagado = useCallback(() => {
+    setAviso({ tipo: "feito", texto: "Texto apagado." });
+    void carregar();
   }, [carregar]);
 
-  async function abrirEditor(id?: string) {
-    if (!id) {
-      aoAbrirEditor(null);
-      return;
-    }
-    try {
-      const resposta = await fetch(`/api/painel/posts/${id}`, { cache: "no-store" });
-      if (resposta.status === 401 || resposta.status === 403) {
-        aoPerderSessao();
-        return;
-      }
-      if (!resposta.ok) {
-        setAviso("Não foi possível abrir esse texto. Tente de novo em alguns minutos.");
-        return;
-      }
-      const corpo = await resposta.json();
-      aoAbrirEditor(corpo.post);
-    } catch {
-      setAviso("Sem conexão com o servidor. Verifique a internet e tente de novo.");
-    }
-  }
+  const aoFalhar = useCallback((texto: string) => setAviso({ tipo: "erro", texto }), []);
 
   return (
     <>
-      {aviso && (
-        <p role="alert" className="mb-6 rounded-md bg-surface px-4 py-3 text-[0.9375rem] text-ink">
-          {aviso}
+      {erroDaLista && (
+        <p role="alert" className="mb-6 rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] text-[#8c2f2f]">
+          {erroDaLista}
+        </p>
+      )}
+
+      {/* ui-ux-pro-max ux: Feedback/Confirmation Messages — sucesso curto e
+          visivel; erro anunciado com o proximo passo */}
+      {aviso?.tipo === "erro" && (
+        <p role="alert" className="mb-6 rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] text-[#8c2f2f]">
+          {aviso.texto}
+        </p>
+      )}
+      {aviso?.tipo === "feito" && (
+        <p role="status" className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] text-ink-strong">
+          {aviso.texto}
         </p>
       )}
 
@@ -100,7 +170,7 @@ export function AbaTextos({
         </h1>
         {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
         <button
-          onClick={() => void abrirEditor()}
+          onClick={() => void abrirEditor(null)}
           className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-6 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift"
         >
           Escrever texto
@@ -126,31 +196,44 @@ export function AbaTextos({
             <LinhaDePost
               key={post.id}
               post={post}
-              aoEditar={() => void abrirEditor(post.id)}
-              aoApagar={() => void carregar()}
+              abrindo={abrindo === post.id}
+              aoEditar={() => {
+                // Um texto por vez: dois cliques rapidos em linhas diferentes
+                // abririam o editor duas vezes, com o segundo por cima.
+                if (!abrindo) void abrirEditor(post.id);
+              }}
+              aoApagado={aoApagado}
+              aoFalhar={aoFalhar}
               aoPerderSessao={aoPerderSessao}
             />
           ))}
         </ul>
       )}
 
-      <p className="mt-14 text-[0.875rem] leading-[1.6] text-muted">
-        Os 68 textos que já estavam no site continuam publicados normalmente — eles não
-        aparecem nesta lista porque fazem parte do próprio site, e não precisam de edição.
-      </p>
+      {doRepositorio !== null && doRepositorio > 0 && (
+        <p className="mt-14 text-[0.875rem] leading-[1.6] text-muted">
+          {doRepositorio === 1
+            ? "O texto que já estava no site continua publicado normalmente — ele não aparece nesta lista porque faz parte do próprio site, e não precisa de edição."
+            : `Os ${doRepositorio.toLocaleString("pt-BR")} textos que já estavam no site continuam publicados normalmente — eles não aparecem nesta lista porque fazem parte do próprio site, e não precisam de edição.`}
+        </p>
+      )}
     </>
   );
 }
 
 function LinhaDePost({
   post,
+  abrindo,
   aoEditar,
-  aoApagar,
+  aoApagado,
+  aoFalhar,
   aoPerderSessao,
 }: {
   post: PostDoPainel;
+  abrindo: boolean;
   aoEditar: () => void;
-  aoApagar: () => void;
+  aoApagado: () => void;
+  aoFalhar: (texto: string) => void;
   aoPerderSessao: () => void;
 }) {
   const [confirmando, setConfirmando] = useState(false);
@@ -170,13 +253,24 @@ function LinhaDePost({
         aoPerderSessao();
         return;
       }
-      aoApagar();
+      // 404: ja nao existia (apagado em outra janela). O que ela queria ja
+      // aconteceu, e a lista recarregada mostra isso.
+      if (resposta.ok || resposta.status === 404) {
+        aoApagado();
+        return;
+      }
+      const corpo = await resposta.json().catch(() => ({}));
+      aoFalhar(
+        resposta.status === 503 && typeof corpo?.erro === "string"
+          ? `${corpo.erro} O texto não foi apagado. Avise quem cuida do site.`
+          : "Não foi possível apagar o texto agora. Ele continua aqui; tente de novo em alguns minutos.",
+      );
     } catch {
-      // Sem rede, recarregar a lista e o que faz o aviso de conexao aparecer.
-      aoApagar();
+      aoFalhar("Sem conexão com o servidor. O texto não foi apagado; verifique a internet e tente de novo.");
     } finally {
-      // Sem isto, um erro de rede deixava o botao preso em "Apagando…".
+      // Sem isto, um erro deixava o botao preso em "Apagando…".
       setApagando(false);
+      setConfirmando(false);
     }
   }
 
@@ -210,9 +304,10 @@ function LinhaDePost({
       <div className="flex shrink-0 items-center gap-3">
         <button
           onClick={aoEditar}
-          className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent"
+          disabled={abrindo}
+          className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent disabled:opacity-50"
         >
-          Editar
+          {abrindo ? "Abrindo…" : "Editar"}
         </button>
         <button
           onClick={() => void apagar()}

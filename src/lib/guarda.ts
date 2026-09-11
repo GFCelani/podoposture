@@ -67,7 +67,8 @@ export async function pedidoVeioDaqui(): Promise<boolean> {
 /**
  * Devolve a sessao valida, ou a resposta pronta de recusa.
  *
- * Uso obrigatorio na PRIMEIRA linha de toda rota de escrita:
+ * Uso obrigatorio na PRIMEIRA linha de todo verbo de `api/painel/**`, leitura
+ * incluida (o teste de rotas protegidas confere):
  *
  * ```ts
  * const auth = await exigirSessao();
@@ -80,7 +81,7 @@ export async function exigirSessao(): Promise<Autorizacao> {
     // Falha fechada: sem segredo de assinatura, ninguem entra. O contrario —
     // liberar quando falta configuracao — e como painel vira porta aberta.
     console.error("[painel] ADMIN_SESSION_SECRET ausente ou curto demais");
-    return recusar("Painel indisponivel.", 503);
+    return recusar("Painel indisponível.", 503);
   }
 
   if (!(await pedidoVeioDaqui())) {
@@ -89,7 +90,7 @@ export async function exigirSessao(): Promise<Autorizacao> {
 
   const bilhete = (await cookies()).get(NOME_COOKIE)?.value;
   const sessao = lerBilhete(bilhete, segredo);
-  if (!sessao) return recusar("Faca login para continuar.", 401);
+  if (!sessao) return recusar("Faça login para continuar.", 401);
 
   return { ok: true, sessao };
 }

@@ -8,7 +8,7 @@ import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { bancoConfigurado, criarPost, listarTodos, registrarAuditoria } from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
 import { camposDoCorpo, validarPost } from "@/lib/painel-tipos";
-import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
+import { BLOG_INDEX, BRUTOS_DO_JSON, hrefDoPost } from "@/lib/posts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,11 +32,16 @@ export async function GET() {
   const auth = await exigirSessao();
   if (!auth.ok) return auth.resposta;
 
+  // Quantos textos vivem no repositorio, fora desta lista. Vai na resposta, e
+  // nao escrito na tela, porque o numero muda quando o acervo muda — e o
+  // navegador nao pode importar o JSON dos posts sem levar o acervo inteiro.
+  const doRepositorio = BRUTOS_DO_JSON.length;
+
   if (!bancoConfigurado()) {
-    return NextResponse.json({ posts: [], semBanco: true });
+    return NextResponse.json({ posts: [], semBanco: true, doRepositorio });
   }
   try {
-    return NextResponse.json({ posts: await listarTodos(), semBanco: false });
+    return NextResponse.json({ posts: await listarTodos(), semBanco: false, doRepositorio });
   } catch (erro) {
     console.error("[painel] falha ao listar posts:", erro);
     return NextResponse.json({ erro: "Não foi possível ler os posts." }, { status: 502 });
