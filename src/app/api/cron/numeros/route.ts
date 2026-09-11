@@ -151,6 +151,19 @@ export async function GET(req: Request) {
   const janela = janelaDaColeta(new Date(inicio), new URL(req.url).searchParams.get("desde"));
   if ("erro" in janela) return NextResponse.json({ erro: janela.erro }, { status: 400 });
 
+  if (!janela.historico) {
+    // Autocura do cache do site. As paginas estaticas que leem o banco (a home,
+    // o blog, o sitemap) devolvem o conteudo padrao quando o banco falha — e se
+    // a falha cai justo numa regeneracao, esse padrao fica em cache ate a
+    // proxima publicacao ou deploy, sem ninguem saber. Invalidar tudo uma vez
+    // por dia limita esse estrago a um dia. O custo e cada pagina se refazer na
+    // proxima visita, uma vez. So na coleta da noite: o backfill roda em lotes
+    // seguidos, e invalidar o site inteiro a cada lote seria desperdicio.
+    // Antes da coleta, e nao depois: uma coleta que estoura o tempo da funcao
+    // nao pode levar a autocura junto.
+    revalidatePath("/", "layout");
+  }
+
   const prazo = inicio + maxDuration * 1000 - FOLGA_PARA_GRAVAR_MS;
   const resumos = (
     await Promise.all([
@@ -162,15 +175,6 @@ export async function GET(req: Request) {
   if (!janela.historico) {
     await podarNumeros().catch((erro) => console.error("[cron] falha ao podar numeros:", erro));
     await avisarSeFalhouDuasNoites(resumos);
-
-    // Autocura do cache do site. As paginas estaticas que leem o banco (a home,
-    // o blog, o sitemap) devolvem o conteudo padrao quando o banco falha — e se
-    // a falha cai justo numa regeneracao, esse padrao fica em cache ate o
-    // proximo salvamento ou deploy, sem ninguem saber. Invalidar tudo uma vez
-    // por dia limita esse estrago a um dia. O custo e cada pagina se refazer na
-    // proxima visita, uma vez. So na coleta da noite: o backfill roda em
-    // lotes seguidos, e invalidar o site inteiro a cada lote seria desperdicio.
-    revalidatePath("/", "layout");
   }
 
   const falhou = resumos.some((r) => r.situacao === "erro");

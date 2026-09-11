@@ -3,6 +3,12 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 
+import {
+  PAUSA_EM_EXECUCAO_MS,
+  PAUSA_NO_BUILD_MS,
+  criarDisjuntor,
+  emConstrucao,
+} from "./disjuntor";
 import type { TipoDeImagem } from "./imagem-webp";
 import {
   ehEstreia,
@@ -90,10 +96,34 @@ export function bancoDoPainel() {
   return conexao;
 }
 
+/**
+ * Um disjuntor so para toda leitura publica (conteudo da home, lista do blog,
+ * post do painel, imagem). Compartilhado de proposito: eles dividem a mesma
+ * conexao, e um banco fora para um esta fora para todos. Ver disjuntor.ts.
+ */
+const disjuntorPublico = criarDisjuntor({
+  pausaMs: () => (emConstrucao() ? PAUSA_NO_BUILD_MS : PAUSA_EM_EXECUCAO_MS),
+});
+
+/**
+ * Leitura de pagina publica: tenta de novo quando a conexao caiu e para de
+ * tentar por um tempo depois de uma falha. Lanca — quem chama decide entre o
+ * que mostrar sem banco e deixar a pagina sem cache.
+ */
+export function lerComDisjuntor<T>(leitura: () => Promise<T>): Promise<T> {
+  return disjuntorPublico.ler(leitura);
+}
+
+/** 42P01 = tabela inexistente: o painel ainda nao gravou nada nesta base. */
+function tabelaAusente(erro: unknown): boolean {
+  return (erro as { code?: string })?.code === "42P01";
+}
+
 let tabelasProntas = false;
 
 /**
- * Cria o que faltar. Idempotente, roda uma vez por instancia.
+ * Cria o que faltar. So o painel chama: leitura publica nao cria tabela (ver
+ * `listarPublicadosSemCorpo`). Idempotente, roda uma vez por instancia.
  *
  * Nao ha arquivo de migracao de proposito: sao quatro tabelas que cabem na
  * tela, e a unica mudanca de forma ate hoje (o formato da imagem) coube num
@@ -209,26 +239,43 @@ export async function listarTodos(): Promise<PostDoPainel[]> {
  * Sem o corpo de proposito: o indice do blog, a home e o sitemap leem esta
  * lista, e nenhum deles mostra o texto. Carregar o corpo de todos para exibir
  * titulo e resumo era a consulta mais cara do site, repetida a cada visita.
+ *
+ * Leitura publica: nao cria tabela, e tabela inexistente e lista vazia. Com
+ * `garantirTabelas` aqui, cada instancia nova rodava sete comandos de DDL numa
+ * visita ao blog, e no build com o banco vazio os workers disputavam o mesmo
+ * CREATE TABLE (um deles caia com 23505 e servia o blog sem os posts do banco).
  */
 export async function listarPublicadosSemCorpo(): Promise<ResumoDoPainel[]> {
   if (!bancoConfigurado()) return [];
-  await garantirTabelas();
   const sql = bancoDoPainel();
-  const linhas = await sql<Omit<LinhaPost, "corpo">[]>`
-    SELECT id, slug, titulo, resumo, categoria, capa, publicado,
-           criado_em, atualizado_em, publicado_em
-    FROM posts WHERE publicado = TRUE ORDER BY publicado_em DESC`;
-  return linhas.map(paraResumo);
+  try {
+    const linhas = await sql<Omit<LinhaPost, "corpo">[]>`
+      SELECT id, slug, titulo, resumo, categoria, capa, publicado,
+             criado_em, atualizado_em, publicado_em
+      FROM posts WHERE publicado = TRUE ORDER BY publicado_em DESC`;
+    return linhas.map(paraResumo);
+  } catch (erro) {
+    if (tabelaAusente(erro)) return [];
+    throw erro;
+  }
 }
 
-/** Um publicado, com o corpo — e o que a pagina do texto precisa. */
+/**
+ * Um publicado, com o corpo — e o que a pagina do texto precisa. null so
+ * quando o banco RESPONDEU que nao existe; falha de conexao lanca, para a
+ * pagina nao guardar um 404 de um texto que existe. Leitura publica, sem DDL.
+ */
 export async function buscarPorSlug(slug: string): Promise<PostDoPainel | null> {
   if (!bancoConfigurado()) return null;
-  await garantirTabelas();
   const sql = bancoDoPainel();
-  const [linha] = await sql<LinhaPost[]>`
-    SELECT * FROM posts WHERE slug = ${slug} AND publicado = TRUE LIMIT 1`;
-  return linha ? paraPost(linha) : null;
+  try {
+    const [linha] = await sql<LinhaPost[]>`
+      SELECT * FROM posts WHERE slug = ${slug} AND publicado = TRUE LIMIT 1`;
+    return linha ? paraPost(linha) : null;
+  } catch (erro) {
+    if (tabelaAusente(erro)) return null;
+    throw erro;
+  }
 }
 
 export async function buscarPorId(id: string): Promise<PostDoPainel | null> {
@@ -301,9 +348,13 @@ export async function atualizarPost(
 
   // COALESCE, e nao so NOW(): se dois salvamentos cruzarem entre a leitura
   // acima e esta escrita, o segundo ainda nao reescreve a data do primeiro.
+  // O endereco segue a mesma cautela: a leitura acima pode ser de antes de
+  // outro salvamento publicar o texto, e so o proprio UPDATE sabe se ele ja
+  // foi ao ar. Com `publicado_em` preenchido o slug fica, venha de onde vier.
   const [linha] = await sql<LinhaPost[]>`
     UPDATE posts SET
-      slug = ${slug}, titulo = ${dados.titulo}, resumo = ${dados.resumo},
+      slug = CASE WHEN publicado_em IS NULL THEN ${slug} ELSE slug END,
+      titulo = ${dados.titulo}, resumo = ${dados.resumo},
       categoria = ${dados.categoria}, capa = ${dados.capa}, corpo = ${dados.corpo},
       publicado = ${dados.publicado}, atualizado_em = NOW(),
       publicado_em = ${
@@ -342,13 +393,18 @@ export async function guardarImagem(
 
 type ImagemGuardada = { bytes: Buffer; largura: number; altura: number; tipo: TipoDeImagem };
 
+/** Leitura publica (a rota que serve a imagem): sem DDL, tabela ausente e "nao existe". */
 export async function buscarImagem(id: string): Promise<ImagemGuardada | null> {
   if (!bancoConfigurado()) return null;
-  await garantirTabelas();
   const sql = bancoDoPainel();
-  const [linha] = await sql<ImagemGuardada[]>`
-    SELECT bytes, largura, altura, tipo FROM imagens WHERE id = ${id} LIMIT 1`;
-  return linha ?? null;
+  try {
+    const [linha] = await sql<ImagemGuardada[]>`
+      SELECT bytes, largura, altura, tipo FROM imagens WHERE id = ${id} LIMIT 1`;
+    return linha ?? null;
+  } catch (erro) {
+    if (tabelaAusente(erro)) return null;
+    throw erro;
+  }
 }
 
 /* -------------------------------------------------------------- auditoria */

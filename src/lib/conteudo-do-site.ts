@@ -13,26 +13,27 @@ import {
   type EstadoDaSecao,
   type EstadosDasSecoes,
 } from "./conteudo-tipos";
-import { bancoConfigurado } from "./painel-db";
+import { BancoEmPausa } from "./disjuntor";
+import { bancoConfigurado, lerComDisjuntor } from "./painel-db";
 
 /**
  * O conteudo que as paginas mostram: padrao do codigo com o publicado por cima.
  *
  * Regra dura deste arquivo: ler conteudo NUNCA derruba pagina nem build.
  * - Sem DATABASE_URL devolve o padrao sem abrir conexao.
- * - Qualquer erro vira console.error e padrao.
- * - Depois de uma falha, o modulo passa 60 s devolvendo o padrao sem tentar.
- *   Sem esse disjuntor, um build com o banco fora esperaria o connect_timeout
- *   de 10 s em cada uma das 89 paginas, e estouraria o limite de 60 s por
- *   pagina muito antes de terminar.
+ * - A leitura passa pelo disjuntor de `painel-db` (disjuntor.ts): conexao que
+ *   morreu ganha uma segunda tentativa, e banco fora de verdade faz as leituras
+ *   pararem de esperar o timeout por um tempo.
+ * - O que ainda assim falhar vira console.error e padrao.
  *
- * O preco conhecido: se o banco falhar justo na regeneracao depois de uma
- * publicacao, a pagina fica com o padrao ate a proxima publicacao ou deploy.
- * Mostrar o texto de hoje e o erro aceitavel; mostrar uma pagina quebrada nao.
+ * O preco que sobra: se o banco estiver fora de verdade justo na regeneracao
+ * depois de uma publicacao, a pagina fica com o padrao ate a proxima
+ * invalidacao — a publicacao seguinte ou a coleta da noite, que invalida o
+ * site inteiro. Antes a primeira falha pausava o modulo por 60 s e qualquer
+ * soluco de conexao ja deixava o padrao em cache; a segunda tentativa e a
+ * pausa curta tiram quase todo esse caso. Mostrar o texto de hoje e o erro
+ * aceitavel; mostrar uma pagina quebrada nao.
  */
-
-const PAUSA_DEPOIS_DE_FALHA_MS = 60_000;
-let falhouEm = 0;
 
 /**
  * Uma consulta por renderizacao: o `cache` do React deduplica entre o layout,
@@ -40,12 +41,13 @@ let falhouEm = 0;
  */
 export const lerConteudoDoSite = cache(async (): Promise<ConteudoDoSite> => {
   if (!bancoConfigurado()) return CONTEUDO_PADRAO;
-  if (Date.now() - falhouEm < PAUSA_DEPOIS_DE_FALHA_MS) return CONTEUDO_PADRAO;
   try {
-    return mesclarConteudo(CONTEUDO_PADRAO, await lerPublicados());
+    return mesclarConteudo(CONTEUDO_PADRAO, await lerComDisjuntor(lerPublicados));
   } catch (erro) {
-    falhouEm = Date.now();
-    console.error("[conteudo] falha ao ler o conteudo publicado; o site mostra o padrao:", erro);
+    // Na pausa o motivo ja foi registrado na falha que a abriu.
+    if (!(erro instanceof BancoEmPausa)) {
+      console.error("[conteudo] falha ao ler o conteudo publicado; o site mostra o padrao:", erro);
+    }
     return CONTEUDO_PADRAO;
   }
 });

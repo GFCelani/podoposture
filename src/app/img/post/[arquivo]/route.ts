@@ -1,4 +1,4 @@
-import { buscarImagem } from "@/lib/painel-db";
+import { buscarImagem, lerComDisjuntor } from "@/lib/painel-db";
 import { lerNomeDoArquivo } from "@/lib/imagem-webp";
 
 export const runtime = "nodejs";
@@ -40,7 +40,14 @@ export async function GET(
   const nome = lerNomeDoArquivo(arquivo);
   if (!nome) return naoEncontrado();
 
-  const imagem = await buscarImagem(nome.resumo);
+  let imagem: Awaited<ReturnType<typeof buscarImagem>>;
+  try {
+    imagem = await lerComDisjuntor(() => buscarImagem(nome.resumo));
+  } catch {
+    // Banco fora nao e "nao existe": sem cache, para a imagem voltar assim que
+    // ele voltar, e sem derrubar a pagina que a mostra.
+    return new Response("Indisponível", { status: 503, headers: { "Cache-Control": "no-store", "Retry-After": "30" } });
+  }
   if (!imagem) return naoEncontrado();
 
   // As medidas e o formato do endereco tem de bater com os guardados. Sem esta

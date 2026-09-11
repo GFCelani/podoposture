@@ -2,8 +2,9 @@ import "server-only";
 
 import { cache } from "react";
 
+import { BancoEmPausa, emConstrucao } from "./disjuntor";
 import { contarPalavras, markdownParaHtml } from "./markdown";
-import { buscarPorSlug, listarPublicadosSemCorpo } from "./painel-db";
+import { buscarPorSlug, lerComDisjuntor, listarPublicadosSemCorpo } from "./painel-db";
 import { rotuloDaData, slugValido, type ResumoDoPainel } from "./painel-tipos";
 import {
   BRUTOS_DO_JSON,
@@ -65,10 +66,13 @@ const SLUGS_DO_REPOSITORIO = new Set(BRUTOS_DO_JSON.map((p) => p.slug.normalize(
  * mostra o que o JSON tem, que e o acervo inteiro de hoje. O oposto — pagina
  * de erro porque o Postgres piscou — seria trocar 68 artigos que funcionam por
  * nenhum.
+ *
+ * Pelo disjuntor: /nosso-blog e dinamica, e sem ele cada visita com o banco
+ * fora esperava o connect_timeout inteiro, em fila na conexao unica.
  */
 const novosDoBanco = cache(async (): Promise<Post[]> => {
   try {
-    const resumos = await listarPublicadosSemCorpo();
+    const resumos = await lerComDisjuntor(listarPublicadosSemCorpo);
     return (
       resumos
         // Slug repetido entre as fontes: o do repositorio vence, porque e o que
@@ -78,7 +82,9 @@ const novosDoBanco = cache(async (): Promise<Post[]> => {
         .map((p) => paraPost(brutoDoPainel(p, "")))
     );
   } catch (erro) {
-    console.error("[blog] banco indisponivel, servindo so os posts do repositorio:", erro);
+    if (!(erro instanceof BancoEmPausa)) {
+      console.error("[blog] banco indisponivel, servindo so os posts do repositorio:", erro);
+    }
     return [];
   }
 });
@@ -106,14 +112,26 @@ export async function categoriasDoSite(): Promise<Tema[]> {
  * `cache` porque a pagina do post chama `buscarPostDoSite` duas vezes, em
  * `generateMetadata` e no componente; sem ele eram duas consultas e duas
  * conversoes de Markdown por visita.
+ *
+ * `undefined` so quando o banco respondeu que o texto nao existe. Com o banco
+ * fora, a pagina chamava `notFound()` e o 404 ia para o cache com status 404:
+ * um texto publicado ficava fora do ar para o Google e para quem abria o link
+ * ate a proxima invalidacao. Em execucao a falha agora lanca: erro nao fica em
+ * cache, a versao boa ja guardada continua servida, e a visita seguinte tenta
+ * de novo. Esse texto nao esta entre as 88 URLs do repositorio — sem banco ele
+ * nao tem de onde vir. No build a falha segue virando `undefined`, porque la
+ * nenhum post do banco e pre-gerado e erro derrubaria o build.
  */
 const postDoBanco = cache(async (slug: string): Promise<PostBruto | undefined> => {
   try {
-    const post = await buscarPorSlug(slug);
+    const post = await lerComDisjuntor(() => buscarPorSlug(slug));
     return post ? brutoDoPainel(post, post.corpo) : undefined;
   } catch (erro) {
-    console.error("[blog] banco indisponivel ao buscar post do painel:", erro);
-    return undefined;
+    if (!(erro instanceof BancoEmPausa)) {
+      console.error("[blog] banco indisponivel ao buscar post do painel:", erro);
+    }
+    if (emConstrucao()) return undefined;
+    throw new Error("banco indisponivel ao buscar post do painel", { cause: erro });
   }
 });
 
