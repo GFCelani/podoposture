@@ -543,6 +543,299 @@ body {
 }
 
 /* ===============================================================
+   HERO — mapa de dor. Ver mapa-de-dor.tsx e figura-corpo.tsx (mapa).
+
+   Hierarquia, sem ambiguidade entre o que e' estrutura e o que e' acao:
+     estrutura  silhueta, prumo, cadeia e cruz de articulacao: papel,
+                traco fino, nada animado alem do ponto que corre a cadeia.
+     coluna     azul em CONTORNO, no tratamento da silhueta: estrutura de
+                fundo, legivel mas secundaria.
+     acao       12 pontos verdes: anel verde com nucleo verde, onda lenta,
+                e no hover 1,35x mais halo mais rotulo. So eles tem cor de
+                acao, so eles tem massa redonda, so eles reagem.
+   =============================================================== */
+
+/* O campo das figuras precisa ficar ACIMA da coluna de texto. A coluna de
+   texto leva z-10 (para ficar acima da foto de fundo) e a caixa dela e'
+   lg:col-span-9 de 12, bem mais larga que a tinta do titulo: sem isto ela
+   passava por cima da figura frontal e as linhas do <h1> (blocos da largura
+   da coluna) comiam o clique dos seis pontos da frontal, de lg para cima.
+   Nao muda tinta: --hero-texto-dir ja poe a caixa do campo depois da borda
+   visual do texto, e o campo continua pointer-events: none, entao so os
+   pontos recebem ponteiro e os botoes do hero seguem clicaveis. */
+.hero-campo {
+  z-index: 20;
+}
+
+/* O embrulho de cada figura: a caixa EXATA do desenho, para a porcentagem
+   do ponto cair no pixel certo. A largura sai do viewBox (221 e 118 por 560),
+   a mesma conta que o .hero-par usa para medir o par. */
+.pd-fig {
+  position: relative;
+  height: var(--hero-fig-h);
+  flex: none;
+}
+
+.pd-fig--frontal {
+  width: calc(var(--hero-fig-h) * 221 / 560);
+}
+
+.pd-fig--perfil {
+  width: calc(var(--hero-fig-h) * 118 / 560);
+}
+
+.pd-lista {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* O alvo: o maior que a anatomia permite, com teto de 44px. Sai da distancia
+   ate o vizinho mais proximo da mesma figura (--alvo-u, gerado) e cresce com
+   a figura, porque distancia entre pontos e' desenho. Piso de 26px, acima dos
+   24px da WCAG 2.5.8. Em 1440 os doze chegam aos 44px; em 390 a figura tem
+   405px, e os pares que a anatomia poe a 43u (tempora e ATM, lombar e disco)
+   ficam em 31px. Dois alvos vizinhos se encostam, nao se sobrepoem. */
+.pd-ponto {
+  --alvo: clamp(26px, calc(var(--hero-fig-h) * var(--alvo-u, 36) / 560), 44px);
+  --fio: max(14px, calc(var(--hero-fig-h) * var(--fio-u) / 560));
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--alvo);
+  height: var(--alvo);
+  margin: calc(var(--alvo) / -2) 0 0 calc(var(--alvo) / -2);
+  border-radius: 50%;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* O anel verde. 13px e' o diametro que o anel de r=5,5 do viewBox tem na
+   figura de 686px; ele nao muda com a figura. A pulsacao reusa .sonar-onda
+   e .sonar-ponto (acima): mesmas curvas, mesmo repouso no estilo base. */
+.pd-anel {
+  position: absolute;
+  inset: 50%;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border: 1.4px solid color-mix(in srgb, var(--color-action) 88%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent-deep) 74%, transparent);
+  transition:
+    border-color var(--dur-media, 260ms) var(--ease-saida, ease),
+    box-shadow var(--dur-media, 260ms) var(--ease-saida, ease),
+    transform var(--dur-media, 260ms) var(--ease-saida, ease);
+}
+
+.pd-onda {
+  position: absolute;
+  inset: -1.4px;
+  border: 1px solid color-mix(in srgb, var(--color-action) 72%, transparent);
+  border-radius: 50%;
+}
+
+.pd-nucleo {
+  position: absolute;
+  inset: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--color-action);
+}
+
+/* Destaque no hover, no foco e no primeiro toque: o anel cresce e ganha
+   halo, a onda para de nascer para nao competir com o halo. */
+.pd-ponto:hover .pd-anel,
+.pd-ponto:focus-visible .pd-anel,
+.pd-ponto.pd-armado .pd-anel {
+  border-color: var(--color-action);
+  transform: scale(1.35);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--color-action) 24%, transparent),
+    0 0 20px -2px color-mix(in srgb, var(--color-action) 60%, transparent);
+}
+
+.pd-ponto:hover .pd-nucleo,
+.pd-ponto:focus-visible .pd-nucleo,
+.pd-ponto.pd-armado .pd-nucleo {
+  animation-play-state: paused;
+  opacity: 1;
+}
+
+.pd-ponto:hover .pd-onda,
+.pd-ponto:focus-visible .pd-onda,
+.pd-ponto.pd-armado .pd-onda {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+.pd-ponto:focus-visible {
+  outline: 2px solid var(--color-accent-light);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+/* Fio e placa. O fio tem comprimento proprio por ponto (--fio-u, medido no
+   contorno da silhueta naquele y): atravessa o desenho, como as linhas de
+   referencia ja atravessam, e a placa so comeca depois da tinta. O fio
+   escala com a figura (e' distancia no desenho); a placa nao (e' texto).
+   Papel sobre #062C42 da 13,7:1: o rotulo passa AA por cima de qualquer
+   coisa que a figura ou a foto ponham atras. */
+.pd-fio,
+.pd-rotulo {
+  position: absolute;
+  top: 50%;
+  opacity: 0;
+  transition:
+    opacity var(--dur-media, 260ms) var(--ease-saida, ease),
+    transform var(--dur-media, 260ms) var(--ease-saida, ease);
+  pointer-events: none;
+}
+
+.pd-fio {
+  width: calc(var(--fio) - 7px);
+  height: 1px;
+  margin-top: -0.5px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--color-action) 30%, transparent),
+    color-mix(in srgb, var(--color-action) 80%, transparent)
+  );
+}
+
+.pd-ponto[data-lado="dir"] .pd-fio {
+  left: calc(50% + 7px);
+}
+
+.pd-ponto[data-lado="esq"] .pd-fio {
+  right: calc(50% + 7px);
+  transform: scaleX(-1);
+}
+
+.pd-rotulo {
+  padding: 4px 8px 5px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-light) 34%, transparent);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--color-accent-deep) 96%, transparent);
+  color: var(--color-paper);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+/* Uma linha por <span>, cada uma em nowrap: a quebra dos rotulos longos e'
+   escrita no gerador. Sem balance e sem max-width, entao a placa mede o
+   mesmo em qualquer maquina. */
+.pd-rotulo span {
+  display: block;
+  white-space: nowrap;
+}
+
+.pd-ponto[data-lado="dir"] .pd-rotulo {
+  left: calc(50% + var(--fio) + 2px);
+  transform: translate(-4px, -50%);
+}
+
+.pd-ponto[data-lado="esq"] .pd-rotulo {
+  right: calc(50% + var(--fio) + 2px);
+  text-align: right;
+  transform: translate(4px, -50%);
+}
+
+.pd-ponto:hover .pd-fio,
+.pd-ponto:focus-visible .pd-fio,
+.pd-ponto.pd-armado .pd-fio,
+.pd-ponto:hover .pd-rotulo,
+.pd-ponto:focus-visible .pd-rotulo,
+.pd-ponto.pd-armado .pd-rotulo {
+  opacity: 1;
+}
+
+.pd-ponto:hover .pd-rotulo,
+.pd-ponto:focus-visible .pd-rotulo,
+.pd-ponto.pd-armado .pd-rotulo {
+  transform: translate(0, -50%);
+}
+
+/* UM rotulo por vez. O unico jeito de ter dois abertos e' o ponteiro parado
+   sobre um ponto enquanto o Tab leva o foco a outro: com o foco no campo, o
+   hover de quem nao tem o foco perde a placa. */
+.hero-campo:has(.pd-ponto:focus-visible) .pd-ponto:hover:not(:focus-visible) .pd-rotulo,
+.hero-campo:has(.pd-ponto:focus-visible) .pd-ponto:hover:not(:focus-visible) .pd-fio {
+  opacity: 0;
+}
+
+/* O ponto em destaque sobe acima dos vizinhos, para a placa nunca ficar por
+   baixo do anel de outro ponto. */
+.pd-ponto:hover,
+.pd-ponto:focus-visible,
+.pd-ponto.pd-armado {
+  z-index: 3;
+}
+
+/* Cadeia: um ponto por membro percorre a polilinha inteira por offset-path,
+   em 12 a 15s. Base em opacity 0 e offset 0: com movimento reduzido nao
+   existe. */
+.pd-corre {
+  opacity: 0;
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: pd-corre var(--dur, 13s) linear infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes pd-corre {
+  0% {
+    opacity: 0;
+    offset-distance: 0%;
+  }
+  7% {
+    opacity: 0.8;
+  }
+  88% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    offset-distance: 100%;
+  }
+}
+
+/* Coluna: a faixa de luz. O dashoffset vai de 12 a -88, exatamente um
+   periodo: a faixa entra por cima de C1 e sai embaixo do coccix, uma vez
+   por ciclo de 11s. Duas animacoes, e as duas morrem com movimento
+   reduzido: o grupo volta a opacity 0 (base) e o tracejado volta a offset
+   12, fora do caminho. Sem faixa, a coluna continua inteira e visivel. */
+.pd-faixa {
+  opacity: 0;
+  animation: pd-faixa-liga 11s linear infinite;
+}
+
+@keyframes pd-faixa-liga {
+  0%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.pd-faixa-traco {
+  stroke-dasharray: 12 88;
+  stroke-dashoffset: 12;
+  animation: pd-faixa 11s linear infinite;
+}
+
+@keyframes pd-faixa {
+  to {
+    stroke-dashoffset: -88;
+  }
+}
+
+/* ===============================================================
    MARCA
    =============================================================== */
 

@@ -4,6 +4,7 @@ import {
   type NomeVista,
   VISTAS,
 } from "./figura-corpo-geometria";
+import { MAPA_DE_DOR_DESENHO } from "./mapa-de-dor-desenho";
 
 /**
  * A figura humana esquematica do projeto. UNICA: hero (frontal + perfil),
@@ -34,6 +35,13 @@ import {
  *   fase        deslocamento de todas as fases, em segundos. E' o que
  *               impede duas figuras na mesma tela de pulsarem em unissono.
  *   opacidade   opacidade do conjunto. Padrao 1.
+ *   mapa        so o hero liga: a coluna refeita em contorno (curva lisa,
+ *               niveis em rampa continua, processos, disco L5-S1, sacro de
+ *               cinco segmentos), a cadeia em polilinhas continuas com cruz
+ *               de articulacao, e SEM a camada de articulacoes, cujo anel
+ *               competia com os pontos clicaveis. Geometria gerada em
+ *               mapa-de-dor-desenho.ts. Padrao false: a lateral das paginas
+ *               internas continua com a figura de sempre.
  *   className   classes do <svg>.
  *
  * TAMANHO vem do CSS, nunca de prop: o svg declara width/height do viewBox
@@ -67,6 +75,7 @@ export function FiguraCorpo({
   animar = true,
   fase = 0,
   opacidade,
+  mapa = false,
   className = "",
 }: {
   vista?: NomeVista;
@@ -74,6 +83,7 @@ export function FiguraCorpo({
   animar?: boolean;
   fase?: number;
   opacidade?: number;
+  mapa?: boolean;
   className?: string;
 }) {
   const v = VISTAS[vista];
@@ -154,7 +164,8 @@ export function FiguraCorpo({
         )}
 
         {/* Cadeia: liga as articulacoes entre si e a coluna */}
-        {tem("cadeia") && (
+        {tem("cadeia") && mapa && <CadeiaDoMapa vista={vista} animar={animar} />}
+        {tem("cadeia") && !mapa && (
           <>
             <g data-camada="cadeia" stroke={PAPEL} strokeOpacity={0.35} strokeWidth={0.9}>
               {v.cadeia.map((c, i) => (
@@ -190,7 +201,8 @@ export function FiguraCorpo({
         {/* Coluna: 24 vertebras, discos como tracos no vao, sacro na base.
             Na frontal tudo fica sobre o eixo, sem giro; no perfil cada peca
             e' girada pela tangente da curva sagital medida. */}
-        {tem("coluna") && (
+        {tem("coluna") && mapa && <ColunaDoMapa vista={vista} animar={animar} />}
+        {tem("coluna") && !mapa && (
           <g data-camada="coluna">
             {v.vertebras.map((r, i) => {
               const giro = `rotate(${n(r.giro)} ${n(r.x)} ${n(r.y)})`;
@@ -252,7 +264,7 @@ export function FiguraCorpo({
         )}
 
         {/* Articulacoes: anel com ponto e o sonar em verde */}
-        {tem("articulacoes") && (
+        {tem("articulacoes") && !mapa && (
           <g data-camada="articulacoes">
             {v.juntas.map((j) => (
               <g key={j.chave} data-articulacao={j.chave}>
@@ -304,5 +316,157 @@ export function FiguraCorpo({
         )}
       </g>
     </svg>
+  );
+}
+
+/* ======================================================================
+   O MAPA DE DOR DO HERO (prop mapa)
+   A geometria vem gerada (scripts/gerar-mapa-de-dor.py); aqui ficam o
+   peso e a estrutura do movimento. As animacoes (faixa de luz, ponto que
+   corre a cadeia) estao em globals.css, secao HERO - mapa de dor, com o
+   repouso no estilo base: com movimento reduzido a faixa e o ponto nao
+   existem e o resto fica inteiro e parado.
+   ====================================================================== */
+
+/** Opacidade com tres casas: arredondar/n levaria 0,022 a 0. */
+const op = (v: number) => Math.round(v * 1000) / 1000;
+
+/**
+ * Peso da coluna do mapa: CONTORNO, no tratamento da silhueta, e nao massa
+ * cheia, que roubava o olho dos pontos verdes. [traco em unidades, opacidade
+ * do traco, opacidade do preenchimento].
+ * Medido no teste de apertar os olhos (desfoque de 5px sobre o par): com
+ * estes valores os pontos se destacam da vizinhanca com deltaE2000 medio de
+ * 19,7 e a coluna acrescenta 3,6 onde mora. O preenchimento residual e' o
+ * que segura a forma na figura de 405px do telefone, onde o traco de 0,85u
+ * sai com 0,6px.
+ */
+const PESO_DA_COLUNA: Record<"discos" | "processos" | "corpos" | "sacro", readonly [number, number, number]> = {
+  discos: [0.6, 0.12, 0.02],
+  processos: [0.85, 0.22, 0],
+  corpos: [0.85, 0.34, 0.03],
+  sacro: [0.85, 0.3, 0.02],
+};
+
+function PecasDaColuna({ vista, cor, forca }: { vista: NomeVista; cor: string; forca: number }) {
+  const c = MAPA_DE_DOR_DESENHO[vista].coluna;
+  const grupos: [readonly string[], readonly [number, number, number]][] = [
+    [c.discos, PESO_DA_COLUNA.discos],
+    [c.processos, PESO_DA_COLUNA.processos],
+    [c.corpos, PESO_DA_COLUNA.corpos],
+    [[...c.sacro, c.coccix], PESO_DA_COLUNA.sacro],
+  ];
+  return (
+    <>
+      {grupos.map(([caminhos, [traco, opTraco, opFill]], i) => (
+        <g
+          key={i}
+          fill={cor}
+          fillOpacity={op(opFill * forca)}
+          stroke={cor}
+          strokeOpacity={op(opTraco * forca)}
+          strokeWidth={traco}
+        >
+          {caminhos.map((d, k) => (
+            <path key={k} d={d} />
+          ))}
+        </g>
+      ))}
+    </>
+  );
+}
+
+/**
+ * A coluna do mapa, mais a faixa de luz: uma copia em papel revelada por
+ * mascara. A mascara e' traco tracejado sobre a linha de centro da coluna
+ * (pathLength=100, como o traco da marcha do hero), desfocado para a borda
+ * nao cortar seco. Uma propriedade animada, continua, nenhum piscar. Os ids
+ * levam a vista porque o hero desenha as duas figuras na mesma pagina.
+ */
+function ColunaDoMapa({ vista, animar }: { vista: NomeVista; animar: boolean }) {
+  const { coluna } = MAPA_DE_DOR_DESENHO[vista];
+  const s = vista === "frontal" ? "f" : "p";
+  // a faixa da frontal nao desce em unissono com a de perfil, pela mesma
+  // razao que as duas figuras ja nao respiram juntas
+  const atraso = vista === "frontal" ? { animationDelay: "-4.6s" } : undefined;
+  return (
+    <g data-camada="coluna">
+      {animar && (
+        <defs>
+          <filter id={`pd-borrao-${s}`} x="-40%" y="-12%" width="180%" height="124%">
+            <feGaussianBlur stdDeviation={4.5} />
+          </filter>
+          <mask
+            id={`pd-faixa-${s}`}
+            maskUnits="userSpaceOnUse"
+            x={0}
+            y={56}
+            width={VISTAS[vista].largura}
+            height={256}
+          >
+            <g filter={`url(#pd-borrao-${s})`}>
+              <path
+                className="pd-faixa-traco"
+                d={coluna.traco}
+                pathLength={100}
+                fill="none"
+                stroke="#fff"
+                strokeWidth={44}
+                strokeLinecap="round"
+                style={atraso}
+              />
+            </g>
+          </mask>
+        </defs>
+      )}
+      <PecasDaColuna vista={vista} cor={AZUL} forca={1} />
+      {animar && (
+        <g className="pd-faixa" mask={`url(#pd-faixa-${s})`} style={atraso}>
+          <PecasDaColuna vista={vista} cor={PAPEL} forca={0.55} />
+        </g>
+      )}
+    </g>
+  );
+}
+
+/**
+ * A cadeia do mapa: uma polilinha continua por membro, da coluna ate dentro
+ * da mao ou do pe, com cruz de articulacao (marca de medida, nao botao) nos
+ * vertices que nao disputam regiao com ponto clicavel. Um ponto corre cada
+ * polilinha inteira por offset-path, como o ponto da curva de marcha.
+ */
+function CadeiaDoMapa({ vista, animar }: { vista: NomeVista; animar: boolean }) {
+  const { polilinhas, cruzes } = MAPA_DE_DOR_DESENHO[vista].cadeia;
+  return (
+    <g data-camada="cadeia">
+      <g stroke={PAPEL} strokeOpacity={0.34} strokeWidth={0.9} fill="none">
+        {polilinhas.map((p, i) => (
+          <path key={i} d={p.d} />
+        ))}
+      </g>
+      <g stroke={PAPEL} strokeOpacity={0.45} strokeWidth={1} fill="none">
+        {cruzes.map((d, i) => (
+          <path key={i} d={d} />
+        ))}
+      </g>
+      {animar && (
+        <g fill={PAPEL} stroke="none">
+          {polilinhas.map((p, i) => (
+            <circle
+              key={i}
+              className="pd-corre"
+              r={1.6}
+              cx={0}
+              cy={0}
+              style={{
+                offsetPath: `path("${p.d}")`,
+                ["--dur" as string]: `${p.dur}s`,
+                ["--fase" as string]: `${p.fase}s`,
+              }}
+            />
+          ))}
+        </g>
+      )}
+    </g>
   );
 }

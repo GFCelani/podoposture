@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
+import { MapaDeDor } from "./mapa-de-dor";
 import { SectionMark } from "./layers";
 
 /**
@@ -345,7 +346,7 @@ export function Hero() {
           - Abaixo de lg o par entra no fluxo depois da curva de marcha,
             centrado, altura pela largura que sobra, teto de 405px.
         */}
-        <div aria-hidden="true" className="hero-campo pointer-events-none">
+        <div className="hero-campo pointer-events-none">
           <div className="hero-quadro">
             {/* Linhas de referencia: 1px em papel a 0,3, com o traco curto de
                 14px x 1,4px na ponta direita, mais claro; recolhem e voltam a
@@ -362,11 +363,13 @@ export function Hero() {
                 da janela, sobre o azul principal, onde o on-deep-muted
                 reprova (3,1) e o papel a 100% passa (4,9). A hierarquia
                 entre a abordagem e a marca e' de caixa e espacejamento.
-                O campo inteiro e' aria-hidden: quem nomeia as tres abordagens
-                para o leitor de tela e' o subtitulo, em prosa. */}
+                As linhas sao aria-hidden uma a uma (o campo deixou de ser,
+                porque agora tem os links do mapa de dor): quem nomeia as tres
+                abordagens para o leitor de tela e' o subtitulo, em prosa. */}
             {LINHAS_DE_REFERENCIA.map(({ y, abordagem, marca }, i) => (
               <div
                 key={y}
+                aria-hidden="true"
                 className="hero-linha rule-in"
                 style={{
                   top: `${((y / 560) * 100).toFixed(2)}%`,
@@ -387,10 +390,21 @@ export function Hero() {
                 </span>
               </div>
             ))}
+            {/* Mapa de dor: cada figura vai num embrulho do tamanho exato
+                do desenho, com os pontos clicaveis por cima (mapa-de-dor.tsx).
+                Seis por figura, nove condicoes: ma postura, dor lombar e
+                hernia de disco nas duas vistas, com a mesma regra de lugar
+                nas duas; cada uma das outras so na vista que a le. */}
             <div className="hero-par">
-              <FiguraCorpo vista="frontal" className="rule-in hero-figura" />
+              <div className="pd-fig pd-fig--frontal">
+                <FiguraCorpo vista="frontal" mapa className="rule-in hero-figura" />
+                <MapaDeDor vista="frontal" />
+              </div>
               {/* fase propria: as duas nao pulsam em unissono */}
-              <FiguraCorpo vista="perfil" fase={2.3} className="rule-in hero-figura" />
+              <div className="pd-fig pd-fig--perfil">
+                <FiguraCorpo vista="perfil" mapa fase={2.3} className="rule-in hero-figura" />
+                <MapaDeDor vista="perfil" />
+              </div>
             </div>
           </div>
         </div>
