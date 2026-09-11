@@ -57,13 +57,26 @@ const DIMENSAO: Record<Exclude<Agrupamento, "day">, Dimensao> = {
   deviceType: "aparelho",
 };
 
+/**
+ * O intervalo em milissegundos: do inicio do primeiro dia ao ultimo milissegundo
+ * do ultimo, em UTC. Mandar `AAAA-MM-DD` deixava o fuso e a inclusao do dia
+ * final ao criterio da API, e os dias do arquivo sao UTC.
+ */
+export function limitesEmMs({ inicio, fim }: Intervalo): { since: string; until: string } {
+  return {
+    since: String(Date.parse(`${inicio}T00:00:00.000Z`)),
+    until: String(Date.parse(`${fim}T23:59:59.999Z`)),
+  };
+}
+
 export function enderecoDaConsulta(cfg: ConfigDaVercel, by: Agrupamento, intervalo: Intervalo): string {
   const url = new URL(ENDERECO);
   url.searchParams.set("projectId", cfg.projeto);
   // Token de time ou de projeto dispensa o teamId; mandar mesmo assim e inofensivo.
   if (cfg.time) url.searchParams.set("teamId", cfg.time);
-  url.searchParams.set("since", intervalo.inicio);
-  url.searchParams.set("until", intervalo.fim);
+  const { since, until } = limitesEmMs(intervalo);
+  url.searchParams.set("since", since);
+  url.searchParams.set("until", until);
   url.searchParams.set("by", by);
   url.searchParams.set("limit", String(LIMITE));
   return url.toString();
@@ -131,6 +144,10 @@ function linha(dia: string, dimensao: Dimensao, item: ItemAgregado): LinhaDoDia 
  * ligada, ou o dia saiu da janela de 12 meses), e gravar zero ali poria no
  * arquivo uma queda de trafego que nunca aconteceu — a comparacao com o periodo
  * anterior diria "muito mais gente" so porque antes nao se media.
+ *
+ * O zero deduzido sai marcado `soSeVazio`: a gravacao so o poe onde nao ha
+ * linha. Sem a marca, um backfill sobre dias ja guardados que sairam da janela
+ * da Vercel (resposta vazia) gravava zero por cima das visitas reais.
  */
 export function totaisDoIntervalo(
   itens: ItemAgregado[],
@@ -144,7 +161,12 @@ export function totaisDoIntervalo(
   const zerosDesde = candidatos.sort()[0];
   return diasDoIntervalo(intervalo)
     .filter((dia) => dia >= zerosDesde)
-    .map((dia) => linha(dia, "total", porDia.get(dia) ?? { chave: "", visitas: 0, pessoas: 0 }));
+    .map((dia) => {
+      const medido = porDia.get(dia);
+      return medido
+        ? linha(dia, "total", medido)
+        : { ...linha(dia, "total", { chave: "", visitas: 0, pessoas: 0 }), soSeVazio: true };
+    });
 }
 
 class FalhaDaVercel extends Error {

@@ -15,6 +15,11 @@ import {
 const CFG: ConfigDaVercel = { token: "token-de-teste", projeto: "prj_teste", time: null };
 const TRES_DIAS = { inicio: "2026-09-01", fim: "2026-09-03" };
 
+/** Inicio do dia UTC em milissegundos, como a consulta manda. */
+const ms = (dia: string) => String(Date.parse(`${dia}T00:00:00.000Z`));
+/** O dia UTC de um `since` em milissegundos. */
+const diaDe = (since: string | null) => new Date(Number(since)).toISOString().slice(0, 10);
+
 function json(corpo: unknown, status = 200): Response {
   return new Response(JSON.stringify(corpo), { status, headers: { "content-type": "application/json" } });
 }
@@ -34,7 +39,7 @@ function vercelFalsa(responder?: (url: URL, n: number) => Response | Promise<Res
       return json({
         version: 1,
         query: { groupBy: ["day"] },
-        data: [{ timestamp: `${url.searchParams.get("since")}T00:00:00.000Z`, pageviews: 10, visitors: 7 }],
+        data: [{ timestamp: `${diaDe(url.searchParams.get("since"))}T00:00:00.000Z`, pageviews: 10, visitors: 7 }],
       });
     }
     return json({ version: 1, data: [{ [by]: by === "requestPath" ? "/home/f/texto" : "valor", pageviews: 3, visitors: 2 }] });
@@ -61,13 +66,17 @@ describe("enderecoDaConsulta", () => {
   it("monta so com parametros fixos, uma dimensao, limite 100", () => {
     const url = new URL(enderecoDaConsulta(CFG, "requestPath", { inicio: "2026-09-01", fim: "2026-09-01" }));
     expect(`${url.origin}${url.pathname}`).toBe("https://api.vercel.com/v1/query/web-analytics/visits/aggregate");
+    // Milissegundos do inicio ao fim do dia em UTC: data solta deixava o fuso a
+    // criterio da API. 1788220800000 = 2026-09-01T00:00:00Z.
     expect(Object.fromEntries(url.searchParams)).toEqual({
       projectId: "prj_teste",
-      since: "2026-09-01",
-      until: "2026-09-01",
+      since: "1788220800000",
+      until: "1788307199999",
       by: "requestPath",
       limit: "100",
     });
+    expect(new Date(1788220800000).toISOString()).toBe("2026-09-01T00:00:00.000Z");
+    expect(new Date(1788307199999).toISOString()).toBe("2026-09-01T23:59:59.999Z");
     expect(url.searchParams.has("filter")).toBe(false);
     expect(new URL(enderecoDaConsulta({ ...CFG, time: "team_x" }, "day", TRES_DIAS)).searchParams.get("teamId")).toBe("team_x");
   });
@@ -129,9 +138,19 @@ describe("totaisDoIntervalo", () => {
     expect(linhas.every((l) => l.dimensao === "total" && l.chave === "" && l.fonte === "vercel")).toBe(true);
   });
 
-  it("com arquivo mais antigo, todo dia do intervalo e zero medido", () => {
-    expect(totaisDoIntervalo(dia3, cinco, "2026-08-01")).toHaveLength(5);
+  it("com arquivo mais antigo, todo dia do intervalo ganha total, e o que nao veio sai marcado como deduzido", () => {
+    const linhas = totaisDoIntervalo(dia3, cinco, "2026-08-01");
+    expect(linhas).toHaveLength(5);
+    expect(linhas.map((l) => [l.dia, l.soSeVazio === true])).toEqual([
+      ["2026-09-01", true],
+      ["2026-09-02", true],
+      ["2026-09-03", false],
+      ["2026-09-04", true],
+      ["2026-09-05", true],
+    ]);
     expect(totaisDoIntervalo([], cinco, "2026-09-04").map((l) => l.dia)).toEqual(["2026-09-04", "2026-09-05"]);
+    // resposta vazia sobre arquivo antigo (dia fora da janela da Vercel): so zeros deduzidos
+    expect(totaisDoIntervalo([], cinco, "2026-08-01").every((l) => l.soSeVazio)).toBe(true);
   });
 
   it("resposta vazia sem nada guardado nao inventa zero", () => {
@@ -149,8 +168,11 @@ describe("coletarVercel", () => {
     expect(porBy.filter((b) => b === "day")).toHaveLength(1);
     for (const by of ["requestPath", "referrerHostname", "country", "deviceType"]) {
       const doBy = pedidos.filter((p) => p.url.searchParams.get("by") === by);
-      expect(doBy.map((p) => p.url.searchParams.get("since"))).toEqual(["2026-09-01", "2026-09-02", "2026-09-03"]);
-      expect(doBy.every((p) => p.url.searchParams.get("since") === p.url.searchParams.get("until"))).toBe(true);
+      expect(doBy.map((p) => p.url.searchParams.get("since"))).toEqual([ms("2026-09-01"), ms("2026-09-02"), ms("2026-09-03")]);
+      // um dia so por chamada: do inicio ao ultimo milissegundo do mesmo dia
+      expect(
+        doBy.every((p) => Number(p.url.searchParams.get("until")) - Number(p.url.searchParams.get("since")) === 86_399_999),
+      ).toBe(true);
     }
     expect(pedidos.every((p) => (p.init.headers as Record<string, string>).Authorization === "Bearer token-de-teste")).toBe(
       true,
@@ -204,7 +226,7 @@ describe("coletarVercel", () => {
 
   it("demora vira erro registrado, e o que chegou inteiro fica", async () => {
     const { buscar } = vercelFalsa((url) => {
-      if (url.searchParams.get("by") === "country" && url.searchParams.get("since") === "2026-09-03") {
+      if (url.searchParams.get("by") === "country" && url.searchParams.get("since") === ms("2026-09-03")) {
         throw Object.assign(new Error("tempo"), { name: "TimeoutError" });
       }
       return null;

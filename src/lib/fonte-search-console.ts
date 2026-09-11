@@ -39,7 +39,37 @@ export function configDaBusca(env: NodeJS.ProcessEnv = process.env): ConfigDaBus
   const contaBruta = env.GSC_SERVICE_ACCOUNT?.trim();
   const site = env.GSC_SITE_URL?.trim();
   if (!contaBruta || !site) return null;
-  return { contaBruta, site };
+  return { contaBruta, site: propriedadeDoSite(site) };
+}
+
+const DOMINIO = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+
+/**
+ * A propriedade no formato que a API do Search Console espera.
+ *
+ * Quem configura cola o que tiver a mao, e a API so reconhece duas formas:
+ * `sc-domain:dominio` (propriedade de dominio) ou a URL com barra final
+ * (propriedade de prefixo). Um endereco sem a barra, ou so o dominio, dava 403
+ * ou 404 na coleta e parecia falta de permissao.
+ * - `sc-domain:...` fica, com o dominio em minuscula;
+ * - `https://podoposture.com.br` vira `https://podoposture.com.br/`;
+ * - `podoposture.com.br` vira `sc-domain:podoposture.com.br`.
+ * O que nao for nenhum dos tres segue como veio, e a coleta registra a recusa.
+ */
+export function propriedadeDoSite(bruto: string): string {
+  const valor = bruto.trim();
+  if (/^sc-domain:/i.test(valor)) return `sc-domain:${valor.slice("sc-domain:".length).trim().toLowerCase()}`;
+  if (/^https?:\/\//i.test(valor)) {
+    try {
+      const url = new URL(valor);
+      const caminho = url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`;
+      return `${url.protocol}//${url.host}${caminho}`;
+    } catch {
+      return valor;
+    }
+  }
+  const dominio = valor.toLowerCase().replace(/\/+$/, "");
+  return DOMINIO.test(dominio) ? `sc-domain:${dominio}` : valor;
 }
 
 /**

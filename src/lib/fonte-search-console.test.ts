@@ -103,6 +103,19 @@ describe("conta de servico", () => {
     });
     expect(configDaBusca({ GSC_SERVICE_ACCOUNT: CONTA } as unknown as NodeJS.ProcessEnv)).toBeNull();
   });
+
+  it("aceita a propriedade nas tres formas que quem configura cola", () => {
+    const site = (valor: string) =>
+      configDaBusca({ GSC_SERVICE_ACCOUNT: CONTA, GSC_SITE_URL: valor } as unknown as NodeJS.ProcessEnv)?.site;
+    expect(site("sc-domain:podoposture.com.br")).toBe("sc-domain:podoposture.com.br");
+    expect(site("SC-DOMAIN:Podoposture.com.br")).toBe("sc-domain:podoposture.com.br");
+    expect(site("https://podoposture.com.br/")).toBe("https://podoposture.com.br/");
+    expect(site("https://podoposture.com.br")).toBe("https://podoposture.com.br/");
+    expect(site("podoposture.com.br")).toBe("sc-domain:podoposture.com.br");
+    expect(site(" podoposture.com.br/ ")).toBe("sc-domain:podoposture.com.br");
+    // o que nao se reconhece segue como veio: a coleta registra a recusa do Google
+    expect(site("minha propriedade")).toBe("minha propriedade");
+  });
 });
 
 describe("montarJwt", () => {

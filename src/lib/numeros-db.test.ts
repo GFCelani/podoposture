@@ -89,6 +89,24 @@ describe.skipIf(!URL_DE_TESTE)("arquivo diario no Postgres", () => {
     expect(await db.somarTotal("vercel", DIA)).toMatchObject({ visitas: 12, pessoas: 8 });
   });
 
+  it("zero deduzido nunca apaga o numero guardado, mas preenche o dia que falta", async () => {
+    // O cenario do backfill: o arquivo ja tem o dia com visitas, a Vercel ja
+    // apagou esse dia e responde vazio, e o total do dia vira zero deduzido.
+    await db.gravarLinhas([linha({ visitas: 40, pessoas: 25 })]);
+    await db.gravarLinhas([
+      linha({ soSeVazio: true }),
+      linha({ dia: "2026-09-02", soSeVazio: true }),
+    ]);
+    expect(await db.somarTotal("vercel", DIA)).toMatchObject({ visitas: 40, pessoas: 25 });
+    expect(await db.serieDiaria("vercel", { inicio: "2026-09-01", fim: "2026-09-02" })).toEqual([
+      { dia: "2026-09-01", pessoas: 25 },
+      { dia: "2026-09-02", pessoas: 0 },
+    ]);
+    // e a medicao de verdade continua substituindo o zero deduzido
+    await db.gravarLinhas([linha({ dia: "2026-09-02", visitas: 3, pessoas: 2 })]);
+    expect((await db.somarTotal("vercel", { inicio: "2026-09-02", fim: "2026-09-02" })).pessoas).toBe(2);
+  });
+
   it("chave repetida no mesmo lote nao derruba a gravacao", async () => {
     await db.gravarLinhas([linha({ visitas: 1 }), linha({ visitas: 2 })]);
     expect(await contarLinhas()).toBe(1);

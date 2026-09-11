@@ -83,14 +83,22 @@ async function garantirTabelasDeNumeros() {
 /** Linhas por comando: 9 colunas x 1000 fica longe do teto de parametros do Postgres. */
 const LINHAS_POR_COMANDO = 1000;
 
-/** Grava com upsert. Devolve quantas linhas foram escritas depois da poda. */
+/**
+ * Grava com upsert. Devolve quantas linhas foram escritas depois da poda.
+ *
+ * Linha medida substitui a guardada (refazer o dia corrige). Zero deduzido
+ * (`soSeVazio`) so entra onde nao ha linha: por cima de um numero guardado ele
+ * apagaria visita que a fonte ja nao tem mais para devolver.
+ */
 export async function gravarLinhas(linhas: LinhaDoDia[]): Promise<number> {
   await garantirTabelasDeNumeros();
   const sql = bancoDoPainel();
   const podadas = limitarPorDia(linhas);
+  const medidas = podadas.filter((l) => !l.soSeVazio);
+  const deduzidas = podadas.filter((l) => l.soSeVazio);
 
-  for (let i = 0; i < podadas.length; i += LINHAS_POR_COMANDO) {
-    const lote = podadas.slice(i, i + LINHAS_POR_COMANDO);
+  for (let i = 0; i < medidas.length; i += LINHAS_POR_COMANDO) {
+    const lote = medidas.slice(i, i + LINHAS_POR_COMANDO);
     await sql`
       INSERT INTO numeros_dia ${sql(
         lote,
@@ -110,6 +118,23 @@ export async function gravarLinhas(linhas: LinhaDoDia[]): Promise<number> {
         cliques   = EXCLUDED.cliques,
         aparicoes = EXCLUDED.aparicoes,
         posicao   = EXCLUDED.posicao`;
+  }
+  for (let i = 0; i < deduzidas.length; i += LINHAS_POR_COMANDO) {
+    const lote = deduzidas.slice(i, i + LINHAS_POR_COMANDO);
+    await sql`
+      INSERT INTO numeros_dia ${sql(
+        lote,
+        "fonte",
+        "dia",
+        "dimensao",
+        "chave",
+        "visitas",
+        "pessoas",
+        "cliques",
+        "aparicoes",
+        "posicao",
+      )}
+      ON CONFLICT (fonte, dia, dimensao, chave) DO NOTHING`;
   }
   return podadas.length;
 }
