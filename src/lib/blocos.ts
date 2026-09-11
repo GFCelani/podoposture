@@ -1,8 +1,10 @@
 /**
  * Classifica o corpo de uma secao em blocos, pelo FORMATO do conteudo.
  *
- * O texto da cliente chega plano (p, h3, ul, ol, blockquote, figure). Um
- * bloco unico de prosa nao tem ritmo; mas o formato que a autora usou ja
+ * O texto da cliente chega plano (p, h3, ul, ol, blockquote, figure); o post
+ * escrito no painel passa pelo Markdown e pode trazer tambem h1, h2, h5, h6,
+ * pre, table e hr, que nenhum formato abaixo reconhece e por isso seguem como
+ * prosa. Um bloco unico de prosa nao tem ritmo; mas o formato que a autora usou ja
  * diz o que cada trecho e': uma sequencia de h3 sem corpo e' um mapa de
  * rotulos, "<p><strong>ROTULO</strong></p>" seguido de lista e' uma lista
  * rotulada, pares h3+p curtos sao um protocolo, paragrafos com telefone no
@@ -59,6 +61,34 @@ export type Bloco =
 
 const TELEFONE = /\(\d{2}\)\s?\d{4,5}-\d{4}/;
 
+/** As tags que classificar() sabe ler; qualquer outra entra como "outro". */
+const RECONHECIDAS: ReadonlySet<string> = new Set([
+  "p",
+  "h3",
+  "h4",
+  "ul",
+  "ol",
+  "blockquote",
+  "figure",
+]);
+
+/** Sem fechamento: a propria tag de abertura ja e' o elemento inteiro. */
+const VAZIOS: ReadonlySet<string> = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "source",
+  "track",
+  "wbr",
+]);
+
 function textoDe(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
@@ -67,33 +97,90 @@ function textoDe(html: string): string {
     .trim();
 }
 
-/** Divide HTML plano em elementos de primeiro nivel. */
-export function elementos(html: string): Elemento[] {
-  const re = /<(p|h3|h4|ul|ol|blockquote|figure)\b[^>]*>[\s\S]*?<\/\1>/g;
-  const out: Elemento[] = [];
+/**
+ * Posicao logo depois do fechamento do elemento `nome` cuja abertura termina
+ * em `desde`. Conta aberturas e fechamentos do mesmo nome: com regex
+ * preguicoso, uma lista dentro de um item fechava a de fora no primeiro
+ * </ul> e os itens seguintes sumiam. Sem fechamento, vai ate o fim, porque um
+ * bloco comprido demais custa menos que texto a menos.
+ */
+function fimDoElemento(html: string, nome: string, desde: number): number {
+  const marca = new RegExp(`<(/?)${nome}\\b[^>]*>`, "gi");
+  marca.lastIndex = desde;
+  let profundidade = 1;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) {
-    const tag = m[1] as Tag;
-    const el = m[0];
-    const texto = textoDe(el);
-    const li = el.match(/<li\b[^>]*>[\s\S]*?<\/li>/g) ?? [];
-    const comLink = li.filter((x) => /<a\s/.test(x)).length;
-    const interno = el.replace(/^<p\b[^>]*>/, "").replace(/<\/p>$/, "").trim();
-    out.push({
-      tag,
-      html: el,
-      texto,
-      itens: li.length,
-      maiorItem: li.reduce((a, x) => Math.max(a, textoDe(x).length), 0),
-      soStrong:
-        tag === "p" &&
-        /^<strong>[\s\S]*<\/strong>$/.test(interno) &&
-        !/<\/strong>[\s\S]*<strong>/.test(interno) &&
-        texto.length > 0,
-      soLinks: li.length >= 2 && comLink / li.length >= 0.6,
-      temTelefone: TELEFONE.test(texto),
-    });
+  while ((m = marca.exec(html))) {
+    if (m[1]) profundidade--;
+    else if (!m[0].endsWith("/>")) profundidade++;
+    if (profundidade === 0) return marca.lastIndex;
   }
+  return html.length;
+}
+
+/** Os <li> de primeiro nivel, cada um com a lista que tiver dentro. */
+function itensDe(html: string): string[] {
+  const abre = /<li\b[^>]*>/gi;
+  const out: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = abre.exec(html))) {
+    const fim = fimDoElemento(html, "li", abre.lastIndex);
+    out.push(html.slice(m.index, fim));
+    abre.lastIndex = fim;
+  }
+  return out;
+}
+
+function medir(nome: string, el: string): Elemento {
+  const tag: Tag = RECONHECIDAS.has(nome) ? (nome as Tag) : "outro";
+  const texto = textoDe(el);
+  const li = itensDe(el);
+  const comLink = li.filter((x) => /<a\s/.test(x)).length;
+  const interno = el.replace(/^<p\b[^>]*>/, "").replace(/<\/p>$/, "").trim();
+  return {
+    tag,
+    html: el,
+    texto,
+    itens: li.length,
+    maiorItem: li.reduce((a, x) => Math.max(a, textoDe(x).length), 0),
+    soStrong:
+      tag === "p" &&
+      /^<strong>[\s\S]*<\/strong>$/.test(interno) &&
+      !/<\/strong>[\s\S]*<strong>/.test(interno) &&
+      texto.length > 0,
+    soLinks: li.length >= 2 && comLink / li.length >= 0.6,
+    temTelefone: TELEFONE.test(texto),
+  };
+}
+
+/**
+ * Divide HTML em elementos de primeiro nivel, sem deixar nada para tras.
+ *
+ * Era um regex so para as tags de RECONHECIDAS: o que ficasse fora (h1, h2
+ * sem par, h5, h6, pre, table, hr) nao chegava a pagina, e sem erro nenhum.
+ * Ja cortava titulos de posts e paginas migrados, e o painel piora isso: o
+ * botao de titulo do editor gera um h2 sozinho. Agora toda tag aberta no
+ * primeiro nivel vira elemento ate o seu fechamento, a desconhecida como
+ * "outro" (que classificar() poe em prosa), e texto solto entre tags tambem
+ * vira elemento. So comentario e fechamento orfao sao pulados: nao tem texto.
+ */
+export function elementos(html: string): Elemento[] {
+  const marca = /<!--[\s\S]*?(?:-->|$)|<\/[a-zA-Z][^>]*>|<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
+  const out: Elemento[] = [];
+  const solto = (trecho: string) => {
+    if (trecho.trim()) out.push(medir("", trecho.trim()));
+  };
+  let desde = 0;
+  let m: RegExpExecArray | null;
+  while ((m = marca.exec(html))) {
+    solto(html.slice(desde, m.index));
+    desde = marca.lastIndex;
+    if (!m[1]) continue;
+    const nome = m[1].toLowerCase();
+    if (!VAZIOS.has(nome) && !m[0].endsWith("/>")) desde = fimDoElemento(html, nome, desde);
+    out.push(medir(nome, html.slice(m.index, desde)));
+    marca.lastIndex = desde;
+  }
+  solto(html.slice(desde));
   return out;
 }
 

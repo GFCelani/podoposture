@@ -14,8 +14,9 @@ import { lerNomeDoArquivo } from "./imagem-webp";
  * Isso e diferente, e melhor, do que guardar HTML e passar um sanitizador em
  * cima: sanitizador e uma lista do que remover, e listas tem buracos.
  *
- * Importa em dobro aqui: `src/components/prose.tsx` injeta o corpo com
- * `dangerouslySetInnerHTML` e nao sanitiza nada em runtime. Isso era seguro
+ * Importa em dobro aqui: depois de `SecoesDeConteudo` dividir o corpo em
+ * secoes e blocos, o `Html` de `src/components/blocos.tsx` injeta cada trecho
+ * com `dangerouslySetInnerHTML` e nao sanitiza nada em runtime. Isso era seguro
  * enquanto a unica fonte era o extrator Python, que constroi o HTML a partir de
  * uma arvore fechada. O painel abre uma segunda fonte — e e esta funcao que
  * mantem a promessa de pe.

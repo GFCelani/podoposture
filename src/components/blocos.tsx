@@ -30,9 +30,11 @@ export type Tom = "paper" | "surface" | "deep";
 
 const TELEFONE = /\(\d{2}\)\s?\d{4,5}-\d{4}/;
 
-/* Seguro: HTML gerado em build-time pelos extratores, a partir de uma lista
-   fechada de tags, com texto e atributos escapados. Nao ha entrada de
-   terceiros; o conteudo e' da propria clinica. */
+/* Seguro: as duas fontes chegam com texto e atributos escapados. Paginas e
+   posts migrados vem dos extratores, em build-time, a partir de uma lista
+   fechada de tags; posts do painel vem de lib/markdown.ts, em que marcacao
+   digitada nunca vira HTML (html: false). Nao ha entrada de terceiros; o
+   conteudo e' da propria clinica. */
 export function Html({
   html,
   className,
