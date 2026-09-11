@@ -224,6 +224,7 @@ function Conteudo({ resposta, agora }: { resposta: RespostaDosNumeros; agora: nu
           migracao={migracao}
           primeiroDia={fontes.busca.primeiroDia}
           ultimoDia={fontes.busca.ultimoDia}
+          ano={ano}
         />
       )}
       <Detalhes visitas={visitas} fontes={fontes} agora={agora} ano={ano} />
@@ -345,7 +346,7 @@ function QuadroDePessoas({
       <Secao id="numeros-pessoas" titulo="Quantas pessoas abriram o site" primeira>
         <FonteSemNumero
           estado={estado}
-          naoLigada="A contagem de visitas ainda não foi ligada. Falta ativar a medição de visitas na Vercel e cadastrar a chave de leitura no servidor — é com quem cuida do site."
+          naoLigada="A contagem de visitas ainda não foi ligada — é com quem cuida do site."
           semDia="A contagem de visitas está ligada, mas ainda não há nenhum dia guardado. A coleta roda todo dia às 6h da manhã."
         />
       </Secao>
@@ -483,7 +484,7 @@ function QuadroDeBuscas({
       <Secao id="numeros-buscas" titulo="O que as pessoas buscaram no Google">
         <FonteSemNumero
           estado={estado}
-          naoLigada="As buscas no Google ainda não foram ligadas. Falta dar ao site acesso de leitura ao Search Console do endereço da clínica — é com quem cuida do site."
+          naoLigada="As buscas no Google ainda não foram ligadas — é com quem cuida do site."
           semDia="O acesso às buscas no Google está ligado, mas ainda não há nenhum dia guardado. O Google libera os números com 2 a 3 dias de atraso."
         />
       </Secao>
@@ -547,11 +548,13 @@ function AntesEDepois({
   migracao,
   primeiroDia,
   ultimoDia,
+  ano,
 }: {
   buscas: Buscas;
   migracao: string | null;
   primeiroDia: string;
   ultimoDia: string;
+  ano: number;
 }) {
   const meses = mesesSemBuraco(buscas.meses);
   const pontos: Ponto[] = meses.map((m) => ({
@@ -565,7 +568,8 @@ function AntesEDepois({
 
   let frase: string;
   if (!migracao) {
-    frase = "A data da mudança do site ainda não foi marcada. Quando for, o gráfico mostra onde ela cai e compara os meses de antes com os de depois.";
+    frase =
+      "A data da mudança do site ainda não foi marcada — é com quem cuida do site. Quando for, o gráfico mostra onde ela cai e compara os meses de antes com os de depois.";
   } else {
     const { antes, depois } = mediasAntesEDepois(meses, migracao, primeiroDia, ultimoDia);
     const mesDaMudanca = mesPorExtenso(migracao);
@@ -580,6 +584,9 @@ function AntesEDepois({
 
   return (
     <Secao id="numeros-mudanca" titulo="Antes e depois da mudança do site">
+      {/* Todo quadro diz ate quando os dados vao (JOURNEY): as datas do eixo
+          ficam num desenho que o leitor de tela nao le. */}
+      <Intervalo inicio={primeiroDia} fim={ultimoDia} ano={ano} />
       <p className="mt-3 text-[1.0625rem] leading-[1.6] text-ink">{frase}</p>
       {pontos.length > 1 && (
         <div className="mt-6">
@@ -646,18 +653,20 @@ function Detalhes({
             const estado = fontes[fonte];
             return (
               <div key={fonte}>
-                <dt className="text-ink-strong">{fonte === "vercel" ? "Visitas (Vercel)" : "Buscas (Google Search Console)"}</dt>
+                {/* Linguagem de consultorio (JOURNEY): sem nome de fornecedor e sem o
+                    erro cru da coleta, que fica no log para quem cuida do site. */}
+                <dt className="text-ink-strong">{fonte === "vercel" ? "Visitas" : "Buscas no Google"}</dt>
                 <dd className="text-muted">
                   {!estado.configurada
-                    ? "Não configurada neste servidor."
+                    ? "Ainda não foi ligada neste servidor."
                     : !estado.ultima
-                      ? "Configurada; nenhuma coleta registrada ainda."
+                      ? "Ligada; ainda não houve nenhuma coleta."
                       : `Última coleta ${quandoFoi(estado.ultima.em, new Date(agora))}: ${
                           estado.ultima.situacao === "ok"
-                            ? `deu certo, ${contar(estado.ultima.linhas, ["linha gravada", "linhas gravadas"])}`
+                            ? "deu certo"
                             : estado.ultima.situacao === "erro"
-                              ? `falhou (${estado.ultima.erro ?? "sem detalhe"})`
-                              : "a fonte estava sem credencial"
+                              ? "não deu certo; se continuar assim, avise quem cuida do site"
+                              : "ainda não estava ligada"
                         }.`}
                   {estado.primeiroDia && estado.ultimoDia && (
                     <> Guardado de {dataPorExtenso(estado.primeiroDia, ano)} a {dataPorExtenso(estado.ultimoDia, ano)}.</>
