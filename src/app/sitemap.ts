@@ -51,5 +51,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [home, indiceDoBlog, ...paginas, ...posts];
+  // Nasceu com a medicao de visitas, fora das 88 do site antigo. Entra no
+  // sitemap porque quem busca como o site trata os dados precisa acha-la.
+  // Data fixa: e a da ultima mudanca do texto, e nao a do build.
+  const privacidade = {
+    url: urlAbsoluta("/privacidade"),
+    lastModified: new Date("2026-09-11"),
+    changeFrequency: "yearly" as const,
+    priority: 0.2,
+  };
+
+  return [home, indiceDoBlog, ...paginas, ...posts, privacidade];
 }

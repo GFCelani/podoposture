@@ -1,12 +1,31 @@
 "use client";
 
+import { Analytics, type BeforeSendEvent } from "@vercel/analytics/next";
+
 /**
- * Ponto de montagem da medicao de visitas do site.
+ * Medicao de visitas do site (Vercel Web Analytics).
  *
- * Ja fica montado no layout raiz para que a frente de "Numeros" so precise
- * trocar o corpo deste componente, sem mexer em `layout.tsx`, que e comum a
- * todas as frentes. Enquanto isso, nao renderiza nada e nao carrega script.
+ * Sem cookie: a visitante vira um resumo da requisicao que a Vercel descarta
+ * em 24 horas. E o que permite a pagina de privacidade dizer que ninguem e
+ * identificado, e dispensa aviso de consentimento.
+ *
+ * Arquivo de cliente por causa de `beforeSend`: funcao nao atravessa de um
+ * componente de servidor (o layout) para um de cliente.
  */
+
+/** O painel fica de fora: e trabalho da clinica, nao leitura do site. */
+function descartarPainel(evento: BeforeSendEvent): BeforeSendEvent | null {
+  let caminho: string;
+  try {
+    caminho = new URL(evento.url, "https://podoposture.invalido").pathname;
+  } catch {
+    // Endereco ilegivel nao da para classificar; na duvida, nao mede —
+    // medir o painel por engano e pior do que perder uma visita.
+    return null;
+  }
+  return caminho === "/publicar" || caminho.startsWith("/publicar/") ? null : evento;
+}
+
 export function AnalyticsDoSite() {
-  return null;
+  return <Analytics beforeSend={descartarPainel} />;
 }
