@@ -104,6 +104,10 @@ não renderiza WebP em Open Graph, e o cartão sai sem imagem. O
 4. Definir `NEXT_PUBLIC_SITE_URL` na Vercel.
 5. Baixar o TTL do DNS para 300s **24h antes** da troca.
 6. Manter o plano GoDaddy pago por 30 dias — rollback é reverter o DNS.
+7. **No momento de apontar o DNS**, cadastrar `DOMINIO_NO_AR=1` na Vercel e fazer um
+   deploy novo. O `robots.txt` é gerado no build: sem a variável, e sem o deploy depois
+   dela, o site entra no ar dizendo aos buscadores para não rastrear nenhuma das 88 URLs.
+   Conferir `https://podoposture.com.br/robots.txt` logo depois (tem que ter `Allow: /`).
 
 ## Escopo deliberadamente fora
 

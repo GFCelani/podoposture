@@ -27,7 +27,7 @@ sabe o que é e por que está ali. O peso está no meio e no fim.
 | **Avaliação** (ver como vai ficar) | **dominante** | Ela não conhece Markdown; sem ver o resultado, não tem como confiar no que escreveu |
 | Descoberta | leve | Endereço passado uma vez; não há descoberta a cada visita |
 | Atração | não se aplica | Usuária cativa: não há decisão de "vale a pena?" |
-| Recomendação | vira **loop de retorno** | Ela volta 2-4×/mês; a tela de entrada depois do login é a lista do que já existe, com "Escrever post" como ação dominante |
+| Recomendação | vira **loop de retorno** | Ela volta 2-4×/mês; a tela de entrada depois do login é a lista do que já existe, com "Escrever texto" como ação dominante |
 
 ## Friction budget
 
@@ -95,7 +95,7 @@ entrar → lista do que já existe → escrever post → pré-visualizar → pub
 ```
 
 A tela depois do login é a **lista**, não o formulário vazio: quem volta quer primeiro ver
-o que já fez. "Escrever post" é o único botão preenchido da tela.
+o que já fez. "Escrever texto" é o único botão preenchido da tela.
 
 ## Verificação
 
@@ -121,8 +121,19 @@ Ainda não conferido, porque precisa de navegador:
 - a contagem de cliques do login até o post publicado;
 - sessão caída → senha → editor reaberto sozinho;
 - dois cliques para despublicar;
-- a prévia "Ver como vai ficar" renderizada. Ela mostra só o corpo, sem o título e a capa
-  do cabeçalho.
+- a prévia "Ver como vai ficar" renderizada.
+
+**Rodada 1 de correção (11/09/2026)**, depois do teste em navegador:
+
+- a prévia passou a mostrar data, tema, título, resumo e capa com as classes do topo do post;
+- "Cancelar" com alteração pede o segundo clique e apaga a cópia do navegador; a cópia sabe
+  de que versão do texto nasceu e pergunta quando o texto mudou em outro aparelho;
+- o envio da capa mostra "Enviando…" ao lado dela, e publicar espera o envio (espera sem
+  feedback: 0);
+- o aviso de sessão caída fica dentro do cartão da senha, e a tela volta ao topo;
+- "Senha incorreta" diz o que conferir e a quem pedir uma senha nova (becos sem saída: 0).
+
+Falta conferir no navegador o que mudou nesta rodada.
 
 ---
 
@@ -246,6 +257,20 @@ Ainda não conferido, porque precisa de navegador:
 - aviso do navegador ao sair com alteração não salva;
 - seção reabrindo depois de a sessão cair;
 - o botão "Fechar a prévia e voltar ao painel" fechando a aba da prévia.
+
+**Rodada 1 de correção (11/09/2026)**, depois do teste em navegador (texto em 6 interações
+contra o teto de 5, por causa da volta ao painel):
+
+- a aba de como vai ficar tem o próprio "Publicar no site" → "Confirmar e publicar": seção →
+  campo → ver como vai ficar → publicar → confirmar, 5 interações, sem voltar ao painel;
+- ela mostra só o rascunho da seção aberta, e diz quais outras seções têm rascunho;
+- "voltar ao texto original" existe também dentro das listas, item por item; "Voltar o site ao
+  texto original" só aparece quando o publicado difere do original, e a confirmação diz que
+  muda o site na hora;
+- trocar a foto pede a descrição da foto nova;
+- nas mensagens, "como vai ficar" no lugar de "prévia" (termos novos por tela: só "rascunho").
+
+Falta conferir no navegador o que mudou nesta rodada.
 
 ---
 

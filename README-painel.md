@@ -30,13 +30,13 @@ configuração. A lista completa, com o porquê de cada uma, está em
 |---|---|---|
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | A entrada no painel | Ninguém entra; o painel diz que não foi configurado |
 | `DATABASE_URL` | Textos novos, imagens enviadas, edição da página inicial, números guardados | O blog mostra os 68 textos e a home mostra o texto padrão; as abas explicam que falta o banco |
-| `CRON_SECRET` | A coleta diária dos números (`/api/cron/numeros`) | A coleta recusa todo pedido, inclusive o da Vercel |
+| `CRON_SECRET` | A coleta diária dos números (`/api/cron/numeros`) e a renovação diária do cache do site. **Cadastre assim que houver `DATABASE_URL`**, mesmo sem ligar os números | A coleta recusa todo pedido, inclusive o da Vercel. E uma página que tenha ido ao cache com o texto padrão durante uma queda do banco só se refaz na próxima publicação ou deploy |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` (opcional) | Visitas na aba Números | A aba diz "a contagem de visitas ainda não foi ligada", nunca "0 visitas" |
 | `GSC_SERVICE_ACCOUNT`, `GSC_SITE_URL` | Buscas no Google na aba Números | A aba diz "as buscas no Google ainda não foram ligadas" |
 | `DATA_DA_MIGRACAO` (opcional) | A marca de antes e depois da troca de site no gráfico | O gráfico sai sem marca e diz que a data não foi marcada |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (opcionais) | Aviso quando a coleta falha duas noites seguidas | O aviso fica só na aba Números |
 | `PROXY_HOPS` | Limite de tentativas correto fora da Vercel | Na Vercel, deixe vazio |
-| `DOMINIO_NO_AR` | Libera os buscadores no dia da troca de DNS | O `robots.txt` bloqueia tudo, de propósito |
+| `DOMINIO_NO_AR` | Libera os buscadores no dia da troca de DNS. **Só vale depois de um deploy novo**: o `robots.txt` é gerado no build | Na Vercel, o `robots.txt` bloqueia tudo, de propósito. Fora da Vercel ele sempre libera |
 
 ### 1. A senha
 
@@ -75,11 +75,15 @@ ar.
 1. Ligar **Web Analytics** no projeto da Vercel e fazer um deploy novo. A
    medição só começa a partir desse deploy e não é retroativa.
 2. Criar um token com escopo só deste projeto e cadastrar `VERCEL_API_TOKEN` e
-   `VERCEL_PROJECT_ID`.
+   `VERCEL_PROJECT_ID`. **A Vercel não tem token só de leitura**: esse token consegue
+   publicar e apagar o projeto. Cadastre-o só nas variáveis da Vercel e não o copie
+   para planilha, conversa ou `.env` compartilhado.
 3. No Google Cloud: ativar a Search Console API, criar uma conta de serviço e
    baixar a chave em JSON. Cadastrar o JSON inteiro em `GSC_SERVICE_ACCOUNT`.
 4. No Search Console: adicionar o e-mail da conta de serviço como usuário
-   (Restrito basta) e cadastrar a propriedade em `GSC_SITE_URL`.
+   (Restrito basta) e cadastrar a propriedade em `GSC_SITE_URL`. Vale
+   `sc-domain:podoposture.com.br`, `https://podoposture.com.br/` ou só
+   `podoposture.com.br` (que vira `sc-domain:`).
 5. Criar `CRON_SECRET` com pelo menos 16 caracteres aleatórios.
 
 A coleta roda todo dia às 6h de Brasília e refaz os últimos 5 dias, para cobrir
@@ -104,7 +108,8 @@ PROXY_HOPS=1
 Nada disto se resolve pelo código nem por quem só tem acesso ao repositório:
 
 1. **Ligar Web Analytics** no projeto (hoje está desligado).
-2. **Criar o token de projeto** (`VERCEL_API_TOKEN`) e informar o ID do projeto.
+2. **Criar o token de projeto** (`VERCEL_API_TOKEN`) e informar o ID do projeto. Lembrando:
+   o token publica e apaga o projeto, e fica só nas variáveis da Vercel.
 3. **Cadastrar `CRON_SECRET`** e as demais variáveis em Settings → Environment
    Variables. Hoje o projeto não tem nenhuma variável.
 4. **Criar e conectar o Postgres** (por exemplo, Neon pelo Marketplace, que
@@ -133,12 +138,16 @@ Nada disto se resolve pelo código nem por quem só tem acesso ao repositório:
 
 1. Escolhe a seção pela lista, que mostra o começo do texto que está no ar.
 2. Troca o texto ou a foto. Cada campo diz o limite e mostra o texto original.
-3. **Ver como vai ficar** guarda um rascunho e abre a home inteira com a mudança,
-   numa aba separada.
-4. Só depois da prévia aparece **Publicar no site**, que pede um segundo clique
-   em **Confirmar e publicar**. Qualquer mudança depois da prévia esconde o
-   botão de novo.
-5. **Voltar ao texto original** desfaz o que foi publicado naquela seção.
+3. **Ver como vai ficar** guarda um rascunho e abre a home inteira numa aba
+   separada, com a mudança desta seção e as outras como estão no site. Se outra
+   seção tiver rascunho, a faixa diz qual.
+4. Só depois disso aparece **Publicar no site**, na própria faixa da aba de como
+   vai ficar e no painel, e ele pede um segundo clique em **Confirmar e
+   publicar**. Qualquer mudança depois de ver esconde o botão do painel de novo.
+5. **Usar o original neste campo** desfaz um campo só, inclusive dentro de listas
+   (serviços, cartões, fotos). **Voltar o site ao texto original** tira do ar o
+   que foi publicado naquela seção, na hora; ele só aparece quando o publicado
+   difere do original.
 
 ### Números
 
@@ -158,8 +167,9 @@ seção reabre sozinho.
 |---|---|
 | Descobrir o endereço e publicar | Toda rota do painel, leitura incluída, exige sessão válida no **servidor**. A tela nunca é a fechadura |
 | Ver o rascunho da home sem senha | A prévia confere a sessão antes de ler qualquer dado; sem ela, manda para a entrada. Sai com `noindex` |
-| Descobrir a senha por tentativa | 8 tentativas a cada 15 minutos por origem; a 9ª é recusada |
-| Derrubar o site com tentativas | No máximo 2 conferências de senha ao mesmo tempo |
+| Descobrir a senha por tentativa | 8 tentativas a cada 15 minutos por origem (IPv6 conta pelo bloco /64, que qualquer servidor alugado tem inteiro); a 9ª é recusada. Mais de 300 tentativas somadas em 15 minutos viram alerta no log |
+| Derrubar o site com tentativas | No máximo 2 pedidos de entrada ao mesmo tempo por instância; a recusa por excesso não gasta tentativa de ninguém |
+| Duas janelas editando a mesma seção da home | Cada gravação confere a versão da seção; se outra janela publicou antes, nada é gravado e o editor junta o que mudou com a versão nova |
 | Ler a senha nas variáveis do servidor | Lá está só o resumo `scrypt`, não a senha |
 | Forjar ou esticar a sessão | Cookie assinado com HMAC; qualquer alteração invalida |
 | Pedido forjado de outro site | Cookie `SameSite=Strict` mais conferência de procedência |
@@ -168,7 +178,7 @@ seção reabre sozinho.
 | Script malicioso dentro de um texto | O texto do blog é Markdown e a conversão não produz HTML executável |
 | Rastreador de terceiro dentro de um texto | Só imagem hospedada aqui vira imagem na página |
 | Consulta ao banco montada com texto de fora | Toda consulta é parametrizada |
-| Banco fora do ar derrubar o site | O blog serve os 68 textos e a home serve o texto padrão; depois de uma falha, a home para de tentar o banco por 60 segundos |
+| Banco fora do ar derrubar o site | O blog serve os 68 textos e a home serve o texto padrão. Uma conexão que caiu ganha uma segunda tentativa; depois de uma falha real, as leituras do site param de tentar o banco por 15 segundos (60 no build). Um texto publicado pelo painel nunca vira 404 guardado em cache por causa do banco fora |
 | O painel sujar os números | A medição de visitas descarta tudo que começa com `/publicar` |
 | Identificar quem visita | Web Analytics sem cookie; o resumo diário guarda só totais, e é apagado depois de 3 anos (ver `/privacidade`) |
 
