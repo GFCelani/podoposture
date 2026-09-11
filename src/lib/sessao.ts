@@ -103,8 +103,16 @@ export function lerBilhete(
  */
 export function ehLocalhost(host: string | null | undefined): boolean {
   if (!host) return false;
-  const nome = host.split(":")[0]?.toLowerCase() ?? "";
-  return nome === "localhost" || nome === "127.0.0.1" || nome === "[" || nome === "::1";
+  // Pelo leitor de URL, e nao cortando no primeiro ":": num IPv6 entre
+  // colchetes o corte dava sempre "[", e qualquer endereco IPv6 contava como
+  // localhost e recebia o cookie sem `secure`.
+  let nome: string;
+  try {
+    nome = new URL(`http://${host}`).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return nome === "localhost" || nome === "127.0.0.1" || nome === "[::1]";
 }
 
 /** Opcoes do cookie. Cada uma fecha um caminho de ataque diferente. */

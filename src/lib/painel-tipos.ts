@@ -149,8 +149,12 @@ export function validarPost(dados: DadosDoPost): ErrosPost {
   else if (dados.capa && !dados.capa.startsWith(PREFIXO_IMAGEM))
     erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
 
-  if (!dados.corpo) erros.corpo = "Escreva o texto antes de salvar.";
-  else if (dados.corpo.length < CORPO_MINIMO)
+  // Medido sem os espacos das pontas: uma tabela do Word que o conversor
+  // descarta vira so quebras de linha, e 40 delas passavam como texto e iam ao
+  // ar com titulo e corpo vazio.
+  const corpoLimpo = dados.corpo.trim();
+  if (!corpoLimpo) erros.corpo = "Escreva o texto antes de salvar.";
+  else if (corpoLimpo.length < CORPO_MINIMO)
     erros.corpo = `Escreva um pouco mais — pelo menos ${CORPO_MINIMO} caracteres.`;
   else if (dados.corpo.length > LIMITES_POST.corpo)
     erros.corpo = `Texto longo demais (máximo ${LIMITES_POST.corpo.toLocaleString("pt-BR")} caracteres).`;

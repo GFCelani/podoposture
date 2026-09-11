@@ -306,10 +306,22 @@ async function slugLivre(base: string, idAtual?: string): Promise<string> {
   return juntarSlug(raiz, `-${Date.now().toString(36)}`);
 }
 
-export async function criarPost(dados: DadosDoPost): Promise<PostDoPainel> {
+/**
+ * Cria o texto. `id`, quando vem, e o que o editor gerou ao abrir: repetir o
+ * pedido com o mesmo id atualiza o texto em vez de criar outro. Sem isso, a
+ * resposta que se perdia no 4G depois de o banco gravar deixava "Sem conexao",
+ * ela clicava de novo e o site ganhava "dor-lombar" e "dor-lombar-2" iguais.
+ */
+export async function criarPost(dados: DadosDoPost, id?: string): Promise<PostDoPainel> {
   await garantirTabelas();
   const sql = bancoDoPainel();
   const base = gerarSlug(dados.titulo);
+  const idDoPost = id ?? randomUUID();
+
+  if (id) {
+    const existente = await buscarPorId(id);
+    if (existente) return (await atualizarPost(id, dados)) ?? existente;
+  }
 
   // Duas pessoas salvando ao mesmo tempo podem escolher o mesmo endereco entre
   // a consulta e a insercao. O banco recusa (23505) e tentamos de novo.
@@ -318,11 +330,15 @@ export async function criarPost(dados: DadosDoPost): Promise<PostDoPainel> {
     try {
       const [linha] = await sql<LinhaPost[]>`
         INSERT INTO posts (id, slug, titulo, resumo, categoria, capa, corpo, publicado, publicado_em)
-        VALUES (${randomUUID()}, ${slug}, ${dados.titulo}, ${dados.resumo}, ${dados.categoria},
+        VALUES (${idDoPost}, ${slug}, ${dados.titulo}, ${dados.resumo}, ${dados.categoria},
                 ${dados.capa}, ${dados.corpo}, ${dados.publicado},
                 ${dados.publicado ? sql`NOW()` : null})
+        ON CONFLICT (id) DO NOTHING
         RETURNING *`;
-      return paraPost(linha);
+      if (linha) return paraPost(linha);
+      // O mesmo id entrou por outro pedido entre a conferencia e a insercao.
+      const atualizado = await atualizarPost(idDoPost, dados);
+      if (atualizado) return atualizado;
     } catch (erro) {
       const codigo = (erro as { code?: string })?.code;
       if (codigo !== "23505" || tentativa === 3) throw erro;
@@ -447,7 +463,8 @@ export async function registrarAuditoria(
 
 /**
  * Conta as tentativas recentes e registra esta. Devolve quantas ja houve na
- * janela, incluindo a atual.
+ * janela para a chave, incluindo a atual, e quantas houve somando todas as
+ * chaves (o alerta de tentativa espalhada por muitos enderecos).
  *
  * Lanca se o banco estiver fora — quem chama decide o que fazer. A rota de
  * login cai para um contador em memoria nesse caso: um banco indisponivel nao
@@ -456,20 +473,21 @@ export async function registrarAuditoria(
 export async function contarERegistrarTentativa(
   chave: string,
   janelaMs: number,
-): Promise<number> {
+): Promise<{ daChave: number; todas: number }> {
   await garantirTabelas();
   const sql = bancoDoPainel();
   const desde = new Date(Date.now() - janelaMs);
 
   await sql`INSERT INTO painel_tentativas (chave) VALUES (${chave})`;
-  const [linha] = await sql<{ total: string }[]>`
-    SELECT COUNT(*)::text AS total FROM painel_tentativas
-    WHERE chave = ${chave} AND em > ${desde}`;
+  const [linha] = await sql<{ da_chave: string; todas: string }[]>`
+    SELECT COUNT(*) FILTER (WHERE chave = ${chave})::text AS da_chave, COUNT(*)::text AS todas
+    FROM painel_tentativas
+    WHERE em > ${desde}`;
 
   // Poda oportunista: linhas fora de qualquer janela nao servem a ninguem.
   await sql`DELETE FROM painel_tentativas WHERE em < ${new Date(Date.now() - janelaMs * 4)}`;
 
-  return Number(linha?.total ?? 0);
+  return { daChave: Number(linha?.da_chave ?? 0), todas: Number(linha?.todas ?? 0) };
 }
 
 /** Zera o contador da chave — chamado quando a senha entra certa. */

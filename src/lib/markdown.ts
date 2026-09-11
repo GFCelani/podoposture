@@ -94,12 +94,28 @@ export function markdownParaHtml(texto: string): string {
   return md.render(texto ?? "");
 }
 
+const ENTIDADES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+
+/**
+ * Desfaz o escape do HTML. O markdown-it escreve `&`, `<`, `>` e `"` como
+ * entidade; apagar as entidades tirava esses sinais do resumo que vai ao
+ * Google ("O "efeito rebote" & a dor < 3 meses" saia sem aspas, sem & e sem <).
+ */
+function decodificarEntidades(texto: string): string {
+  return texto.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (inteira, nome: string) => {
+    if (nome[0] === "#") {
+      const codigo = nome[1].toLowerCase() === "x" ? parseInt(nome.slice(2), 16) : parseInt(nome.slice(1), 10);
+      return Number.isFinite(codigo) && codigo > 0 && codigo <= 0x10ffff ? String.fromCodePoint(codigo) : " ";
+    }
+    return ENTIDADES[nome.toLowerCase()] ?? " ";
+  });
+}
+
 /** Texto puro do Markdown — para resumo automatico e contagem de palavras. */
 export function markdownParaTexto(texto: string): string {
-  return md
-    .render(texto ?? "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&[a-z]+;/gi, " ")
+  // As marcas saem ANTES de desfazer o escape: um "<" que ela escreveu nao
+  // pode ser confundido com o comeco de uma marca e levar o texto junto.
+  return decodificarEntidades(md.render(texto ?? "").replace(/<[^>]+>/g, " "))
     .replace(/\s+/g, " ")
     .trim();
 }

@@ -105,6 +105,9 @@ describe("cookie", () => {
     ["podoposture.com.br", false],
     ["podoposture-tau.vercel.app", false],
     ["localhost.evil.com", false],
+    ["[::1]:3000", true],
+    ["[2001:db8::10]", false],
+    ["[2001:db8::10]:443", false],
     [null, false],
   ])("ehLocalhost(%s) = %s", (host, esperado) => {
     expect(ehLocalhost(host as string | null)).toBe(esperado);

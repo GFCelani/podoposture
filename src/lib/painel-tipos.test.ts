@@ -58,6 +58,14 @@ describe("ehEstreia", () => {
   });
 });
 
+describe("validarPost", () => {
+  it("corpo feito so de espacos e quebras de linha nao passa por texto", () => {
+    expect(validarPost({ ...CERTO, corpo: "\n".repeat(60) }).corpo).toBe("Escreva o texto antes de salvar.");
+    expect(validarPost({ ...CERTO, corpo: `${" ".repeat(50)}curto${" ".repeat(50)}` }).corpo).toMatch(/pelo menos/);
+    expect(validarPost(CERTO).corpo).toBeUndefined();
+  });
+});
+
 describe("errosComCampo", () => {
   it("sair do titulo nao acusa o corpo que ela ainda nem escreveu", () => {
     const dados = { ...CERTO, titulo: "", corpo: "" };

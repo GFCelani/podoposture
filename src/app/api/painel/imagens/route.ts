@@ -53,13 +53,14 @@ export async function POST(req: Request) {
   if (!leitura.ok) {
     return leitura.motivo === "grande"
       ? NextResponse.json({ erro: "Imagem grande demais (máximo 3 MB)." }, { status: 413 })
-      : NextResponse.json({ erro: "O envio foi interrompido." }, { status: 400 });
+      : NextResponse.json({ erro: "O envio foi interrompido. Tente enviar a imagem de novo." }, { status: 400 });
   }
 
   const medida = reconhecer(leitura.bytes);
   if (!medida) {
+    // Sem "envie pelo proprio painel": quem ve esta frase ja esta no painel.
     return NextResponse.json(
-      { erro: "Arquivo não reconhecido. Envie uma imagem pelo próprio painel." },
+      { erro: "Não conseguimos ler essa imagem. Tente outra foto, em JPG ou PNG." },
       { status: 400 },
     );
   }

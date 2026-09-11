@@ -49,7 +49,7 @@ type Tela =
   | { nome: "carregando" }
   | { nome: "entrar" }
   | { nome: "painel"; aba: Aba }
-  | { nome: "editor"; post: PostDoPainel | null; abaDeOrigem: Aba };
+  | { nome: "editor"; post: PostDoPainel | null; semBanco: boolean; abaDeOrigem: Aba };
 
 const SESSAO_TERMINOU = "Sua sessão terminou. Digite a senha de novo para continuar de onde parou.";
 const SESSAO_TERMINOU_NO_TEXTO =
@@ -66,6 +66,10 @@ export function Painel() {
   // Para onde voltar depois da senha: quem perdeu a sessao olhando os numeros
   // nao deveria reaparecer na lista de textos.
   const abaDeVolta = useRef<Aba>("textos");
+  // O foco nas trocas de tela. Sem ele, entrar, abrir e fechar o editor
+  // desmontavam o elemento focado e o foco caia no corpo da pagina.
+  const focarAbaAoAbrir = useRef(false);
+  const focoNaLista = useRef<string | null>(null);
 
   const abrirPainel = useCallback((aba: Aba) => {
     setVisitadas([aba]);
@@ -99,10 +103,32 @@ export function Painel() {
 
   useEffect(() => {
     // O estado so muda depois da resposta de rede, nunca durante o efeito. A
-    // microtarefa deixa isso visivel para a regra react-hooks/set-state-in-effect,
-    // do mesmo jeito que o EditorDePost faz ao recuperar o rascunho.
+    // microtarefa deixa isso visivel para a regra react-hooks/set-state-in-effect.
     queueMicrotask(() => void conferirSessao());
   }, [conferirSessao]);
+
+  useEffect(() => {
+    // Sessao que cai com o editor rolado ate os botoes: a tela de senha e mais
+    // curta, e sem voltar ao topo o aviso "nada se perdeu" ficava acima da
+    // janela (medido: rolagem presa em 49 a 98 px, aviso inteiro fora da tela).
+    if (tela.nome === "entrar") window.scrollTo(0, 0);
+    if (tela.nome === "painel" && focarAbaAoAbrir.current) {
+      focarAbaAoAbrir.current = false;
+      document.getElementById(`aba-${tela.aba}`)?.focus();
+    }
+  }, [tela]);
+
+  const aoEntrar = useCallback(async () => {
+    focarAbaAoAbrir.current = true;
+    await conferirSessao();
+  }, [conferirSessao]);
+
+  /** Lido uma vez pela lista de textos quando ela termina de carregar. */
+  const tomarFocoDaLista = useCallback(() => {
+    const alvo = focoNaLista.current;
+    focoNaLista.current = null;
+    return alvo;
+  }, []);
 
   // A mensagem fica no painel, e nao em quem perdeu a sessao: quem perdeu e
   // desmontado no mesmo instante, e um aviso guardado la nunca apareceria.
@@ -115,8 +141,8 @@ export function Painel() {
   const perderSessaoEmTextos = useCallback(() => perderSessao("textos", SESSAO_TERMINOU), [perderSessao]);
   const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
   const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
-  const abrirEditor = useCallback((post: PostDoPainel | null) => {
-    setTela({ nome: "editor", post, abaDeOrigem: "textos" });
+  const abrirEditor = useCallback((post: PostDoPainel | null, semBanco: boolean) => {
+    setTela({ nome: "editor", post, semBanco, abaDeOrigem: "textos" });
   }, []);
 
   async function sair() {
@@ -143,28 +169,25 @@ export function Painel() {
   }
 
   if (tela.nome === "entrar") {
-    return (
-      <>
-        {aviso && (
-          <p role="alert" className="bg-surface px-6 py-3 text-center text-[0.9375rem] text-ink">
-            {aviso}
-          </p>
-        )}
-        <Entrar aoEntrar={() => void conferirSessao()} />
-      </>
-    );
+    return <Entrar aoEntrar={aoEntrar} aviso={aviso} />;
   }
 
   if (tela.nome === "editor") {
     // O editor ocupa a tela inteira, fora do cabecalho e das abas, de
     // proposito: um clique numa aba ou em "Sair" no meio do texto desmontaria
     // o editor sem passar pelo aviso do navegador de alteracao nao salva.
-    const { abaDeOrigem } = tela;
+    const { abaDeOrigem, post } = tela;
+    const voltar = () => {
+      // O foco volta ao "Editar" do texto de onde ela saiu, ou ao titulo da lista.
+      focoNaLista.current = post ? `editar-${post.id}` : "textos-titulo";
+      abrirPainel(abaDeOrigem);
+    };
     return (
       <EditorDePost
-        post={tela.post}
-        aoSalvar={() => abrirPainel(abaDeOrigem)}
-        aoCancelar={() => abrirPainel(abaDeOrigem)}
+        post={post}
+        semBanco={tela.semBanco}
+        aoSalvar={voltar}
+        aoCancelar={voltar}
         aoPerderSessao={() => perderSessao(abaDeOrigem, SESSAO_TERMINOU_NO_TEXTO)}
       />
     );
@@ -252,7 +275,11 @@ export function Painel() {
           className="mt-10"
         >
           {visitadas.includes(id) && id === "textos" && (
-            <AbaTextos aoPerderSessao={perderSessaoEmTextos} aoAbrirEditor={abrirEditor} />
+            <AbaTextos
+              aoPerderSessao={perderSessaoEmTextos}
+              aoAbrirEditor={abrirEditor}
+              tomarFoco={tomarFocoDaLista}
+            />
           )}
           {visitadas.includes(id) && id === "inicio" && (
             <AbaInicio aoPerderSessao={perderSessaoEmInicio} />

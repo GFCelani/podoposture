@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { markdownParaHtml, resumoAutomatico } from "./markdown";
+import { markdownParaHtml, markdownParaTexto, resumoAutomatico } from "./markdown";
 
 /**
  * O corpo do post e injetado com `dangerouslySetInnerHTML` e nao passa por
@@ -131,5 +131,12 @@ describe("resumoAutomatico", () => {
 
   it("nao carrega marcacao", () => {
     expect(resumoAutomatico("## Título\n\nCorpo do texto.")).not.toContain("<");
+  });
+
+  it("mantem os sinais que o HTML escapa: aspas, &, < e >", () => {
+    expect(resumoAutomatico('O "efeito rebote" & a dor < 3 meses > 1 semana')).toBe(
+      'O "efeito rebote" & a dor < 3 meses > 1 semana',
+    );
+    expect(markdownParaTexto("Dor <script>alert(1)</script> lombar")).toBe("Dor <script>alert(1)</script> lombar");
   });
 });

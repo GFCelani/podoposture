@@ -14,6 +14,11 @@
  * tipo do que voltou e conferido e, se nao for WebP, a imagem sai em JPEG.
  */
 
+/** O que o servidor aceita: acima disso ele recusa com 413. */
+export const TAMANHO_MAXIMO_DO_ENVIO = 3 * 1024 * 1024;
+/** O maior lado que o servidor le (LADO_MAXIMO em imagem-webp.ts). */
+export const LADO_MAXIMO_DO_ENVIO = 8192;
+
 /**
  * Erro com a frase pronta para mostrar a ela.
  *
@@ -37,6 +42,32 @@ export class ErroAoEnviarImagem extends Error {
 
 export type ImagemEnviada = { url: string; largura: number; altura: number };
 
+/**
+ * Quanto a imagem encolhe. Pela largura, que e o que a coluna do site usa, e
+ * tambem pela altura: uma captura de tela comprida do iPhone (1170 x 9500)
+ * passava inteira pela regra so da largura, e o servidor, que nao le lado
+ * acima de 8192, recusava o arquivo.
+ */
+export function escalaDoEnvio(largura: number, altura: number, larguraMaxima: number): number {
+  if (largura < 1 || altura < 1) return 1;
+  return Math.min(1, larguraMaxima / largura, LADO_MAXIMO_DO_ENVIO / largura, LADO_MAXIMO_DO_ENVIO / altura);
+}
+
+/**
+ * A frase de falha do envio, por status, sempre com o proximo passo e dizendo
+ * que o texto nao se perdeu. A mensagem crua do servidor ("Nao foi possivel
+ * guardar a imagem.") parava no problema.
+ */
+export function mensagemDeFalhaDoEnvio(status: number, doServidor: unknown): string {
+  const motivo = typeof doServidor === "string" && doServidor ? doServidor : null;
+  if (status === 413) return "Imagem grande demais (máximo 3 MB). Tente uma foto menor.";
+  if (status === 503) {
+    return `${motivo ?? "O banco de dados não está configurado neste servidor."} O que você escreveu continua aqui. Avise quem cuida do site.`;
+  }
+  if (status === 400) return motivo ?? "Não conseguimos ler essa imagem. Tente outra foto, em JPG ou PNG.";
+  return "Não foi possível guardar a imagem agora. O que você escreveu continua aqui; tente de novo em alguns minutos.";
+}
+
 function paraBlob(tela: HTMLCanvasElement, tipo: string, qualidade: number): Promise<Blob> {
   return new Promise((resolver, recusar) =>
     tela.toBlob(
@@ -48,38 +79,47 @@ function paraBlob(tela: HTMLCanvasElement, tipo: string, qualidade: number): Pro
 }
 
 /**
- * Reduz para no maximo `larguraMaxima` pixels de largura e devolve WebP, ou
- * JPEG onde o navegador nao gera WebP. Nunca aumenta uma imagem menor.
+ * Reduz para no maximo `larguraMaxima` pixels de largura (e para o maior lado
+ * que o servidor le) e devolve WebP, ou JPEG onde o navegador nao gera WebP.
+ * Nunca aumenta uma imagem menor. Se ainda assim passar de 3 MB, encolhe mais
+ * algumas vezes antes de desistir: mandar para o servidor recusar seria a
+ * mesma foto voltando com erro.
  */
 export async function prepararImagem(arquivo: File, larguraMaxima: number): Promise<Blob> {
   const bitmap = await createImageBitmap(arquivo);
   try {
-    const escala = Math.min(1, larguraMaxima / bitmap.width);
-    const largura = Math.max(1, Math.round(bitmap.width * escala));
-    const altura = Math.max(1, Math.round(bitmap.height * escala));
+    let escala = escalaDoEnvio(bitmap.width, bitmap.height, larguraMaxima);
+    let pronta: Blob | null = null;
+    for (let tentativa = 0; tentativa < 5; tentativa += 1) {
+      const largura = Math.max(1, Math.round(bitmap.width * escala));
+      const altura = Math.max(1, Math.round(bitmap.height * escala));
 
-    const tela = document.createElement("canvas");
-    tela.width = largura;
-    tela.height = altura;
-    const ctx = tela.getContext("2d");
-    if (!ctx) throw new Error("sem contexto de desenho");
-    ctx.drawImage(bitmap, 0, 0, largura, altura);
+      const tela = document.createElement("canvas");
+      tela.width = largura;
+      tela.height = altura;
+      const ctx = tela.getContext("2d");
+      if (!ctx) throw new Error("sem contexto de desenho");
+      ctx.drawImage(bitmap, 0, 0, largura, altura);
 
-    const webp = await paraBlob(tela, "image/webp", 0.82);
-    if (webp.type === "image/webp") return webp;
-
-    // JPEG nao tem transparencia: sem um fundo pintado ATRAS do desenho, o que
-    // era transparente num PNG (um logotipo, por exemplo) sairia preto.
-    ctx.globalCompositeOperation = "destination-over";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, largura, altura);
-    return await paraBlob(tela, "image/jpeg", 0.85);
+      const webp = await paraBlob(tela, "image/webp", 0.82);
+      if (webp.type === "image/webp") {
+        pronta = webp;
+      } else {
+        // JPEG nao tem transparencia: sem um fundo pintado ATRAS do desenho, o
+        // que era transparente num PNG (um logotipo, por exemplo) sairia preto.
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, largura, altura);
+        pronta = await paraBlob(tela, "image/jpeg", 0.85);
+      }
+      if (pronta.size <= TAMANHO_MAXIMO_DO_ENVIO) return pronta;
+      escala *= 0.8;
+    }
+    return pronta!;
   } finally {
     bitmap.close();
   }
 }
-
-const FALHA_GENERICA = "Não foi possível enviar a imagem. Tente de novo em alguns minutos.";
 
 /**
  * Prepara e envia para `/api/painel/imagens`. Devolve o endereco publico e as
@@ -104,7 +144,9 @@ export async function enviarImagem(arquivo: File, larguraMaxima: number): Promis
       body: pronta,
     });
   } catch {
-    throw new ErroAoEnviarImagem("Sem conexão com o servidor. Verifique a internet e tente de novo.");
+    throw new ErroAoEnviarImagem(
+      "Sem conexão com o servidor. O que você escreveu continua aqui; verifique a internet e tente de novo.",
+    );
   }
 
   if (resposta.status === 401 || resposta.status === 403) {
@@ -113,19 +155,13 @@ export async function enviarImagem(arquivo: File, larguraMaxima: number): Promis
       resposta.status,
     );
   }
-  if (resposta.status === 413) {
-    throw new ErroAoEnviarImagem("Imagem grande demais (máximo 3 MB).", 413);
-  }
 
   const corpo = await resposta.json().catch(() => null);
   if (!resposta.ok) {
-    throw new ErroAoEnviarImagem(
-      typeof corpo?.erro === "string" ? corpo.erro : FALHA_GENERICA,
-      resposta.status,
-    );
+    throw new ErroAoEnviarImagem(mensagemDeFalhaDoEnvio(resposta.status, corpo?.erro), resposta.status);
   }
   if (typeof corpo?.url !== "string") {
-    throw new ErroAoEnviarImagem(FALHA_GENERICA, resposta.status);
+    throw new ErroAoEnviarImagem(mensagemDeFalhaDoEnvio(502, null), resposta.status);
   }
 
   return { url: corpo.url, largura: Number(corpo.largura), altura: Number(corpo.altura) };

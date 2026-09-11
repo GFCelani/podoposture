@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 /** Corpo de post: texto longo cabe, mas nao um upload disfarcado. */
 const TAMANHO_MAXIMO = 256 * 1024;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function lerCorpo(req: Request): Promise<Record<string, unknown> | null> {
   const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO);
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
 
   const campos = camposDoCorpo(bruto);
   if (!campos.resumo) campos.resumo = resumoAutomatico(campos.corpo);
+  // O id que o editor gerou ao abrir: repetir o envio atualiza em vez de
+  // duplicar. Qualquer outra coisa e ignorada e o servidor escolhe o id.
+  const id = typeof bruto.id === "string" && UUID.test(bruto.id) ? bruto.id.toLowerCase() : undefined;
 
   const erros = validarPost(campos);
   if (Object.keys(erros).length > 0) {
@@ -73,7 +77,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const post = await criarPost(campos);
+    const post = await criarPost(campos, id);
     await registrarAuditoria(
       post.publicado ? "post-publicado" : "post-rascunho",
       post.slug,

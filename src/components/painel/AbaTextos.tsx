@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel } from "@/lib/painel-tipos";
 import { armazemDaAba, deixarRecado, tomarRecado } from "@/lib/recado-do-editor";
@@ -24,10 +24,17 @@ const SEM_CONEXAO = "Sem conexão com o servidor. Verifique a internet e tente d
 export function AbaTextos({
   aoPerderSessao,
   aoAbrirEditor,
+  tomarFoco,
 }: {
   aoPerderSessao: () => void;
-  aoAbrirEditor: (post: PostDoPainel | null) => void;
+  aoAbrirEditor: (post: PostDoPainel | null, semBanco: boolean) => void;
+  /** Para onde vai o foco quando a lista termina de carregar (voltando do editor), ou null. */
+  tomarFoco: () => string | null;
 }) {
+  const primeiraCarga = useRef(true);
+  // Em ref, e nao so no estado: o editor precisa saber se ha banco, e ler o
+  // estado aqui refaria `abrirEditor` e recarregaria a aba quando ele chega.
+  const semBancoAgora = useRef(false);
   const [posts, setPosts] = useState<PostDoPainel[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [semBanco, setSemBanco] = useState(false);
@@ -59,14 +66,26 @@ export function AbaTextos({
       const corpo = await resposta.json();
       setPosts(corpo.posts ?? []);
       setSemBanco(Boolean(corpo.semBanco));
+      semBancoAgora.current = Boolean(corpo.semBanco);
       setDoRepositorio(typeof corpo.doRepositorio === "number" ? corpo.doRepositorio : null);
       setErroDaLista(null);
     } catch {
       setErroDaLista(SEM_CONEXAO);
     } finally {
       setCarregando(false);
+      // So na primeira carga: voltando do editor, o foco volta ao "Editar" do
+      // texto de onde ela saiu (ou ao titulo, se ele nao estiver mais na lista).
+      if (primeiraCarga.current) {
+        primeiraCarga.current = false;
+        const alvo = tomarFoco();
+        if (alvo) {
+          requestAnimationFrame(() =>
+            (document.getElementById(alvo) ?? document.getElementById("textos-titulo"))?.focus(),
+          );
+        }
+      }
     }
-  }, [aoPerderSessao]);
+  }, [aoPerderSessao, tomarFoco]);
 
   /**
    * Busca o texto completo e abre o editor. `reabrindo` e o caso da sessao que
@@ -76,7 +95,7 @@ export function AbaTextos({
   const abrirEditor = useCallback(
     async (id: string | null, reabrindo = false): Promise<void> => {
       if (!id) {
-        aoAbrirEditor(null);
+        aoAbrirEditor(null, semBancoAgora.current);
         return;
       }
       setAbrindo(id);
@@ -108,7 +127,7 @@ export function AbaTextos({
           return;
         }
         const corpo = await resposta.json();
-        aoAbrirEditor(corpo.post);
+        aoAbrirEditor(corpo.post, semBancoAgora.current);
       } catch {
         setAviso({ tipo: "erro", texto: SEM_CONEXAO });
       } finally {
@@ -151,21 +170,33 @@ export function AbaTextos({
           {aviso.texto}
         </p>
       )}
-      {aviso?.tipo === "feito" && (
-        <p role="status" className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] text-ink-strong">
-          {aviso.texto}
-        </p>
-      )}
+      {/* Regiao sempre na pagina, trocando so o texto: um aviso que ja nasce
+          escrito junto com a lista nem sempre e lido pelo leitor de tela. */}
+      <p
+        role="status"
+        className={
+          aviso?.tipo === "feito"
+            ? "mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] text-ink-strong"
+            : "sr-only"
+        }
+      >
+        {aviso?.tipo === "feito" ? aviso.texto : ""}
+      </p>
 
       {semBanco && (
         <p className="mb-6 rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink">
           O painel está funcionando, mas o banco de textos ainda não foi ligado neste
-          servidor. Assim que ele for configurado, os textos aparecem aqui.
+          servidor: por enquanto dá para escrever, mas não para guardar nem publicar. Assim que
+          ele for configurado, os textos aparecem aqui. Avise quem cuida do site.
         </p>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">
+        <h1
+          id="textos-titulo"
+          tabIndex={-1}
+          className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
+        >
           Seus textos
         </h1>
         {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
@@ -303,6 +334,7 @@ function LinhaDePost({
 
       <div className="flex shrink-0 items-center gap-3">
         <button
+          id={`editar-${post.id}`}
           onClick={aoEditar}
           disabled={abrindo}
           className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent disabled:opacity-50"
@@ -313,6 +345,7 @@ function LinhaDePost({
           onClick={() => void apagar()}
           onBlur={() => setConfirmando(false)}
           disabled={apagando}
+          aria-describedby={confirmando ? `aviso-apagar-${post.id}` : undefined}
           className={`min-h-[44px] rounded-md px-4 text-[0.9375rem] ${
             confirmando
               ? "border-[1.5px] border-[#8c2f2f] text-[#8c2f2f]"
@@ -322,6 +355,20 @@ function LinhaDePost({
           {apagando ? "Apagando…" : confirmando ? "Confirmar exclusão" : "Apagar"}
         </button>
       </div>
+      {/* Como nas outras confirmacoes do painel: a troca do rotulo sozinha nem
+          sempre e lida num botao que ja tem o foco, e ela precisa saber que
+          apagar nao tem volta antes do segundo clique. */}
+      {confirmando && (
+        <p
+          id={`aviso-apagar-${post.id}`}
+          role="alert"
+          className="w-full rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f]"
+        >
+          {post.publicado
+            ? "Este texto sai do site e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar exclusão”."
+            : "Este rascunho é apagado e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar exclusão”."}
+        </p>
+      )}
     </li>
   );
 }
