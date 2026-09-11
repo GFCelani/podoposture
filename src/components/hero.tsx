@@ -1,7 +1,8 @@
 import Image from "next/image";
+
 import { ButtonLink } from "./button-link";
-import { FiguraEsquematica } from "./figura-esquematica";
-import { PageGrid, SectionMark } from "./layers";
+import { FiguraCorpo } from "./figura-corpo";
+import { SectionMark } from "./layers";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -11,12 +12,16 @@ import { PageGrid, SectionMark } from "./layers";
  * vw.
  * Na janela baixa (laptop, ate 860px de altura) os botoes descem junto com
  * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
- * ficarem grandes ao lado de um titulo de 50/61px. A regra e' essa, e vale
+ * ficarem grandes ao lado de um titulo de 44/52px. A regra e' essa, e vale
  * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
- * Corpo 15px, caixa 24x11, o que da 48px de altura contra os 55 do degrau
- * de desktop; a seta e' medida em em no proprio ButtonLink,
- * entao ela nao precisa de degrau proprio e nunca sobra na caixa menor.
- * Referencia da proporcao no desktop: rotulo de 17px sob titulo de 68/83.
+ * O simbolo e' medido em em no proprio ButtonLink, entao ele nao precisa de
+ * degrau proprio e nunca sobra na caixa menor.
+ * Os dois botoes desceram um degrau em 2026-09-05 (a pedido): corpo de 17
+ * para 16px e caixa de 32x16 para 28x13 na janela alta, caixa de 24x11 para
+ * 22x10 na janela baixa. Corpo e caixa descem juntos de proposito; reduzir so
+ * a caixa aperta o rotulo e reduzir so o corpo deixa a caixa folgada. A forma
+ * e o raio ficaram como estavam. Referencia da proporcao no desktop: rotulo
+ * de 16px sob titulo de 56/64.
  */
 /**
  * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
@@ -36,10 +41,25 @@ import { PageGrid, SectionMark } from "./layers";
 const TRACO_MARCHA =
   "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
 
+/**
+ * As tres linhas que atravessam o campo das figuras, com a abordagem que
+ * cada uma marca. A altura e' o y da articulacao no viewBox de 560 das duas
+ * figuras (as duas tem o mesmo y de corpo, ver silhueta-perfil-path.ts), e
+ * vira porcentagem do quadro que tem exatamente a altura delas: 149,5 cai
+ * nos ombros, 309,5 na pelve (quadril), 408 nos joelhos, nas duas figuras.
+ * Nao e' rotulo decorativo, e' legenda de diagrama: mexer no y sem mexer no
+ * nome quebra a correspondencia.
+ */
+const LINHAS_DE_REFERENCIA = [
+  { y: 149.5, abordagem: "Posturologia", marca: "prumo e níveis" },
+  { y: 309.5, abordagem: "Osteopatia", marca: "coluna" },
+  { y: 408, abordagem: "Acupuntura", marca: "pontos" },
+] as const;
+
 const ESCALA_BOTAO =
-  "lg:gap-4 lg:px-8 lg:py-4 lg:text-[1.0625rem] " +
-  "lg:[@media(max-height:860px)]:gap-3 lg:[@media(max-height:860px)]:px-6 " +
-  "lg:[@media(max-height:860px)]:py-[11px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
+  "lg:gap-3.5 lg:px-7 lg:py-[13px] lg:text-[1rem] " +
+  "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
+  "lg:[@media(max-height:860px)]:py-[10px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
 export function Hero() {
   return (
@@ -47,37 +67,30 @@ export function Hero() {
       data-tone="deep"
       className="relative overflow-hidden bg-accent-deep text-paper"
     >
-      {/* Camada 0: fundo copiado do preview p3-fotografia. A foto deixa de
-          ser textura quase apagada e vira o fundo real: sem opacidade
-          reduzida e sem dessaturacao. Por cima, o scrim de dois gradientes
-          do p3, em accent-deep, que e' o que garante a leitura do texto.
-          A camada de luz de janela (ambar) saiu junto: ela nao existe no p3,
-          e mante-la faria o fundo nao bater com a referencia. */}
-      <div aria-hidden="true" className="absolute inset-0">
+      {/* Camada 0: o fundo. Cor chapada, sem degrade e sem movimento, com a
+          fotografia da sala de atendimento por cima em opacidade baixa.
+          Substituiu, em 2026-09-06, o plano deformado por ruido em WebGL
+          (fundo-ondulado.tsx, removido; esta no historico do git se um dia
+          precisar voltar). A foto e' a mesma que o hero tinha antes daquele
+          plano, no mesmo enquadramento.
+
+          O fundo e' #08496b. A cor precisa ser escura assim
+          porque a foto CLAREIA o fundo (a luminancia media dela e' maior que
+          a do fundo), e nao escurece: num tom claro o hero reprovaria AA
+          antes mesmo de a foto entrar. Os dois numeros, cor e opacidade,
+          foram escolhidos juntos: ver o preview em _previews/hero-foto.
+
+          A foto entra com priority porque e' o LCP da home. */}
+      <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
         <Image
           src="/img/clinica-podoposture-5.webp"
           alt=""
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[34%_45%]"
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background: [
-              "linear-gradient(to top, rgb(13 37 54 / 0.95) 0%, rgb(13 37 54 / 0.9) 42%, rgb(13 37 54 / 0.55) 72%, rgb(13 37 54 / 0.35) 100%)",
-              "linear-gradient(to right, rgb(13 37 54 / 0.92) 0%, rgb(13 37 54 / 0.6) 46%, rgb(13 37 54 / 0.28) 100%)",
-            ].join(", "),
-          }}
+          className="object-cover object-[34%_45%] opacity-[0.18]"
         />
       </div>
-
-      {/* Camada 1: a grade da pagina, em rampa da esquerda para a direita.
-          Mesma geometria das demais bandas; o que muda e' o peso, que some
-          atras do titulo e chega cheio sobre a area da imagem. Sem os fios
-          de coluna. */}
-      <PageGrid tone="deep" crescente />
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do
           resto da pagina: 1340 em lg. E' o que traz o bloco de texto para a
@@ -85,13 +98,13 @@ export function Hero() {
           texto ja esta na goteira de 40px da grade). O preco e' que a
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-20 pb-16 lg:min-h-[calc(100svh-92px)] lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:py-16 lg:[@media(max-height:860px)]:py-7">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[114px] lg:[@media(max-height:860px)]:pb-7">
         {/* O recuo extra na janela baixa e' o "tudo mais para a direita": vale
             para o numeral, o titulo, os botoes e a curva de marcha, e nao
             para a peca grafica, que e' absoluta e ancorada a direita. */}
         <div className="relative z-10 lg:col-span-9 lg:[@media(max-height:860px)]:pl-14">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
-            <SectionMark n="01" tone="deep" destaque />
+            <SectionMark n="01" tone="deep" destaque sobreFoto />
           </div>
 
           {/*
@@ -101,17 +114,43 @@ export function Hero() {
             diferente em desktop e em laptop, porque redistribuia as palavras
             em cada largura.
             Corpo em degraus fixos por faixa; na janela baixa (laptop, ate
-            860px de altura) cada degrau desce um patamar: 50px em lg, 61px em
-            xl, contra 68 e 83 na janela alta. Foi pedido. Como a quebra e'
+            860px de altura) cada degrau desce um patamar: 44px em lg, 52px em
+            xl, contra 56 e 64 na janela alta. Foi pedido. Como a quebra e'
             escrita, trocar o corpo por altura aqui nao mexe em onde as linhas
             caem: muda a escala, nao a composicao.
+            Os degraus desceram um patamar em 2026-09-05 (eram 34/40/64/68/83
+            e 50/61), para o titulo parar de ler como cartaz e abrir espaco
+            para o subtitulo. So o corpo mudou: entrelinha, tracking, peso e a
+            quebra escrita sao os mesmos, entao a composicao e' a de antes em
+            outra escala.
             Dentro de cada faixa a linha mais larga cabe com folga sobre a
             fonte de fallback, entao a quebra tambem nao muda no swap da
             Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
             corpo x entrelinha, sem CLS.
+
+            A virgula depois de "efetiva" virou "e" em 2026-09-07. A quebra
+            NAO precisou mudar: enumerando as 84 particoes das dez palavras em
+            quatro linhas, esta continua sendo a de menor irregularidade
+            (17,6%), como ja era com a virgula. E a troca melhora o bloco
+            sozinha, porque engorda justamente a segunda linha: em 64px ela
+            passa de 465,1 para 493,7px, e a primeira linha, que e' a mais
+            longa, deixa de sair 119,5px alem dela para sair 90,9.
+            A linha mais larga continua sendo "Integracao terapeutica" com os
+            mesmos 584,6px, entao --hero-texto-dir nao precisou ser remedido.
+
+            Os numeros acima sao do corte de TEXTO da Newsreader, que era o
+            que o navegador recebia ate 2026-09-08, quando o eixo optico
+            entrou na configuracao da fonte (layout.tsx). No corte de display
+            o titulo sai mais largo: em 64px as quatro linhas passam a medir
+            615,3 / 517,7 / 413,3 / 478,7. A quebra escrita de novo NAO
+            precisou mudar: reenumeradas as 84 particoes com as metricas
+            novas, esta segue em primeiro lugar, com 17,7% contra 19,9% da
+            segunda colocada. Quem precisou de remedicao foi o
+            --hero-texto-dir, e so nas duas faixas xl; o porque esta no
+            comentario do bloco HERO em globals.css.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[34px] min-[390px]:text-[40px] sm:text-[64px] lg:text-[68px] xl:text-[83px] lg:[@media(max-height:860px)]:text-[50px] xl:[@media(max-height:860px)]:text-[61px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <span className="block">
@@ -119,11 +158,75 @@ export function Hero() {
               <span className="block sm:inline">terapêutica </span>
             </span>
             <span className="block">
-              <mark className="marca-grifo">efetiva</mark>, inovadora{" "}
+              <mark className="marca-grifo">efetiva</mark> e inovadora{" "}
             </span>
             <span className="block">com resultados </span>
             <span className="block">rápidos e eficazes</span>
           </h1>
+
+          {/*
+            Subtitulo: quem responde, com que titulos, e onde. Sao dados
+            verificaveis do proprio site (site.ts para o endereco e o nome,
+            pagina do Curriculo Profissional para os titulos do COFFITO), nao
+            argumento de venda: nada de selo, badge ou numero sem fonte.
+            Entra FORA do embrulho da acao, e nao dentro: o embrulho e'
+            fit-content sobre a fila de botoes, e e' dele que a curva de
+            marcha tira a medida. Um paragrafo largo la dentro esticaria a
+            curva ate a largura da coluna.
+            A medida vai em ch, nao em px, para a linha ficar no confortavel
+            de leitura em qualquer degrau de corpo.
+
+            O tempo de pratica clinica estava pendente e a clinica confirmou
+            em 2026-09-05: 30 anos. Entra colado na credencial, e nao no fim do
+            paragrafo, porque o tempo e' da pessoa e nao da cidade; e entra com
+            as MESMAS palavras da secao 03 ("com 30 anos de experiencia
+            clinica"), nao com uma segunda formulacao do mesmo dado, porque as
+            duas ficam visiveis na mesma pagina. A Regua30 em illustrations.tsx
+            desenha 30 tracos a partir deste numero: se ele mudar, ela muda
+            junto.
+            As outras duas formas que sobraram do site antigo ("quase 30 anos"
+            na pagina da responsavel tecnica, "quase tres decadas" no
+            curriculo) sao copy da cliente e continuam como estao.
+          */}
+          {/*
+            Quebra escrita em quatro linhas, a partir de sm. Antes eram tres
+            linhas que o navegador decidia sozinho, e o bloco saia com 617px
+            de largura contra 585 do titulo: 105%, nem igual nem
+            decisivamente menor, que e' a distancia que le como descuido.
+            Em quatro linhas o mesmo texto cai em 437 / 452 / 460 / 397 e o
+            paragrafo passa a ser uma coluna de leitura a 58% do titulo, com
+            medida de ~55 caracteres.
+            As quebras foram escolhidas enumerando todas as particoes das 26
+            palavras e minimizando a fracao da caixa que sobra vazia; nao ha
+            text-balance aqui, que decide por heuristica propria e varia entre
+            maquinas. A copy e' a mesma, palavra por palavra: so muda onde a
+            linha corta.
+            Abaixo de sm o <br> some e o texto volta a fluir sozinho: na
+            coluna do telefone a linha mais larga das quatro (388px em 16px)
+            nao caberia, e escrever quebra que nao cabe e' pior que nao
+            escrever.
+            A medida de 480px e' guarda, nao forma: quem desenha a borda sao
+            as quebras. Ela existe para o bloco nunca quebrar sozinho se a
+            fonte de fallback medir diferente.
+          */}
+          <p
+            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
+            style={{ ["--in-delay" as string]: "420ms" }}
+          >
+            <span className="font-medium text-paper">
+              Dra. Claudia Meirelles
+            </span>
+            , fisioterapeuta especialista
+            <br className="hidden sm:inline" /> em Osteopatia e Acupuntura pelo
+            COFFITO, com{" "}
+            <span className="text-paper">
+              30
+              <br className="hidden sm:inline" /> anos de experiência clínica
+            </span>
+            . Osteopatia, posturologia
+            <br className="hidden sm:inline" /> e acupuntura em Copacabana, Rio
+            de Janeiro.
+          </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
               sobre a fila em linha), e e' dela que a curva de marcha tira a
@@ -134,7 +237,7 @@ export function Hero() {
               presa a largura do bloco. */}
           <div className="sm:w-fit">
             {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
-              o primario e' o par completo da secao 08, rotulo e destino; o
+              o primario e' o par completo da secao 09, rotulo e destino; o
               secundario
               e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
               entrada clinica. */}
@@ -145,6 +248,7 @@ export function Hero() {
               <ButtonLink
                 href="https://wa.me/5521992035643"
                 variant="primary"
+                icone="balao"
                 className={ESCALA_BOTAO}
               >
                 Envie uma mensagem
@@ -152,6 +256,7 @@ export function Hero() {
               <ButtonLink
                 href="/tratamento-da-dor"
                 variant="secondary-deep"
+                icone="pergunta"
                 className={ESCALA_BOTAO}
               >
                 Quero mais informações
@@ -212,79 +317,59 @@ export function Hero() {
         </div>
 
         {/*
-          O campo da peca grafica: contrapeso do bloco de titulo. A peca nao
-          passa por baixo do texto: o campo comeca 24px depois do fim da
-          linha mais larga do titulo e vai ate a borda da janela.
+          O campo das duas figuras: contrapeso do bloco de titulo. Frontal a
+          esquerda, perfil a direita com as costas voltadas para ela (a
+          curvatura da coluna fica no meio do par). Layout em globals.css
+          (.hero-campo e filhos), porque e' um sistema de variaveis por
+          faixa, nao uma pilha de classes:
 
-          As constantes do calc saem da geometria medida do titulo, e sao a
-          soma "recuo do contentor + 40 de padding + linha mais larga + 24
-          de folga". A linha mais larga muda no degrau de corpo: 621px em lg
-          (68px), 758px em xl (83px). O recuo do contentor e'
-          max(0, (100vw - 1340) / 2), zero ate 1340 e crescente depois; por
-          isso ele entra no calc de xl, que e' a unica faixa que atravessa
-          esse limite (1280 sem recuo, 1440 com 50). Se o corpo do titulo
-          ou o max-w do contentor mudar, estes dois calc mudam junto.
-
-          A margem direita afasta a peca da borda da janela: 104 / 155 / 195 /
-          235px em 1024 / 1280 / 1440 / 1600. E' o que traz a figura para a
-          esquerda. O piso de 104 nao e' escolha de gosto: em 1024 o campo
-          tem 339px e a figura 223, entao a margem so pode chegar a 116
-          antes de a peca alcancar o inicio do campo e entrar no titulo.
-          Em 1280 para cima o teto e' 223 / 293 / 373, e a rampa e' que
-          manda.
-
-          Na janela baixa a margem tem rampa propria, mais inclinada que a
-          da janela alta: 180 / 255 / 305 / 360px em 1024 / 1280 / 1440 /
-          1600, contra 104 / 155 / 195 / 235. A inclinacao maior e' o que
-          permite trazer a peca bem para a esquerda nas larguras de laptop
-          (1440 e 1536) sem fechar a folga em 1024, que e' a largura onde o
-          campo e' estreito e a peca inteira ja nao caberia nele.
-          porque foi pedido trazer a figura mais para a esquerda no laptop.
-          Em 1024 a soma de margem e peca passa da largura do campo, e o
-          shrink-0 na peca e' o que decide o desempate: em vez de a figura
-          encolher (o svg tem preserveAspectRatio, entao encolher a largura
-          reduz o desenho inteiro e ele deixa de bater com as outras faixas),
-          ela mantem o tamanho e transborda o inicio nominal do campo.
-
-          Nessa altura o campo deixa de ser a fronteira, porque o bloco de
-          texto tambem andou 56px para a direita. Quem manda ali e' a folga
-          medida entre o fim da linha mais larga e a borda da peca: 53px em
-          1024, 122 em 1280, 187 em 1366. Em 1024 quem chega mais perto da
-          peca nao e' o titulo, e' a curva de marcha, que acompanha a largura
-          do texto e para 20px antes dela. E' esse par de numeros, e nao o
-          calc, que precisa ser reconferido se o corpo do titulo, o recuo do
-          bloco ou a rampa de margem mudarem de novo.
-
-          A figura e' vertical (221 x 560), entao a escala vem da altura do
-          hero, nao da largura do campo: altura = altura do hero menos 112px
-          (56px acima e abaixo), teto de 760px; a largura segue a proporcao.
-          O campo sempre sobra em largura, entao a folga com o titulo fica
-          acima do minimo medido (23px) em todas as faixas.
-
-          Abaixo de lg entra no fluxo, depois da curva de marcha, centrada e
-          limitada a min(44vw, 200px): 141px em 320, 172 em 390, 200 em 768.
+          - O campo comeca na borda VISUAL do bloco de texto mais 24px, e vai
+            ate o respiro da borda da janela. A borda e' constante por faixa
+            (569 / 571 / 625 / 571px em lg alta, lg baixa, xl alta, xl baixa;
+            em xl soma o recuo do contentor). Medida por Range nos nos de
+            texto, nao pela caixa da coluna: as linhas do titulo sao blocos da
+            largura da coluna inteira. Se o corpo do titulo, a medida do
+            paragrafo ou o recuo do bloco mudarem, remedir.
+            Qual peca e' a mais larga MUDA por faixa, e por isso as quatro sao
+            medidas separadas: com a credencial em quatro linhas ela deixou de
+            ser a peca mais larga em toda faixa. Hoje quem manda e' o titulo
+            em xl e a fila de botoes em lg.
+          - As duas figuras tem UMA expressao de altura, entao sao sempre
+            exatamente iguais: o menor entre a altura util da janela, 820px e
+            o que cabe na largura do campo com as duas lado a lado (221 + 118
+            de viewBox por 560), descontados o vao e a faixa dos rotulos;
+            tudo vezes 0,92 (pedido: "um pouco menores"). 686px em 1440 x
+            900, 500px em 1024 x 768.
+          - O par e' centrado no campo como conjunto, descontada a faixa de
+            150px reservada aos rotulos a direita (so em xl).
+          - Abaixo de lg o par entra no fluxo depois da curva de marcha,
+            centrado, altura pela largura que sobra, teto de 405px.
         */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none relative mx-auto mt-12 w-[min(78vw,320px)] lg:absolute lg:inset-y-0 lg:right-0 lg:m-0 lg:flex lg:w-[calc(100vw_-_685px)] lg:items-center lg:justify-end lg:pr-[max(104px,25vw_-_165px)] lg:[@media(max-height:860px)]:pr-[max(150px,31.25vw_-_140px)] xl:w-[calc(100vw_-_max(0px,(100vw_-_1340px)/2)_-_822px)]"
-        >
-          {/* Linhas de referencia da versao com a coluna em SVG: 1px em papel a
-              0,3, com o traco curto de 14px x 1,4px na ponta direita, mais
-              claro, e recolhem e voltam a partir da esquerda (so scaleX). Vivem no campo, nao na peca: atravessam a figura e
-              seguem ate 36px da borda da janela, que e' o "alem dela". Nunca
-              entram no titulo porque o campo comeca depois dele. Atras da
-              peca. Sem rotulo. Abaixo de lg o campo e' estreito e entra no
-              fluxo; ali as linhas so poluiriam. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden lg:block"
-          >
-            {[24, 50, 76].map((y, i) => (
+        <div aria-hidden="true" className="hero-campo pointer-events-none">
+          <div className="hero-quadro">
+            {/* Linhas de referencia: 1px em papel a 0,3, com o traco curto de
+                14px x 1,4px na ponta direita, mais claro; recolhem e voltam a
+                partir da esquerda (so scaleX). Atravessam as duas figuras e
+                seguem ate 36px da borda da janela. Nunca entram no titulo
+                porque o campo comeca depois dele. Atras das figuras.
+
+                O rotulo e' empilhado (abordagem sobre o fio, o que ela marca
+                sob ele) e so existe a partir de xl, na faixa reservada: em lg
+                as duas figuras ocupam o campo inteiro e nao sobra vao para
+                nome sem cruzar corpo. Abaixo de lg nao ha linhas.
+
+                Papel, nao on-deep-muted: os rotulos moram na metade direita
+                da janela, sobre o azul principal, onde o on-deep-muted
+                reprova (3,1) e o papel a 100% passa (4,9). A hierarquia
+                entre a abordagem e a marca e' de caixa e espacejamento.
+                O campo inteiro e' aria-hidden: quem nomeia as tres abordagens
+                para o leitor de tela e' o subtitulo, em prosa. */}
+            {LINHAS_DE_REFERENCIA.map(({ y, abordagem, marca }, i) => (
               <div
                 key={y}
-                className="rule-in absolute right-9 left-0"
+                className="hero-linha rule-in"
                 style={{
-                  top: `${y}%`,
+                  top: `${((y / 560) * 100).toFixed(2)}%`,
                   ["--in-delay" as string]: `${760 + i * 140}ms`,
                 }}
               >
@@ -296,10 +381,18 @@ export function Hero() {
                   }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
+                <span className="hero-rotulo absolute -top-6 right-0 flex-col items-end font-mono text-[11px] leading-[1.55] tracking-[0.14em] whitespace-nowrap text-paper uppercase">
+                  <span>{abordagem}</span>
+                  <span className="mt-[7px] tracking-[0.04em] normal-case">{marca}</span>
+                </span>
               </div>
             ))}
+            <div className="hero-par">
+              <FiguraCorpo vista="frontal" className="rule-in hero-figura" />
+              {/* fase propria: as duas nao pulsam em unissono */}
+              <FiguraCorpo vista="perfil" fase={2.3} className="rule-in hero-figura" />
+            </div>
           </div>
-          <FiguraEsquematica className="rule-in relative mx-auto block h-auto w-[min(44vw,200px)] lg:mx-0 lg:h-[min(calc(100svh-92px-112px),760px)] lg:w-auto lg:shrink-0" />
         </div>
       </div>
     </section>

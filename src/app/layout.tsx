@@ -14,9 +14,20 @@ import {
 // arquivo variavel e todos os pesos ficam disponiveis. Com `weight` explicito
 // ele baixava uma estatica por peso e por estilo. IBM Plex Mono nao e variavel,
 // entao continua declarando o peso, e so o 400 e usado.
+
+// O eixo optico precisa ser pedido: o next/font baixa a variavel so com o
+// eixo wght, e sem `axes` o navegador recebe a instancia padrao do opsz da
+// Newsreader, que e o corte de TEXTO (opsz 16). Em titulo de 56 a 64px o que
+// aparecia era esse corte ampliado: serifa grossa, contraste baixo, encaixe
+// largo. Declarado o eixo, o `font-optical-sizing: auto` que o navegador ja
+// aplica por padrao mapeia opsz = corpo em px e o corte de display entra
+// sozinho nos titulos. Conferido no font-data.json do next: a Newsreader tem
+// opsz (6..72, padrao 16) e wght; a Public Sans tem so wght, entao nao ha
+// eixo a declarar nela; a IBM Plex Mono nao e variavel.
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
+  axes: ["opsz"],
   style: ["normal", "italic"],
   display: "swap",
 });

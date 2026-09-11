@@ -32,42 +32,96 @@ function curva(pts: Pt[], fechar = false): string {
    com os pontos de avaliacao acendendo em sequencia.
    ================================================================ */
 
-/** Metade direita do contorno, do topo da cabeca ao centro da base. */
+/**
+ * Metade direita do contorno, do topo da cabeca ao centro da base.
+ *
+ * Redesenhada em 2026-09-06: a versao anterior tinha as proporcoes erradas
+ * (pescoco fino demais, tronco comprido, pernas curtas e finas, quadril
+ * largo, bracos passando do meio da coxa). As alturas e larguras agora saem
+ * de medida, nao de estimativa: foram lidas no contorno vetorizado do hero
+ * (silhueta-corpo-path.ts, que veio de uma referencia fotografica) em
+ * fracoes da altura do corpo, e reescaladas para os 390 desta caixa (topo da
+ * cabeca em y 14, planta em y 404). Marcos usados, em fracao da altura:
+ *
+ *   queixo 0,12   ombros 0,18   deltoide 0,20   axila 0,29
+ *   cintura 0,38  quadril 0,50  virilha 0,55   joelho 0,75
+ *   tornozelo 0,90                            planta 1,00
+ *
+ * Larguras que importam, em unidades desta caixa: pescoco 27 (era 16),
+ * biacromial 104, cintura 62, quadril 76 (quadril sobre ombro = 0,73, e nao
+ * 0,88), coxa 36 (era 24), joelho 24, panturrilha 27, tornozelo 14.
+ *
+ * O braco tem quatro medidas diferentes, e nao uma so: biceps 23, cotovelo
+ * 24, antebraco 20, punho 13, e a mao volta a 14. Sem essa variacao ele sai
+ * como um tubo, que foi o defeito da primeira correcao. Ele tambem desce
+ * levemente afastado do tronco, com um vao de cerca de 5 unidades constante
+ * da axila ao punho: colado, a fenda fecha e a mao funde no quadril.
+ *
+ * O DESENHO continua sendo o desta secao, nao o do hero: poucos pontos com
+ * Catmull-Rom, sem dedos, sem polegar, sem virilha desenhada, traco mais
+ * grosso e em currentColor. O que foi emprestado do hero e' a proporcao, que
+ * nao pertence a estilo nenhum.
+ */
 const MEIA_SILHUETA: Pt[] = [
   { x: 100, y: 14 },
-  { x: 117, y: 20 },
-  { x: 122, y: 38 },
-  { x: 116, y: 56 },
-  { x: 108, y: 64 },
-  { x: 108, y: 76 },
-  { x: 128, y: 82 },
-  { x: 148, y: 92 },
-  { x: 157, y: 110 },
+  { x: 108, y: 15 },
+  { x: 117, y: 27 },
+  { x: 119, y: 44 },
+  { x: 116, y: 55 },
+  // pescoco
+  { x: 112, y: 66 },
+  { x: 113, y: 74 },
+  // trapezio ate o acromio
+  { x: 124, y: 79 },
+  { x: 140, y: 86 },
+  { x: 151, y: 93 },
+  // braco, face externa: deltoide, biceps, cotovelo, antebraco, punho, mao
+  { x: 158, y: 106 },
+  { x: 161, y: 126 },
   { x: 162, y: 144 },
-  { x: 166, y: 182 },
-  { x: 171, y: 222 },
-  { x: 169, y: 244 },
-  { x: 158, y: 246 },
-  { x: 152, y: 226 },
-  { x: 147, y: 188 },
-  { x: 142, y: 150 },
-  { x: 139, y: 124 },
-  { x: 136, y: 160 },
-  { x: 138, y: 196 },
-  { x: 142, y: 232 },
-  { x: 138, y: 262 },
-  { x: 130, y: 300 },
-  { x: 126, y: 336 },
-  { x: 124, y: 372 },
-  { x: 126, y: 392 },
-  { x: 138, y: 398 },
-  { x: 138, y: 404 },
-  { x: 112, y: 404 },
-  { x: 108, y: 380 },
-  { x: 108, y: 344 },
-  { x: 106, y: 308 },
-  { x: 100, y: 270 },
+  { x: 160, y: 167 },
+  { x: 158, y: 190 },
+  { x: 154, y: 209 },
+  { x: 156, y: 221 },
+  { x: 150, y: 233 },
+  // braco, face interna, subindo ate a axila
+  { x: 142, y: 228 },
+  { x: 141, y: 211 },
+  { x: 138, y: 190 },
+  { x: 136, y: 167 },
+  { x: 139, y: 146 },
+  { x: 138, y: 130 },
+  // tronco
+  { x: 135, y: 139 },
+  { x: 133, y: 150 },
+  { x: 130, y: 166 },
+  { x: 133, y: 189 },
+  { x: 136, y: 211 },
+  // perna, face externa
+  { x: 137, y: 229 },
+  { x: 137, y: 249 },
+  { x: 134, y: 269 },
+  { x: 131, y: 288 },
+  { x: 134, y: 307 },
+  { x: 135, y: 327 },
+  { x: 131, y: 347 },
+  { x: 127, y: 367 },
+  { x: 126, y: 385 },
+  { x: 132, y: 398 },
+  { x: 136, y: 404 },
+  // planta e face interna, subindo ate a virilha
+  { x: 108, y: 404 },
+  { x: 108, y: 393 },
+  { x: 112, y: 380 },
+  { x: 112, y: 360 },
+  { x: 109, y: 336 },
+  { x: 110, y: 312 },
+  { x: 108, y: 288 },
+  { x: 106, y: 268 },
+  { x: 102, y: 248 },
+  { x: 100, y: 229 },
 ];
+
 
 function espelhar(pts: Pt[]): Pt[] {
   return pts.map((p) => ({ x: 200 - p.x, y: p.y }));
@@ -78,14 +132,20 @@ const SILHUETA_D =
   " " +
   curva(espelhar(MEIA_SILHUETA).reverse()).replace(/^M/, "L");
 
-/** Pontos de avaliacao, na ordem em que acendem. */
+/**
+ * Pontos de avaliacao, na ordem em que acendem. Cada um cai onde a nova
+ * silhueta poe a estrutura que ele nomeia: o cervical no pescoco, os ombros
+ * dentro do deltoide, a pelve na altura do quadril mais largo, os joelhos e
+ * os pes no eixo de cada perna. Mexer na silhueta sem mexer aqui tira os
+ * pontos do lugar.
+ */
 const PONTOS_AVALIACAO: { x: number; y: number; nivel: string }[] = [
-  { x: 100, y: 74, nivel: "cervical" },
-  { x: 138, y: 92, nivel: "ombro-d" },
-  { x: 62, y: 92, nivel: "ombro-e" },
-  { x: 100, y: 226, nivel: "pelve" },
-  { x: 122, y: 306, nivel: "joelho-d" },
-  { x: 78, y: 306, nivel: "joelho-e" },
+  { x: 100, y: 70, nivel: "cervical" },
+  { x: 144, y: 99, nivel: "ombro-d" },
+  { x: 56, y: 99, nivel: "ombro-e" },
+  { x: 100, y: 212, nivel: "pelve" },
+  { x: 123, y: 307, nivel: "joelho-d" },
+  { x: 77, y: 307, nivel: "joelho-e" },
   { x: 122, y: 396, nivel: "pe-d" },
   { x: 78, y: 396, nivel: "pe-e" },
 ];
@@ -110,7 +170,7 @@ export function FigurePoints({ className }: { className?: string }) {
         strokeDasharray="3 6"
       />
       {/* niveis horizontais nos pontos centrais */}
-      {[74, 92, 226, 306, 396].map((y) => (
+      {[70, 99, 212, 307, 396].map((y) => (
         <line
           key={y}
           x1={14}

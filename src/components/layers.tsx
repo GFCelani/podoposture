@@ -58,16 +58,24 @@ export function SectionMark({
   n,
   tone = "light",
   destaque = false,
+  sobreFoto = false,
 }: {
   n: string;
   tone?: Tone;
   destaque?: boolean;
+  /** So o hero: la o numeral cai sobre a fotografia e precisa de mais luz
+      que o on-deep-muted das bandas de cor chapada. Ver --color-on-hero. */
+  sobreFoto?: boolean;
 }) {
   return (
     <div className={`flex items-center gap-4 ${destaque ? "lg:gap-5" : ""}`}>
       <span
         className={`text-[0.6875rem] tracking-[0.2em] ${destaque ? "lg:text-[0.8125rem]" : ""} ${
-          tone === "deep" ? "text-on-deep-muted" : "text-muted"
+          tone === "deep"
+            ? sobreFoto
+              ? "text-on-hero"
+              : "text-on-deep-muted"
+            : "text-muted"
         }`}
         style={{ fontFamily: "var(--mono)" }}
       >

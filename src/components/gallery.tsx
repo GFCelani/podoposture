@@ -3,11 +3,16 @@ import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Seis fotografias reais da clinica; recepcao, consultorio e avaliacao
- * postural moram agora nas secoes 02, 08 e 03 e sairam daqui para nao repetir.
- * As outras sete imagens da galeria do site atual sao pecas de marketing com
- * texto embutido (Palmilhas para corrida, Paciente RPG, Paciente com Zumbido,
- * Neuromodulacao, POSTURE+, Axon e um print de Street View) e ficaram de fora.
+ * Seis fotografias reais da clinica. Recepcao e avaliacao postural moram
+ * nas secoes 02 e 03 e ficam fora daqui para nao repetir. A sacola de pano
+ * saiu a pedido da cliente (2026-09-07) e no lugar entrou o consultorio, a
+ * unica foto de ambiente do acervo que ainda nao estava na home: 819x1024
+ * para no maximo 380 CSS de largura, 2,15x de densidade. Ela tambem abre a
+ * pagina do Metodo Posture+, que e' outra superficie, nao esta grade.
+ * As outras sete imagens da galeria do site antigo sao pecas de marketing
+ * com texto embutido (Palmilhas para corrida, Paciente RPG, Paciente com
+ * Zumbido, Neuromodulacao, POSTURE+, Axon e um print de Street View) e
+ * continuam de fora.
  */
 const PHOTOS = [
   { src: "/img/galeria/sala-de-exame.webp", alt: "Sala de exame com maca e bancada de equipamentos" },
@@ -15,7 +20,7 @@ const PHOTOS = [
   { src: "/img/galeria/corredor-de-marcha.webp", alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro" },
   { src: "/img/galeria/acupuntura.webp", alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente" },
   { src: "/img/galeria/plataforma-de-pressao.webp", alt: "Pés descalços sobre a plataforma de baropodometria" },
-  { src: "/img/galeria/ecobag.webp", alt: "Sacola de pano da Podoposture com a marca impressa" },
+  { src: "/img/galeria/consultorio.webp", alt: "Consultório com mesa de atendimento, espelho de corpo inteiro e bolas de exercício" },
 ];
 
 export function Gallery() {
@@ -29,7 +34,7 @@ export function Gallery() {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
         <Reveal variante="cortina">
-          <SectionMark n="10" tone="deep" />
+          <SectionMark n="11" tone="deep" />
           <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
             Galeria
           </h2>

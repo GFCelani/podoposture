@@ -1,44 +1,113 @@
 @import "tailwindcss";
+@import "./paginas-internas.css";
 
+/* PALETA CALMA, neutros quentes com o azul do site (2026-09-06).
+
+   O pedido foi tirar o azul-com-branco de empresa seria e deixar a pagina
+   mais quente. O que mudou, e por que:
+
+     1. O branco frio saiu. O papel virou linho (#FBF8F3) e a superficie
+        virou areia (#F5EFE6). Sao os dois fundos que ocupam quase toda a
+        pagina, entao e' deles que vem a temperatura; nenhuma cor de destaque
+        faria esse trabalho.
+     2. A tinta e o metadado deixaram de puxar para o azul e passaram a puxar
+        para o verde-oliva e o marrom (#3A3B33, #6A6355), que e' o que casa
+        com papel quente. Tinta azul sobre papel quente le como impressao mal
+        calibrada.
+     3. O AZUL FICOU. Uma versao intermediaria levou o acento para petroleo
+        esverdeado e foi descartada: o pedido era aquecer os neutros, nao
+        trocar a cor do site. O que mudou no azul foi so o degrau do token de
+        TEXTO, e por obrigacao de contraste: #0E7BB4 sobre o linho da 4.39 e
+        sobre a areia da 4.07, os dois abaixo de AA. Ele agora e' o
+        accent-vivid, onde nunca recebe texto de corpo (grifo, grafico,
+        preenchimento), e o accent de texto e' o mesmo azul um degrau mais
+        fundo, #0B6A9C, que da 5.57 no linho e 5.17 na areia. E' o tom que a
+        paleta anterior ja usava dentro da banda de superficie, pela mesma
+        razao; a diferenca entre os dois a olho e' de um degrau.
+     4. As bandas escuras continuam azuis, como eram.
+
+   O verde #96BF0D e o #4B6007 do hover continuam fora da recalibracao: sao a
+   cor do logo, e seguem restritos ao CTA de WhatsApp e ao acento anatomico.
+
+   O QUE O PAPEL QUENTE COBRA. O papel escureceu de #FCFDFE para #FBF8F3, e
+   todo par que dependia do papel quase branco perdeu um pouco. Dois casos
+   precisaram de ajuste, e sao a unica consequencia real da mudanca: o token
+   de texto do acento desceu um degrau (acima), e o hover do botao primario
+   caiu de 6.93 para 6.66, que segue muito acima dos 4.5 e por isso ficou como
+   estava, ja que o verde e' do logo e nao acompanha o papel.
+
+   AREIA MAIS CLARA (2026-09-06). A superficie subiu de #F1E9DD para #F5EFE6 a
+   pedido: a banda secundaria estava puxando escuro demais para o papel quente.
+   Como todo texto sobre ela e' escuro, clarear so aumentou contraste, e nenhum
+   par precisou de ajuste; os numeros de surface abaixo ja sao os novos. O que
+   a mudanca cobra e' a distancia para o papel, que caiu de 1.14 para 1.08: a
+   alternancia de bandas continua legivel porque cada corte tem fio de rule.
+   Se a superficie subir mais um degrau, a alternancia deixa de existir.
+
+   Vinte e seis pares de texto medidos, todos AA; os numeros nos comentarios
+   abaixo sao desta paleta. Se um token mudar, remedir os dois lados do par.
+   O unico par que perdeu margem foi papel sobre action-deep, o hover do
+   botao primario: caiu de 6.93 para 6.66, porque o verde e' do logo e nao
+   acompanha o papel mais escuro. Segue muito acima dos 4.5. */
 @theme {
-  /* Neutros */
-  --color-paper: #faf9f6;
-  --color-surface: #f1efea;
-  /* Tinta em dois pesos: corpo azulado suave (8.2 sobre paper) e strong
-     para titulo (13.3). O preto puro saiu da pagina. */
-  --color-ink: #2e4f6a;
-  --color-ink-strong: #102e46;
-  --color-muted: #4a5a68;
-  --color-rule: #dad7cf;
+  /* Neutros quentes. O papel e' linho e a superficie e' areia: e' aqui que
+     mora a temperatura da pagina inteira. */
+  --color-paper: #FBF8F3;
+  --color-surface: #F5EFE6;
+  /* Tinta em dois pesos, puxando para o verde-oliva escuro: corpo 10.70 sobre
+     paper, strong para titulo 15.00. O preto puro continua fora da pagina. */
+  --color-ink: #3A3B33;
+  --color-ink-strong: #20231F;
+  /* Metadado em marrom-acinzentado, 5.62 sobre paper e 5.21 sobre surface. */
+  --color-muted: #6A6355;
+  --color-rule: #DED2C0;
 
   /* Cor de acao — verde do logo. So em preenchimento de CTA primario
-     e nos discos da coluna do hero. Nunca como texto sobre claro. */
+     e nos discos da coluna do hero. Nunca como texto sobre claro.
+     Fora da recalibracao: nao muda com a paleta. */
   --color-action: #96bf0d;
   --color-action-deep: #4b6007;
 
-  /* Acento — azul do logo. Rotulos, reguas, links, secoes escuras. */
-  --color-accent: #0e71b4;
-  /* Tint do acento, para uso SO sobre o petroleo: o #0e71b4 da 2.8 la,
-     este da 5.9. Nao e cor nova, e o mesmo azul clareado. */
-  --color-accent-light: #5aa6da;
-  --color-accent-deep: #0d2536;
-  /* Petroleo suavizado das secoes escuras fora do hero. Contraste:
-     paper 10.7, on-deep-muted 5.4, ambos AA. */
-  --color-deep-calm: #1e3d56;
-  /* O hero clareia ate o teto do contraste: com este tom o texto mono
-     on-deep-muted ainda da 4.85 (AA para corpo) e o h1 da 9.7. Um degrau
-     acima (#244B62) derruba o mono para 4.42 e sai de AA. */
-  --color-hero: #20455a;
+  /* Acento — o azul do site, no degrau que serve de TEXTO. Rotulos, reguas,
+     links, preenchimentos. 5.57 sobre paper e 5.57 como fundo com texto em
+     papel; sobre a superficie de areia da 5.17, entao ele serve nas duas
+     bandas claras sem excecao. */
+  --color-accent: #0B6A9C;
+  /* Acento vivo — o #0E7BB4, o tom que o site sempre teve. Cor de grifo, de
+     grafico e segundo tom de qualquer par de acento. NUNCA recebe texto de
+     corpo: sobre o linho da 4.39 e sobre a areia da 4.07, os dois passam no
+     minimo de 3.0 para grafico e reprovam para texto. E' esta linha que o mantem fora do texto. */
+  --color-accent-vivid: #0E7BB4;
+  /* Tint do acento, para uso SO sobre as bandas escuras: o azul do acento la
+     seria invisivel, este da 8.06 sobre o petroleo e 5.96 sobre o deep-calm.
+     Nao e cor nova, e o mesmo azul clareado. */
+  --color-accent-light: #8cc9ea;
+  --color-accent-deep: #062c42;
+  /* Azul profundo das secoes escuras fora do hero (rodape, galeria,
+     "compreender antes de tratar", fotos-que-faltam). Leva texto de CORPO em
+     on-deep-muted: contraste paper 10.13, on-deep-muted 6.17, tint 5.96. */
+  --color-deep-calm: #0a425f;
+  /* Um degrau acima do deep-calm, para banda escura que precise clarear sem
+     perder o corpo: on-deep-muted da 5.31 e o h1 da 8.72. */
+  --color-hero: #0c4c6e;
 
-  /* Texto sobre o petroleo. Contraste sobre #0D2536:
-     paper 14.94, on-deep-muted 7.48. */
-  --color-on-deep-muted: #a6b5bf;
+  /* Texto sobre as bandas escuras, em azul-claro dessaturado. Contraste
+     sobre o petroleo #062C42: paper 13.70, on-deep-muted 8.35. */
+  --color-on-deep-muted: #a9c9dc;
 
-  /* Profundidade. Quatro degraus, e nada fora deles. */
-  --shadow-tag: 0 10px 30px -22px rgb(13 37 54 / 0.7);
-  --shadow-plate: 0 16px 38px -30px rgb(13 37 54 / 0.55);
-  --shadow-lift: 0 22px 46px -26px rgb(13 37 54 / 0.6);
-  --shadow-float: 0 22px 48px -30px rgb(13 37 54 / 0.5);
+  /* Texto secundario do HERO, e so dele. O hero tem uma fotografia sob o
+     texto, e a foto clareia o fundo: o on-deep-muted cai abaixo de AA ali,
+     enquanto continua em 6.7 nas outras bandas escuras, que sao cor chapada.
+     Um degrau de luz a mais resolve sem mexer no fundo nem na opacidade da
+     foto. Nao usar fora do hero. */
+  --color-on-hero: #c7dce9;
+
+  /* Profundidade. Quatro degraus, e nada fora deles.
+     A cor da sombra e o azul profundo da paleta, nao um azul solto. */
+  --shadow-tag: 0 10px 30px -22px rgb(6 44 66 / 0.7);
+  --shadow-plate: 0 16px 38px -30px rgb(6 44 66 / 0.55);
+  --shadow-lift: 0 22px 46px -26px rgb(6 44 66 / 0.6);
+  --shadow-float: 0 22px 48px -30px rgb(6 44 66 / 0.5);
 
   /* Raio. Tres degraus, e nada fora deles.
      sm  etiqueta, chip, numero em placa
@@ -152,8 +221,8 @@ body {
 }
 
 .grade[data-grade="deep"] {
-  --fio-forte: rgb(250 249 246 / 0.07);
-  --fio-fino: rgb(250 249 246 / 0.03);
+  --fio-forte: rgb(251 248 243 / 0.07);
+  --fio-fino: rgb(251 248 243 / 0.03);
 }
 
 /* Fios de coluna so onde forem pedidos: hoje, so no hero. Abaixo dele fica
@@ -175,7 +244,7 @@ body {
 }
 
 .grade[data-grade="deep"][data-crescente] {
-  --fio-fino: rgb(250 249 246 / 0.038);
+  --fio-fino: rgb(251 248 243 / 0.038);
 }
 
 @media (min-width: 1024px) {
@@ -239,6 +308,25 @@ body {
   100% {
     opacity: 0;
     transform: scale(var(--escala, 9));
+  }
+}
+
+/* Pulso que percorre um fio (secao Metodo RegulaDOR). O path leva
+   pathLength="100", entao o tracejado e' em porcentagem: 12 de traco, 88 de
+   vao, e o offset anda de 100 a 0, o que move o segmento no sentido do
+   desenho. O fio inteiro e' outro path, por baixo: no movimento reduzido a
+   animacao para no primeiro quadro e o pulso vira um traco curto parado
+   sobre um fio que ja esta inteiro. */
+.leitura-pulso {
+  stroke-dasharray: 12 88;
+  stroke-dashoffset: 100;
+  animation: leitura-pulso var(--dur, 7s) linear infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes leitura-pulso {
+  to {
+    stroke-dashoffset: -100;
   }
 }
 
@@ -316,6 +404,141 @@ body {
 @keyframes estende {
   50% {
     transform: scaleX(0.42);
+  }
+}
+
+/* ===============================================================
+   HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
+   Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
+   ===============================================================
+
+   --hero-texto-dir e' MEDIDO, nao escolhido: e' a goteira esquerda mais a
+   maior largura de conteudo da coluna de texto naquela faixa. Quem manda
+   muda por faixa; em xl e' a primeira linha do titulo, em lg e' a curva de
+   marcha, e em xl baixo os dois empatam. Se o corpo do titulo, a quebra
+   escrita ou as metricas da Newsreader mudarem, remedir os quatro valores
+   antes de confiar neles.
+
+   Remedido em 2026-09-08, quando o eixo optico entrou no next/font (ver
+   layout.tsx). A largura da Newsreader nao anda em linha reta com o eixo:
+   medida por 100px de corpo, ela e' minima em opsz 20, sobe pouco ate ~40
+   (onde empata com o corte de texto que vinha sendo servido) e passa a
+   crescer dali para cima. Nos corpos do titulo isso da +0,6% em 44px,
+   +2,5% em 52, +3,4% em 56 e +5,2% em 64. Os dois valores de xl subiram,
+   porque neles quem manda e' o titulo: 625 -> 656 e 571 -> 583. Os dois de
+   lg ficaram, porque neles quem manda e' a curva de marcha, que nao depende
+   da fonte; em lg alto o titulo passou a encostar na borda (569,0 contra
+   569,7 da curva) em vez de sobrar 17px.
+   O preco esta em 1280 de largura, a unica faixa onde a altura das figuras
+   sai da largura do campo e nao da janela: elas descem de 609 para 562px.
+   Mais estreito seria o titulo entrar no campo das figuras.
+   =============================================================== */
+
+.hero-campo {
+  --hero-folga: 24px; /* entre o texto e o campo */
+  --hero-respiro: 24px; /* entre o campo e a borda da janela */
+  --hero-vao: 32px; /* entre as duas figuras */
+  --hero-reserva: 0px; /* faixa a direita reservada aos rotulos (xl) */
+  --hero-texto-dir: 0px; /* borda visual do bloco de texto, por faixa */
+  --hero-reducao: 0.92; /* "um pouco menores" (2026-09-06) */
+  /* abaixo de lg: duas figuras lado a lado no que sobra de largura
+     (221 + 118 de viewBox por 560, mais 40 de vao), teto de 405px */
+  --hero-fig-h: calc(min(calc((100vw - 88px) * 560 / 339), 440px) * var(--hero-reducao));
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.hero-quadro {
+  position: relative;
+  height: var(--hero-fig-h);
+}
+
+.hero-par {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  height: var(--hero-fig-h);
+}
+
+.hero-figura {
+  display: block;
+  height: var(--hero-fig-h);
+  width: auto;
+}
+
+.hero-linha,
+.hero-rotulo {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hero-campo {
+    --hero-texto-dir: 569px;
+    --hero-campo-w: calc(100vw - var(--hero-texto-dir) - var(--hero-folga) - var(--hero-respiro));
+    --hero-fig-h: calc(
+      min(
+          calc(100svh - 90px - 64px),
+          820px,
+          calc((var(--hero-campo-w) - var(--hero-vao) - var(--hero-reserva)) * 560 / 339)
+        ) *
+        var(--hero-reducao)
+    );
+    --hero-par-w: calc(var(--hero-fig-h) * 339 / 560 + var(--hero-vao));
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: calc(var(--hero-texto-dir) + var(--hero-folga));
+    margin: 0;
+    padding-top: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-height: 860px) {
+    .hero-campo {
+      --hero-texto-dir: 571px;
+    }
+  }
+
+  .hero-quadro {
+    width: 100%;
+  }
+
+  /* o par centrado no campo (descontada a faixa dos rotulos), como conjunto */
+  .hero-par {
+    position: absolute;
+    top: 0;
+    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
+    gap: var(--hero-vao);
+  }
+
+  .hero-linha {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 36px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .hero-campo {
+    --hero-respiro: 40px;
+    --hero-vao: 40px;
+    --hero-reserva: 150px;
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 656px);
+  }
+
+  @media (max-height: 860px) {
+    .hero-campo {
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 583px);
+    }
+  }
+
+  .hero-rotulo {
+    display: flex;
   }
 }
 
@@ -889,9 +1112,13 @@ a:focus-visible .marca-vertebra {
 
    O segundo seletor existe porque a maioria das 18 paginas de servico ABRE com
    titulo, e nesse caso o primeiro seletor nunca casava: o recurso de hierarquia
-   estava escrito e desligado justamente onde mais fazia falta. */
-.prosa > p:first-child,
-.prosa > :is(h2, h3):first-child + p {
+   estava escrito e desligado justamente onde mais fazia falta.
+
+   So na abertura (.prosa-abertura): com o documento dividido em secoes, cada
+   secao abre com titulo, e o seletor de antes faria o primeiro paragrafo de
+   TODA secao crescer. O degrau e' de entrada, entao vale uma vez. */
+.prosa-abertura > p:first-child,
+.prosa-abertura > :is(h2, h3):first-child + p {
   font-size: 1.25rem;
   line-height: 1.6;
   color: var(--color-ink-strong);
@@ -1109,5 +1336,68 @@ a:focus-visible .marca-vertebra {
 
   .prosa figcaption {
     padding-inline: 4rem;
+  }
+}
+
+/* ===========================================================================
+   .prosa em blocos: o que muda quando o documento deixa de ser um so.
+   Ver SecoesDeConteudo e lib/secoes.ts.
+   =========================================================================== */
+
+/* O titulo abre o bloco: a regua e o respiro de cima vem do contentor da
+   secao, nao do h2. Vale para h3 tambem, porque em parte das paginas o corte
+   e' em h3 e ali ele e' o titulo da secao, no corpo do h2. */
+.prosa-secao > :is(h2, h3):first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.prosa-secao > h3:first-child {
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  line-height: 1.2;
+}
+
+/* No ritmo corrido (post, institucional) a costura entre secoes e' um fio
+   fino na largura do texto, que e' o que a regua do h2 fazia antes. */
+.prosa-secao-fio {
+  border-top: 1px solid var(--color-rule);
+  padding-top: 1.6rem;
+}
+
+/* Na grade de secoes o texto encosta a esquerda da coluna, ao lado do
+   numeral; centrar a medida deixaria um vao entre os dois. */
+@media (min-width: 1024px) {
+  .prosa-na-grade {
+    margin-inline: 0;
+  }
+}
+
+/* Pull quote no lugar. E' a frase que a autora escreveu inteira em negrito
+   (lib/secoes.ts marca a primeira do documento): display, corpo maior, fio
+   vertical em accent. Nao sai da ordem de leitura; muda so o tratamento. */
+.prosa .destaque {
+  margin-top: 2.25em;
+  margin-bottom: 2.25em;
+  padding-left: 1.5rem;
+  border-left: 2px solid var(--color-accent);
+  font-family: var(--display);
+  font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  color: var(--color-ink-strong);
+  text-wrap: balance;
+}
+
+.prosa .destaque strong {
+  font-weight: 500;
+  color: inherit;
+}
+
+@media (min-width: 1024px) {
+  .prosa .destaque {
+    /* pende um pouco para a esquerda, para dentro da goteira da coluna */
+    margin-left: -1.5rem;
+    padding-left: 1.5rem;
   }
 }

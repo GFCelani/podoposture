@@ -99,16 +99,76 @@ const FOTOS: Record<string, Foto> = {
   },
 };
 
+/**
+ * O que falta fotografar. Sete paginas nao tem cena honesta no acervo:
+ * nenhuma foto de atendimento, de aparelho de neuromodulacao ou da
+ * responsavel tecnica existe (AUDITORIA.md, itens 7 e 8). Cada rotulo aqui
+ * vira um PlaceholderFoto no lugar da foto e uma linha no pedido a cliente.
+ * Quando a foto chegar, ela entra em FOTOS e a linha sai daqui.
+ */
+const PLACEHOLDERS: Record<string, string> = {
+  "currículo-profissional": "retrato da responsável técnica",
+  "dor-lombar-crônica": "atendimento de dor lombar na maca",
+  "neuromodulação": "sessão de neuromodulação com o aparelho",
+  rpg: "sessão de RPG na sala de exame",
+  "tratamento-da-dor": "avaliação clínica da dor em consulta",
+  "tratamento-da-dtm": "avaliação da ATM em consulta",
+  "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
+};
+
 /* Os slugs chegam do JSON com acento. Normalizar as chaves uma vez evita a
    divergencia NFC/NFD entre Windows e Linux que ja custou caro nas rotas. */
 const POR_SLUG = new Map(
   Object.entries(FOTOS).map(([slug, foto]) => [slug.normalize("NFC"), foto]),
 );
+const PLACEHOLDER_POR_SLUG = new Map(
+  Object.entries(PLACEHOLDERS).map(([slug, rotulo]) => [
+    slug.normalize("NFC"),
+    rotulo,
+  ]),
+);
+
+/**
+ * Fotografias de apoio, distribuidas no corpo da pagina (ver
+ * SecoesDeConteudo). A mesma regra da foto do hero, aplicada por trecho: a
+ * foto entra ao lado do passo que descreve o que ela mostra. Por isso a
+ * tabela e' por pagina e por enquanto so tem uma entrada: a avaliacao da
+ * dor lista anamnese, padrao postural e pisada, e o acervo tem o escritorio
+ * das anamneses, o painel postural e a plataforma de pressao. As legendas
+ * sao as mesmas das fotos acima; nenhuma foi escrita para aqui.
+ */
+const APOIO: Record<string, Foto[]> = {
+  "tratamento-da-dor": [
+    {
+      src: `${GALERIA}/escritorio.webp`,
+      alt: "Escritório da clínica, com mesa de trabalho e certificados na parede.",
+      legenda: "O escritório onde são feitas as anamneses e a leitura dos exames.",
+      largura: 960,
+      altura: 1200,
+    },
+    FOTOS.posturologia,
+    FOTOS.baropodometria,
+  ],
+};
+
+const APOIO_POR_SLUG = new Map(
+  Object.entries(APOIO).map(([slug, fotos]) => [slug.normalize("NFC"), fotos]),
+);
+
+export function fotosDeApoio(slug: string): Foto[] | undefined {
+  return APOIO_POR_SLUG.get(slug.normalize("NFC"));
+}
 
 export function ilustracaoDaPagina(slug: string): {
   glifo: string;
   foto?: Foto;
+  /** Rotulo do placeholder, quando a foto ainda nao existe. */
+  placeholder?: string;
 } {
   const chave = slug.normalize("NFC");
-  return { glifo: `/${chave}`, foto: POR_SLUG.get(chave) };
+  return {
+    glifo: `/${chave}`,
+    foto: POR_SLUG.get(chave),
+    placeholder: PLACEHOLDER_POR_SLUG.get(chave),
+  };
 }
