@@ -5,6 +5,8 @@ import { PageGrid, SeamRuler, SectionMark } from "@/components/layers";
 import { Reveal } from "@/components/reveal";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
 /**
  * Pedido de fotografias para a clinica.
@@ -101,12 +103,13 @@ const COMO_TIRAR = [
    divergir da lista se uma cena mudar de mao. */
 const EXTENSO = ["nenhuma", "Uma", "Duas", "Três", "Quatro", "Cinco", "Seis", "Sete"];
 
-export default function FotosQueFaltam() {
+export default async function FotosQueFaltam() {
   const comPaciente = PEDIDOS.filter((p) => p.comPaciente).length;
+  const contato = derivarContato((await lerConteudoDoSite()).contato);
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader contato={contatoDoCabecalho(contato)} />
 
       <main id="conteudo">
         {/* Abertura. O respiro de cima e' o que faz o texto nascer abaixo do
@@ -378,8 +381,8 @@ export default function FotosQueFaltam() {
         <SeamRuler />
       </main>
 
-      <SiteFooter />
-      <FloatingWhatsApp />
+      <SiteFooter contato={contato} />
+      <FloatingWhatsApp whatsapp={contato.whatsapp} />
     </>
   );
 }

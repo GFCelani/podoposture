@@ -219,9 +219,9 @@ export function FigurePoints({ className }: { className?: string }) {
 }
 
 /* ================================================================
-   03 — TRES COMPETENCIAS + REGUA DE 30
+   03 — TRES COMPETENCIAS + REGUA DOS ANOS
    Osteopatia, posturologia e acupuntura como marcas proprias; a
-   experiencia como regua de 30 tracos com cursor percorrendo.
+   experiencia como regua de um traco por ano, com cursor percorrendo.
    ================================================================ */
 
 function MarcaOsteopatia() {
@@ -275,8 +275,15 @@ export const MARCAS_CLINICAS = [
   { chave: "acupuntura", Marca: MarcaAcupuntura },
 ];
 
-/** Regua de 30 tracos, um por ano da copy, com cursor que percorre. */
-export function Regua30({ className }: { className?: string }) {
+/**
+ * Regua com um traco por ano de experiencia, com cursor que percorre.
+ *
+ * O numero vem do cadastro de contato (1 a 80), e nao da copy: antes eram 30
+ * tracos fixos, e trocar o "30" do texto deixaria a regua desenhando um numero
+ * errado. Os tracos se espalham pela mesma largura, entao a peca nao cresce.
+ */
+export function ReguaDosAnos({ anos, className }: { anos: number; className?: string }) {
+  const ultimo = anos - 1;
   return (
     <svg
       viewBox="0 0 300 26"
@@ -285,9 +292,10 @@ export function Regua30({ className }: { className?: string }) {
       focusable="false"
     >
       <line x1={0} y1={18} x2={300} y2={18} stroke="var(--color-rule)" strokeWidth={1.2} />
-      {Array.from({ length: 30 }, (_, i) => {
-        const x = 4 + (i * 292) / 29;
-        const alto = i % 5 === 0 || i === 29;
+      {Array.from({ length: anos }, (_, i) => {
+        // Com um ano so nao ha intervalo para dividir: o traco fica no meio.
+        const x = ultimo > 0 ? 4 + (i * 292) / ultimo : 150;
+        const alto = i % 5 === 0 || i === ultimo;
         return (
           <line
             key={i}

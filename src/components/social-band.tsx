@@ -1,3 +1,5 @@
+import type { ConteudoContato } from "@/lib/conteudo-tipos";
+
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 import { SocialLinks } from "./social-links";
@@ -6,8 +8,19 @@ import { SocialLinks } from "./social-links";
  * O numeral e' da sequencia da home (01 a 12). Nas paginas internas a faixa
  * fecha um documento que tem a propria numeracao de secoes, e um "12" solto
  * ali nao conta nada: sem `n`, a faixa vai so com o fio e o titulo.
+ *
+ * O titulo e os enderecos vem do painel e valem para o site inteiro: a mesma
+ * faixa fecha as 89 paginas.
  */
-export function SocialBand({ n }: { n?: string }) {
+export function SocialBand({
+  n,
+  titulo,
+  redes,
+}: {
+  n?: string;
+  titulo: string;
+  redes: ConteudoContato["redes"];
+}) {
   return (
     <section
       id="ligue-se-a-nos"
@@ -25,9 +38,9 @@ export function SocialBand({ n }: { n?: string }) {
         <Reveal delay={90}>
           <div className={`flex flex-col gap-8 border-t border-rule pt-10 sm:flex-row sm:items-center sm:justify-between${n ? " mt-10" : ""}`}>
             <h2 className="font-display text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.2] font-semibold tracking-[-0.015em] text-ink-strong">
-              Ligue-se a nós
+              {titulo}
             </h2>
-            <SocialLinks tone="light" />
+            <SocialLinks redes={redes} tone="light" />
           </div>
         </Reveal>
       </div>

@@ -5,10 +5,15 @@ import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
-import { ENDERECO, MAPS_DIRECOES, TELEFONES } from "@/lib/site";
+import type { ContatoDoCabecalho } from "@/lib/site";
 import { BrandMark } from "./brand-mark";
 
-export function SiteHeader() {
+/**
+ * Componente de cliente: o contato chega pronto por prop, do servidor que leu
+ * o banco. So o pedaco que o menu usa, para nao mandar ao navegador o cadastro
+ * inteiro em cada pagina.
+ */
+export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
   const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
@@ -301,7 +306,7 @@ export function SiteHeader() {
             coluna do meio e' so a navegacao: com o CTA dentro dela, o que
             ficaria centrado na chapa era o conjunto, e nao as secoes. */}
         <a
-          href="https://wa.me/5521992035643"
+          href={contato.whatsapp}
           target="_blank"
           rel="noopener noreferrer"
           className="btn-fill [--fill:var(--color-action)] hidden items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-3 py-2 text-[0.75rem] xl:px-3.5 xl:py-2.5 xl:text-[0.875rem] font-medium whitespace-nowrap text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0 lg:inline-flex lg:justify-self-end"
@@ -563,18 +568,18 @@ export function SiteHeader() {
                 Onde estamos
               </p>
               <a
-                href={MAPS_DIRECOES}
+                href={contato.mapsDirecoes}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setDrawer(false)}
                 className="group/end mt-3 block rounded-sm"
               >
                 <address className="font-display text-[1rem] leading-[1.5] font-medium text-ink-strong not-italic">
-                  {ENDERECO.rua}
+                  {contato.endereco.rua}
                   <br />
-                  {ENDERECO.sala}
+                  {contato.endereco.sala}
                   <br />
-                  {ENDERECO.local}
+                  {contato.endereco.local}
                 </address>
                 <span className="mt-3 inline-flex items-center gap-2 text-[0.875rem] text-accent">
                   Como chegar
@@ -596,8 +601,8 @@ export function SiteHeader() {
               </a>
 
               <ul className="mt-6 space-y-1">
-                {TELEFONES.map((phone) => (
-                  <li key={phone.href} className="flex items-baseline gap-3">
+                {contato.telefones.map((phone, i) => (
+                  <li key={i} className="flex items-baseline gap-3">
                     <a
                       href={phone.href}
                       className="sublinha inline-flex min-h-[32px] items-center text-[1rem] tracking-[0.02em] text-accent"

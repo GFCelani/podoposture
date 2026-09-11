@@ -1,4 +1,12 @@
 import Image from "next/image";
+import { Fragment } from "react";
+
+import {
+  dividirPeloDestaque,
+  hrefDoDestino,
+  segmentosDoSubtitulo,
+  type ConteudoHero,
+} from "@/lib/conteudo-tipos";
 
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
@@ -61,7 +69,75 @@ const ESCALA_BOTAO =
   "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
   "lg:[@media(max-height:860px)]:py-[10px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
-export function Hero() {
+/**
+ * A forma de cada botao e da POSICAO, e fica no codigo: o primeiro e o convite
+ * verde, o segundo o de contorno. O painel edita so rotulo e destino; um
+ * icone ou uma variante trocados mudariam a hierarquia que a fila mede.
+ */
+const FORMA_DOS_BOTOES = [
+  { variant: "primary", icone: "balao" },
+  { variant: "secondary-deep", icone: "pergunta" },
+] as const;
+
+/**
+ * O titulo em blocos, um por linha escrita. A primeira linha vira um bloco por
+ * palavra abaixo de sm: no telefone "Integracao terapeutica" nao cabe numa
+ * linha so, e a quebra continua escolhida, nao emergente. Cada linha menos a
+ * ultima termina com espaco, para o texto copiado sair corrido.
+ */
+function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: string }) {
+  return linhas.map((linha, i) => {
+    const fim = i < linhas.length - 1 ? " " : "";
+    if (i === 0) {
+      const palavras = linha.split(" ");
+      return (
+        <span key={i} className="block">
+          {palavras.map((palavra, j) => (
+            <span key={j} className="block sm:inline">
+              {palavra}
+              {j < palavras.length - 1 ? " " : fim}
+            </span>
+          ))}
+        </span>
+      );
+    }
+    // A regra do descritor garante o grifo na 2a linha; se um dia faltar, a
+    // linha sai sem grifo em vez de sumir.
+    const partes = i === 1 ? dividirPeloDestaque(linha, destaque) : null;
+    return (
+      <span key={i} className="block">
+        {partes ? (
+          <>
+            {partes.antes}
+            <mark className="marca-grifo">{partes.destaque}</mark>
+            {partes.depois}
+          </>
+        ) : (
+          linha
+        )}
+        {fim}
+      </span>
+    );
+  });
+}
+
+/** "\n" vira quebra que so vale a partir de sm, seguida do espaco que a linha corrida precisa. */
+function ComQuebras({ texto }: { texto: string }) {
+  return texto.split("\n").map((parte, i) => (
+    <Fragment key={i}>
+      {i > 0 && (
+        <>
+          <br className="hidden sm:inline" />{" "}
+        </>
+      )}
+      {parte}
+    </Fragment>
+  ));
+}
+
+export function Hero({ conteudo, whatsapp }: { conteudo: ConteudoHero; whatsapp: string }) {
+  const segmentos = segmentosDoSubtitulo(conteudo.subtituloLinhas, conteudo.destaquesDoSubtitulo);
+
   return (
     <section
       data-tone="deep"
@@ -153,15 +229,7 @@ export function Hero() {
             className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
-            <span className="block">
-              <span className="block sm:inline">Integração </span>
-              <span className="block sm:inline">terapêutica </span>
-            </span>
-            <span className="block">
-              <mark className="marca-grifo">efetiva</mark> e inovadora{" "}
-            </span>
-            <span className="block">com resultados </span>
-            <span className="block">rápidos e eficazes</span>
+            <TituloEmLinhas linhas={conteudo.tituloLinhas} destaque={conteudo.destaque} />
           </h1>
 
           {/*
@@ -181,9 +249,10 @@ export function Hero() {
             paragrafo, porque o tempo e' da pessoa e nao da cidade; e entra com
             as MESMAS palavras da secao 03 ("com 30 anos de experiencia
             clinica"), nao com uma segunda formulacao do mesmo dado, porque as
-            duas ficam visiveis na mesma pagina. A Regua30 em illustrations.tsx
-            desenha 30 tracos a partir deste numero: se ele mudar, ela muda
-            junto.
+            duas ficam visiveis na mesma pagina. A regua da secao 03 desenha um
+            traco por ano a partir de `anosDeExperiencia`, no cadastro de
+            contato; o numero escrito aqui e o da secao 03 sao texto, e se
+            editam cada um no seu lugar.
             As outras duas formas que sobraram do site antigo ("quase 30 anos"
             na pagina da responsavel tecnica, "quase tres decadas" no
             curriculo) sao copy da cliente e continuam como estao.
@@ -213,19 +282,21 @@ export function Hero() {
             className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
-            <span className="font-medium text-paper">
-              Dra. Claudia Meirelles
-            </span>
-            , fisioterapeuta especialista
-            <br className="hidden sm:inline" /> em Osteopatia e Acupuntura pelo
-            COFFITO, com{" "}
-            <span className="text-paper">
-              30
-              <br className="hidden sm:inline" /> anos de experiência clínica
-            </span>
-            . Osteopatia, posturologia
-            <br className="hidden sm:inline" /> e acupuntura em Copacabana, Rio
-            de Janeiro.
+            {/* Os trechos em destaque sao segmentos de texto, nunca HTML: o
+                primeiro leva peso, o segundo so a cor, como na composicao
+                original (o nome e o tempo de pratica). */}
+            {segmentos.map((segmento, i) =>
+              segmento.destaque === null ? (
+                <ComQuebras key={i} texto={segmento.texto} />
+              ) : (
+                <span
+                  key={i}
+                  className={segmento.destaque === 0 ? "font-medium text-paper" : "text-paper"}
+                >
+                  <ComQuebras texto={segmento.texto} />
+                </span>
+              ),
+            )}
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
@@ -236,31 +307,28 @@ export function Hero() {
               o embrulho os encolheria, entao no telefone a curva continua
               presa a largura do bloco. */}
           <div className="sm:w-fit">
-            {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
-              o primario e' o par completo da secao 09, rotulo e destino; o
-              secundario
-              e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
-              entrada clinica. */}
+            {/* Acao do hero. No padrao, o primario e' o par completo da
+              secao 09, rotulo e destino; o secundario e' o CTA da Avaliacao
+              Clinica da Dor Persistente, a porta de entrada clinica. O teto de
+              24 caracteres do rotulo e' o que a borda medida em lg aguenta. */}
             <div
               className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-6"
               style={{ ["--in-delay" as string]: "620ms" }}
             >
-              <ButtonLink
-                href="https://wa.me/5521992035643"
-                variant="primary"
-                icone="balao"
-                className={ESCALA_BOTAO}
-              >
-                Envie uma mensagem
-              </ButtonLink>
-              <ButtonLink
-                href="/tratamento-da-dor"
-                variant="secondary-deep"
-                icone="pergunta"
-                className={ESCALA_BOTAO}
-              >
-                Quero mais informações
-              </ButtonLink>
+              {conteudo.botoes.map((botao, i) => {
+                const forma = FORMA_DOS_BOTOES[i] ?? FORMA_DOS_BOTOES[1];
+                return (
+                  <ButtonLink
+                    key={i}
+                    href={hrefDoDestino(botao.destino, whatsapp)}
+                    variant={forma.variant}
+                    icone={forma.icone}
+                    className={ESCALA_BOTAO}
+                  >
+                    {botao.rotulo}
+                  </ButtonLink>
+                );
+              })}
             </div>
 
             {/* Curva de forca da marcha: o duplo pico de cada passo, o

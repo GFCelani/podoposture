@@ -1,3 +1,5 @@
+import type { ConteudoCompreender } from "@/lib/conteudo-tipos";
+
 import { FigurePoints } from "./illustrations";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -7,7 +9,7 @@ import { Reveal } from "./reveal";
  * pontos de avaliacao acendendo mora aqui, em traco claro sobre o petroleo
  * suave, ocupando a coluna direita inteira. Sem caixa, sem timeline.
  */
-export function UnderstandFirst() {
+export function UnderstandFirst({ conteudo }: { conteudo: ConteudoCompreender }) {
   return (
     <section
       id="compreender-antes-de-tratar"
@@ -33,13 +35,15 @@ export function UnderstandFirst() {
             <Reveal variante="cortina">
               <SectionMark n="04" tone="deep" />
               <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
-                Compreender Antes de Tratar
+                {conteudo.titulo}
               </h2>
             </Reveal>
 
+            {/* Frase em corpo de display numa coluna de 26ch: o teto de 90
+                caracteres do painel e' o que a mantem em tres ou quatro linhas. */}
             <Reveal delay={150}>
               <p className="mt-10 max-w-[26ch] font-display text-[clamp(1.5rem,2.6vw,2.125rem)] leading-[1.3] font-medium text-balance text-paper">
-                Conviver com dor ou limitações raramente é uma questão local.
+                {conteudo.frase}
               </p>
             </Reveal>
 
@@ -49,11 +53,7 @@ export function UnderstandFirst() {
                 className="mt-10 h-px w-full max-w-[420px] bg-paper/[0.14]"
               />
               <p className="mt-10 max-w-[58ch] text-[1.0625rem] leading-[1.75] text-on-deep-muted">
-                Com o tempo, o corpo se adapta no movimento, no sono, na forma
-                de se organizar. Por isso, o ponto de partida não são as
-                técnicas. É a escuta clínica, o histórico e a leitura dos
-                sinais que o corpo sustenta. As intervenções vêm a partir desse
-                entendimento.
+                {conteudo.paragrafo}
               </p>
             </Reveal>
           </div>

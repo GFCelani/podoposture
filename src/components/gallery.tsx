@@ -1,29 +1,22 @@
 import Image from "next/image";
+
+import type { ConteudoGaleria } from "@/lib/conteudo-tipos";
+
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Seis fotografias reais da clinica. Recepcao e avaliacao postural moram
- * nas secoes 02 e 03 e ficam fora daqui para nao repetir. A sacola de pano
- * saiu a pedido da cliente (2026-09-07) e no lugar entrou o consultorio, a
- * unica foto de ambiente do acervo que ainda nao estava na home: 819x1024
- * para no maximo 380 CSS de largura, 2,15x de densidade. Ela tambem abre a
- * pagina do Metodo Posture+, que e' outra superficie, nao esta grade.
- * As outras sete imagens da galeria do site antigo sao pecas de marketing
- * com texto embutido (Palmilhas para corrida, Paciente RPG, Paciente com
- * Zumbido, Neuromodulacao, POSTURE+, Axon e um print de Street View) e
- * continuam de fora.
+ * Fotografias reais da clinica. No padrao, recepcao e avaliacao postural
+ * moram nas secoes 02 e 03 e ficam fora daqui para nao repetir; a sacola de
+ * pano saiu a pedido da cliente (2026-09-07) e no lugar entrou o consultorio.
+ * As sete imagens restantes da galeria do site antigo sao pecas de marketing
+ * com texto embutido e continuam de fora.
+ *
+ * Toda foto e' recortada em 4:5 pelo centro. Largura e altura sao as reais do
+ * arquivo: com o painel trocando fotos, a medida fixa de antes (900x1125)
+ * mentiria sobre qualquer imagem nova.
  */
-const PHOTOS = [
-  { src: "/img/galeria/sala-de-exame.webp", alt: "Sala de exame com maca e bancada de equipamentos" },
-  { src: "/img/galeria/escritorio.webp", alt: "Mesa de atendimento com diplomas e modelos anatômicos ao fundo" },
-  { src: "/img/galeria/corredor-de-marcha.webp", alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro" },
-  { src: "/img/galeria/acupuntura.webp", alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente" },
-  { src: "/img/galeria/plataforma-de-pressao.webp", alt: "Pés descalços sobre a plataforma de baropodometria" },
-  { src: "/img/galeria/consultorio.webp", alt: "Consultório com mesa de atendimento, espelho de corpo inteiro e bolas de exercício" },
-];
-
-export function Gallery() {
+export function Gallery({ conteudo }: { conteudo: ConteudoGaleria }) {
   return (
     <section
       data-tone="deep"
@@ -36,7 +29,7 @@ export function Gallery() {
         <Reveal variante="cortina">
           <SectionMark n="11" tone="deep" />
           <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
-            Galeria
+            {conteudo.titulo}
           </h2>
         </Reveal>
 
@@ -45,8 +38,8 @@ export function Gallery() {
         </Reveal>
 
         <ul className="mt-12 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-          {PHOTOS.map((photo, i) => (
-            <li key={photo.src}>
+          {conteudo.fotos.map((foto, i) => (
+            <li key={i}>
               <Reveal delay={(i % 3) * 90}>
                 <figure className="group relative overflow-hidden rounded-lg border border-white/[0.12] transition-[border-color,transform,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-1 hover:border-white/40 hover:shadow-lift">
                   <span
@@ -57,10 +50,10 @@ export function Gallery() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <Image
-                    src={photo.src}
-                    alt={photo.alt}
-                    width={900}
-                    height={1125}
+                    src={foto.src}
+                    alt={foto.alt}
+                    width={foto.largura}
+                    height={foto.altura}
                     sizes="(min-width: 1024px) 380px, 50vw"
                     className="aspect-[4/5] w-full object-cover saturate-[0.88] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.04] group-hover:saturate-100"
                   />

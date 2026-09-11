@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  EMAIL,
-  ENDERECO,
-  HORARIO,
-  MAPS_DIRECOES,
-  TELEFONES,
-} from "@/lib/site";
+import type { ContatoDoSite } from "@/lib/site";
 import { PageGrid } from "./layers";
 import { SocialLinks } from "./social-links";
 
@@ -38,7 +32,9 @@ function Rotulo({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ contato }: { contato: ContatoDoSite }) {
+  const { endereco, telefones, email, horario, mapsDirecoes, redes } = contato;
+
   return (
     <footer
       data-tone="deep"
@@ -58,17 +54,17 @@ export function SiteFooter() {
 
             {/* A ficha inteira leva ao mapa, como na secao de contato. */}
             <a
-              href={MAPS_DIRECOES}
+              href={mapsDirecoes}
               target="_blank"
               rel="noopener noreferrer"
               className="group/end mt-5 block rounded-sm"
             >
               <address className="font-display text-[1.25rem] leading-[1.45] font-medium text-paper not-italic lg:text-[1.375rem]">
-                {ENDERECO.rua}
+                {endereco.rua}
                 <br />
-                {ENDERECO.sala}
+                {endereco.sala}
                 <br />
-                {ENDERECO.local}
+                {endereco.local}
               </address>
               <span className="mt-4 inline-flex items-center gap-2 text-[0.875rem] text-accent-light transition-colors duration-[160ms] group-hover/end:text-paper">
                 Como chegar
@@ -89,17 +85,19 @@ export function SiteFooter() {
               </span>
             </a>
 
-            <p className="mt-5 max-w-[30rem] text-[0.9375rem] leading-[1.7] text-on-deep-muted">
-              {ENDERECO.referencia}
-            </p>
+            {endereco.referencia && (
+              <p className="mt-5 max-w-[30rem] text-[0.9375rem] leading-[1.7] text-on-deep-muted">
+                {endereco.referencia}
+              </p>
+            )}
           </div>
 
           <div className="lg:col-span-5 lg:col-start-8">
             <Rotulo>Contato</Rotulo>
 
             <ul className="mt-5 flex flex-wrap gap-x-8 gap-y-1">
-              {TELEFONES.map((phone) => (
-                <li key={phone.href} className="flex items-baseline gap-3">
+              {telefones.map((phone, i) => (
+                <li key={i} className="flex items-baseline gap-3">
                   <a
                     href={phone.href}
                     className="sublinha inline-flex min-h-[32px] items-center text-[1.0625rem] tracking-[0.02em] text-paper transition-colors duration-[160ms] hover:text-accent-light"
@@ -117,15 +115,15 @@ export function SiteFooter() {
             </ul>
 
             <a
-              href={`mailto:${EMAIL}`}
+              href={`mailto:${email}`}
               className="sublinha mt-2 inline-flex min-h-[32px] items-center text-[1.0625rem] tracking-[0.02em] break-all text-paper transition-colors duration-[160ms] hover:text-accent-light"
               style={{ fontFamily: "var(--mono)" }}
             >
-              {EMAIL}
+              {email}
             </a>
 
             <p className="mt-5 text-[0.9375rem] leading-[1.7] text-on-deep-muted">
-              {HORARIO}
+              {horario}
             </p>
           </div>
         </div>
@@ -149,7 +147,7 @@ export function SiteFooter() {
             </ul>
           </nav>
 
-          <SocialLinks tone="dark" className="shrink-0" />
+          <SocialLinks redes={redes} tone="dark" className="shrink-0" />
         </div>
 
         <div

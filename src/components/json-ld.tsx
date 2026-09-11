@@ -7,15 +7,7 @@
  * horario. Aqui o schema fica mais rico que o do site antigo, nao mais pobre.
  */
 
-import {
-  CLINICA,
-  DESCRICAO_PADRAO,
-  RESPONSAVEL,
-  SAME_AS,
-  SITE_NAME,
-  SITE_URL,
-  urlAbsoluta,
-} from "@/lib/site";
+import { SITE_NAME, SITE_URL, urlAbsoluta, type ContatoDoSite } from "@/lib/site";
 
 type Json = Record<string, unknown>;
 
@@ -47,17 +39,14 @@ function JsonLd({ dados }: { dados: Json }) {
 
 const ID_CLINICA = `${SITE_URL}/#clinica`;
 
-const ENDERECO = {
-  "@type": "PostalAddress",
-  streetAddress: CLINICA.rua,
-  addressLocality: CLINICA.bairro,
-  addressRegion: CLINICA.estado,
-  postalCode: CLINICA.cep,
-  addressCountry: CLINICA.pais,
-};
-
-/** Identidade do negocio e do site. Vai no layout, uma vez por pagina. */
-export function NegocioLocalJsonLd() {
+/**
+ * Identidade do negocio e do site. Vai no layout, uma vez por pagina.
+ *
+ * Nome da responsavel, descricao, endereco e redes vem do painel: sao
+ * exatamente os campos que passam pelo escape de `JsonLd` acima.
+ */
+export function NegocioLocalJsonLd({ contato }: { contato: ContatoDoSite }) {
+  const { clinica } = contato;
   return (
     <JsonLd
       dados={{
@@ -67,17 +56,24 @@ export function NegocioLocalJsonLd() {
             "@type": ["MedicalClinic", "LocalBusiness"],
             "@id": ID_CLINICA,
             name: SITE_NAME,
-            description: DESCRICAO_PADRAO,
+            description: contato.descricao,
             url: SITE_URL,
-            telephone: CLINICA.telefone,
-            address: ENDERECO,
+            telephone: clinica.telefone,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: clinica.rua,
+              addressLocality: clinica.bairro,
+              addressRegion: clinica.estado,
+              postalCode: clinica.cep,
+              addressCountry: clinica.pais,
+            },
             geo: {
               "@type": "GeoCoordinates",
-              latitude: CLINICA.latitude,
-              longitude: CLINICA.longitude,
+              latitude: clinica.latitude,
+              longitude: clinica.longitude,
             },
             image: urlAbsoluta("/og.png"),
-            sameAs: SAME_AS,
+            sameAs: contato.sameAs,
             medicalSpecialty: ["Osteopathic", "PhysicalTherapy"],
             availableService: [
               "Osteopatia",
@@ -91,7 +87,7 @@ export function NegocioLocalJsonLd() {
             ].map((nome) => ({ "@type": "MedicalTherapy", name: nome })),
             areaServed: {
               "@type": "City",
-              name: CLINICA.cidade,
+              name: clinica.cidade,
             },
           },
           {
@@ -105,8 +101,8 @@ export function NegocioLocalJsonLd() {
           {
             "@type": "Person",
             "@id": `${SITE_URL}/#responsavel`,
-            name: RESPONSAVEL.nome,
-            jobTitle: RESPONSAVEL.titulo,
+            name: contato.responsavel.nome,
+            jobTitle: contato.responsavel.titulo,
             worksFor: { "@id": ID_CLINICA },
           },
         ],

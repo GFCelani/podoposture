@@ -1,41 +1,17 @@
 import Image from "next/image";
+
+import { hrefDaPagina, type ConteudoTratamentos } from "@/lib/conteudo-tipos";
+
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * Os tres cartoes do site atual. Cada um carrega tres <h4> no HTML de origem,
- * sendo dois lixo de edicao do builder com o titulo de outro cartao. Aqui fica
- * so o titulo visivel de cada um, que e a correcao de duplicacao autorizada.
+ * Os cartoes de tratamento, com foto recortada em 4:5. O titulo do cartao nao
+ * precisa ser o titulo da pagina de destino: e texto de chamada, e trocar um
+ * nao mexe em rota nem em SEO.
  */
-const CARDS = [
-  {
-    title: "Tratamento da Dor Lombar",
-    href: "/dor-lombar-crônica",
-    src: "/img/card-dor-lombar.webp",
-    width: 1024,
-    height: 1280,
-    alt: "Homem sentado à mesa com dor na região lombar",
-  },
-  {
-    title: "Tratamento da Dor Crônica",
-    href: "/tratamento-da-dor",
-    src: "/img/card-dor-cronica.webp",
-    width: 1024,
-    height: 1280,
-    alt: "Mulher em pé levando a mão ao pescoço, com dor cervical",
-  },
-  {
-    title: "Tratamento do Zumbido, Bruxismo, Cefaleias e DTMs",
-    href: "/tratamento-do-zumbido",
-    src: "/img/card-zumbido.webp",
-    width: 819,
-    height: 1024,
-    alt: "Mulher diante de um computador com as mãos nas têmporas, com cefaleia",
-  },
-];
-
-export function TreatmentCards() {
+export function TreatmentCards({ conteudo }: { conteudo: ConteudoTratamentos }) {
   return (
     <section
       id="tratamentos"
@@ -49,8 +25,9 @@ export function TreatmentCards() {
         </Reveal>
 
         <ul className="mt-12 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {CARDS.map((card, i) => (
-            <li key={card.href} className="flex">
+          {/* Chave pela posicao: dois cartoes podem levar a mesma pagina. */}
+          {conteudo.cartoes.map((cartao, i) => (
+            <li key={i} className="flex">
               <Reveal delay={i * 110} className="flex w-full">
                 <article className="group flex w-full flex-col">
                   <div className="relative overflow-hidden rounded-lg border border-rule bg-paper shadow-plate transition-[box-shadow,transform] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift">
@@ -59,10 +36,10 @@ export function TreatmentCards() {
                       className="absolute inset-x-0 top-0 z-10 h-[3px] origin-left scale-x-0 bg-accent transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-x-100"
                     />
                     <Image
-                      src={card.src}
-                      alt={card.alt}
-                      width={card.width}
-                      height={card.height}
+                      src={cartao.imagem.src}
+                      alt={cartao.imagem.alt}
+                      width={cartao.imagem.largura}
+                      height={cartao.imagem.altura}
                       sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
                       className="aspect-[4/5] w-full scale-100 object-cover saturate-[0.88] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.04] group-hover:saturate-100"
                     />
@@ -77,13 +54,13 @@ export function TreatmentCards() {
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <h3 className="font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
-                      {card.title}
+                      {cartao.titulo}
                     </h3>
                   </div>
 
                   <div className="mt-auto pt-6">
-                    <ButtonLink href={card.href} variant="secondary">
-                      Saiba Mais
+                    <ButtonLink href={hrefDaPagina(cartao.destino)} variant="secondary">
+                      {conteudo.rotuloDoBotao}
                     </ButtonLink>
                   </div>
                 </article>

@@ -10,6 +10,7 @@ import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { quebrasDaAbertura } from "@/lib/abertura";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { fotosDeApoio, ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
 import {
   SLUGS_A_GERAR,
@@ -18,6 +19,7 @@ import {
   rotuloDaPagina,
   tituloDaPagina,
 } from "@/lib/pages";
+import { derivarContato } from "@/lib/site";
 
 /**
  * As 20 paginas internas.
@@ -137,6 +139,7 @@ export default async function Pagina({
   const ilustracao = ilustracaoDaPagina(pagina.slug);
   const tipo = tipoDaPagina(pagina.slug);
   const eContato = pagina.slug === "contato";
+  const conteudo = await lerConteudoDoSite();
   /* Subtitulo visivel: o que a cliente escreveu para a abertura, quando
      existe; senao a descricao de <meta>, como nas demais paginas. A
      descricao e o JSON-LD nao mudam com a abertura: sao copy de busca. */
@@ -177,7 +180,12 @@ export default async function Pagina({
             contato ja pronta traz endereco, mapa, telefones, e-mail e horario,
             que e' o que alguem procura nesse endereco. */}
         {eContato ? (
-          <Contact numero={null} comoSecao={false} />
+          <Contact
+            contato={derivarContato(conteudo.contato)}
+            textos={conteudo["contato-secao"]}
+            numero={null}
+            comoSecao={false}
+          />
         ) : (
           <SecoesDeConteudo
             html={pagina.html}

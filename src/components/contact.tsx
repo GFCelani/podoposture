@@ -1,12 +1,6 @@
-import {
-  EMAIL,
-  ENDERECO,
-  HORARIO,
-  MAPS_DIRECOES,
-  MAPS_EMBED,
-  TELEFONES,
-  WHATSAPP,
-} from "@/lib/site";
+import type { ConteudoContatoSecao } from "@/lib/conteudo-tipos";
+import type { ContatoDoSite } from "@/lib/site";
+
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -16,14 +10,23 @@ import { Reveal } from "./reveal";
  * As duas props cobrem essa diferenca sem duplicar o componente: sem numero de
  * secao, sem corte diagonal (nao ha banda anterior para cortar) e sem repetir
  * no h2 o que o h1 do PageShell ja diz.
+ *
+ * `textos` sao os da secao; `contato` e' o cadastro do site inteiro. Os dois
+ * chegam prontos de quem renderiza a pagina, que e' quem le o banco.
  */
 export function Contact({
+  contato,
+  textos,
   numero = "09",
   comoSecao = true,
 }: {
+  contato: ContatoDoSite;
+  textos: ConteudoContatoSecao;
   numero?: string | null;
   comoSecao?: boolean;
-} = {}) {
+}) {
+  const { endereco, telefones, email, horario, whatsapp, mapsEmbed, mapsDirecoes } = contato;
+
   return (
     <section
       id="contato"
@@ -38,7 +41,7 @@ export function Contact({
           <Reveal variante="cortina">
             {numero && <SectionMark n={numero} />}
             <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
-              Converse com a Podoposture
+              {textos.titulo}
             </h2>
           </Reveal>
         )}
@@ -52,28 +55,25 @@ export function Contact({
             <Reveal delay={110}>
               {comoSecao ? (
                 <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
-                  Sua dor merece ser compreendida
+                  {textos.subtitulo}
                 </h3>
               ) : (
                 <h2 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
-                  Sua dor merece ser compreendida
+                  {textos.subtitulo}
                 </h2>
               )}
             </Reveal>
 
             <Reveal delay={180}>
               <p className="mt-6 max-w-[56ch] text-[1.0625rem] leading-[1.7] text-ink">
-                Se você convive com dor ou sente que seu corpo precisa ser
-                avaliado com mais atenção, estamos à disposição para ouvir,
-                orientar e entender se uma avaliação faz sentido para o seu
-                caso.
+                {textos.paragrafo}
               </p>
             </Reveal>
 
             <Reveal delay={260}>
               <div className="mt-12">
-                <ButtonLink href={WHATSAPP} variant="primary">
-                  Envie uma mensagem
+                <ButtonLink href={whatsapp} variant="primary">
+                  {textos.rotuloDoBotao}
                 </ButtonLink>
               </div>
             </Reveal>
@@ -86,8 +86,9 @@ export function Contact({
                 className="mt-12 h-px w-full max-w-[26rem] bg-rule"
               />
               <ul className="mt-8 space-y-6">
-                {TELEFONES.map((phone) => (
-                  <li key={phone.href} className="flex items-baseline gap-4">
+                {/* Chave pela posicao: fixo e WhatsApp podem ser o mesmo numero. */}
+                {telefones.map((phone, i) => (
+                  <li key={i} className="flex items-baseline gap-4">
                     <span
                       aria-hidden="true"
                       className="h-px w-8 shrink-0 translate-y-[-0.35em] bg-accent/40"
@@ -122,11 +123,11 @@ export function Contact({
                   </dt>
                   <dd className="mt-1 pl-12">
                     <a
-                      href={`mailto:${EMAIL}`}
+                      href={`mailto:${email}`}
                       className="sublinha inline-flex min-h-[28px] items-center text-[1.0625rem] tracking-[0.02em] break-all text-accent transition-colors duration-[160ms] hover:text-accent-deep"
                       style={{ fontFamily: "var(--mono)" }}
                     >
-                      {EMAIL}
+                      {email}
                     </a>
                   </dd>
                 </div>
@@ -140,7 +141,7 @@ export function Contact({
                     Horário de atendimento
                   </dt>
                   <dd className="mt-1 pl-12 text-[1.0625rem] text-ink">
-                    {HORARIO}
+                    {horario}
                   </dd>
                 </div>
               </dl>
@@ -199,8 +200,8 @@ export function Contact({
 
                   <div className="absolute inset-0 overflow-hidden rounded-lg border border-rule bg-surface shadow-plate min-[390px]:inset-5 min-[390px]:rounded-full">
                     <iframe
-                      title={`Mapa: ${ENDERECO.completo}`}
-                      src={MAPS_EMBED}
+                      title={`Mapa: ${endereco.completo}`}
+                      src={mapsEmbed}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                       className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 saturate-[1.2]"
@@ -231,7 +232,7 @@ export function Contact({
                     mapa, e obrigar a mirar no link de 11px do rodape do disco
                     era um alvo pequeno para o gesto mais comum da secao. */}
                 <a
-                  href={MAPS_DIRECOES}
+                  href={mapsDirecoes}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group/end block rounded-sm"
@@ -240,11 +241,11 @@ export function Contact({
                     className="text-[0.9375rem] leading-[1.75] text-ink not-italic transition-colors duration-[160ms] group-hover/end:text-ink-strong"
                     style={{ fontFamily: "var(--mono)" }}
                   >
-                    {ENDERECO.rua}
+                    {endereco.rua}
                     <br />
-                    {ENDERECO.sala}
+                    {endereco.sala}
                     <br />
-                    {ENDERECO.local}
+                    {endereco.local}
                   </address>
                   <span className="mt-4 inline-flex items-center gap-2 text-[0.8125rem] tracking-[0.02em] text-accent transition-colors duration-[160ms] group-hover/end:text-accent-deep">
                     Como chegar
@@ -265,10 +266,12 @@ export function Contact({
                   </span>
                 </a>
 
-                <p className="mt-7 text-[0.9375rem] leading-[1.7] text-ink">
-                  {ENDERECO.referencia}
-                </p>
-
+                {/* A referencia e' opcional no painel: sem ela, sem paragrafo vazio. */}
+                {endereco.referencia && (
+                  <p className="mt-7 text-[0.9375rem] leading-[1.7] text-ink">
+                    {endereco.referencia}
+                  </p>
+                )}
               </div>
             </Reveal>
           </div>

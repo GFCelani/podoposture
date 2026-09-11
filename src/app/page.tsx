@@ -1,43 +1,16 @@
-import { Approach } from "@/components/approach";
-import { ClinicalResponsibility } from "@/components/clinical-responsibility";
-import { Contact } from "@/components/contact";
-import { FloatingWhatsApp } from "@/components/floating-whatsapp";
-import { Gallery } from "@/components/gallery";
-import { Hero } from "@/components/hero";
-import { Journal } from "@/components/journal";
-import { SeamRuler } from "@/components/layers";
-import { MetodoRegulador } from "@/components/metodo-regulador";
-import { ServicesGrid } from "@/components/services-grid";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { SocialBand } from "@/components/social-band";
-import { TreatmentCards } from "@/components/treatment-cards";
-import { UnderstandFirst } from "@/components/understand-first";
-import { Welcome } from "@/components/welcome";
+import { lerBlogDaPaginaInicial, PaginaInicial } from "@/components/pagina-inicial";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 
-export default function Home() {
-  return (
-    <>
-      <SiteHeader />
-      <main id="conteudo">
-        <Hero />
-        <SeamRuler />
-        <Welcome />
-        <ClinicalResponsibility />
-        <UnderstandFirst />
-        <SeamRuler />
-        <Approach />
-        <MetodoRegulador />
-        <TreatmentCards />
-        <ServicesGrid />
-        <Contact />
-        <Journal />
-        <Gallery />
-        <SeamRuler />
-        <SocialBand n="12" />
-      </main>
-      <SiteFooter />
-      <FloatingWhatsApp />
-    </>
-  );
+/**
+ * A pagina inicial.
+ *
+ * Continua estatica de proposito: sem `dynamic`, sem `revalidate`, sem cookies,
+ * cabecalhos ou searchParams. O banco e lido no build e na primeira visita
+ * depois de cada publicacao (as rotas do painel chamam revalidatePath), entao
+ * visitante nenhum paga consulta, e o banco fora do ar nao derruba a pagina:
+ * as duas leituras caem no conteudo padrao.
+ */
+export default async function Home() {
+  const [conteudo, blog] = await Promise.all([lerConteudoDoSite(), lerBlogDaPaginaInicial()]);
+  return <PaginaInicial conteudo={conteudo} blog={blog} />;
 }

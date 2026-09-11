@@ -1,9 +1,17 @@
+import { CONTEUDO_PADRAO } from "./conteudo-padrao";
+import { linkDoWhatsapp, type ConteudoContato } from "./conteudo-tipos";
+
 /**
- * Identidade e dados fixos do site, num lugar so.
+ * Identidade do site e a forma de apresentacao dos dados de contato.
  *
- * O NAP (nome, endereco, telefone) estava repetido entre contact.tsx e o
- * rodape; como ele tambem alimenta o JSON-LD de negocio local, divergencia
- * entre as copias vira divergencia no que o Google indexa. Fonte unica aqui.
+ * Os dados de contato (telefones, endereco, redes, responsavel) deixaram de
+ * ser constantes daqui: agora sao editaveis pelo painel e chegam de
+ * `lerConteudoDoSite()`. O que ficou neste arquivo e o que nao se edita (URL,
+ * nome, verificacao do Google, coordenadas) e `derivarContato`, que monta de
+ * UM cadastro todas as formas em que o contato aparece. Antes eram tres
+ * formas do endereco escritas a mao (JSON-LD, tela e busca do mapa) e o
+ * WhatsApp repetido em seis componentes; trocar o numero num lugar deixava o
+ * site com dois numeros.
  */
 
 /**
@@ -20,9 +28,12 @@ export const SITE_URL = (
 
 export const SITE_NAME = "Podoposture";
 
-export const DESCRICAO_PADRAO =
-  "Integração terapêutica efetiva, inovadora com resultados rápidos e eficazes. " +
-  "Osteopatia, posturologia e acupuntura em Copacabana, Rio de Janeiro.";
+/**
+ * A descricao do conteudo PADRAO. Quem renderiza pagina usa a publicada
+ * (`contato.descricao`); esta constante fica para o que roda fora da arvore de
+ * pagina e nao le banco: o manifest e a descricao de reserva de pages.ts.
+ */
+export const DESCRICAO_PADRAO = CONTEUDO_PADRAO.contato.descricaoParaBuscadores;
 
 /**
  * Verificacao de propriedade do Google Search Console.
@@ -34,78 +45,109 @@ export const DESCRICAO_PADRAO =
  */
 export const GOOGLE_SITE_VERIFICATION = "PbHiCclqlcemqO2F6myJInsR0RquVe3S2IJ4ZRTxTBg";
 
-export const CLINICA = {
-  rua: "Avenida Nossa Senhora de Copacabana, 928 — sala 501",
-  bairro: "Copacabana",
-  cidade: "Rio de Janeiro",
-  estado: "RJ",
-  cep: "22020-002",
-  pais: "BR",
-  latitude: -22.9711,
-  longitude: -43.1863,
-  telefone: "+552122554845",
-} as const;
-
-export const RESPONSAVEL = {
-  nome: "Claudia Meirelles",
-  titulo: "Osteopata, Posturologista e Acupunturista",
-} as const;
-
 /**
- * Perfis sociais.
- *
- * LinkedIn e Pinterest chegaram do site antigo malformados — dominio duplicado
- * e "https" truncado para "ttps" — e por isso nao abrem. Preservar um link
- * quebrado nao preserva destino nenhum, entao aqui eles vao corrigidos. Os
- * destinos finais sao os mesmos que a autora pretendia.
+ * Coordenadas do JSON-LD. Fixas no codigo de proposito: o painel edita o
+ * endereco em texto, e um geocodificador seria dependencia e chamada externa
+ * para um dado que muda uma vez na vida. Se a clinica mudar, remedir aqui.
  */
-export const REDES = {
-  facebook: "https://www.facebook.com/1761419930738285",
-  instagram: "https://www.instagram.com/podoposture/",
-  linkedin: "https://www.linkedin.com/in/claudia-m-b-oliveira-79312937",
-  pinterest: "https://br.pinterest.com/pin/571323902725564321/",
-} as const;
-
-export const SAME_AS = Object.values(REDES);
+const COORDENADAS = { latitude: -22.9711, longitude: -43.1863 } as const;
 
 /** URL absoluta a partir de um caminho do site. */
 export function urlAbsoluta(caminho: string): string {
   return `${SITE_URL}${caminho.startsWith("/") ? caminho : `/${caminho}`}`;
 }
 
-/**
- * Endereco, contato e horario em forma de apresentacao.
- *
- * CLINICA acima e' o dado estruturado que alimenta o JSON-LD; isto aqui e' o
- * mesmo endereco na forma em que ele aparece na tela. Estavam soltos dentro
- * de contact.tsx, e o rodape nao tinha endereco nenhum: o visitante que
- * procurava onde a clinica fica precisava atravessar oito secoes da home ate
- * a secao 09. Uma fonte so, para as duas pecas nunca divergirem.
- */
-export const ENDERECO = {
-  /* Espaco duro antes do numero: no menu do telefone a linha quebra, e sem
-     ele o "928" cai sozinho numa linha, orfao do proprio logradouro. */
-  rua: "Avenida Nossa Senhora de Copacabana,\u00A0928",
-  sala: "Sala 501, Copacabana",
-  local: "Rio de Janeiro, RJ",
-  completo:
-    "Avenida Nossa Senhora de Copacabana, 928 - sala 501 - Copacabana, Rio de Janeiro - RJ, Brasil",
-  referencia: "Estamos a 11 minutos da estação Cantagalo do metrô.",
-} as const;
+export type Telefone = { label: string; href: string; nota: string | null };
 
-const MAPS_BUSCA = encodeURIComponent(
-  "Avenida Nossa Senhora de Copacabana, 928, Copacabana, Rio de Janeiro",
-);
+/** O contato ja na forma em que cada peca da tela e o JSON-LD o usam. */
+export type ContatoDoSite = {
+  /** Link do WhatsApp (wa.me). Destino de todo botao de mensagem. */
+  whatsapp: string;
+  telefones: Telefone[];
+  /** O fixo na forma curta do convite de fecho: "(21) 2255-4845". */
+  telefoneFixo: { curto: string; href: string };
+  email: string;
+  horario: string;
+  endereco: { rua: string; sala: string; local: string; completo: string; referencia: string };
+  mapsEmbed: string;
+  mapsDirecoes: string;
+  /** O dado estruturado que alimenta o JSON-LD de negocio local. */
+  clinica: {
+    rua: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    cep: string;
+    pais: string;
+    latitude: number;
+    longitude: number;
+    telefone: string;
+  };
+  redes: ConteudoContato["redes"];
+  sameAs: string[];
+  responsavel: ConteudoContato["responsavel"];
+  descricao: string;
+  anosDeExperiencia: number;
+};
 
-/** Enquadramento z=14: ver a nota do mapa em contact.tsx. */
-export const MAPS_EMBED = `https://www.google.com/maps?q=${MAPS_BUSCA}&z=14&output=embed`;
-export const MAPS_DIRECOES = `https://www.google.com/maps/dir/?api=1&destination=${MAPS_BUSCA}`;
+/** O pedaco que o cabecalho (componente de cliente) recebe por prop. */
+export type ContatoDoCabecalho = Pick<ContatoDoSite, "whatsapp" | "telefones" | "endereco" | "mapsDirecoes">;
 
-export const TELEFONES = [
-  { label: "+ 55 21 2255-4845", href: "tel:552122554845", nota: null },
-  { label: "+ 55 21 99203-5643", href: "tel:5521992035643", nota: "WhatsApp" },
-] as const;
+/** "5521992035643" -> DDI, DDD e o numero com hifen antes dos 4 ultimos. */
+function partesDoTelefone(digitos: string): { ddi: string; ddd: string; numero: string } {
+  const numero = digitos.slice(4);
+  return { ddi: digitos.slice(0, 2), ddd: digitos.slice(2, 4), numero: `${numero.slice(0, -4)}-${numero.slice(-4)}` };
+}
 
-export const WHATSAPP = "https://wa.me/5521992035643";
-export const EMAIL = "contatopodoposture@gmail.com";
-export const HORARIO = "Segunda a sexta-feira, das 8h às 19h";
+export function derivarContato(c: ConteudoContato): ContatoDoSite {
+  const fixo = partesDoTelefone(c.telefoneFixo);
+  const zap = partesDoTelefone(c.whatsapp);
+  const { rua, numero, sala, bairro, cidade, uf, cep, referencia } = c.endereco;
+
+  // Busca do mapa sem a sala: o Google acha o predio, nao o conjunto, e com a
+  // sala na busca o embed chegava a errar de quarteirao.
+  const busca = encodeURIComponent(`${rua}, ${numero}, ${bairro}, ${cidade}`);
+
+  return {
+    whatsapp: linkDoWhatsapp(c.whatsapp),
+    telefones: [
+      { label: `+ ${fixo.ddi} ${fixo.ddd} ${fixo.numero}`, href: `tel:${c.telefoneFixo}`, nota: null },
+      { label: `+ ${zap.ddi} ${zap.ddd} ${zap.numero}`, href: `tel:${c.whatsapp}`, nota: "WhatsApp" },
+    ],
+    telefoneFixo: { curto: `(${fixo.ddd}) ${fixo.numero}`, href: `tel:${c.telefoneFixo}` },
+    email: c.email,
+    horario: c.horario,
+    endereco: {
+      /* Espaco duro antes do numero: no menu do telefone a linha quebra, e sem
+         ele o numero cai sozinho numa linha, orfao do proprio logradouro. */
+      rua: `${rua}, ${numero}`,
+      sala: sala ? `Sala ${sala}, ${bairro}` : bairro,
+      local: `${cidade}, ${uf}`,
+      completo: `${rua}, ${numero}${sala ? ` - sala ${sala}` : ""} - ${bairro}, ${cidade} - ${uf}, Brasil`,
+      referencia,
+    },
+    /* Enquadramento z=14: ver a nota do mapa em contact.tsx. */
+    mapsEmbed: `https://www.google.com/maps?q=${busca}&z=14&output=embed`,
+    mapsDirecoes: `https://www.google.com/maps/dir/?api=1&destination=${busca}`,
+    clinica: {
+      rua: `${rua}, ${numero}${sala ? ` — sala ${sala}` : ""}`,
+      bairro,
+      cidade,
+      estado: uf,
+      cep,
+      pais: "BR",
+      latitude: COORDENADAS.latitude,
+      longitude: COORDENADAS.longitude,
+      telefone: `+${c.telefoneFixo}`,
+    },
+    redes: c.redes,
+    sameAs: Object.values(c.redes),
+    responsavel: c.responsavel,
+    descricao: c.descricaoParaBuscadores,
+    anosDeExperiencia: c.anosDeExperiencia,
+  };
+}
+
+export function contatoDoCabecalho(c: ContatoDoSite): ContatoDoCabecalho {
+  return { whatsapp: c.whatsapp, telefones: c.telefones, endereco: c.endereco, mapsDirecoes: c.mapsDirecoes };
+}
