@@ -130,19 +130,28 @@ const FOTOS: Record<string, Foto> = {
     largura: 1200,
     altura: 1500,
   },
+  rpg: {
+    // pexels.com/photo/5793895, Yan Krukau
+    src: "/img/conducao-da-perna-na-maca.webp",
+    alt: "Pernas de uma paciente deitada na maca; uma fisioterapeuta segura o calcanhar e apoia a outra mão na coxa, conduzindo a perna estendida.",
+    legenda: "Imagem ilustrativa: condução da perna com o paciente deitado.",
+    largura: 1200,
+    altura: 1500,
+  },
 };
 
 /**
- * O que falta fotografar. Quatro paginas nao tem cena honesta nem no acervo
- * da clinica nem em acervo livre: nao ha foto da responsavel tecnica (e nao
- * pode haver de banco), e os acervos nao mostram RPG, avaliacao de ATM nem
- * eletrodo auricular sem trocar o procedimento. Cada rotulo aqui vira um
- * PlaceholderFoto no lugar da foto e uma linha no pedido a cliente. Quando a
- * foto chegar, ela entra em FOTOS e a linha sai daqui.
+ * O que falta fotografar. Tres paginas nao tem cena honesta nem no acervo da
+ * clinica nem em acervo livre: o retrato da responsavel tecnica nao pode vir
+ * de banco; nos cinco acervos, palpacao de ATM so aparece como massagem facial
+ * de estetica ou com o rosto em primeiro plano; e eletrodo auricular de taVNS
+ * nao aparece (o que existe e' acupuntura auricular e clipe de EEG, outro
+ * procedimento). Cada rotulo aqui vira um PlaceholderFoto no lugar da foto e
+ * uma linha no pedido a cliente. Quando a foto chegar, ela entra em FOTOS e a
+ * linha sai daqui.
  */
 const PLACEHOLDERS: Record<string, string> = {
   "currículo-profissional": "retrato da responsável técnica",
-  rpg: "sessão de RPG na sala de exame",
   "tratamento-da-dtm": "avaliação da ATM em consulta",
   "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
 };
