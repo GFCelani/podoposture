@@ -1,8 +1,8 @@
 /**
  * O lugar de uma fotografia que ainda nao existe.
  *
- * Sete paginas nao tem imagem honesta no acervo da clinica (ver
- * ilustracao-da-pagina.ts), e imagem de banco esta fora de questao. Em vez de
+ * Algumas paginas nao tem imagem honesta nem no acervo da clinica nem em
+ * acervo livre (ver PLACEHOLDERS em ilustracao-da-pagina.ts). Em vez de
  * deixar a coluna vazia ou o layout torto, entra esta placa: a mesma moldura
  * das fotos reais, a trama da grade por dentro, marcas de canto de visor e o
  * rotulo em mono dizendo o que deveria estar aqui. E' o pedido de foto para a

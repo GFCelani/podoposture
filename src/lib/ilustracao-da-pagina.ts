@@ -9,11 +9,13 @@
  *     mapa: quem nao tem glifo cai em undefined e a pagina vai sem emblema.
  *   - a fotografia, e essa precisa de tabela, porque vale uma regra dura: a
  *     foto entra SO se mostra o lugar, o aparelho ou o gesto de que a pagina
- *     fala. Sao fotos reais da clinica, e usar a sala de exame para ilustrar
- *     "Quem Somos" seria decorar, nao informar. Sem foto honesta, so o emblema.
+ *     fala. Usar a sala de exame para ilustrar "Quem Somos" seria decorar,
+ *     nao informar. A fonte e' a galeria da clinica; onde ela nao tem a cena,
+ *     entra foto de acervo livre marcada como ilustrativa (ver o fim de
+ *     FOTOS). Sem foto honesta de nenhuma das duas, fica o placeholder.
  *
- * Toda foto da galeria e retrato (proporcao 4:5) — as medidas sao as reais do
- * arquivo, para o navegador reservar o espaco e o CLS continuar zero.
+ * Toda foto e retrato (proporcao 4:5) — as medidas sao as reais do arquivo,
+ * para o navegador reservar o espaco e o CLS continuar zero.
  */
 
 export type Foto = {
@@ -97,21 +99,50 @@ const FOTOS: Record<string, Foto> = {
     largura: 960,
     altura: 1200,
   },
+
+  /* Fotos de acervo livre, no lugar de cena que a clinica ainda nao
+     fotografou. Nao sao da Podoposture, e a legenda diz isso: sem rosto
+     identificavel, para ninguem tomar a pessoa por paciente ou equipe.
+     Ficam fora de /img/galeria, que e' so foto real. Todas sob a licenca
+     Pexels (pexels.com/license): uso comercial, sem atribuicao obrigatoria.
+     Recorte 4:5 a partir do original. */
+  "neuromodulação": {
+    // pexels.com/photo/30483052, Cansu Hangül
+    src: "/img/eletroestimulacao-no-joelho.webp",
+    alt: "Mão posicionando um eletrodo adesivo na perna, junto ao joelho, com cabos laranja e azul ligados aos eletrodos.",
+    legenda: "Imagem ilustrativa: eletrodos de superfície para estimulação elétrica.",
+    largura: 1200,
+    altura: 1500,
+  },
+  "dor-lombar-crônica": {
+    // pexels.com/photo/5793807, Yan Krukau
+    src: "/img/palpacao-lombar.webp",
+    alt: "Mão de um profissional apoiada na região lombar de uma pessoa de camisa branca.",
+    legenda: "Imagem ilustrativa: palpação da região lombar.",
+    largura: 1200,
+    altura: 1500,
+  },
+  "tratamento-da-dor": {
+    // pexels.com/photo/4506107, Karolina Grabowska (Kaboompics)
+    src: "/img/avaliacao-da-coluna.webp",
+    alt: "Paciente de costas, com a mão de um profissional no ombro e a outra na região lombar.",
+    legenda: "Imagem ilustrativa: palpação da coluna durante a avaliação.",
+    largura: 1200,
+    altura: 1500,
+  },
 };
 
 /**
- * O que falta fotografar. Sete paginas nao tem cena honesta no acervo:
- * nenhuma foto de atendimento, de aparelho de neuromodulacao ou da
- * responsavel tecnica existe (AUDITORIA.md, itens 7 e 8). Cada rotulo aqui
- * vira um PlaceholderFoto no lugar da foto e uma linha no pedido a cliente.
- * Quando a foto chegar, ela entra em FOTOS e a linha sai daqui.
+ * O que falta fotografar. Quatro paginas nao tem cena honesta nem no acervo
+ * da clinica nem em acervo livre: nao ha foto da responsavel tecnica (e nao
+ * pode haver de banco), e os acervos nao mostram RPG, avaliacao de ATM nem
+ * eletrodo auricular sem trocar o procedimento. Cada rotulo aqui vira um
+ * PlaceholderFoto no lugar da foto e uma linha no pedido a cliente. Quando a
+ * foto chegar, ela entra em FOTOS e a linha sai daqui.
  */
 const PLACEHOLDERS: Record<string, string> = {
   "currículo-profissional": "retrato da responsável técnica",
-  "dor-lombar-crônica": "atendimento de dor lombar na maca",
-  "neuromodulação": "sessão de neuromodulação com o aparelho",
   rpg: "sessão de RPG na sala de exame",
-  "tratamento-da-dor": "avaliação clínica da dor em consulta",
   "tratamento-da-dtm": "avaliação da ATM em consulta",
   "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
 };
