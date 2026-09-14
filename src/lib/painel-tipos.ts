@@ -215,6 +215,25 @@ export function rascunhoPrecisaConfirmar(post: Pick<PostDoPainel, "publicado"> |
   return post?.publicado === true;
 }
 
+/**
+ * O envio repetido de um texto NOVO tiraria do ar um texto ja publicado?
+ *
+ * O caso, que nao e teorico: ela clica em "Publicar", a resposta se perde no 4G
+ * e o texto ja foi gravado e publicado. Ela volta a tela, muda de ideia e
+ * clica em "Guardar rascunho". O editor repete o envio com o MESMO id — e do
+ * lado dele o texto ainda e "novo", entao `rascunhoPrecisaConfirmar` nao tem o
+ * que conferir e o aviso "Tirar do site e guardar" nunca aparece. O servidor e
+ * o unico lado que sabe que aquele id ja esta publicado.
+ *
+ * Pura de proposito: quem decide e a rota, e a regra se prova sem banco.
+ */
+export function repetirTiraDoAr(
+  existente: Pick<PostDoPainel, "publicado"> | null,
+  novos: Pick<DadosDoPost, "publicado">,
+): boolean {
+  return existente?.publicado === true && !novos.publicado;
+}
+
 /** A frase curta que aparece na lista depois de salvar. Diz o que mudou no site. */
 export function mensagemAoSalvar(publicarAgora: boolean, estavaNoAr: boolean): string {
   if (publicarAgora) {

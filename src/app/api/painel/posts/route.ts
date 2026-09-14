@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 import { lerCorpoLimitado } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
-import { bancoConfigurado, criarPost, listarTodos, registrarAuditoria } from "@/lib/painel-db";
+import { bancoConfigurado, buscarPorId, criarPost, listarTodos, registrarAuditoria } from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
-import { camposDoCorpo, validarPost } from "@/lib/painel-tipos";
+import { camposDoCorpo, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
 import { BLOG_INDEX, BRUTOS_DO_JSON, hrefDoPost } from "@/lib/posts";
 
 export const runtime = "nodejs";
@@ -77,6 +77,22 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Repetir o envio com o mesmo id atualiza em vez de duplicar (ver
+    // `criarPost`). O que ele nao pode fazer e tirar do ar, calado, um texto que
+    // ja esta publicado: no editor isso pede um segundo clique ("Tirar do site e
+    // guardar"), e nesse caminho o aviso nunca aparece, porque do lado do
+    // navegador o texto ainda e novo. A saida esta escrita na mensagem.
+    const existente = id ? await buscarPorId(id) : null;
+    if (repetirTiraDoAr(existente, campos)) {
+      return NextResponse.json(
+        {
+          erro:
+            "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Seus textos” e use “Tirar do site e guardar”.",
+        },
+        { status: 409 },
+      );
+    }
+
     const post = await criarPost(campos, id);
     await registrarAuditoria(
       post.publicado ? "post-publicado" : "post-rascunho",
@@ -84,16 +100,17 @@ export async function POST(req: Request) {
       ipDaRequisicao(await headers()),
     );
 
-    if (post.publicado) {
-      // Sem isto o post existe no banco e nao aparece: as paginas que o
-      // listam foram servidas do cache montado antes de ele existir.
-      revalidatePath(BLOG_INDEX);
-      revalidatePath(hrefDoPost(post.slug));
-      revalidatePath("/");
-      // O sitemap tambem e montado no build: sem isto, o post existe, abre
-      // pela URL e nunca e anunciado ao buscador.
-      revalidatePath("/sitemap.xml");
-    }
+    // Sempre, e nao so quando o texto fica publicado. Este mesmo POST atualiza
+    // quando o id ja existe, e uma atualizacao muda o que as paginas em cache
+    // mostram — inclusive quando ela TIRA o texto do ar. Limpar so no caso
+    // `publicado` deixava o texto fora do banco e ainda visivel no site, ate a
+    // proxima publicacao ou deploy. O PUT ja limpava sempre; aqui nao.
+    revalidatePath(BLOG_INDEX);
+    revalidatePath(hrefDoPost(post.slug));
+    revalidatePath("/");
+    // O sitemap tambem e montado no build: sem isto, o post existe, abre pela
+    // URL e nunca e anunciado ao buscador.
+    revalidatePath("/sitemap.xml");
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (erro) {

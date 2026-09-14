@@ -7,6 +7,7 @@ import {
   mensagemAoSalvar,
   mensagemDeFalhaAoSalvar,
   rascunhoPrecisaConfirmar,
+  repetirTiraDoAr,
   validarPost,
   type DadosDoPost,
 } from "./painel-tipos";
@@ -99,6 +100,23 @@ describe("rascunhoPrecisaConfirmar", () => {
     expect(rascunhoPrecisaConfirmar({ publicado: true })).toBe(true);
     expect(rascunhoPrecisaConfirmar({ publicado: false })).toBe(false);
     expect(rascunhoPrecisaConfirmar(null)).toBe(false);
+  });
+});
+
+describe("repetirTiraDoAr", () => {
+  it("repetir o envio como rascunho num id ja publicado tiraria o texto do ar", () => {
+    expect(repetirTiraDoAr({ publicado: true }, { publicado: false })).toBe(true);
+  });
+
+  it("repetir publicando, ou num texto que nunca foi ao ar, nao tira nada", () => {
+    expect(repetirTiraDoAr({ publicado: true }, { publicado: true })).toBe(false);
+    expect(repetirTiraDoAr({ publicado: false }, { publicado: false })).toBe(false);
+    expect(repetirTiraDoAr({ publicado: false }, { publicado: true })).toBe(false);
+  });
+
+  it("texto novo de verdade (id que ainda nao existe) nunca e conflito", () => {
+    expect(repetirTiraDoAr(null, { publicado: false })).toBe(false);
+    expect(repetirTiraDoAr(null, { publicado: true })).toBe(false);
   });
 });
 
