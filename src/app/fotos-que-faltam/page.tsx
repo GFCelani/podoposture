@@ -20,7 +20,10 @@ import { SiteHeader } from "@/components/site-header";
  * posts.json), entao esta rota nao entra nele sozinha. O middleware tambem
  * nao a toca: ele so reescreve slug que existe em rotas.json.
  *
- * Quando as sete fotos chegarem, esta pagina pode ser apagada inteira.
+ * Tres paginas ja receberam foto ilustrativa de acervo livre e sairam da
+ * lista (ver ilustracao-da-pagina.ts). As de RPG e DTM tambem receberam, mas
+ * ficam ate a cliente aprovar. Quando as fotos chegarem, esta pagina pode ser
+ * apagada inteira.
  */
 
 export const metadata: Metadata = {
@@ -33,7 +36,12 @@ type Pedido = {
   foto: string;
   /** Ha paciente na cena? Decide o aviso de autorizacao. */
   comPaciente: boolean;
+  /** Situacao da pagina hoje, quando ha algo alem da placa. */
+  nota?: string;
 };
+
+const SO_FOTO_REAL =
+  "Nenhum acervo de fotos livres mostra este procedimento. Só uma foto feita na clínica resolve.";
 
 const PEDIDOS: Pedido[] = [
   {
@@ -42,34 +50,22 @@ const PEDIDOS: Pedido[] = [
     comPaciente: false,
   },
   {
-    pagina: "Dor Lombar Crônica",
-    foto: "Atendimento de dor lombar na maca",
-    comPaciente: true,
-  },
-  {
-    pagina: "Neuromodulação",
-    foto: "Sessão de neuromodulação com o aparelho",
-    comPaciente: true,
-  },
-  {
     pagina: "RPG",
     foto: "Sessão de RPG na sala de exame",
     comPaciente: true,
-  },
-  {
-    pagina: "Tratamento da Dor",
-    foto: "Avaliação clínica da dor em consulta",
-    comPaciente: true,
+    nota: "Já tem uma foto ilustrativa, de acervo livre e sem rosto. Precisa do seu aval: se ela representa a sessão, a página fica como está; se não, entra uma foto sua.",
   },
   {
     pagina: "Tratamento da DTM",
     foto: "Avaliação da ATM em consulta",
     comPaciente: true,
+    nota: "Já tem uma foto ilustrativa, de acervo livre, em que aparece o rosto de um modelo. Precisa do seu aval: se ela representa a avaliação e o rosto não confunde o paciente, a página fica como está; se não, entra uma foto sua.",
   },
   {
     pagina: "Tratamento do Zumbido",
     foto: "Aplicação de neuromodulação auricular",
     comPaciente: true,
+    nota: SO_FOTO_REAL,
   },
 ];
 
@@ -87,7 +83,7 @@ const COMO_TIRAR = [
   {
     titulo: "A cena real, com o aparelho",
     texto:
-      "Cada foto precisa mostrar o lugar, o aparelho ou o gesto de que a página fala. Foto de banco de imagem não entra: descaracteriza a clínica.",
+      "Cada foto precisa mostrar o lugar, o aparelho ou o gesto de que a página fala.",
   },
   {
     titulo: "Luz do ambiente, sem flash",
@@ -103,6 +99,7 @@ const EXTENSO = ["nenhuma", "Uma", "Duas", "Três", "Quatro", "Cinco", "Seis", "
 
 export default function FotosQueFaltam() {
   const comPaciente = PEDIDOS.filter((p) => p.comPaciente).length;
+  const total = EXTENSO[PEDIDOS.length];
 
   return (
     <>
@@ -126,13 +123,23 @@ export default function FotosQueFaltam() {
 
             <Reveal delay={180}>
               <p className="mt-6 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-ink md:mt-7 md:text-[1.125rem]">
-                Sete páginas ainda estão sem fotografia. No lugar de cada uma
-                há hoje uma placa dizendo o que deveria estar ali. O site não
-                fica quebrado assim, mas essas páginas não mostram a clínica.
+                {total} páginas ainda dependem de fotografia sua. Em duas
+                delas há hoje uma placa dizendo o que deveria estar ali; nas de
+                RPG e DTM, uma foto ilustrativa que espera o seu aval. O site
+                não fica quebrado assim, mas essas páginas não mostram a
+                clínica.
               </p>
             </Reveal>
 
             <Reveal delay={260}>
+              <p className="mt-5 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-ink">
+                Neuromodulação, Dor Lombar Crônica e Tratamento da Dor já
+                receberam foto ilustrativa de acervo livre, sem rosto, e
+                saíram desta lista.
+              </p>
+            </Reveal>
+
+            <Reveal delay={340}>
               <p className="mt-5 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-muted">
                 Esta página é só para você. Ela não aparece no menu nem em
                 buscas, e some quando as fotos chegarem.
@@ -142,7 +149,7 @@ export default function FotosQueFaltam() {
         </header>
 
         {/* Autorizacao em banda escura, antes da lista: e' a condicao para
-            seis das sete fotos existirem, nao um rodape. */}
+            quase todas as fotos da lista existirem, nao um rodape. */}
         <section
           data-tone="deep"
           aria-labelledby="autorizacao-titulo"
@@ -164,10 +171,10 @@ export default function FotosQueFaltam() {
 
                 <Reveal delay={110}>
                   <p className="mt-7 max-w-[56ch] text-[1.0625rem] leading-[1.75] text-paper">
-                    {EXTENSO[comPaciente]} das sete fotos mostram um
-                    atendimento, com paciente na cena. Publicar essas imagens exige autorização
-                    de quem aparece, e a responsabilidade é sua, como
-                    responsável técnica.
+                    {EXTENSO[comPaciente]} das {total.toLowerCase()} fotos
+                    mostram um atendimento, com paciente na cena. Publicar
+                    essas imagens exige autorização de quem aparece, e a
+                    responsabilidade é sua, como responsável técnica.
                   </p>
                 </Reveal>
 
@@ -192,7 +199,7 @@ export default function FotosQueFaltam() {
           </div>
         </section>
 
-        {/* As sete. Cartoes, e nao tabela: no celular uma tabela de duas
+        {/* As que faltam. Cartoes, e nao tabela: no celular uma tabela de duas
             colunas espreme a descricao a ponto de quebrar palavra a palavra. */}
         <section
           aria-labelledby="lista-titulo"
@@ -201,16 +208,16 @@ export default function FotosQueFaltam() {
           <PageGrid />
           <div className="relative mx-auto max-w-[1240px] px-6 py-16 md:px-8 md:py-20 lg:px-10 lg:py-24">
             <Reveal variante="cortina">
-              <SectionMark n="07" />
+              <SectionMark n={String(PEDIDOS.length).padStart(2, "0")} />
               <h2
                 id="lista-titulo"
                 className="mt-8 font-display text-[clamp(1.5rem,1.15rem+1.75vw,2.25rem)] leading-[1.16] font-semibold tracking-[-0.018em] text-ink-strong"
               >
-                As sete fotos
+                As {total.toLowerCase()} fotos
               </h2>
             </Reveal>
 
-            <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+            <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
               {PEDIDOS.map((pedido, i) => (
                 <li key={pedido.pagina} className="flex">
                   <Reveal delay={60 + i * 70} className="flex w-full">
@@ -234,6 +241,12 @@ export default function FotosQueFaltam() {
                       <p className="mt-4 [overflow-wrap:anywhere] font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink-strong">
                         {pedido.foto}
                       </p>
+
+                      {pedido.nota && (
+                        <p className="mt-3 text-[0.9375rem] leading-[1.6] text-ink">
+                          {pedido.nota}
+                        </p>
+                      )}
 
                       {pedido.comPaciente && (
                         <p className="mt-auto flex items-center gap-3 pt-5 text-[0.8125rem] leading-[1.5] text-muted">
@@ -329,17 +342,16 @@ export default function FotosQueFaltam() {
               <Reveal delay={190}>
                 <div className="mt-10 border-t border-rule pt-7 md:mt-0">
                   <h3 className="max-w-[24ch] font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
-                    Três delas saem na mesma sessão
+                    Duas delas saem na mesma sessão
                   </h3>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-ink">
-                    Neuromodulação, Tratamento da DTM e Tratamento do Zumbido
-                    usam a mesma sala e o mesmo aparelho. Dá para resolver as
-                    três numa tarde, com o mesmo paciente e a mesma
-                    autorização.
+                    Tratamento da DTM e Tratamento do Zumbido usam a mesma sala
+                    e o mesmo aparelho. Dá para resolver as duas numa tarde,
+                    com o mesmo paciente e a mesma autorização.
                   </p>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-muted">
-                    Sobram quatro: o seu retrato, o atendimento de dor lombar,
-                    a sessão de RPG e a avaliação clínica da dor.
+                    Sobram o seu retrato e, se a foto ilustrativa não servir,
+                    a sessão de RPG.
                   </p>
                 </div>
               </Reveal>

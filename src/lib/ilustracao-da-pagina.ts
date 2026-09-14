@@ -26,6 +26,8 @@ export type Foto = {
   legenda: string;
   largura: number;
   altura: number;
+  /** So para foto de apoio: id da secao ao lado da qual ela entra. */
+  secao?: string;
 };
 
 const GALERIA = "/img/galeria";
@@ -101,11 +103,12 @@ const FOTOS: Record<string, Foto> = {
   },
 
   /* Fotos de acervo livre, no lugar de cena que a clinica ainda nao
-     fotografou. Nao sao da Podoposture, e a legenda diz isso: sem rosto
-     identificavel, para ninguem tomar a pessoa por paciente ou equipe.
-     Ficam fora de /img/galeria, que e' so foto real. Todas sob a licenca
-     Pexels (pexels.com/license): uso comercial, sem atribuicao obrigatoria.
-     Recorte 4:5 a partir do original. */
+     fotografou. Nao sao da Podoposture, e a legenda diz isso. Sem rosto
+     identificavel, para ninguem tomar a pessoa por paciente ou equipe; a
+     unica excecao e' a de DTM, logo abaixo. Ficam fora de /img/galeria, que
+     e' so foto real. Estas quatro sob a licenca Pexels (pexels.com/license):
+     uso comercial, sem atribuicao obrigatoria. Recorte 4:5 a partir do
+     original. */
   "neuromodulação": {
     // pexels.com/photo/30483052, Cansu Hangül
     src: "/img/eletroestimulacao-no-joelho.webp",
@@ -138,21 +141,30 @@ const FOTOS: Record<string, Foto> = {
     largura: 1200,
     altura: 1500,
   },
+  /* Unica foto de acervo com rosto: procedimento na mandibula nao tem
+     enquadramento sem ele. Licenca Unsplash (unsplash.com/license): uso
+     comercial, sem atribuicao obrigatoria. O arquivo ja e' 4:5, sem recorte. */
+  "tratamento-da-dtm": {
+    // unsplash.com/photos/Nyg_gvnLr4s, Ruslan Zaplatin
+    src: "/img/palpacao-da-mandibula.webp",
+    alt: "Mão de um profissional apoiada na mandíbula de um rapaz, com os dedos ao longo do queixo, logo abaixo da orelha.",
+    legenda: "Imagem ilustrativa: palpação da mandíbula.",
+    largura: 1200,
+    altura: 1500,
+  },
 };
 
 /**
- * O que falta fotografar. Tres paginas nao tem cena honesta nem no acervo da
+ * O que falta fotografar. Duas paginas nao tem cena honesta nem no acervo da
  * clinica nem em acervo livre: o retrato da responsavel tecnica nao pode vir
- * de banco; nos cinco acervos, palpacao de ATM so aparece como massagem facial
- * de estetica ou com o rosto em primeiro plano; e eletrodo auricular de taVNS
- * nao aparece (o que existe e' acupuntura auricular e clipe de EEG, outro
+ * de banco, e eletrodo auricular de taVNS nao aparece em nenhum dos cinco
+ * acervos (o que existe e' acupuntura auricular e clipe de EEG, outro
  * procedimento). Cada rotulo aqui vira um PlaceholderFoto no lugar da foto e
  * uma linha no pedido a cliente. Quando a foto chegar, ela entra em FOTOS e a
  * linha sai daqui.
  */
 const PLACEHOLDERS: Record<string, string> = {
   "currículo-profissional": "retrato da responsável técnica",
-  "tratamento-da-dtm": "avaliação da ATM em consulta",
   "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
 };
 
@@ -172,10 +184,12 @@ const PLACEHOLDER_POR_SLUG = new Map(
  * Fotografias de apoio, distribuidas no corpo da pagina (ver
  * SecoesDeConteudo). A mesma regra da foto do hero, aplicada por trecho: a
  * foto entra ao lado do passo que descreve o que ela mostra. Por isso a
- * tabela e' por pagina e por enquanto so tem uma entrada: a avaliacao da
- * dor lista anamnese, padrao postural e pisada, e o acervo tem o escritorio
- * das anamneses, o painel postural e a plataforma de pressao. As legendas
- * sao as mesmas das fotos acima; nenhuma foi escrita para aqui.
+ * tabela e' por pagina. A avaliacao da dor lista anamnese, padrao postural e
+ * pisada, e o acervo tem o escritorio das anamneses, o painel postural e a
+ * plataforma de pressao; as legendas sao as mesmas das fotos acima. A DTM
+ * abre com a secao de cefaleia tensional, e a foto de terapia na base do
+ * cranio entra ao lado dela: `secao` ancora a foto pelo id do titulo, porque
+ * sem ancora ela iria para a primeira banda em superficie, la no bruxismo.
  */
 const APOIO: Record<string, Foto[]> = {
   "tratamento-da-dor": [
@@ -188,6 +202,18 @@ const APOIO: Record<string, Foto[]> = {
     },
     FOTOS.posturologia,
     FOTOS.baropodometria,
+  ],
+  "tratamento-da-dtm": [
+    {
+      // pexels.com/photo/4506162, Karolina Grabowska (Kaboompics). Licenca
+      // Pexels, sem rosto; recorte 16:10, o formato da foto grande de apoio.
+      src: "/img/terapia-manual-na-base-do-cranio.webp",
+      alt: "Paciente sentada, vista de costas, com a mão de um profissional na base do crânio e a outra no ombro; ao fundo, pranchas de anatomia na parede.",
+      legenda: "Imagem ilustrativa: terapia manual na base do crânio.",
+      largura: 1600,
+      altura: 1000,
+      secao: "cefaleia-tensional",
+    },
   ],
 };
 

@@ -94,8 +94,9 @@ function agrupar(blocos: Bloco[]): Grupo[] {
 
 /**
  * O plano da pagina em grade. Alterna a quina do corte diagonal entre as
- * bandas tintadas; poe as fotos de apoio na primeira banda em superficie ou,
- * sem nenhuma, numa banda propria depois da primeira secao.
+ * bandas tintadas; poe as fotos de apoio ao lado da secao que a primeira
+ * delas nomeia (`secao`) ou, sem ancora, na primeira banda em superficie; sem
+ * nenhuma das duas, numa banda propria depois da primeira secao.
  */
 function planejar(
   lidas: SecaoLida[],
@@ -107,12 +108,14 @@ function planejar(
   const itens: Item[] = [];
   let cortes = 0;
   let fotos = apoio && apoio.length > 0 ? apoio : undefined;
+  const ancora = fotos?.[0].secao;
 
-  const decorar = (blocos: Bloco[]): Grupo[] =>
-    agrupar(blocos).map((g) => {
+  const decorar = (blocos: Bloco[], id?: string): Grupo[] =>
+    agrupar(blocos).map((g, k) => {
       const grupo: Grupo = { ...g };
       if (g.tom !== "paper") grupo.corte = cortes++ % 2 === 0 ? "dir" : "esq";
-      if (g.tom === "surface" && fotos) {
+      const aqui = ancora ? k === 0 && id === ancora : g.tom === "surface";
+      if (aqui && fotos) {
         grupo.fotos = fotos;
         fotos = undefined;
       }
@@ -135,7 +138,7 @@ function planejar(
       continue;
     }
     const s = lidas[i];
-    const grupos = decorar(s.blocos);
+    const grupos = decorar(s.blocos, s.secao.id);
     if (grupos.length === 0) grupos.push({ tom: "paper", blocos: [] });
     itens.push({ kind: "secao", cabeca: { s, n, nivel }, grupos });
   }
