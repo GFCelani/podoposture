@@ -187,13 +187,26 @@ export async function publicarSecao(
   return linha ? paraLinha(linha) : null;
 }
 
-/** null quando a secao nunca foi salva: nao havia rascunho para descartar. */
-export async function descartarRascunho(chave: ChaveDeSecao): Promise<LinhaDeConteudo | null> {
+/**
+ * null quando nada foi gravado, por um de dois motivos: a secao nunca foi salva
+ * (nao havia rascunho para descartar) ou ela ja nao esta na `versao` esperada.
+ * Quem chama separa os dois relendo a secao — e a rota responde 409 no segundo
+ * caso, como o PUT.
+ *
+ * A conferencia de versao vale aqui pelo mesmo motivo que vale ao gravar:
+ * descartar e um UPDATE que apaga o que estiver no campo, e uma aba aberta
+ * antes de outra janela salvar um rascunho novo apagava esse rascunho sem
+ * avisar ninguem.
+ */
+export async function descartarRascunho(
+  chave: ChaveDeSecao,
+  versao?: string | null,
+): Promise<LinhaDeConteudo | null> {
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
     UPDATE conteudo_site SET rascunho = NULL, atualizado_em = NOW()
-    WHERE chave = ${chave}
+    WHERE chave = ${chave} AND (${condicaoDeVersao(sql, versao)})
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;
 }
@@ -201,13 +214,20 @@ export async function descartarRascunho(chave: ChaveDeSecao): Promise<LinhaDeCon
 /**
  * O site volta a mostrar o texto do codigo. O rascunho fica: quem clicou em
  * "voltar ao padrao" pode estar no meio de uma edicao que ainda quer.
+ *
+ * Mesma conferencia de versao do descarte, e aqui ela pesa mais: sem ela, uma
+ * aba aberta de manha tirava do ar, a tarde, um texto que outra janela tinha
+ * acabado de publicar. null = nada gravado (secao inexistente ou versao velha).
  */
-export async function voltarAoPadrao(chave: ChaveDeSecao): Promise<LinhaDeConteudo | null> {
+export async function voltarAoPadrao(
+  chave: ChaveDeSecao,
+  versao?: string | null,
+): Promise<LinhaDeConteudo | null> {
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
     UPDATE conteudo_site SET publicado = NULL, publicado_em = NULL, atualizado_em = NOW()
-    WHERE chave = ${chave}
+    WHERE chave = ${chave} AND (${condicaoDeVersao(sql, versao)})
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;
 }

@@ -62,6 +62,41 @@ describe.skipIf(!URL_DE_TESTE)("versao da secao da pagina inicial no Postgres", 
     expect(await db.publicarSecao("galeria", CONTEUDO_PADRAO.galeria, null)).toBeNull();
   });
 
+  it("descartar rascunho com a versao velha nao apaga o rascunho que a outra janela salvou", async () => {
+    const primeira = await db.gravarRascunho("contato", contato, null);
+
+    // a outra janela salva um rascunho novo: a secao muda de versao
+    const nova = { ...contato, horario: "Segunda a quinta" };
+    const segunda = await db.gravarRascunho("contato", nova, primeira!.atualizadoEm);
+    expect(segunda).not.toBeNull();
+
+    // a aba velha manda descartar com a versao que carregou: nada e apagado
+    expect(await db.descartarRascunho("contato", primeira!.atualizadoEm)).toBeNull();
+    const atual = await db.lerSecao("contato");
+    expect((atual?.rascunho as { horario: string }).horario).toBe("Segunda a quinta");
+
+    // com a versao de agora, descarta
+    expect(await db.descartarRascunho("contato", segunda!.atualizadoEm)).not.toBeNull();
+    expect((await db.lerSecao("contato"))?.rascunho).toBeNull();
+  });
+
+  it("voltar ao padrao com a versao velha nao tira do ar a publicacao nova", async () => {
+    const publicada = await db.publicarSecao("galeria", CONTEUDO_PADRAO.galeria, null);
+    const nova = await db.publicarSecao("galeria", CONTEUDO_PADRAO.galeria, publicada!.atualizadoEm);
+    expect(nova).not.toBeNull();
+
+    expect(await db.voltarAoPadrao("galeria", publicada!.atualizadoEm)).toBeNull();
+    expect((await db.lerSecao("galeria"))?.publicado).not.toBeNull();
+
+    expect(await db.voltarAoPadrao("galeria", nova!.atualizadoEm)).not.toBeNull();
+    expect((await db.lerSecao("galeria"))?.publicado).toBeNull();
+  });
+
+  it("secao que nunca foi salva devolve null no descarte, e nao conflito", async () => {
+    expect(await db.descartarRascunho("metodo", null)).toBeNull();
+    expect(await db.lerSecao("metodo")).toBeNull();
+  });
+
   it("sem versao a escrita continua valendo, e a previa le a versao de cada linha", async () => {
     const linha = await db.publicarSecao("hero", CONTEUDO_PADRAO.hero);
     expect(linha).not.toBeNull();

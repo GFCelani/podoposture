@@ -59,6 +59,36 @@ function respostaDaSecao(chave: ChaveDeSecao, linha: LinhaDeConteudo | null) {
 }
 
 /**
+ * A secao mudou em outra janela: nada foi gravado, e a secao atual volta junto
+ * para o editor juntar o que ela mudou com a versao nova.
+ *
+ * Uma frase so, usada pelo PUT e pelo DELETE: o editor trata os dois do mesmo
+ * jeito, e uma mensagem diferente por verbo so faria ela achar que sao coisas
+ * diferentes.
+ */
+function conflitoDeVersao(chave: ChaveDeSecao, atual: LinhaDeConteudo | null) {
+  return NextResponse.json(
+    {
+      erro: "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora.",
+      chave,
+      secao: estadoDaSecao(chave, atual),
+    },
+    { status: 409 },
+  );
+}
+
+/**
+ * DELETE que nao gravou linha nenhuma tem duas causas, e elas pedem respostas
+ * opostas: ou a secao nunca foi salva — nao havia o que descartar, e o padrao ja
+ * e o que o site mostra —, ou ela existe e esta noutra versao, e ai e 409 com a
+ * secao atual, como no PUT.
+ */
+async function nadaGravado(chave: ChaveDeSecao) {
+  const atual = await lerSecao(chave);
+  return atual ? conflitoDeVersao(chave, atual) : respostaDaSecao(chave, null);
+}
+
+/**
  * O conteudo aparece no site inteiro (contato no cabecalho, no rodape e no
  * JSON-LD; faixa social no fim de toda pagina), entao o que muda o site
  * invalida a arvore pelo layout raiz. Uma regra so, em vez de decidir por
@@ -123,15 +153,7 @@ export async function PUT(req: Request, ctx: Contexto) {
       // Outra janela gravou depois que este editor carregou a secao: nada foi
       // gravado. A secao atual volta junto, e o editor junta o que ela mudou
       // com a versao nova em vez de apagar a publicacao da outra janela.
-      const atual = await lerSecao(chave);
-      return NextResponse.json(
-        {
-          erro: "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora.",
-          chave,
-          secao: estadoDaSecao(chave, atual),
-        },
-        { status: 409 },
-      );
+      return conflitoDeVersao(chave, await lerSecao(chave));
     }
 
     await registrarAuditoria(
@@ -150,6 +172,13 @@ export async function PUT(req: Request, ctx: Contexto) {
 /**
  * `?alvo=rascunho` descarta o rascunho; `?alvo=publicado` tira o texto
  * publicado e a secao volta ao padrao do codigo (o rascunho, se houver, fica).
+ *
+ * `&versao=` leva a versao que o editor carregou, como o PUT leva no corpo. Os
+ * dois sao UPDATE que apagam um campo inteiro: sem a conferencia, uma aba
+ * aberta de manha descartava, a tarde, o rascunho que outra janela tinha
+ * acabado de salvar — ou tirava do ar o texto que ela tinha acabado de
+ * publicar. Sem o parametro nao ha conferencia, para um cliente antigo nao
+ * quebrar.
  */
 export async function DELETE(req: Request, ctx: Contexto) {
   const auth = await exigirSessao();
@@ -159,7 +188,8 @@ export async function DELETE(req: Request, ctx: Contexto) {
   if (!ehChaveDeSecao(chave)) return secaoInexistente();
   if (!bancoConfigurado()) return semBanco();
 
-  const alvo = new URL(req.url).searchParams.get("alvo");
+  const parametros = new URL(req.url).searchParams;
+  const alvo = parametros.get("alvo");
   if (alvo !== "rascunho" && alvo !== "publicado") {
     return NextResponse.json(
       { erro: "Diga o que descartar: o rascunho ou o texto publicado." },
@@ -167,16 +197,23 @@ export async function DELETE(req: Request, ctx: Contexto) {
     );
   }
 
+  // Data ISO, ou ausente. Qualquer outra coisa e pedido torto, como no PUT.
+  const versao = parametros.get("versao");
+  if (versao !== null && Number.isNaN(Date.parse(versao))) return requisicaoInvalida();
+  const versaoEsperada = versao ?? undefined;
+
   try {
     const origem = ipDaRequisicao(await headers());
 
     if (alvo === "rascunho") {
-      const linha = await descartarRascunho(chave);
+      const linha = await descartarRascunho(chave, versaoEsperada);
+      if (!linha) return await nadaGravado(chave);
       await registrarAuditoria("inicio-rascunho", `${chave}: descartado`, origem);
       return respostaDaSecao(chave, linha);
     }
 
-    const linha = await voltarAoPadrao(chave);
+    const linha = await voltarAoPadrao(chave, versaoEsperada);
+    if (!linha) return await nadaGravado(chave);
     await registrarAuditoria("inicio-restaurado", chave, origem);
     revalidarOSite();
     return respostaDaSecao(chave, linha);

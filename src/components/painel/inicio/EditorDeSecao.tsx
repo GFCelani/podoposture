@@ -373,7 +373,13 @@ export function EditorDeSecao({
     corpo: { dados: DadosEmEdicao; acao: AcaoDaEscrita } | null,
     alvo: AlvoDoDescarte | null,
   ): Promise<EstadoDaSecao<unknown> | null> {
-    const endereco = `/api/painel/inicio/${encodeURIComponent(chave)}${alvo ? `?alvo=${alvo}` : ""}`;
+    // A versao que este editor carregou vai nos dois verbos: no corpo do PUT e
+    // na URL do DELETE. Descartar e voltar ao original tambem apagam campo, e
+    // sem ela uma aba velha desfazia o que outra janela tinha acabado de salvar.
+    const versao = estado.atualizadoEm;
+    const endereco =
+      `/api/painel/inicio/${encodeURIComponent(chave)}` +
+      (alvo ? `?alvo=${alvo}${versao ? `&versao=${encodeURIComponent(versao)}` : ""}` : "");
     const referencia = salvo;
     let resposta: Response;
     try {
