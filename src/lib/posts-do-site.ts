@@ -116,17 +116,41 @@ export async function categoriasDoSite(): Promise<Tema[]> {
  * `undefined` so quando o banco respondeu que o texto nao existe. Com o banco
  * fora, a pagina chamava `notFound()` e o 404 ia para o cache com status 404:
  * um texto publicado ficava fora do ar para o Google e para quem abria o link
- * ate a proxima invalidacao. Em execucao a falha agora lanca: erro nao fica em
- * cache, a versao boa ja guardada continua servida, e a visita seguinte tenta
- * de novo. Esse texto nao esta entre as 88 URLs do repositorio — sem banco ele
- * nao tem de onde vir. No build a falha segue virando `undefined`, porque la
- * nenhum post do banco e pre-gerado e erro derrubaria o build.
+ * ate a proxima invalidacao. Em execucao a falha lanca: erro nao fica em cache
+ * e a visita seguinte tenta de novo.
+ *
+ * O que NAO da para prometer, e o comentario aqui prometia, e que "a versao ja
+ * guardada continua servida". Ela continua enquanto existir: depois de uma
+ * invalidacao — publicar qualquer coisa, ou a coleta da noite — nao ha versao
+ * guardada nenhuma, e ate o banco voltar a pagina do texto responde erro.
+ *
+ * Por isso a pausa do disjuntor nao vale aqui. A pausa existe para a LISTA do
+ * blog, que toda visita pede e que tem os 68 posts do JSON para mostrar sem
+ * banco nenhum; esta leitura e de um post so, por chave unica, e so acontece
+ * em endereco que o repositorio nao tem. Desistir sem tentar seria responder
+ * erro num texto publicado enquanto o banco ja voltou. O preco, quando o banco
+ * esta fora de verdade, e uma espera de `connect_timeout` nessa visita.
+ *
+ * No build a falha segue virando `undefined`, porque la nenhum post do banco e
+ * pre-gerado e erro derrubaria o build.
  */
 const postDoBanco = cache(async (slug: string): Promise<PostBruto | undefined> => {
-  try {
-    const post = await lerComDisjuntor(() => buscarPorSlug(slug));
+  const buscar = async (): Promise<PostBruto | undefined> => {
+    const post = await buscarPorSlug(slug);
     return post ? brutoDoPainel(post, post.corpo) : undefined;
+  };
+  try {
+    return await lerComDisjuntor(buscar);
   } catch (erro) {
+    // Em pausa nada foi tentado ainda: vale uma tentativa direta (ver acima).
+    if (erro instanceof BancoEmPausa && !emConstrucao()) {
+      try {
+        return await buscar();
+      } catch (segundo) {
+        console.error("[blog] banco indisponivel ao buscar post do painel:", segundo);
+        throw new Error("banco indisponivel ao buscar post do painel", { cause: segundo });
+      }
+    }
     if (!(erro instanceof BancoEmPausa)) {
       console.error("[blog] banco indisponivel ao buscar post do painel:", erro);
     }
