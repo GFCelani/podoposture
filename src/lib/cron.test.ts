@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { exigirSegredoDoCron } from "./cron";
+import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde } from "./cron";
 
 const SEGREDO = "s3gredo-do-cron-com-folga";
 
@@ -58,5 +58,81 @@ describe("exigirSegredoDoCron", () => {
   ])("recusa: %s", (_caso, authorization) => {
     vi.stubEnv("CRON_SECRET", SEGREDO);
     expect(exigirSegredoDoCron(pedido(authorization))?.status).toBe(401);
+  });
+});
+
+/**
+ * A autocura do cache so pode acontecer com o banco respondendo.
+ *
+ * O caso que importa e o de baixo: invalidar com o banco fora troca o conteudo
+ * publicado, que esta certo no cache, pelo texto padrao — e ele fica ate a
+ * proxima publicacao ou deploy. Uma queda as 6h da manha deixaria o site inteiro
+ * com o telefone antigo por 24 horas.
+ */
+describe("autocura do cache do site", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("banco fora: nao invalida nada e deixa anotado", async () => {
+    const invalidar = vi.fn();
+    const anotar = vi.fn<(motivo: string) => Promise<void>>(async () => {});
+
+    const invalidou = await invalidarCacheSeOBancoResponde({
+      provarLeitura: () => Promise.reject(new Error("ECONNREFUSED")),
+      invalidar,
+      anotarQuePulou: anotar,
+    });
+
+    expect(invalidou).toBe(false);
+    expect(invalidar).not.toHaveBeenCalled();
+    expect(anotar).toHaveBeenCalledTimes(1);
+    expect(anotar.mock.calls[0][0]).toMatch(/cache nao invalidado/);
+  });
+
+  it("disjuntor em pausa conta como banco fora", async () => {
+    const invalidar = vi.fn();
+    const pausa = Object.assign(new Error("banco em pausa"), { name: "BancoEmPausa" });
+
+    const invalidou = await invalidarCacheSeOBancoResponde({
+      provarLeitura: () => Promise.reject(pausa),
+      invalidar,
+      anotarQuePulou: async () => {},
+    });
+
+    expect(invalidou).toBe(false);
+    expect(invalidar).not.toHaveBeenCalled();
+  });
+
+  it("banco respondendo: invalida uma vez", async () => {
+    const invalidar = vi.fn();
+    const anotar = vi.fn<(motivo: string) => Promise<void>>(async () => {});
+
+    const invalidou = await invalidarCacheSeOBancoResponde({
+      provarLeitura: () => Promise.resolve({ hero: { titulo: "x" } }),
+      invalidar,
+      anotarQuePulou: anotar,
+    });
+
+    expect(invalidou).toBe(true);
+    expect(invalidar).toHaveBeenCalledTimes(1);
+    expect(anotar).not.toHaveBeenCalled();
+  });
+
+  it("falhar ao anotar nao derruba o cron", async () => {
+    const invalidar = vi.fn();
+
+    const invalidou = await invalidarCacheSeOBancoResponde({
+      provarLeitura: () => Promise.reject(new Error("fora")),
+      invalidar,
+      anotarQuePulou: () => Promise.reject(new Error("o banco tambem nao grava")),
+    });
+
+    expect(invalidou).toBe(false);
+    expect(invalidar).not.toHaveBeenCalled();
   });
 });

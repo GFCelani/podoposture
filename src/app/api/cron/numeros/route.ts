@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { exigirSegredoDoCron } from "@/lib/cron";
+import { lerPublicados } from "@/lib/conteudo-db";
+import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde } from "@/lib/cron";
 import { coletarBusca, configDaBusca } from "@/lib/fonte-search-console";
 import { coletarVercel, configDaVercel } from "@/lib/fonte-vercel";
 import {
@@ -10,6 +11,7 @@ import {
   gravarLinhas,
   podarNumeros,
   primeiroDiaGuardado,
+  registrarCachePulado,
   registrarColeta,
 } from "@/lib/numeros-db";
 import {
@@ -19,7 +21,7 @@ import {
   type ResultadoDaColeta,
   type SituacaoDaColeta,
 } from "@/lib/numeros-tipos";
-import { bancoConfigurado } from "@/lib/painel-db";
+import { bancoConfigurado, lerComDisjuntor, podarDadosDoPainel } from "@/lib/painel-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,16 +154,23 @@ export async function GET(req: Request) {
   if ("erro" in janela) return NextResponse.json({ erro: janela.erro }, { status: 400 });
 
   if (!janela.historico) {
-    // Autocura do cache do site. As paginas estaticas que leem o banco (a home,
-    // o blog, o sitemap) devolvem o conteudo padrao quando o banco falha — e se
-    // a falha cai justo numa regeneracao, esse padrao fica em cache ate a
-    // proxima publicacao ou deploy, sem ninguem saber. Invalidar tudo uma vez
-    // por dia limita esse estrago a um dia. O custo e cada pagina se refazer na
-    // proxima visita, uma vez. So na coleta da noite: o backfill roda em lotes
-    // seguidos, e invalidar o site inteiro a cada lote seria desperdicio.
-    // Antes da coleta, e nao depois: uma coleta que estoura o tempo da funcao
-    // nao pode levar a autocura junto.
-    revalidatePath("/", "layout");
+    // Autocura do cache do site (o porque inteiro esta em lib/cron.ts). So na
+    // coleta da noite: o backfill roda em lotes seguidos, e invalidar o site a
+    // cada lote seria desperdicio. O custo e cada pagina se refazer na proxima
+    // visita, uma vez.
+    //
+    // Fica antes da coleta so por ordem de leitura. No Next 16 a invalidacao
+    // nao acontece nesta linha: ela e aplicada depois que o handler devolve a
+    // resposta. Entao a posicao da chamada NAO protege contra a funcao estourar
+    // o tempo — se ela estourar, nada e invalidado, esteja a chamada onde
+    // estiver. Quem cuida do prazo e o `prazo` abaixo, que reserva
+    // FOLGA_PARA_GRAVAR_MS dos 60 s para o handler fechar e responder.
+    await invalidarCacheSeOBancoResponde({
+      // A mesma leitura publica que a home faz, pelo mesmo disjuntor.
+      provarLeitura: () => lerComDisjuntor(lerPublicados),
+      invalidar: () => revalidatePath("/", "layout"),
+      anotarQuePulou: registrarCachePulado,
+    });
   }
 
   const prazo = inicio + maxDuration * 1000 - FOLGA_PARA_GRAVAR_MS;
@@ -174,6 +183,12 @@ export async function GET(req: Request) {
 
   if (!janela.historico) {
     await podarNumeros().catch((erro) => console.error("[cron] falha ao podar numeros:", erro));
+    // O prazo do IP de quem tenta entrar e o teto do registro de acoes sao
+    // promessa escrita na pagina de privacidade. As podas de dentro do painel
+    // dependem de alguem usa-lo; esta roda todo dia, com ou sem trafego.
+    await podarDadosDoPainel().catch((erro) =>
+      console.error("[cron] falha ao podar os dados do painel:", erro),
+    );
     await avisarSeFalhouDuasNoites(resumos);
   }
 

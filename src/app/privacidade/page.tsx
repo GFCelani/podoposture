@@ -10,8 +10,14 @@ import { PageShell } from "@/components/page-shell";
  * visitas sem dizer o que e contado seria pedir confianca sem dar motivo. O
  * texto e curto de proposito e so afirma o que o codigo faz — sem cookie de
  * rastreamento (`components/analytics.tsx`), o painel fora da medicao, o
- * resumo diario podado em 3 anos (`lib/numeros-db.ts`). Mudou uma dessas
- * pecas, este texto muda junto, e a data do fim tambem.
+ * resumo diario podado em 3 anos (`lib/numeros-db.ts`), e o IP de quem tenta
+ * entrar apagado por `podarDadosDoPainel` (`lib/painel-db.ts`), que a coleta da
+ * noite chama. Mudou uma dessas pecas, este texto muda junto, e a data do fim
+ * tambem.
+ *
+ * O paragrafo do painel diz que a limpeza depende da tarefa diaria de proposito:
+ * ela e que garante o prazo sem trafego, e prometer um prazo que so vale
+ * quando alguem usa o painel seria prometer o que o codigo nao cumpre.
  *
  * Pagina estatica, sem leitura de banco: nao ha o que possa derruba-la.
  */
@@ -71,8 +77,12 @@ export default function Privacidade() {
             <li>
               A área em que a clínica publica os textos fica fora da contagem. O único cookie do
               site é o de acesso a essa área, usado só pela equipe da clínica. Quem tenta entrar
-              nela tem o endereço de IP guardado, só para segurança: por até uma hora na contagem de
-              tentativas de senha, e no registro das últimas 2.000 ações dessa área.
+              nela tem o endereço de IP guardado, só para segurança, em dois lugares: na contagem de
+              tentativas de senha, apagada uma hora depois, e no registro das ações dessa área, que
+              guarda as 2.000 mais recentes — nesse registro o endereço fica até sair pelas 2.000,
+              o que pode levar bem mais de uma hora. A limpeza dos dois é feita uma vez por dia pela
+              tarefa automática do site; se ela não estiver ligada, a limpeza acontece na próxima
+              vez que alguém usar essa área.
             </li>
           </ul>
 
@@ -100,7 +110,7 @@ export default function Privacidade() {
           </p>
 
           <p>
-            <em>Texto atualizado em 11 de setembro de 2026.</em>
+            <em>Texto atualizado em 14 de setembro de 2026.</em>
           </p>
         </div>
       </div>

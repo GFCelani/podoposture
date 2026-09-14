@@ -160,6 +160,23 @@ export async function registrarColeta(registro: RegistroDeColeta): Promise<void>
 }
 
 /**
+ * Anota que a invalidacao do cache foi pulada, no mesmo diario das coletas.
+ *
+ * Com fonte propria, `cache`, e nao `vercel` ou `busca`: tudo o que le este
+ * diario (a tela de Números, o aviso de duas noites seguidas) filtra pelas duas
+ * fontes de verdade, entao esta linha nao vira "a coleta de visitas falhou" nem
+ * dispara aviso por Telegram. E rastro para quem for descobrir por que o site
+ * passou um dia mostrando o texto padrao.
+ */
+export async function registrarCachePulado(motivo: string): Promise<void> {
+  await garantirTabelasDeNumeros();
+  const sql = bancoDoPainel();
+  await sql`
+    INSERT INTO numeros_coleta (fonte, situacao, historico, ate, linhas, erro)
+    VALUES ('cache', 'erro', false, NULL, 0, ${motivo.slice(0, MAX_ERRO)})`;
+}
+
+/**
  * Quantos dias seguidos, contando do mais recente, a coleta da noite desta
  * fonte terminou em erro. Vale a ultima execucao de cada dia (UTC): o
  * agendador pode rodar duas vezes na mesma noite, e uma segunda execucao nao e

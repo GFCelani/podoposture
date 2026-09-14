@@ -459,6 +459,40 @@ export async function registrarAuditoria(
   }
 }
 
+/**
+ * Uma hora — o prazo que a pagina de privacidade promete para o IP de quem
+ * tenta entrar. E o mesmo que a poda oportunista de `contarERegistrarTentativa`
+ * aplica (quatro vezes a janela de 15 min).
+ */
+export const RETENCAO_DE_TENTATIVAS_MS = 60 * 60 * 1000;
+
+/**
+ * Apaga o que passou do prazo prometido na pagina de privacidade, sem depender
+ * de ninguem usar o painel.
+ *
+ * As duas podas que ja existiam sao oportunistas: a das tentativas roda dentro
+ * de `contarERegistrarTentativa`, e a da auditoria a cada 100 gravacoes. Num
+ * site de uma clinica, onde o painel passa dias sem ser aberto, elas
+ * simplesmente nao rodam — o IP de quem tentou entrar ficava guardado ate a
+ * proxima tentativa de alguem, que pode ser semanas depois, e o registro de
+ * acoes podia parar acima das 2.000. A pagina de privacidade promete uma hora e
+ * 2.000; quem cumpre a promessa quando nao ha trafego e esta funcao, chamada
+ * pela coleta da noite.
+ */
+export async function podarDadosDoPainel(): Promise<void> {
+  await garantirTabelas();
+  const sql = bancoDoPainel();
+  await sql`
+    DELETE FROM painel_tentativas
+    WHERE em < ${new Date(Date.now() - RETENCAO_DE_TENTATIVAS_MS)}`;
+  await sql`
+    DELETE FROM painel_auditoria WHERE id < (
+      SELECT COALESCE(MIN(id), 0) FROM (
+        SELECT id FROM painel_auditoria ORDER BY id DESC LIMIT ${MAX_AUDITORIA}
+      ) recentes
+    )`;
+}
+
 /* ------------------------------------------------------------- tentativas */
 
 /**
