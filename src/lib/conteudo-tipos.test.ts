@@ -138,9 +138,26 @@ describe("cada lista respeita minimo e maximo", () => {
     expect(errosDe("hero", "tituloLinhas", linhas.slice(0, 3)).tituloLinhas).toBeDefined();
     expect(errosDe("hero", "tituloLinhas", [...linhas, "mais"]).tituloLinhas).toBeDefined();
     expect(errosDe("hero", "tituloLinhas.0", "a".repeat(23))["tituloLinhas.0"]).toMatch(/22/);
-    expect(errosDe("hero", "tituloLinhas.0", "a".repeat(22))).toEqual({});
+    // No teto exato de caracteres o limite de caracteres nao reclama. Com letra
+    // estreita, de proposito: 22 letras medias ja sao mais largas que a linha de
+    // referencia e caem na regra de largura, que e outro limite (ver abaixo).
+    expect(errosDe("hero", "tituloLinhas.0", "l".repeat(22))).toEqual({});
     expect(errosDe("hero", "subtituloLinhas.3", "a".repeat(54))["subtituloLinhas.3"]).toMatch(/53/);
     expect(errosDe("hero", "tituloLinhas.2", "")["tituloLinhas.2"]).toBe("Preencha a linha 3.");
+  });
+
+  it("linha do titulo larga demais nao passa, mesmo dentro dos 22 caracteres", () => {
+    // Medido no navegador: 22 letras largas cabem no teto de caracteres e
+    // invadem o campo das figuras (274 px a 1280). Agora e erro, e no servidor.
+    expect(errosDe("hero", "tituloLinhas.0", "M".repeat(22))["tituloLinhas.0"]).toMatch(/larga demais/);
+    expect(errosDe("hero", "tituloLinhas.2", "MWG".repeat(4))["tituloLinhas.2"]).toMatch(/larga demais/);
+    // 22 caracteres estreitos continuam passando: o limite e de largura, nao de
+    // um teto de caracteres mais apertado.
+    expect(errosDe("hero", "tituloLinhas.2", "l".repeat(22))["tituloLinhas.2"]).toBeUndefined();
+  });
+
+  it("a apresentacao nao tem limite de largura — so o titulo foi medido", () => {
+    expect(errosDe("hero", "subtituloLinhas.0", "M".repeat(50))["subtituloLinhas.0"]).toBeUndefined();
   });
 
   it("anos de experiencia e inteiro de 1 a 80", () => {
@@ -399,6 +416,16 @@ describe("mescla com o que esta salvo no banco", () => {
     });
     expect(mesclado.tituloLinhas).toEqual(CONTEUDO_PADRAO.hero.tituloLinhas);
     expect(mesclado.destaque).toBe(CONTEUDO_PADRAO.hero.destaque);
+  });
+
+  it("titulo largo salvo por uma versao antiga do painel cai no padrao", () => {
+    // O que ja estiver no banco de antes desta regra nunca chega a home larga:
+    // a leitura valida com a mesma funcao, e a linha invalida devolve o titulo
+    // de hoje em vez de cobrir as figuras.
+    const mesclado = mesclarSecao("hero", CONTEUDO_PADRAO.hero, {
+      tituloLinhas: ["M".repeat(22), "efetiva e inovadora", "com resultados", "rápidos e eficazes"],
+    });
+    expect(mesclado.tituloLinhas).toEqual(CONTEUDO_PADRAO.hero.tituloLinhas);
   });
 
   it("® salvo por versao antiga no titulo do metodo cai no padrao", () => {

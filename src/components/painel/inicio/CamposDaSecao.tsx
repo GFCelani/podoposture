@@ -19,6 +19,7 @@ import type {
   ErrosDeCampo,
   PaginaDeDestino,
 } from "@/lib/conteudo-tipos";
+import { linhaCabeNoTopo } from "@/lib/largura-do-titulo";
 
 import {
   campoParaEdicao,
@@ -296,33 +297,6 @@ function CampoDeTexto({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
 
 /* ------------------------------------------------------------------ linhas */
 
-let contextoDeMedida: CanvasRenderingContext2D | null | undefined;
-
-/**
- * Largura da linha em relacao a linha de referencia, medida com a fonte do
- * titulo no canvas. Relativa, e nao em pixels: o canvas nem sempre usa o corte
- * optico de display, e antes de a fonte carregar mede com a de reserva — as
- * duas linhas sofrem o mesmo desvio, e a razao continua valendo.
- */
-function larguraRelativa(linha: string, referencia: string): number | null {
-  if (typeof document === "undefined" || !linha.trim()) return null;
-  if (contextoDeMedida === undefined) {
-    try {
-      contextoDeMedida = document.createElement("canvas").getContext("2d");
-    } catch {
-      contextoDeMedida = null;
-    }
-  }
-  const ctx = contextoDeMedida;
-  if (!ctx) return null;
-  const familia = getComputedStyle(document.body).getPropertyValue("--font-newsreader").trim() || "Georgia, serif";
-  ctx.font = `500 64px ${familia}`;
-  // tracking de -0.025em do h1 do topo
-  const medir = (texto: string) => ctx.measureText(texto).width - 0.025 * 64 * Array.from(texto).length;
-  const base = medir(referencia);
-  return base > 0 ? medir(linha.trim()) / base : null;
-}
-
 /**
  * Linhas fixas: uma caixa por linha, porque a quebra escrita e a quebra que o
  * site mostra (o titulo do topo foi medido linha a linha).
@@ -353,8 +327,15 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
           const caminhoDaLinha = `${caminho}.${i}`;
           const idDaLinha = idDoCampo(editor.chave, caminhoDaLinha);
           const erroDaLinha = editor.erros[caminhoDaLinha];
-          const relativa = campo.medidaNaTela ? larguraRelativa(linha, campo.medidaNaTela.referencia) : null;
-          const larga = campo.medidaNaTela !== undefined && relativa !== null && relativa > campo.medidaNaTela.folga;
+          // O MESMO limite que o servidor aplica (lib/largura-do-titulo.ts).
+          // Antes o editor media por conta propria, num canvas, e o limite dele
+          // nao era exatamente o da rota: dava para ver o aviso amarelo e
+          // publicar assim mesmo. Aqui o aviso chega enquanto ela digita, e o
+          // erro, ao sair do campo, diz a mesma coisa.
+          const larga =
+            campo.medidaNaTela !== undefined &&
+            linha.trim() !== "" &&
+            !linhaCabeNoTopo(linha.trim(), campo.medidaNaTela.referencia, campo.medidaNaTela.folga);
           return (
             // Posicao e a identidade da linha: sao fixas e nunca mudam de ordem.
             <div key={i}>
@@ -379,12 +360,13 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
                 className={`${ENTRADA} mt-1`}
               />
               <Contador id={`${idDaLinha}-contador`} texto={linha} max={campo.maxPorLinha} />
-              {/* Aviso, e nao erro: a medida no navegador e aproximada, e so a
-                  pagina de como vai ficar num notebook tira a duvida. */}
+              {/* Chega enquanto ela digita, antes do erro que aparece ao sair do
+                  campo — e o mesmo limite, dito uma vez em amarelo e outra em
+                  vermelho, em vez de uma surpresa na hora de publicar. */}
               {larga && (
                 <p id={`${idDaLinha}-largura`} className="mt-1 text-[0.8125rem] leading-[1.5] text-[#8a6d1f]">
-                  Esta linha pode ficar mais larga que o espaço ao lado das figuras (letras largas ou maiúsculas
-                  ocupam mais). Confira como vai ficar num notebook, ou use palavras mais curtas.
+                  Esta linha é larga demais para o espaço ao lado das figuras (letras como M e W ocupam bem mais
+                  que as outras). Do jeito que está, não vai dar para salvar: use palavras mais curtas.
                 </p>
               )}
               <MensagemDeErro id={`${idDaLinha}-erro`} erro={erroDaLinha} />

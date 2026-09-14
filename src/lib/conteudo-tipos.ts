@@ -1,4 +1,5 @@
 import { lerNomeDoArquivo } from "./imagem-webp";
+import { linhaCabeNoTopo } from "./largura-do-titulo";
 
 /**
  * O contrato do conteudo editavel do site: tipos, descritores e validacao.
@@ -275,10 +276,16 @@ export type CampoLinhas = CampoBase & {
   quantidade: number;
   maxPorLinha: number;
   /**
-   * Para o titulo cujo espaco foi medido em pixels, e nao em letras: o editor
-   * mede cada linha contra `referencia` (a linha mais larga de hoje, que cabe)
-   * e avisa acima de `folga` vezes ela. Contar caracteres nao basta: 22 letras
-   * largas (M, W, maiusculas) invadem as figuras ao lado.
+   * Para o titulo cujo espaco foi medido em pixels, e nao em letras.
+   *
+   * Cada linha e medida contra `referencia` (a linha mais larga de hoje, que
+   * comprovadamente cabe) e nao pode passar de `folga` vezes ela. Contar
+   * caracteres nao basta: 22 letras largas (M, W, maiusculas) cabem no teto de
+   * caracteres e invadem as figuras ao lado.
+   *
+   * E ERRO, nao aviso, e vale nos dois lados — `validarSecao` o aplica, entao a
+   * rota recusa igual ao editor. Como aviso do editor sozinho, a linha larga era
+   * publicada assim mesmo (medido no navegador: invadia 274 px a 1280).
    */
   medidaNaTela?: { referencia: string; folga: number };
 };
@@ -928,6 +935,16 @@ function validarLinhas(
       falhou = true;
     } else if (tamanho(linha) > campo.maxPorLinha) {
       erros[onde] = `A linha ${i + 1} passou de ${campo.maxPorLinha} caracteres (agora são ${tamanho(linha)}).`;
+      falhou = true;
+    } else if (
+      campo.medidaNaTela &&
+      !linhaCabeNoTopo(linha, campo.medidaNaTela.referencia, campo.medidaNaTela.folga)
+    ) {
+      // Larga demais em pixels, mesmo cabendo no teto de caracteres. Recusar
+      // aqui — e nao so avisar no editor — e o que impede a linha de chegar a
+      // home e cobrir as figuras.
+      erros[onde] =
+        `A linha ${i + 1} é larga demais para o espaço ao lado das figuras: letras como M e W ocupam bem mais que as outras. Use palavras mais curtas.`;
       falhou = true;
     } else {
       linhas.push(linha);

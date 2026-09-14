@@ -224,6 +224,13 @@ export function Hero({ conteudo, whatsapp }: { conteudo: ConteudoHero; whatsapp:
             segunda colocada. Quem precisou de remedicao foi o
             --hero-texto-dir, e so nas duas faixas xl; o porque esta no
             comentario do bloco HERO em globals.css.
+
+            O [overflow-wrap:break-word] fica, e nao por causa do titulo largo:
+            desde 2026-09-14 a linha que nao cabe e recusada no servidor
+            (lib/largura-do-titulo.ts), entao ela nao chega mais ate aqui. Ele
+            continua porque a 320px o corpo cai para 32px e uma linha de 22
+            caracteres ainda passa da largura da coluna — sem ele, a pagina
+            rolaria para o lado no telefone.
           */}
           <h1
             className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
