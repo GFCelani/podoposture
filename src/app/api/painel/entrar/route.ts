@@ -29,6 +29,16 @@ export const dynamic = "force-dynamic";
 const TAMANHO_MAXIMO = 4 * 1024;
 
 /**
+ * Prazo para o corpo inteiro chegar.
+ *
+ * Quatro quilobytes numa conexao viva chegam em milissegundos; cinco segundos e
+ * folga para o 4G ruim do consultorio. O prazo existe porque a leitura nao tem
+ * fim garantido: quem abre a conexao e manda um byte de vez em quando segura o
+ * pedido pelo tempo que quiser.
+ */
+const PRAZO_DO_CORPO_MS = 5_000;
+
+/**
  * Quantos pedidos de entrada podem correr ao mesmo tempo nesta instancia.
  *
  * `scrypt` come memoria e uma thread do pool do Node. Sem este teto, uma
@@ -40,6 +50,14 @@ const TAMANHO_MAXIMO = 4 * 1024;
  * a recusa por excesso de pedidos simultaneos gastava uma das 8 tentativas da
  * origem, e quem saturava as vagas fazia a dona da clinica, clicando de novo,
  * ficar trancada 15 minutos com a senha certa.
+ *
+ * E ocupada DEPOIS de ler o corpo, pelo motivo oposto. Dentro da vaga, a
+ * leitura a prendia pelo tempo que ela levasse, e ela nao tem prazo nenhum:
+ * duas conexoes lentas, de graca e sem senha nenhuma, bastavam para a dona da
+ * clinica levar 429 ao clicar em Entrar. Ler antes nao afrouxa o limite de
+ * tentativas — quem le o corpo ainda nao contou tentativa nem chegou ao
+ * `scrypt` —, e o que se gasta com quem ja estourou o limite sao 4 KB e o
+ * prazo curto acima.
  */
 const MAXIMO_EM_VOO = 2;
 let emVoo = 0;
@@ -62,7 +80,13 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2. teto de pedidos simultaneos, em memoria e sem contar tentativa
+  // 2. o corpo, com teto em bytes reais e prazo — fora da vaga (ver acima)
+  const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO, PRAZO_DO_CORPO_MS);
+  if (!leitura.ok) {
+    return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 413 });
+  }
+
+  // 3. teto de pedidos simultaneos, em memoria e sem contar tentativa
   if (emVoo >= MAXIMO_EM_VOO) {
     return NextResponse.json(
       { erro: "Muitas tentativas ao mesmo tempo. Tente de novo em instantes." },
@@ -72,14 +96,14 @@ export async function POST(req: Request) {
 
   emVoo += 1;
   try {
-    return await entrar(req, cabecalhos);
+    return await entrar(leitura.texto, cabecalhos);
   } finally {
     emVoo -= 1;
   }
 }
 
-async function entrar(req: Request, cabecalhos: Headers): Promise<NextResponse> {
-  // 3. limite de tentativas (ainda antes de ler o corpo)
+async function entrar(corpo: string, cabecalhos: Headers): Promise<NextResponse> {
+  // 4. limite de tentativas (ainda antes de qualquer calculo caro)
   const origem = ipDaRequisicao(cabecalhos);
   const veredicto = await registrarTentativa(origem);
   if (!veredicto.permitido) {
@@ -96,15 +120,10 @@ async function entrar(req: Request, cabecalhos: Headers): Promise<NextResponse> 
     );
   }
 
-  // 4. corpo, com teto em bytes reais
-  const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO);
-  if (!leitura.ok) {
-    return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 413 });
-  }
-
+  // 5. o corpo, agora como JSON
   let bruto: unknown;
   try {
-    bruto = JSON.parse(leitura.texto);
+    bruto = JSON.parse(corpo);
   } catch {
     return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 400 });
   }
@@ -115,7 +134,7 @@ async function entrar(req: Request, cabecalhos: Headers): Promise<NextResponse> 
     ? (bruto as { senha: string }).senha
     : "";
 
-  // 5. o painel esta configurado? falha FECHADA
+  // 6. o painel esta configurado? falha FECHADA
   const guardado = hashConfigurado();
   const segredo = segredoConfigurado();
   if (!guardado || !segredo) {
@@ -126,7 +145,7 @@ async function entrar(req: Request, cabecalhos: Headers): Promise<NextResponse> 
     );
   }
 
-  // 6. a senha
+  // 7. a senha
   const confere = senha.length > 0 && (await conferirSenha(senha, guardado));
 
   if (!confere) {

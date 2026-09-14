@@ -17,6 +17,7 @@ export type LeituraDoCorpo =
 export async function lerCorpoLimitado(
   req: Request,
   maximo: number,
+  prazoMs?: number,
 ): Promise<LeituraDoCorpo> {
   if (!req.body) return { ok: true, texto: "" };
 
@@ -24,9 +25,26 @@ export async function lerCorpoLimitado(
   const pedacos: Uint8Array[] = [];
   let total = 0;
 
+  // O prazo, quando existe, vale para a leitura INTEIRA, e nao por pedaco: quem
+  // manda um byte por segundo respeita qualquer prazo por pedaco e mesmo assim
+  // segura a leitura pelo tempo que quiser. Quem chama usa isto onde a leitura
+  // ocupa um recurso disputado (a vaga de entrada do painel).
+  let despertador: ReturnType<typeof setTimeout> | undefined;
+  const prazo =
+    prazoMs === undefined
+      ? null
+      : new Promise<"prazo">((resolver) => {
+          despertador = setTimeout(() => resolver("prazo"), prazoMs);
+        });
+
   try {
     for (;;) {
-      const { done, value } = await leitor.read();
+      const passo = prazo ? await Promise.race([leitor.read(), prazo]) : await leitor.read();
+      if (passo === "prazo") {
+        await leitor.cancel().catch(() => {});
+        return { ok: false, motivo: "interrompida" };
+      }
+      const { done, value } = passo;
       if (done) break;
       total += value.byteLength;
       if (total > maximo) {
@@ -37,6 +55,8 @@ export async function lerCorpoLimitado(
     }
   } catch {
     return { ok: false, motivo: "interrompida" };
+  } finally {
+    clearTimeout(despertador);
   }
 
   const bytes = new Uint8Array(total);
