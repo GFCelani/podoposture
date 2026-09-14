@@ -57,6 +57,23 @@ const ISENTAS: Record<string, string> = {
 /** Rotas de `api/` fora de `painel/` e `cron/`, abertas de proposito. Hoje nenhuma. */
 const PUBLICAS: Record<string, string> = {};
 
+/**
+ * Sondas: rotas do painel que respondem 200 com um booleano em vez de 401.
+ *
+ * A tela de senha pergunta "a sessao ainda vale?" em toda visita, e a resposta
+ * "nao" e o caminho normal, nao um erro — com 401 o navegador escrevia uma
+ * linha vermelha no console de cada abertura de /publicar.
+ *
+ * O que elas NAO deixam de fazer: comecar por `exigirSessao()`. O que muda e so
+ * o que se faz com a resposta da guarda. Sem essa exigencia, "sonda" viraria a
+ * porta dos fundos deste teste — bastaria listar uma rota aqui para ela deixar
+ * de conferir sessao. Nada alem do booleano pode sair da sonda.
+ */
+const SONDAS: Record<string, string> = {
+  "painel/sessao/route.ts":
+    "responde { autenticado } em 200 para a tela de senha nao deixar 401 no console; so o booleano sai daqui",
+};
+
 type Arquivo = { caminho: string; relativo: string };
 
 function listar(dir: string, aceitar: (nome: string) => boolean, prefixo = ""): Arquivo[] {
@@ -183,6 +200,19 @@ function comecaPelaGuardaDeSessao(
   return qualquerRetorno || compacto(se.retorno) === `${decl.nome}.resposta`;
 }
 
+/**
+ * So a PRIMEIRA instrucao: `const X = await exigirSessao();`.
+ *
+ * E o que se exige de uma sonda. Ela nao devolve `auth.resposta`, entao a regra
+ * cheia nao serve; o que nao pode e a guarda sumir do arquivo.
+ */
+function comecaPorExigirSessao(corpo: ts.Block | undefined): boolean {
+  const decl = declaracaoUnica(corpo?.statements[0]);
+  return (
+    !!decl && ts.isAwaitExpression(decl.valor) && ehChamadaDe(decl.valor.expression, ["exigirSessao"])
+  );
+}
+
 /** `const X = exigirSegredoDoCron(req); if (X) return X;` */
 function comecaPeloSegredoDoCron(corpo: ts.Block | undefined): boolean {
   const [primeira, segunda] = corpo?.statements ?? [];
@@ -257,6 +287,12 @@ function problemasDaRotaDoPainel(arquivo: ts.SourceFile, relativo: string): stri
       );
       if (!confereProcedencia) {
         problemas.push(`${verbo}: e isenta de sessao, mas nao espera pedidoVeioDaqui()`);
+      }
+      continue;
+    }
+    if (SONDAS[relativo]) {
+      if (!comecaPorExigirSessao(funcao.body)) {
+        problemas.push(`${verbo}: e sonda, mas nao comeca por 'const auth = await exigirSessao();'`);
       }
       continue;
     }
@@ -417,6 +453,40 @@ describe("toda rota do painel passa pela guarda", () => {
     }
   });
 
+  it("a sonda precisa continuar chamando exigirSessao, mesmo respondendo 200", () => {
+    const sonda = Object.keys(SONDAS)[0];
+    const certo = trecho(`
+      export async function GET() {
+        const auth = await exigirSessao();
+        if (!auth.ok && auth.resposta.status === 503) return auth.resposta;
+        return NextResponse.json({ autenticado: auth.ok });
+      }`);
+    expect(problemasDaRotaDoPainel(certo, sonda)).toEqual([]);
+
+    // Sem a guarda, "sonda" viraria o jeito de escapar deste teste.
+    const semGuarda = trecho(`
+      export async function GET() {
+        return NextResponse.json({ autenticado: false });
+      }`);
+    const soNoComentario = trecho(`
+      export async function GET() {
+        // const auth = await exigirSessao();
+        return NextResponse.json({ autenticado: true });
+      }`);
+    const leAntes = trecho(`
+      export async function GET() {
+        const posts = await listar();
+        const auth = await exigirSessao();
+        return NextResponse.json({ autenticado: auth.ok, posts });
+      }`);
+    for (const errado of [semGuarda, soNoComentario, leAntes]) {
+      expect(problemasDaRotaDoPainel(errado, sonda)).not.toEqual([]);
+    }
+
+    // E a isencao vale so para a rota listada: a mesma forma noutra rota falha.
+    expect(problemasDaRotaDoPainel(certo, "painel/posts/route.ts")).not.toEqual([]);
+  });
+
   it("encontrou as rotas", () => {
     expect(rotasDoPainel.length).toBeGreaterThanOrEqual(6);
   });
@@ -429,11 +499,29 @@ describe("toda rota do painel passa pela guarda", () => {
   );
 
   it("as rotas isentas continuam existindo", () => {
-    for (const relativo of Object.keys(ISENTAS)) {
+    for (const relativo of [...Object.keys(ISENTAS), ...Object.keys(SONDAS)]) {
       expect(
         rotasDoPainel.some((r) => r.relativo === relativo),
         `rota isenta ${relativo} nao existe mais — tire-a da lista`,
       ).toBe(true);
+    }
+  });
+
+  it("toda rota do painel que nao e isenta nem sonda continua exigindo a guarda inteira", () => {
+    const comGuardaInteira = rotasDoPainel.filter(
+      (r) => !(r.relativo in ISENTAS) && !(r.relativo in SONDAS),
+    );
+    // Se um dia sobrar so isenta e sonda, este teste passaria sem provar nada.
+    expect(comGuardaInteira.length).toBeGreaterThanOrEqual(6);
+    for (const { relativo, caminho } of comGuardaInteira) {
+      const verbos = handlers(analisar(caminho));
+      expect(verbos.length, relativo).toBeGreaterThan(0);
+      for (const { verbo, funcao } of verbos) {
+        expect(
+          comecaPelaGuardaDeSessao(funcao.body, ["exigirSessao", "preparar"]),
+          `${relativo} ${verbo}`,
+        ).toBe(true);
+      }
     }
   });
 });

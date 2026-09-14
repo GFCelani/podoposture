@@ -165,8 +165,17 @@ function SeletorDePeriodo({ periodo, aoEscolher }: { periodo: Periodo; aoEscolhe
   // frontend-refs: estado-por-elevacao-nao-matiz — o periodo escolhido se marca
   // por fio escuro e peso; nenhum botao preenchido, porque a tela nao tem acao
   // dominante (e so leitura).
+  //
+  // Abaixo de 360px os quatro botoes nao cabem numa linha e viravam duas, que e
+  // altura tirada do primeiro quadro. Ali eles ficam numa linha so, rolavel: a
+  // rolagem e lateral e dentro do grupo, entao nao empurra a resposta para baixo
+  // da dobra (o corpo da pagina continua sem rolagem lateral).
   return (
-    <div role="group" aria-label="Período" className="flex flex-wrap gap-1">
+    <div
+      role="group"
+      aria-label="Período"
+      className="flex flex-wrap gap-1 max-[359px]:flex-nowrap max-[359px]:overflow-x-auto"
+    >
       {BOTOES_DE_PERIODO.map((b) => {
         const escolhido = b.periodo === periodo;
         return (
@@ -175,7 +184,7 @@ function SeletorDePeriodo({ periodo, aoEscolher }: { periodo: Periodo; aoEscolhe
             type="button"
             aria-pressed={escolhido}
             onClick={() => aoEscolher(b.periodo)}
-            className={`min-h-[44px] rounded-md border px-3 text-[0.9375rem] transition-colors duration-[160ms] ${
+            className={`min-h-[44px] shrink-0 rounded-md border px-3 text-[0.9375rem] transition-colors duration-[160ms] ${
               escolhido
                 ? "border-ink-strong bg-surface font-medium text-ink-strong"
                 : "border-rule text-muted hover:text-ink"
@@ -371,29 +380,43 @@ function QuadroDePessoas({
     <Secao id="numeros-pessoas" titulo="Quantas pessoas abriram o site" primeira>
       <Intervalo inicio={visitas.intervalo.inicio} fim={visitas.intervalo.fim} ano={ano} />
 
-      {/* dataviz: numero de destaque na fonte do texto, com algarismos proporcionais */}
-      <p className="mt-4 text-[3rem] leading-none font-semibold text-ink-strong">{formatarNumero(visitas.pessoas)}</p>
-      <p className="mt-2 text-[1.0625rem] leading-[1.6] text-ink">
-        {visitas.pessoas === 1 ? "pessoa abriu" : "pessoas abriram"} o site, somando{" "}
-        {contar(visitas.visitas, ["página aberta", "páginas abertas"])}.
-      </p>
-      <p className="mt-2 text-[1.0625rem] leading-[1.6] text-ink">
-        {visitas.anterior
-          ? comparacaoEmPalavras(visitas.pessoas, visitas.anterior.pessoas, periodo, ["pessoa", "pessoas"])
-          : `Ainda não há ${rotuloDoPeriodo(periodo)} anteriores guardados para comparar.`}
-      </p>
+      {/* Abaixo de 360px a resposta curta sobe para antes do numero grande.
+          O JOURNEY pede a resposta no primeiro quadro, sem rolar, e a 320x568
+          ela caia ~190px abaixo da dobra: o numero de 48px e as duas frases de
+          comparacao vinham na frente. Acima de 360 a ordem e a de sempre —
+          numero, comparacao, resposta.
 
-      {(maisLido || origem) && (
-        <ul className="mt-4 space-y-1 text-[1.0625rem] leading-[1.6] text-ink">
-          {maisLido && (
-            <li>
-              O texto mais lido foi <strong className="font-medium text-ink-strong">“{maisLido.titulo}”</strong> (
-              {contar(maisLido.pessoas, ["pessoa", "pessoas"])}).
-            </li>
-          )}
-          {origem && <li>{frasesDaOrigem(origem)}</li>}
-        </ul>
-      )}
+          A troca e so visual (ordem do flex). A ordem do documento continua
+          numero → comparacao → resposta, que e a ordem em que o leitor de tela
+          le e a ordem logica do conteudo; a dobra e um problema de quem enxerga
+          a tela. */}
+      <div className="flex flex-col">
+        <div className="max-[359px]:order-2">
+          {/* dataviz: numero de destaque na fonte do texto, com algarismos proporcionais */}
+          <p className="mt-4 text-[3rem] leading-none font-semibold text-ink-strong">{formatarNumero(visitas.pessoas)}</p>
+          <p className="mt-2 text-[1.0625rem] leading-[1.6] text-ink">
+            {visitas.pessoas === 1 ? "pessoa abriu" : "pessoas abriram"} o site, somando{" "}
+            {contar(visitas.visitas, ["página aberta", "páginas abertas"])}.
+          </p>
+          <p className="mt-2 text-[1.0625rem] leading-[1.6] text-ink">
+            {visitas.anterior
+              ? comparacaoEmPalavras(visitas.pessoas, visitas.anterior.pessoas, periodo, ["pessoa", "pessoas"])
+              : `Ainda não há ${rotuloDoPeriodo(periodo)} anteriores guardados para comparar.`}
+          </p>
+        </div>
+
+        {(maisLido || origem) && (
+          <ul className="mt-4 space-y-1 text-[1.0625rem] leading-[1.6] text-ink max-[359px]:order-1">
+            {maisLido && (
+              <li>
+                O texto mais lido foi <strong className="font-medium text-ink-strong">“{maisLido.titulo}”</strong> (
+                {contar(maisLido.pessoas, ["pessoa", "pessoas"])}).
+              </li>
+            )}
+            {origem && <li>{frasesDaOrigem(origem)}</li>}
+          </ul>
+        )}
+      </div>
 
       <p className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
         Cada dia conta as pessoas daquele dia: quem voltou em outro dia entra de novo na soma.

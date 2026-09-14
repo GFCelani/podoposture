@@ -85,13 +85,25 @@ export function Painel() {
     try {
       const resposta = await fetch("/api/painel/sessao", { cache: "no-store" });
       if (resposta.ok) {
-        setAviso(null);
-        abrirPainel(abaDeVolta.current);
+        // A sonda responde 200 mesmo sem sessao (ver a rota): quem diz se ela
+        // esta dentro e o campo, nao o status. Sessao valida sem o campo seria
+        // resposta de outra coisa — o proxy de um hotel, por exemplo — e cair
+        // na tela de senha e o certo.
+        const corpo: unknown = await resposta.json().catch(() => null);
+        const autenticado =
+          typeof corpo === "object" && corpo !== null && (corpo as { autenticado?: unknown }).autenticado === true;
+        if (autenticado) {
+          setAviso(null);
+          abrirPainel(abaDeVolta.current);
+          return;
+        }
+        // Sem sessao: nenhum aviso novo, e o que perderSessao escreveu fica.
+        setTela({ nome: "entrar" });
         return;
       }
       if (resposta.status === 503) {
         setAviso("O painel ainda não foi configurado neste servidor. Avise quem cuida do site.");
-      } else if (resposta.status !== 401 && resposta.status !== 403) {
+      } else {
         setAviso("Não foi possível abrir o painel agora. Tente de novo em alguns minutos.");
       }
       setTela({ nome: "entrar" });
@@ -212,12 +224,17 @@ export function Painel() {
   }
 
   return (
-    <div className="mx-auto max-w-[52rem] px-6 py-12 lg:py-16">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <BrandMark className="h-8 w-auto" />
+    <div className="mx-auto max-w-[52rem] px-6 py-12 max-[359px]:py-8 lg:py-16">
+      {/* Abaixo de 360px o cabecalho fica numa linha so: com a etiqueta ele
+          quebrava em duas e o "Sair" descia, e essa altura sai do primeiro
+          quadro da aba Números (ver QuadroDePessoas). A marca continua na tela
+          e as abas logo abaixo dizem onde ela esta, entao a etiqueta e o que
+          menos falta. */}
+      <header className="flex flex-nowrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <BrandMark className="h-8 w-auto shrink-0" />
           <span
-            className="text-[0.6875rem] tracking-[0.18em] text-muted uppercase"
+            className="truncate text-[0.6875rem] tracking-[0.18em] text-muted uppercase max-[359px]:hidden"
             style={{ fontFamily: "var(--mono)" }}
           >
             Painel do site
@@ -225,7 +242,7 @@ export function Painel() {
         </div>
         <button
           onClick={() => void sair()}
-          className="sublinha min-h-[44px] text-[0.9375rem] text-accent hover:text-accent-deep"
+          className="sublinha min-h-[44px] shrink-0 text-[0.9375rem] text-accent hover:text-accent-deep"
         >
           Sair
         </button>
