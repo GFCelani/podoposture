@@ -32,6 +32,8 @@ export function AbaTextos({
   tomarFoco: () => string | null;
 }) {
   const primeiraCarga = useRef(true);
+  /** O id que espera o foco, lido do painel na primeira carga e consumido depois do render da lista. */
+  const focoPendente = useRef<string | null>(null);
   // Em ref, e nao so no estado: o editor precisa saber se ha banco, e ler o
   // estado aqui refaria `abrirEditor` e recarregaria a aba quando ele chega.
   const semBancoAgora = useRef(false);
@@ -74,18 +76,33 @@ export function AbaTextos({
     } finally {
       setCarregando(false);
       // So na primeira carga: voltando do editor, o foco volta ao "Editar" do
-      // texto de onde ela saiu (ou ao titulo, se ele nao estiver mais na lista).
+      // texto de onde ela saiu. Aqui so guardamos o alvo; quem move o foco e o
+      // efeito abaixo, depois que a lista existe na tela.
       if (primeiraCarga.current) {
         primeiraCarga.current = false;
-        const alvo = tomarFoco();
-        if (alvo) {
-          requestAnimationFrame(() =>
-            (document.getElementById(alvo) ?? document.getElementById("textos-titulo"))?.focus(),
-          );
-        }
+        focoPendente.current = tomarFoco();
       }
     }
   }, [aoPerderSessao, tomarFoco]);
+
+  /**
+   * O foco so vai ao "Editar" depois que a lista foi para a tela.
+   *
+   * Antes ele era movido num `requestAnimationFrame` disparado no fim do
+   * carregamento. No WebKit esse quadro roda ANTES de o React montar as linhas:
+   * `getElementById("editar-<id>")` voltava null e o foco caia no reserva, o
+   * titulo da lista — 1 acerto em 4 idas ao editor, contra 4 em 4 no Chromium.
+   * Este efeito roda depois do render que ja tem as linhas, entao o alvo existe.
+   */
+  useEffect(() => {
+    if (carregando) return;
+    const alvo = focoPendente.current;
+    if (alvo === null) return;
+    focoPendente.current = null;
+    // O reserva continua valendo: o texto pode ter sido apagado em outra janela
+    // e nao estar mais na lista que acabou de chegar.
+    (document.getElementById(alvo) ?? document.getElementById("textos-titulo"))?.focus();
+  }, [posts, carregando]);
 
   /**
    * Busca o texto completo e abre o editor. `reabrindo` e o caso da sessao que
