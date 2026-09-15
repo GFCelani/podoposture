@@ -1,5 +1,5 @@
 import { lerNomeDoArquivo } from "./imagem-webp";
-import { linhaCabeNoTopo } from "./largura-do-titulo";
+import { linhaCabeNoTopo, ocupacaoNoTopo } from "./largura-do-titulo";
 
 /**
  * O contrato do conteudo editavel do site: tipos, descritores e validacao.
@@ -515,7 +515,11 @@ export const DESCRITORES: Descritores = {
         // "Integracao terapeutica" e a linha mais larga medida (615 px a 64 px);
         // o campo das figuras comeca uns 40 px depois dela, dai a folga de 4%.
         medidaNaTela: { referencia: "Integração terapêutica", folga: 1.04 },
-        ajuda: "Quatro linhas, com até 22 caracteres cada. O título quebra exatamente onde você quebrar.",
+        // O limite e de LARGURA, nao de letras: o contador de cada linha mostra
+        // quanto do espaco ela ocupa. `maxPorLinha` fica como trava de seguranca
+        // e nao e anunciado, porque 22 letras comuns ja nao cabem.
+        ajuda:
+          "Quatro linhas. Cada uma precisa caber no espaço ao lado das figuras — o contador embaixo mostra quanto dele a linha ocupa. O título quebra exatamente onde você quebrar.",
       },
       destaque: {
         tipo: "texto",
@@ -915,6 +919,51 @@ function validarTexto(
   return texto;
 }
 
+/** O que o editor mostra embaixo de uma linha, e o que a validacao decide sobre ela. */
+export type SituacaoDaLinha = {
+  /** A linha como sera guardada: sem espacos sobrando, sem caracteres invisiveis. */
+  linha: string;
+  caracteres: number;
+  /** Passou do teto duro de caracteres, a trava de seguranca do campo. */
+  passouDoTeto: boolean;
+  /**
+   * Fracao do espaco ao lado das figuras que a linha ocupa (1 = o espaco
+   * inteiro). null no campo sem `medidaNaTela`, que so conta caracteres.
+   */
+  ocupacao: number | null;
+  /** Cabe no espaco medido. Sempre true no campo sem `medidaNaTela`. */
+  cabe: boolean;
+  /** Cabe, mas ja usa 90% do espaco ou mais. */
+  perto: boolean;
+};
+
+/** A partir de quanto do espaco a linha ja esta "perto" do limite. */
+const PERTO_DO_ESPACO = 0.9;
+
+/**
+ * A situacao de uma linha, pela MESMA conta que `validarSecao` usa.
+ *
+ * Existe porque o editor contava caracteres ("22 de 22") enquanto o servidor
+ * media largura: "Atendimento humanizado" tem 22 letras comuns, o contador dizia
+ * que cabia e a publicacao recusava. Editor e rota agora leem daqui — a mesma
+ * limpeza, o mesmo teto e a mesma medida —, entao os dois nao tem como discordar.
+ */
+export function situacaoDaLinha(campo: CampoLinhas, bruto: unknown): SituacaoDaLinha {
+  const linha = limpar(bruto) ?? "";
+  const caracteres = tamanho(linha);
+  const medida = campo.medidaNaTela;
+  const ocupacao = medida ? ocupacaoNoTopo(linha, medida.referencia, medida.folga) : null;
+  const cabe = medida ? linhaCabeNoTopo(linha, medida.referencia, medida.folga) : true;
+  return {
+    linha,
+    caracteres,
+    passouDoTeto: caracteres > campo.maxPorLinha,
+    ocupacao,
+    cabe,
+    perto: cabe && ocupacao !== null && ocupacao >= PERTO_DO_ESPACO,
+  };
+}
+
 function validarLinhas(
   campo: CampoLinhas,
   valor: unknown,
@@ -928,18 +977,16 @@ function validarLinhas(
   const linhas: string[] = [];
   let falhou = false;
   valor.forEach((bruto, i) => {
-    const linha = limpar(bruto);
+    const situacao = situacaoDaLinha(campo, bruto);
+    const linha = situacao.linha;
     const onde = juntar(caminho, i);
-    if (!linha) {
+    if (typeof bruto !== "string" || !linha) {
       erros[onde] = `Preencha a linha ${i + 1}.`;
       falhou = true;
-    } else if (tamanho(linha) > campo.maxPorLinha) {
-      erros[onde] = `A linha ${i + 1} passou de ${campo.maxPorLinha} caracteres (agora são ${tamanho(linha)}).`;
+    } else if (situacao.passouDoTeto) {
+      erros[onde] = `A linha ${i + 1} passou de ${campo.maxPorLinha} caracteres (agora são ${situacao.caracteres}).`;
       falhou = true;
-    } else if (
-      campo.medidaNaTela &&
-      !linhaCabeNoTopo(linha, campo.medidaNaTela.referencia, campo.medidaNaTela.folga)
-    ) {
+    } else if (!situacao.cabe) {
       // Larga demais em pixels, mesmo cabendo no teto de caracteres. Recusar
       // aqui — e nao so avisar no editor — e o que impede a linha de chegar a
       // home e cobrir as figuras.

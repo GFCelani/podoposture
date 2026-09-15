@@ -19,7 +19,7 @@ import type {
   ErrosDeCampo,
   PaginaDeDestino,
 } from "@/lib/conteudo-tipos";
-import { linhaCabeNoTopo } from "@/lib/largura-do-titulo";
+import { situacaoDaLinha } from "@/lib/conteudo-tipos";
 
 import {
   campoParaEdicao,
@@ -168,6 +168,37 @@ function Contador({ id, texto, max }: { id: string; texto: string; max: number }
       {usados} de {max} caracteres{detalhe}
       <span className="sr-only" aria-live="polite">
         {passou ? " Passou do limite de caracteres." : perto ? " Perto do limite de caracteres." : ""}
+      </span>
+    </p>
+  );
+}
+
+/**
+ * Contador da linha medida em LARGURA (o titulo do topo): quanto do espaco ao
+ * lado das figuras ela ocupa, com as mesmas faixas do contador de caracteres.
+ *
+ * Contar caracteres ali mentia: "22 de 22 · chegou ao limite" para uma linha que
+ * o servidor recusa por largura. Cabe/nao cabe vem de `situacaoDaLinha`, a
+ * mesma conta da validacao; o numero em % so ilustra, e e arredondado para
+ * nunca dizer 100% de uma linha que nao cabe.
+ */
+function ContadorDeLargura({ id, campo, texto }: { id: string; campo: CampoLinhas; texto: string }) {
+  const { ocupacao, cabe, perto, passouDoTeto } = situacaoDaLinha(campo, texto);
+  const bruta = Math.round((ocupacao ?? 0) * 100);
+  const porcento = cabe ? Math.min(bruta, 100) : Math.max(bruta, 101);
+  const passou = !cabe || passouDoTeto;
+  const cor = passou ? "text-[#8c2f2f]" : perto ? "text-[#8a6d1f]" : "text-muted";
+  let detalhe = "";
+  // A trava de caracteres so aparece quando dispara: ela nao e o limite que
+  // importa, e anunciar "22" levava a achar que 22 letras comuns cabiam.
+  if (passouDoTeto) detalhe = ` · passou do limite de ${campo.maxPorLinha} caracteres`;
+  else if (!cabe) detalhe = " · não cabe";
+  else if (perto) detalhe = " · perto do limite";
+  return (
+    <p id={id} className={`mt-1.5 text-[0.8125rem] ${cor}`}>
+      Ocupa {porcento}% do espaço ao lado das figuras{detalhe}
+      <span className="sr-only" aria-live="polite">
+        {passou ? " A linha não cabe." : perto ? " Perto do limite do espaço." : ""}
       </span>
     </p>
   );
@@ -327,15 +358,13 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
           const caminhoDaLinha = `${caminho}.${i}`;
           const idDaLinha = idDoCampo(editor.chave, caminhoDaLinha);
           const erroDaLinha = editor.erros[caminhoDaLinha];
-          // O MESMO limite que o servidor aplica (lib/largura-do-titulo.ts).
-          // Antes o editor media por conta propria, num canvas, e o limite dele
-          // nao era exatamente o da rota: dava para ver o aviso amarelo e
-          // publicar assim mesmo. Aqui o aviso chega enquanto ela digita, e o
-          // erro, ao sair do campo, diz a mesma coisa.
-          const larga =
-            campo.medidaNaTela !== undefined &&
-            linha.trim() !== "" &&
-            !linhaCabeNoTopo(linha.trim(), campo.medidaNaTela.referencia, campo.medidaNaTela.folga);
+          // O MESMO limite que o servidor aplica (`situacaoDaLinha`, usada por
+          // `validarSecao`). Antes o editor media por conta propria, num canvas,
+          // e o limite dele nao era exatamente o da rota: dava para ver o aviso
+          // amarelo e publicar assim mesmo. Aqui o aviso chega enquanto ela
+          // digita, e o erro, ao sair do campo, diz a mesma coisa.
+          const situacao = situacaoDaLinha(campo, linha);
+          const larga = campo.medidaNaTela !== undefined && situacao.linha !== "" && !situacao.cabe;
           return (
             // Posicao e a identidade da linha: sao fixas e nunca mudam de ordem.
             <div key={i}>
@@ -359,7 +388,11 @@ function CampoDeLinhas({ campo, caminho, valor, original, rotulo }: PropsDoCampo
                 data-com-erro={erroDaLinha ? "" : undefined}
                 className={`${ENTRADA} mt-1`}
               />
-              <Contador id={`${idDaLinha}-contador`} texto={linha} max={campo.maxPorLinha} />
+              {campo.medidaNaTela ? (
+                <ContadorDeLargura id={`${idDaLinha}-contador`} campo={campo} texto={linha} />
+              ) : (
+                <Contador id={`${idDaLinha}-contador`} texto={linha} max={campo.maxPorLinha} />
+              )}
               {/* Chega enquanto ela digita, antes do erro que aparece ao sair do
                   campo — e o mesmo limite, dito uma vez em amarelo e outra em
                   vermelho, em vez de uma surpresa na hora de publicar. */}

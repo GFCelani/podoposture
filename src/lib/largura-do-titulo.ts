@@ -102,3 +102,14 @@ export function larguraDaLinha(texto: string): number {
 export function linhaCabeNoTopo(texto: string, referencia: string, folga: number): boolean {
   return larguraDaLinha(texto) <= larguraDaLinha(referencia) * folga;
 }
+
+/**
+ * Quanto do espaco ao lado das figuras a linha ocupa: 1 e o espaco inteiro.
+ *
+ * Serve so para mostrar ("ocupa 80% do espaco"). Se cabe ou nao continua sendo
+ * `linhaCabeNoTopo`, e quem mostra o numero decide cabe/nao cabe por ela — uma
+ * divisao em ponto flutuante nao pode ser o que separa o contador do servidor.
+ */
+export function ocupacaoNoTopo(texto: string, referencia: string, folga: number): number {
+  return larguraDaLinha(texto) / (larguraDaLinha(referencia) * folga);
+}

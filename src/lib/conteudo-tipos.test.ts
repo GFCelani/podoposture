@@ -15,6 +15,7 @@ import {
   mesclarSecao,
   precisaDeEspacoAntes,
   segmentosDoSubtitulo,
+  situacaoDaLinha,
   validarSecao,
   type Campo,
   type ChaveDeSecao,
@@ -154,6 +155,35 @@ describe("cada lista respeita minimo e maximo", () => {
     // 22 caracteres estreitos continuam passando: o limite e de largura, nao de
     // um teto de caracteres mais apertado.
     expect(errosDe("hero", "tituloLinhas.2", "l".repeat(22))["tituloLinhas.2"]).toBeUndefined();
+  });
+
+  it("o contador da linha e a validacao do servidor dizem a mesma coisa", () => {
+    // O caso que motivou: 22 letras comuns. O contador antigo dizia "22 de 22"
+    // (cabe) e a publicacao recusava por largura.
+    const campo = DESCRITORES.hero.campos.tituloLinhas;
+    if (campo.tipo !== "linhas") throw new Error("o titulo do topo deixou de ser linhas");
+    const naoCabe = situacaoDaLinha(campo, "Atendimento humanizado");
+    expect(naoCabe.caracteres).toBe(22);
+    expect(naoCabe.cabe).toBe(false);
+    expect(errosDe("hero", "tituloLinhas.0", "Atendimento humanizado")["tituloLinhas.0"]).toMatch(/larga demais/);
+
+    const cabe = situacaoDaLinha(campo, "Integração terapêutica");
+    expect(cabe.cabe).toBe(true);
+    expect(cabe.perto).toBe(true);
+    expect(errosDe("hero", "tituloLinhas.1", "Integração terapêutica")["tituloLinhas.1"]).toBeUndefined();
+
+    // E para qualquer linha: onde o contador diz "cabe", nao ha erro de largura.
+    for (const linha of [
+      ...CONTEUDO_PADRAO.hero.tituloLinhas,
+      "Fisioterapia postural",
+      "MMMMMMMMMMMMMMMMM",
+      "  Integração   terapêutica  ",
+      "iiiiiiiiiiiiiiiiiiiiii",
+      "Reabilitação completa",
+    ]) {
+      const erro = errosDe("hero", "tituloLinhas.2", linha)["tituloLinhas.2"] ?? "";
+      expect(/larga demais/.test(erro), linha).toBe(!situacaoDaLinha(campo, linha).cabe);
+    }
   });
 
   it("a apresentacao nao tem limite de largura — so o titulo foi medido", () => {
