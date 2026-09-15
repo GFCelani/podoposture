@@ -441,33 +441,69 @@ export function mensagemDeFalha(status: number, erroDoServidor: unknown): string
 }
 
 /**
- * O que fazer quando a rota responde 409 (a secao mudou em outra janela).
+ * O formulario depois de um 409 (a secao mudou em outra janela), em qualquer
+ * pedido: salvar, publicar, descartar ou voltar ao original.
  *
- * Depende do que ela tentou. Salvando ou publicando, o que ela mudou e juntado
- * com a versao nova, e ela confere. Descartando ou voltando ao original, nao ha
- * o que juntar — ela queria DESFAZER, e juntar o formulario com a versao nova
- * trazia de volta campos que ela mandou jogar fora. Ali a mensagem precisa dizer
- * o que mais importa para quem acabou de clicar num botao que mexe no site:
- * nada foi alterado, e o texto que esta no ar continua no ar.
- *
- * `alvo` e o do DELETE (null no PUT de salvar/publicar).
+ * O que ela mudou em relacao a `referencia` (o que o editor conhecia) fica por
+ * cima da versao nova; o resto passa a ser a versao nova. Tambem no descarte e
+ * no voltar ao original: a recusa vale para o pedido de desfazer, nao para as
+ * edicoes pendentes. Deixar o formulario inteiro velho enquanto a versao do
+ * editor avancava fazia a proxima publicacao passar sem 409 levando os campos
+ * antigos, e o que a outra janela publicou saia do site sem ninguem saber.
+ * Sem alteracao pendente, o resultado e exatamente a versao nova.
  */
-export function respostaAoConflito(alvo: AlvoDoDescarte | null): { juntarFormulario: boolean; aviso: string } {
+export function formularioDepoisDoConflito(
+  chave: ChaveDeSecao,
+  versaoNova: DadosEmEdicao,
+  atuais: DadosEmEdicao,
+  referencia: DadosEmEdicao,
+): DadosEmEdicao {
+  return aplicarCopia(chave, versaoNova, atuais, referencia);
+}
+
+/**
+ * O aviso quando a rota responde 409.
+ *
+ * Salvando ou publicando, diz que nada foi salvo e que o que ela mudou foi
+ * juntado. Descartando ou voltando ao original, diz que nada foi feito por aqui
+ * e descreve o estado NOVO (`secaoNova`, a que veio no 409): a outra janela pode
+ * ter mudado o site, entao "continua no ar como estava" era falso, e pedir para
+ * repetir so faz sentido se o botao ainda existe. Os rotulos citados sao os dos
+ * botoes na tela.
+ *
+ * `alvo` e o do DELETE (null no PUT de salvar/publicar); `comAlteracao` diz se
+ * havia mudanca nao salva no formulario.
+ */
+export function respostaAoConflito(
+  alvo: AlvoDoDescarte | null,
+  secaoNova: EstadoDaSecao<unknown> | null = null,
+  comAlteracao = false,
+): { aviso: string } {
   const mudou = "Esta seção mudou em outra janela ou aparelho depois que você a abriu.";
+  const suaMudanca = comAlteracao ? " O que você mudou nesta tela continua aqui, por cima da versão nova." : "";
   if (alvo === "publicado") {
+    if (secaoNova && !publicadoDiferenteDoPadrao(secaoNova)) {
+      return {
+        aviso: `${mudou} Nada foi feito agora por aqui: o site já está com o texto original, e o editor já mostra essa versão.${suaMudanca}`,
+      };
+    }
     return {
-      juntarFormulario: false,
-      aviso: `${mudou} Nada foi alterado agora: o texto do site continua no ar como estava. O editor já conhece a versão mais nova; confira e, se ainda quiser, clique de novo em “Voltar ao original”.`,
+      aviso: `${mudou} Nada foi feito agora por aqui: o site mostra a versão que a outra janela deixou, e o editor já mostra essa versão.${suaMudanca} Confira e, se ainda quiser, clique de novo em “Voltar o site ao texto original”.`,
     };
   }
   if (alvo === "rascunho") {
+    if (secaoNova && secaoNova.rascunho === null) {
+      return {
+        aviso: `${mudou} Nada foi descartado agora por aqui: o rascunho já não existe mais, e o editor já mostra a versão mais nova.${suaMudanca}${
+          comAlteracao ? " Para jogar fora o que você mudou, use “Descartar alterações”." : ""
+        }`,
+      };
+    }
     return {
-      juntarFormulario: false,
-      aviso: `${mudou} Nada foi descartado agora, e o texto do site continua no ar como estava. O editor já conhece a versão mais nova; confira e, se ainda quiser, descarte de novo.`,
+      aviso: `${mudou} Nada foi descartado agora por aqui, e o editor já mostra a versão mais nova do rascunho.${suaMudanca} Confira e, se ainda quiser, clique de novo em “Descartar rascunho”.`,
     };
   }
   return {
-    juntarFormulario: true,
     aviso: `${mudou} Nada foi salvo agora para não apagar essa mudança. Juntamos o que você alterou com a versão mais nova: confira os campos e veja de novo como vai ficar.`,
   };
 }
@@ -552,6 +588,10 @@ export function apagarCopiaLocal(armazem: Armazem | null, chave: ChaveDeSecao): 
  * agora do servidor. E a mesma juncao que o editor usa quando outra janela
  * publicou no meio: o que ela alterou vai por cima da versao nova, e o que ela
  * nao tocou segue a versao nova. Sem `referencia` (copia antiga), vai tudo.
+ *
+ * Campo de linhas (o titulo do topo, a apresentacao) junta linha a linha: sao
+ * quatro caixas separadas na tela, e ela mexer na 4a linha nao pode devolver ao
+ * site a 2a linha velha que outra janela tinha acabado de publicar.
  */
 export function aplicarCopia(
   chave: ChaveDeSecao,
@@ -560,9 +600,25 @@ export function aplicarCopia(
   referencia?: DadosEmEdicao,
 ): DadosEmEdicao {
   const saida: DadosEmEdicao = { ...servidor };
-  for (const nome of Object.keys(camposDaSecao(chave))) {
+  for (const [nome, campo] of Object.entries(camposDaSecao(chave))) {
     if (!(nome in copia)) continue;
     if (referencia && JSON.stringify(copia[nome]) === JSON.stringify(referencia[nome])) continue;
+    const linhasDaCopia = copia[nome];
+    const linhasDaReferencia = referencia?.[nome];
+    const linhasDoServidor = servidor[nome];
+    if (
+      campo.tipo === "linhas" &&
+      Array.isArray(linhasDaCopia) &&
+      Array.isArray(linhasDaReferencia) &&
+      Array.isArray(linhasDoServidor) &&
+      linhasDaCopia.length === linhasDaReferencia.length &&
+      linhasDaCopia.length === linhasDoServidor.length
+    ) {
+      saida[nome] = linhasDaCopia.map((linha, i) =>
+        JSON.stringify(linha) === JSON.stringify(linhasDaReferencia[i]) ? linhasDoServidor[i] : linha,
+      );
+      continue;
+    }
     saida[nome] = copia[nome];
   }
   return saida;

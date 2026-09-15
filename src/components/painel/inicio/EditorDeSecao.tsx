@@ -30,6 +30,7 @@ import {
   enderecoDaPrevia,
   explicacaoDePublicar,
   explicacaoDeVoltarAoOriginal,
+  formularioDepoisDoConflito,
   gravarCaminho,
   guardarCopiaLocal,
   idDoCampo,
@@ -403,23 +404,21 @@ export function EditorDeSecao({
     const secaoDaResposta = ehObjeto(lido) && ehObjeto(lido.secao) ? (lido.secao as EstadoDaSecao<unknown>) : null;
 
     if (resposta.status === 409) {
-      const conflito = respostaAoConflito(alvo);
+      // O formulario de agora, e nao o deste fechamento: durante o pedido ela
+      // pode ter digitado.
+      const comAlteracao = JSON.stringify(ultimo.current.dados) !== JSON.stringify(referencia);
       if (secaoDaResposta) {
         aoAtualizar(secaoDaResposta);
         const versaoNova = baseDaSecao(chave, secaoDaResposta);
-        if (conflito.juntarFormulario) {
-          setDados((atuais) => aplicarCopia(chave, versaoNova, atuais, referencia));
-        } else {
-          // Descartar ou voltar ao original: nada a juntar. Formulario sem
-          // alteracao passa a mostrar a versao atual; com alteracao nao salva,
-          // fica como esta — o pedido recusado nao pode apagar o que ela escreve.
-          setDados((atuais) => (JSON.stringify(atuais) === JSON.stringify(referencia) ? versaoNova : atuais));
-        }
+        // Em todo 409, inclusive no descarte e no voltar ao original: a versao
+        // do editor avanca, entao o formulario precisa avancar junto, com o
+        // que ela mudou por cima. Ver `formularioDepoisDoConflito`.
+        setDados((atuais) => formularioDepoisDoConflito(chave, versaoNova, atuais, referencia));
         setSalvo(versaoNova);
       }
       setPreviaDe(null);
       setLinkDaPrevia(null);
-      setAviso(conflito.aviso);
+      setAviso(respostaAoConflito(alvo, secaoDaResposta, comAlteracao).aviso);
       return null;
     }
 

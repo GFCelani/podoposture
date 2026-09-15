@@ -40,6 +40,7 @@ import {
   enderecoDaPrevia,
   explicacaoDePublicar,
   explicacaoDeVoltarAoOriginal,
+  formularioDepoisDoConflito,
   publicadoDiferenteDoPadrao,
 } from "./edicao";
 
@@ -360,21 +361,60 @@ describe("textos para a tela", () => {
     expect(mensagemDeFalha(500, 42)).toContain("Tente de novo");
   });
 
-  it("conflito ao desfazer diz que o site continua no ar e nao junta o formulario", () => {
+  it("conflito ao desfazer diz que nada foi feito por aqui, sem prometer que o site ficou como estava", () => {
     for (const alvo of ["publicado", "rascunho"] as const) {
       const resposta = respostaAoConflito(alvo);
-      expect(resposta.juntarFormulario).toBe(false);
-      expect(resposta.aviso).toMatch(/Nada foi (alterado|descartado) agora/);
-      expect(resposta.aviso).toContain("continua no ar");
-      expect(resposta.aviso).not.toMatch(/campos/);
+      expect(resposta.aviso).toMatch(/Nada foi (feito|descartado) agora por aqui/);
+      expect(resposta.aviso).not.toContain("continua no ar como estava");
+      expect(resposta.aviso).not.toMatch(/Juntamos/);
     }
-    expect(respostaAoConflito("publicado").aviso).toContain("Voltar ao original");
+  });
+
+  it("conflito ao voltar ao original descreve o estado novo e cita o rotulo exato do botao", () => {
+    const padrao = { titulo: "A" };
+    // Outra janela publicou outra coisa: o botao continua na tela.
+    const aindaAlterado = respostaAoConflito("publicado", estado(padrao, { titulo: "B" }, null)).aviso;
+    expect(aindaAlterado).toContain("“Voltar o site ao texto original”");
+    expect(aindaAlterado).not.toContain("“Voltar ao original”");
+    // Outra janela ja voltou ao original: o botao sumiu, entao nao manda clicar nele.
+    const jaNoOriginal = respostaAoConflito("publicado", estado(padrao, null, null)).aviso;
+    expect(jaNoOriginal).toContain("já está com o texto original");
+    expect(jaNoOriginal).not.toMatch(/clique de novo/);
+    expect(respostaAoConflito("publicado", estado(padrao, null, null), true).aviso).toContain("continua aqui");
+  });
+
+  it("conflito ao descartar so pede para repetir se o rascunho ainda existe", () => {
+    const padrao = { titulo: "A" };
+    expect(respostaAoConflito("rascunho", estado(padrao, null, { titulo: "C" })).aviso).toContain(
+      "“Descartar rascunho”",
+    );
+    const semRascunho = respostaAoConflito("rascunho", estado(padrao, { titulo: "B" }, null), true).aviso;
+    expect(semRascunho).toContain("já não existe mais");
+    expect(semRascunho).not.toContain("“Descartar rascunho”");
+    expect(semRascunho).toContain("“Descartar alterações”");
   });
 
   it("conflito ao salvar ou publicar junta o que ela mudou com a versao nova", () => {
-    const resposta = respostaAoConflito(null);
-    expect(resposta.juntarFormulario).toBe(true);
-    expect(resposta.aviso).toMatch(/Juntamos o que você alterou/);
+    expect(respostaAoConflito(null).aviso).toMatch(/Juntamos o que você alterou/);
+  });
+
+  it("409 ao voltar ao original seguido de publicar nao devolve ao site a linha que a outra janela publicou", () => {
+    // Janela A publicou a 2a linha "efetiva primeira"; B abriu e mudou so a 4a
+    // linha, sem salvar. A publicou "efetiva segunda". B tenta voltar ao
+    // original e recebe 409; depois publica o formulario.
+    const padrao = paraEdicao("hero", CONTEUDO_PADRAO.hero);
+    const linhas = padrao.tituloLinhas as string[];
+    const p1 = { ...padrao, tituloLinhas: [linhas[0], "efetiva primeira", linhas[2], linhas[3]], destaque: "efetiva" };
+    const p2 = { ...p1, tituloLinhas: [linhas[0], "efetiva segunda", linhas[2], linhas[3]] };
+    const formularioDeB = { ...p1, tituloLinhas: [linhas[0], "efetiva primeira", linhas[2], "rápidos e seguros"] };
+
+    const depois = formularioDepoisDoConflito("hero", p2, formularioDeB, p1);
+    expect(depois.tituloLinhas).toEqual([linhas[0], "efetiva segunda", linhas[2], "rápidos e seguros"]);
+    // O que vai no PUT seguinte (com a versao nova) e isto, e passa na validacao.
+    expect(validarSecao("hero", depois).erros).toEqual({});
+
+    // Sem nada pendente, o formulario vira exatamente a versao nova.
+    expect(formularioDepoisDoConflito("hero", p2, p1, p1)).toEqual(p2);
   });
 });
 
