@@ -147,6 +147,12 @@ describe("status da execucao do cron", () => {
     expect(statusDoCron({ coletaFalhou: true, cacheInvalidado: true })).toBe(502);
   });
 
+  it("poda dos dados do painel que falhou responde 502, mesmo com coleta e autocura certas", () => {
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: true, podaFalhou: true })).toBe(502);
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: true, podaFalhou: false })).toBe(200);
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null, podaFalhou: null })).toBe(200);
+  });
+
   it("tudo certo, ou lote de historico sem autocura, responde 200", () => {
     expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: true })).toBe(200);
     expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null })).toBe(200);

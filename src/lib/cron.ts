@@ -83,9 +83,16 @@ export function exigirSegredoDoCron(req: Request): Response | null {
  * sem invalidar e tudo parecia verde. Agora ela conta como falha, igual a coleta.
  *
  * `cacheInvalidado` null = a autocura nem foi tentada (lote de historico).
+ *
+ * A poda que falhou tambem: o prazo do IP de quem tenta entrar e promessa da
+ * pagina de privacidade, e ela falhando toda noite saia 200 sem ninguem saber.
  */
-export function statusDoCron(execucao: { coletaFalhou: boolean; cacheInvalidado: boolean | null }): 200 | 502 {
-  return execucao.coletaFalhou || execucao.cacheInvalidado === false ? 502 : 200;
+export function statusDoCron(execucao: {
+  coletaFalhou: boolean;
+  cacheInvalidado: boolean | null;
+  podaFalhou?: boolean | null;
+}): 200 | 502 {
+  return execucao.coletaFalhou || execucao.cacheInvalidado === false || execucao.podaFalhou === true ? 502 : 200;
 }
 
 export async function invalidarCacheSeOBancoResponde(passos: {

@@ -60,6 +60,12 @@ type Resumo = {
   erro: string | null;
 };
 
+/**
+ * O que a execucao conseguiu fazer. `cacheInvalidado` e `podaFalhou` ficam null
+ * quando nao foram tentados (lote de historico, ou prazo esgotado antes).
+ */
+type Feito = { cacheInvalidado: boolean | null; podaFalhou: boolean | null; resumos: Resumo[] };
+
 /** O coletor da fonte, ou null quando a credencial nao existe. */
 async function coletor(fonte: Fonte, intervalo: Intervalo, prazo: number): Promise<ResultadoDaColeta | null> {
   if (fonte === "vercel") {
@@ -159,8 +165,7 @@ export async function GET(req: Request) {
 
   // O que a execucao conseguiu fazer, preenchido aos poucos: se o prazo total
   // estourar no meio, a resposta sai com o que ja se sabe.
-  // cacheInvalidado null = lote de historico, onde a autocura nao roda.
-  const feito: { cacheInvalidado: boolean | null; resumos: Resumo[] } = { cacheInvalidado: null, resumos: [] };
+  const feito: Feito = { cacheInvalidado: null, podaFalhou: null, resumos: [] };
 
   // Prazo total, abaixo do maxDuration. Com o banco travado (conexao aceita e
   // nenhuma resposta) cada gravacao esperava para sempre e a execucao levava
@@ -176,7 +181,7 @@ export async function GET(req: Request) {
     console.error("[cron] a execucao passou do prazo total: o banco nao respondeu a tempo");
   }
 
-  const { cacheInvalidado, resumos } = feito;
+  const { cacheInvalidado, podaFalhou, resumos } = feito;
   const coletaFalhou = prazoEsgotado || resumos.some((r) => r.situacao === "erro");
   return NextResponse.json(
     {
@@ -186,11 +191,12 @@ export async function GET(req: Request) {
       proximoDesde: janela.proximoDesde,
       // Na resposta, e nao so no diario: e o que aparece no log da execucao.
       cacheInvalidado,
+      podaFalhou,
       prazoEsgotado,
     },
     // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o
-    // status — tanto a coleta que falhou quanto a autocura pulada.
-    { status: statusDoCron({ coletaFalhou, cacheInvalidado }) },
+    // status — a coleta que falhou, a autocura pulada e a poda que falhou.
+    { status: statusDoCron({ coletaFalhou, cacheInvalidado, podaFalhou }) },
   );
 }
 
@@ -198,7 +204,7 @@ export async function GET(req: Request) {
 async function executar(
   janela: Exclude<ReturnType<typeof janelaDaColeta>, { erro: string }>,
   inicio: number,
-  feito: { cacheInvalidado: boolean | null; resumos: Resumo[] },
+  feito: Feito,
 ): Promise<void> {
   if (!janela.historico) {
     // Autocura do cache do site (o porque inteiro esta em lib/cron.ts). So na
@@ -238,8 +244,14 @@ async function executar(
     // O prazo do IP de quem tenta entrar e o teto do registro de acoes sao
     // promessa escrita na pagina de privacidade. As podas de dentro do painel
     // dependem de alguem usa-lo; esta roda todo dia, com ou sem trafego.
-    await podarDadosDoPainel().catch((erro) =>
-      console.error("[cron] falha ao podar os dados do painel:", erro),
+    // O resultado vai para a resposta e para o status: falhando calada toda
+    // noite, os IPs ficavam guardados por dias contra o texto da /privacidade.
+    feito.podaFalhou = await podarDadosDoPainel().then(
+      () => false,
+      (erro) => {
+        console.error("[cron] falha ao podar os dados do painel:", erro);
+        return true;
+      },
     );
     await avisarSeFalhouDuasNoites(feito.resumos);
   }
