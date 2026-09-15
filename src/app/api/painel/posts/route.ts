@@ -5,7 +5,14 @@ import { NextResponse } from "next/server";
 import { lerCorpoLimitado } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
-import { bancoConfigurado, buscarPorId, criarPost, listarTodos, registrarAuditoria } from "@/lib/painel-db";
+import {
+  TiraDoArSemConfirmacao,
+  bancoConfigurado,
+  buscarPorId,
+  criarPost,
+  listarTodos,
+  registrarAuditoria,
+} from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
 import { camposDoCorpo, envioMudaOSite, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
 import { BLOG_INDEX, BRUTOS_DO_JSON, hrefDoPost } from "@/lib/posts";
@@ -16,6 +23,10 @@ export const dynamic = "force-dynamic";
 /** Corpo de post: texto longo cabe, mas nao um upload disfarcado. */
 const TAMANHO_MAXIMO = 256 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A saida para quem mandou como rascunho um texto que ja esta no ar. */
+const JA_ESTA_PUBLICADO =
+  "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Seus textos” e use “Tirar do site e guardar”.";
 
 async function lerCorpo(req: Request): Promise<Record<string, unknown> | null> {
   const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO);
@@ -82,15 +93,12 @@ export async function POST(req: Request) {
     // ja esta publicado: no editor isso pede um segundo clique ("Tirar do site e
     // guardar"), e nesse caminho o aviso nunca aparece, porque do lado do
     // navegador o texto ainda e novo. A saida esta escrita na mensagem.
+    // Esta leitura so adianta a resposta no caso comum; quem garante a regra e
+    // a propria escrita (`TiraDoArSemConfirmacao`), porque com dois envios
+    // cruzados ela ainda ve o texto como inexistente.
     const existente = id ? await buscarPorId(id) : null;
     if (repetirTiraDoAr(existente, campos)) {
-      return NextResponse.json(
-        {
-          erro:
-            "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Seus textos” e use “Tirar do site e guardar”.",
-        },
-        { status: 409 },
-      );
+      return NextResponse.json({ erro: JA_ESTA_PUBLICADO }, { status: 409 });
     }
 
     const { post, estavaPublicado } = await criarPost(campos, id);
@@ -120,6 +128,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (erro) {
+    if (erro instanceof TiraDoArSemConfirmacao) {
+      return NextResponse.json({ erro: JA_ESTA_PUBLICADO }, { status: 409 });
+    }
     console.error("[painel] falha ao salvar post:", erro);
     return NextResponse.json({ erro: "Não foi possível salvar o post." }, { status: 502 });
   }

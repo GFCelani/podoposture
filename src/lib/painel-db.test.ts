@@ -204,19 +204,55 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
       publicado: true,
     };
     try {
-      // O primeiro envio publica; o segundo, com o mesmo id, guarda como
-      // rascunho. Mesmo que a rota tenha lido o texto como inexistente antes, o
-      // estado de antes vem da escrita, e a limpeza do site acontece.
+      // O primeiro envio publica; o segundo, com o mesmo id, publica de novo.
+      // Mesmo que a rota tenha lido o texto como inexistente antes, o estado de
+      // antes vem da escrita, e a limpeza do site acontece.
       const primeiro = await banco.criarPost(dados, id);
       expect(primeiro.estavaPublicado).toBe(false);
       expect(primeiro.post.publicado).toBe(true);
 
-      const segundo = await banco.criarPost({ ...dados, publicado: false }, id);
+      const segundo = await banco.criarPost({ ...dados, corpo: "Corpo corrigido." }, id);
       expect(segundo.estavaPublicado).toBe(true);
-      expect(segundo.post.publicado).toBe(false);
+      expect(segundo.post.corpo).toBe("Corpo corrigido.");
+    } finally {
+      await banco.apagarPost(id);
+    }
+  });
 
-      const terceiro = await banco.criarPost({ ...dados, publicado: false }, id);
-      expect(terceiro.estavaPublicado).toBe(false);
+  it("envio de texto novo nunca tira do ar um texto publicado, nem cruzado com o envio que publicou", async () => {
+    // O caso da rodada: 'Publicar no site', a resposta se perde no 4G, e o
+    // 'Guardar como rascunho' chega com a rota vendo o texto como inexistente.
+    // A regra mora na escrita, entao vale mesmo sem a leitura da rota.
+    const id = crypto.randomUUID();
+    const dados = {
+      titulo: `Teste de rascunho cruzado ${id.slice(0, 8)}`,
+      resumo: "Resumo.",
+      categoria: "Postura",
+      capa: "",
+      corpo: "Corpo do texto.",
+      publicado: true,
+    };
+    try {
+      await banco.criarPost(dados, id);
+      await expect(banco.criarPost({ ...dados, publicado: false }, id)).rejects.toBeInstanceOf(
+        banco.TiraDoArSemConfirmacao,
+      );
+      expect((await banco.buscarPorId(id))?.publicado).toBe(true);
+
+      // Rascunho que nunca foi ao ar continua sendo guardado de novo normalmente.
+      const outro = crypto.randomUUID();
+      try {
+        await banco.criarPost({ ...dados, publicado: false }, outro);
+        const repetido = await banco.criarPost({ ...dados, publicado: false, corpo: "Outro corpo." }, outro);
+        expect(repetido.estavaPublicado).toBe(false);
+        expect(repetido.post.corpo).toBe("Outro corpo.");
+      } finally {
+        await banco.apagarPost(outro);
+      }
+
+      // O caminho proprio de tirar do ar, com confirmacao, segue funcionando.
+      const tirado = await banco.atualizarPost(id, { ...dados, publicado: false });
+      expect(tirado?.publicado).toBe(false);
     } finally {
       await banco.apagarPost(id);
     }

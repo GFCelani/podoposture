@@ -331,10 +331,27 @@ async function slugLivre(base: string, idAtual?: string): Promise<string> {
 }
 
 /**
+ * Lancado quando um envio de texto novo tentaria tirar do ar um texto que ja
+ * esta publicado. Nesse caminho o editor ainda acha que o texto e novo e nunca
+ * mostra o aviso de "Tirar do site e guardar"; a rota responde 409.
+ */
+export class TiraDoArSemConfirmacao extends Error {
+  constructor() {
+    super("envio de texto novo tiraria do ar um texto publicado");
+    this.name = "TiraDoArSemConfirmacao";
+  }
+}
+
+/**
  * Cria o texto. `id`, quando vem, e o que o editor gerou ao abrir: repetir o
  * pedido com o mesmo id atualiza o texto em vez de criar outro. Sem isso, a
  * resposta que se perdia no 4G depois de o banco gravar deixava "Sem conexao",
  * ela clicava de novo e o site ganhava "dor-lombar" e "dor-lombar-2" iguais.
+ *
+ * Essa repeticao nunca tira do ar: com o texto ja publicado e o envio pedindo
+ * rascunho, lanca `TiraDoArSemConfirmacao`. A regra fica na escrita, e nao numa
+ * leitura da rota, porque com dois envios cruzados a leitura via o texto ainda
+ * inexistente e deixava o rascunho passar.
  */
 export async function criarPost(
   dados: DadosDoPost,
@@ -348,7 +365,9 @@ export async function criarPost(
   if (id) {
     const existente = await buscarPorId(id);
     if (existente) {
-      return (await gravarPost(id, dados)) ?? { post: existente, estavaPublicado: existente.publicado };
+      return (
+        (await gravarPost(id, dados, { manterNoAr: true })) ?? { post: existente, estavaPublicado: existente.publicado }
+      );
     }
   }
 
@@ -366,7 +385,7 @@ export async function criarPost(
         RETURNING *`;
       if (linha) return { post: paraPost(linha), estavaPublicado: false };
       // O mesmo id entrou por outro pedido entre a conferencia e a insercao.
-      const atualizado = await gravarPost(idDoPost, dados);
+      const atualizado = await gravarPost(idDoPost, dados, { manterNoAr: true });
       if (atualizado) return atualizado;
     } catch (erro) {
       const codigo = (erro as { code?: string })?.code;
@@ -391,11 +410,16 @@ export async function atualizarPost(
  * o texto ainda inexistente, o segundo tirava do ar sem limpar nada, e o texto
  * seguia na home e no indice. Lido pelo proprio UPDATE, com a linha travada,
  * o estado anterior e o que o banco tinha no instante da troca.
+ *
+ * `manterNoAr` recusa, pela mesma linha travada, a troca de publicado para
+ * rascunho (ver `criarPost`).
  */
 async function gravarPost(
   id: string,
   dados: DadosDoPost,
+  opcoes: { manterNoAr?: boolean } = {},
 ): Promise<{ post: PostDoPainel; estavaPublicado: boolean } | null> {
+  const manterNoAr = opcoes.manterNoAr === true;
   await garantirTabelas();
   const sql = bancoDoPainel();
   const atual = await buscarPorId(id);
@@ -425,8 +449,14 @@ async function gravarPost(
       }
     FROM (SELECT id, publicado FROM posts WHERE id = ${id} FOR UPDATE) AS antes
     WHERE posts.id = antes.id
+      AND (${!manterNoAr}::boolean OR antes.publicado = FALSE OR ${dados.publicado}::boolean)
     RETURNING posts.*, antes.publicado AS estava_publicado`;
-  return linha ? { post: paraPost(linha), estavaPublicado: linha.estava_publicado } : null;
+  if (linha) return { post: paraPost(linha), estavaPublicado: linha.estava_publicado };
+  // Nada escrito: ou o texto sumiu entre a leitura e a escrita, ou a regra
+  // acima recusou. A decisao ja foi tomada com a linha travada; esta leitura so
+  // diz qual dos dois foi.
+  if (manterNoAr && !dados.publicado && (await buscarPorId(id))?.publicado) throw new TiraDoArSemConfirmacao();
+  return null;
 }
 
 export async function apagarPost(id: string): Promise<boolean> {
