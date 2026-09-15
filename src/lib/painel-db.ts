@@ -114,6 +114,15 @@ export function lerComDisjuntor<T>(leitura: () => Promise<T>): Promise<T> {
   return disjuntorPublico.ler(leitura);
 }
 
+/**
+ * Como `lerComDisjuntor`, mas com direito a UMA tentativa direta por pausa
+ * (ver `sondar` em disjuntor.ts). So para leitura que nao tem o que mostrar sem
+ * banco — hoje, a pagina de um post do painel.
+ */
+export function sondarComDisjuntor<T>(leitura: () => Promise<T>): Promise<T> {
+  return disjuntorPublico.sondar(leitura);
+}
+
 /** 42P01 = tabela inexistente: o painel ainda nao gravou nada nesta base. */
 function tabelaAusente(erro: unknown): boolean {
   return (erro as { code?: string })?.code === "42P01";

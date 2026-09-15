@@ -56,6 +56,49 @@ describe("criarDisjuntor", () => {
     expect(disjuntor.emPausa()).toBe(false);
   });
 
+  it("na pausa, N sondagens tocam o banco uma vez so", async () => {
+    const r = relogio();
+    const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora });
+    await expect(disjuntor.ler(() => Promise.reject(erroCom("CONNECT_TIMEOUT")))).rejects.toBeTruthy();
+
+    // Uma leitura que nunca responde durante o teste: as outras chegam com a
+    // sondagem ainda esperando o banco.
+    let responder: (erro: unknown) => void = () => {};
+    const leitura = vi.fn(
+      () => new Promise<never>((_, rejeitar) => { responder = rejeitar; }),
+    );
+    const primeira = disjuntor.sondar(leitura);
+    const outras = Array.from({ length: 5 }, () => disjuntor.sondar(leitura));
+    for (const outra of outras) await expect(outra).rejects.toBeInstanceOf(BancoEmPausa);
+    responder(erroCom("CONNECT_TIMEOUT"));
+    await expect(primeira).rejects.toMatchObject({ code: "CONNECT_TIMEOUT" });
+    expect(leitura).toHaveBeenCalledTimes(1);
+
+    // A sondagem que falhou recomeca a pausa ja sondada: nada de outra tentativa.
+    r.andar(5_000);
+    await expect(disjuntor.sondar(leitura)).rejects.toBeInstanceOf(BancoEmPausa);
+    expect(leitura).toHaveBeenCalledTimes(1);
+    expect(disjuntor.emPausa()).toBe(true);
+  });
+
+  it("sondagem que acerta fecha o disjuntor para todas as leituras", async () => {
+    const r = relogio();
+    const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora });
+    await expect(disjuntor.ler(() => Promise.reject(erroCom("ECONNREFUSED")))).rejects.toBeTruthy();
+    expect(disjuntor.emPausa()).toBe(true);
+
+    await expect(disjuntor.sondar(() => Promise.resolve("post"))).resolves.toBe("post");
+    expect(disjuntor.emPausa()).toBe(false);
+    // A home e o indice, que usam `ler`, voltam ao banco na hora.
+    await expect(disjuntor.ler(() => Promise.resolve("home"))).resolves.toBe("home");
+
+    // E uma falha nova abre outra janela, com direito a sua propria sondagem.
+    await expect(disjuntor.ler(() => Promise.reject(erroCom("ECONNREFUSED")))).rejects.toBeTruthy();
+    const leitura = vi.fn().mockResolvedValue(2);
+    await expect(disjuntor.sondar(leitura)).resolves.toBe(2);
+    expect(leitura).toHaveBeenCalledTimes(1);
+  });
+
   it("conexao que cai duas vezes seguidas conta como falha", async () => {
     const r = relogio();
     const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora });

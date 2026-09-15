@@ -4,7 +4,7 @@ import { cache } from "react";
 
 import { BancoEmPausa, emConstrucao } from "./disjuntor";
 import { contarPalavras, markdownParaHtml } from "./markdown";
-import { buscarPorSlug, lerComDisjuntor, listarPublicadosSemCorpo } from "./painel-db";
+import { buscarPorSlug, lerComDisjuntor, listarPublicadosSemCorpo, sondarComDisjuntor } from "./painel-db";
 import { rotuloDaData, slugValido, type ResumoDoPainel } from "./painel-tipos";
 import {
   BRUTOS_DO_JSON,
@@ -124,12 +124,14 @@ export async function categoriasDoSite(): Promise<Tema[]> {
  * invalidacao — publicar qualquer coisa, ou a coleta da noite — nao ha versao
  * guardada nenhuma, e ate o banco voltar a pagina do texto responde erro.
  *
- * Por isso a pausa do disjuntor nao vale aqui. A pausa existe para a LISTA do
- * blog, que toda visita pede e que tem os 68 posts do JSON para mostrar sem
- * banco nenhum; esta leitura e de um post so, por chave unica, e so acontece
- * em endereco que o repositorio nao tem. Desistir sem tentar seria responder
- * erro num texto publicado enquanto o banco ja voltou. O preco, quando o banco
- * esta fora de verdade, e uma espera de `connect_timeout` nessa visita.
+ * Por isso a pausa do disjuntor vale aqui pela metade. A pausa existe para a
+ * LISTA do blog, que toda visita pede e que tem os 68 posts do JSON para
+ * mostrar sem banco nenhum; esta leitura e de um post so, e desistir sem tentar
+ * seria responder erro num texto publicado enquanto o banco ja voltou. Mas
+ * tentar em TODA visita trazia de volta a fila de 10 s na conexao unica. Entao:
+ * uma tentativa direta por janela de pausa (`sondarComDisjuntor`). Se acerta, o
+ * disjuntor fecha e home e indice voltam ao banco junto; as outras visitas da
+ * mesma janela respondem erro na hora, sem esperar, e erro nao fica em cache.
  *
  * No build a falha segue virando `undefined`, porque la nenhum post do banco e
  * pre-gerado e erro derrubaria o build.
@@ -140,17 +142,10 @@ const postDoBanco = cache(async (slug: string): Promise<PostBruto | undefined> =
     return post ? brutoDoPainel(post, post.corpo) : undefined;
   };
   try {
-    return await lerComDisjuntor(buscar);
+    // No build a pausa inteira vale: la a falha vira `undefined`, e sondar em
+    // cada uma das paginas seria esperar o timeout de novo em cada uma.
+    return await (emConstrucao() ? lerComDisjuntor(buscar) : sondarComDisjuntor(buscar));
   } catch (erro) {
-    // Em pausa nada foi tentado ainda: vale uma tentativa direta (ver acima).
-    if (erro instanceof BancoEmPausa && !emConstrucao()) {
-      try {
-        return await buscar();
-      } catch (segundo) {
-        console.error("[blog] banco indisponivel ao buscar post do painel:", segundo);
-        throw new Error("banco indisponivel ao buscar post do painel", { cause: segundo });
-      }
-    }
     if (!(erro instanceof BancoEmPausa)) {
       console.error("[blog] banco indisponivel ao buscar post do painel:", erro);
     }
