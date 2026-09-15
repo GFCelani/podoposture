@@ -7,7 +7,7 @@ import { exigirSessao } from "@/lib/guarda";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { bancoConfigurado, buscarPorId, criarPost, listarTodos, registrarAuditoria } from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
-import { camposDoCorpo, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
+import { camposDoCorpo, envioMudaOSite, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
 import { BLOG_INDEX, BRUTOS_DO_JSON, hrefDoPost } from "@/lib/posts";
 
 export const runtime = "nodejs";
@@ -100,17 +100,20 @@ export async function POST(req: Request) {
       ipDaRequisicao(await headers()),
     );
 
-    // Sempre, e nao so quando o texto fica publicado. Este mesmo POST atualiza
-    // quando o id ja existe, e uma atualizacao muda o que as paginas em cache
-    // mostram — inclusive quando ela TIRA o texto do ar. Limpar so no caso
-    // `publicado` deixava o texto fora do banco e ainda visivel no site, ate a
-    // proxima publicacao ou deploy. O PUT ja limpava sempre; aqui nao.
-    revalidatePath(BLOG_INDEX);
-    revalidatePath(hrefDoPost(post.slug));
-    revalidatePath("/");
-    // O sitemap tambem e montado no build: sem isto, o post existe, abre pela
-    // URL e nunca e anunciado ao buscador.
-    revalidatePath("/sitemap.xml");
+    // Quando o site muda: o texto fica publicado, ou ja estava no ar antes deste
+    // envio. Este mesmo POST atualiza quando o id ja existe, e essa atualizacao
+    // pode TIRAR o texto do ar — olhar so `post.publicado` deixava o texto fora
+    // do banco e ainda visivel no site ate a proxima publicacao. O que fica de
+    // fora e so o rascunho que nunca esteve no ar: limpar home, indice e
+    // sitemap por ele refazia tres paginas iguais a cada "Guardar rascunho".
+    if (envioMudaOSite(existente, post)) {
+      revalidatePath(BLOG_INDEX);
+      revalidatePath(hrefDoPost(post.slug));
+      revalidatePath("/");
+      // O sitemap tambem e montado no build: sem isto, o post existe, abre pela
+      // URL e nunca e anunciado ao buscador.
+      revalidatePath("/sitemap.xml");
+    }
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (erro) {

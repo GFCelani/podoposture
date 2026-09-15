@@ -234,6 +234,20 @@ export function repetirTiraDoAr(
   return existente?.publicado === true && !novos.publicado;
 }
 
+/**
+ * O envio de um texto pelo POST muda o que o site mostra?
+ *
+ * Muda quando o texto fica publicado ou quando ja estava no ar antes (o POST
+ * repetido atualiza, e pode tirar do ar). So o rascunho que nunca esteve no ar
+ * nao muda nada, e por ele nao se refaz home, indice e sitemap.
+ */
+export function envioMudaOSite(
+  existente: Pick<PostDoPainel, "publicado"> | null,
+  salvo: Pick<DadosDoPost, "publicado">,
+): boolean {
+  return existente?.publicado === true || salvo.publicado;
+}
+
 /** A frase curta que aparece na lista depois de salvar. Diz o que mudou no site. */
 export function mensagemAoSalvar(publicarAgora: boolean, estavaNoAr: boolean): string {
   if (publicarAgora) {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   ehEstreia,
   enderecoPodeMudar,
+  envioMudaOSite,
   errosComCampo,
   mensagemAoSalvar,
   mensagemDeFalhaAoSalvar,
@@ -128,6 +129,19 @@ describe("mensagemAoSalvar", () => {
     [false, false, "Rascunho guardado. Ele ainda não está no site."],
   ])("publicar=%s, estava no ar=%s", (publicar, estavaNoAr, esperada) => {
     expect(mensagemAoSalvar(publicar, estavaNoAr)).toBe(esperada);
+  });
+});
+
+describe("envioMudaOSite", () => {
+  it.each([
+    [null, true, true],
+    [{ publicado: false }, true, true],
+    [{ publicado: true }, true, true],
+    [{ publicado: true }, false, true],
+    [{ publicado: false }, false, false],
+    [null, false, false],
+  ])("antes=%j, publicado agora=%s -> %s", (existente, publicado, esperado) => {
+    expect(envioMudaOSite(existente, { publicado })).toBe(esperado);
   });
 });
 
