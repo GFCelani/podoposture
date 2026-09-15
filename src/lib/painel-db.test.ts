@@ -193,6 +193,35 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
     expect(depois).toBe(0);
   });
 
+  it("envio repetido com o mesmo id diz se o texto estava no ar logo antes da propria escrita", async () => {
+    const id = crypto.randomUUID();
+    const dados = {
+      titulo: `Teste de envio cruzado ${id.slice(0, 8)}`,
+      resumo: "Resumo.",
+      categoria: "Postura",
+      capa: "",
+      corpo: "Corpo do texto.",
+      publicado: true,
+    };
+    try {
+      // O primeiro envio publica; o segundo, com o mesmo id, guarda como
+      // rascunho. Mesmo que a rota tenha lido o texto como inexistente antes, o
+      // estado de antes vem da escrita, e a limpeza do site acontece.
+      const primeiro = await banco.criarPost(dados, id);
+      expect(primeiro.estavaPublicado).toBe(false);
+      expect(primeiro.post.publicado).toBe(true);
+
+      const segundo = await banco.criarPost({ ...dados, publicado: false }, id);
+      expect(segundo.estavaPublicado).toBe(true);
+      expect(segundo.post.publicado).toBe(false);
+
+      const terceiro = await banco.criarPost({ ...dados, publicado: false }, id);
+      expect(terceiro.estavaPublicado).toBe(false);
+    } finally {
+      await banco.apagarPost(id);
+    }
+  });
+
   it("com menos de 2.000 acoes nao apaga nada", async () => {
     const sql = banco.bancoDoPainel();
     await sql`

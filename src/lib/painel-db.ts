@@ -330,7 +330,10 @@ async function slugLivre(base: string, idAtual?: string): Promise<string> {
  * resposta que se perdia no 4G depois de o banco gravar deixava "Sem conexao",
  * ela clicava de novo e o site ganhava "dor-lombar" e "dor-lombar-2" iguais.
  */
-export async function criarPost(dados: DadosDoPost, id?: string): Promise<PostDoPainel> {
+export async function criarPost(
+  dados: DadosDoPost,
+  id?: string,
+): Promise<{ post: PostDoPainel; estavaPublicado: boolean }> {
   await garantirTabelas();
   const sql = bancoDoPainel();
   const base = gerarSlug(dados.titulo);
@@ -338,7 +341,9 @@ export async function criarPost(dados: DadosDoPost, id?: string): Promise<PostDo
 
   if (id) {
     const existente = await buscarPorId(id);
-    if (existente) return (await atualizarPost(id, dados)) ?? existente;
+    if (existente) {
+      return (await gravarPost(id, dados)) ?? { post: existente, estavaPublicado: existente.publicado };
+    }
   }
 
   // Duas pessoas salvando ao mesmo tempo podem escolher o mesmo endereco entre
@@ -353,9 +358,9 @@ export async function criarPost(dados: DadosDoPost, id?: string): Promise<PostDo
                 ${dados.publicado ? sql`NOW()` : null})
         ON CONFLICT (id) DO NOTHING
         RETURNING *`;
-      if (linha) return paraPost(linha);
+      if (linha) return { post: paraPost(linha), estavaPublicado: false };
       // O mesmo id entrou por outro pedido entre a conferencia e a insercao.
-      const atualizado = await atualizarPost(idDoPost, dados);
+      const atualizado = await gravarPost(idDoPost, dados);
       if (atualizado) return atualizado;
     } catch (erro) {
       const codigo = (erro as { code?: string })?.code;
@@ -369,6 +374,22 @@ export async function atualizarPost(
   id: string,
   dados: DadosDoPost,
 ): Promise<PostDoPainel | null> {
+  return (await gravarPost(id, dados))?.post ?? null;
+}
+
+/**
+ * O UPDATE de um texto, devolvendo tambem se ele estava publicado logo antes
+ * DESTA escrita. Quem decide limpar o cache do site precisa desse estado, e nao
+ * de uma leitura feita antes: com dois envios cruzados (publicar, a resposta se
+ * perde no 4G, e ela clica em guardar como rascunho), a leitura do segundo via
+ * o texto ainda inexistente, o segundo tirava do ar sem limpar nada, e o texto
+ * seguia na home e no indice. Lido pelo proprio UPDATE, com a linha travada,
+ * o estado anterior e o que o banco tinha no instante da troca.
+ */
+async function gravarPost(
+  id: string,
+  dados: DadosDoPost,
+): Promise<{ post: PostDoPainel; estavaPublicado: boolean } | null> {
   await garantirTabelas();
   const sql = bancoDoPainel();
   const atual = await buscarPorId(id);
@@ -385,20 +406,21 @@ export async function atualizarPost(
   // O endereco segue a mesma cautela: a leitura acima pode ser de antes de
   // outro salvamento publicar o texto, e so o proprio UPDATE sabe se ele ja
   // foi ao ar. Com `publicado_em` preenchido o slug fica, venha de onde vier.
-  const [linha] = await sql<LinhaPost[]>`
+  const [linha] = await sql<(LinhaPost & { estava_publicado: boolean })[]>`
     UPDATE posts SET
-      slug = CASE WHEN publicado_em IS NULL THEN ${slug} ELSE slug END,
+      slug = CASE WHEN posts.publicado_em IS NULL THEN ${slug} ELSE posts.slug END,
       titulo = ${dados.titulo}, resumo = ${dados.resumo},
       categoria = ${dados.categoria}, capa = ${dados.capa}, corpo = ${dados.corpo},
       publicado = ${dados.publicado}, atualizado_em = NOW(),
       publicado_em = ${
         ehEstreia(atual.publicadoEm, dados.publicado)
-          ? sql`COALESCE(publicado_em, NOW())`
-          : sql`publicado_em`
+          ? sql`COALESCE(posts.publicado_em, NOW())`
+          : sql`posts.publicado_em`
       }
-    WHERE id = ${id}
-    RETURNING *`;
-  return linha ? paraPost(linha) : null;
+    FROM (SELECT id, publicado FROM posts WHERE id = ${id} FOR UPDATE) AS antes
+    WHERE posts.id = antes.id
+    RETURNING posts.*, antes.publicado AS estava_publicado`;
+  return linha ? { post: paraPost(linha), estavaPublicado: linha.estava_publicado } : null;
 }
 
 export async function apagarPost(id: string): Promise<boolean> {

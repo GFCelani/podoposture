@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const post = await criarPost(campos, id);
+    const { post, estavaPublicado } = await criarPost(campos, id);
     await registrarAuditoria(
       post.publicado ? "post-publicado" : "post-rascunho",
       post.slug,
@@ -106,7 +106,10 @@ export async function POST(req: Request) {
     // do banco e ainda visivel no site ate a proxima publicacao. O que fica de
     // fora e so o rascunho que nunca esteve no ar: limpar home, indice e
     // sitemap por ele refazia tres paginas iguais a cada "Guardar rascunho".
-    if (envioMudaOSite(existente, post)) {
+    // O "antes" e o que a propria escrita viu (`estavaPublicado`), e nao o
+    // `existente` lido la em cima: com dois envios cruzados ele e de antes do
+    // outro envio publicar.
+    if (envioMudaOSite({ publicado: estavaPublicado }, post)) {
       revalidatePath(BLOG_INDEX);
       revalidatePath(hrefDoPost(post.slug));
       revalidatePath("/");
