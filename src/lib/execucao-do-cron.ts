@@ -97,6 +97,29 @@ export type PassosDoCron = {
   anotarQuePulou: (motivo: string) => Promise<void>;
 };
 
+/** Codigos de banco que recusou a conexao ou nem foi achado, e nao de banco travado. */
+const CONEXAO_RECUSADA = new Set(["ECONNREFUSED", "ENOTFOUND", "EHOSTUNREACH", "ENETUNREACH"]);
+
+function conexaoRecusada(erro: unknown): boolean {
+  const codigo = (erro as { code?: unknown } | null)?.code;
+  return typeof codigo === "string" && CONEXAO_RECUSADA.has(codigo);
+}
+
+/** Por quanto tempo uma recusa ainda explica uma gravacao que nao volta. */
+const RECUSA_RECENTE_MS = 5 * 60 * 1000;
+
+/**
+ * O que a instancia lembra do banco entre uma execucao e outra.
+ *
+ * Existe por causa do driver: depois de uma conexao recusada, cada tentativa
+ * nova espera um intervalo crescente (medido: 0,2 s, 2 s, 5 s, ate uns 20 s)
+ * antes de falhar. Na primeira execucao a recusa volta na hora; numa segunda
+ * na mesma instancia a gravacao fica esperando esse intervalo e estoura o
+ * prazo, e sem esta memoria saia "prazo esgotado", como se o banco estivesse
+ * travado e nao fora do ar.
+ */
+export type MemoriaDoBanco = { recusouEm: number | null };
+
 export async function executarColeta(entrada: {
   inicio: number;
   /** Quanto a execucao inteira pode durar, ja descontado o tempo de responder. */
@@ -106,6 +129,8 @@ export async function executarColeta(entrada: {
   busca: Intervalo | null;
   passos: PassosDoCron;
   agora?: () => number;
+  /** Guardada pela rota entre execucoes da mesma instancia (ver `MemoriaDoBanco`). */
+  memoria?: MemoriaDoBanco;
 }): Promise<Feito> {
   const { passos, historico } = entrada;
   const agora = entrada.agora ?? Date.now;
@@ -147,6 +172,8 @@ export async function executarColeta(entrada: {
         // Grava o que chegou mesmo com erro: dia que veio inteiro nao precisa
         // esperar a proxima noite por causa de outro dia que falhou.
         const linhas = await noBanco(fonte, () => passos.gravarLinhas(resultado.linhas));
+        // O banco aceitou: uma recusa antiga nao explica mais um corte daqui para frente.
+        if (entrada.memoria) entrada.memoria.recusouEm = null;
         const situacao: SituacaoDaColeta = resultado.erro ? "erro" : "ok";
         await noBanco(fonte, () =>
           passos.registrarColeta({ fonte, situacao, historico, ate: resultado.ate, linhas, erro: resultado.erro }),
@@ -155,6 +182,9 @@ export async function executarColeta(entrada: {
         resumo = { fonte, situacao, intervalo, linhas, ate: resultado.ate, erro: resultado.erro };
       }
     } catch (erro) {
+      // Anotada mesmo depois do corte: a recusa que chega atrasada e o que
+      // explica o corte da proxima execucao nesta instancia.
+      if (conexaoRecusada(erro) && entrada.memoria) entrada.memoria.recusouEm = agora();
       if (cortado) return;
       console.error(`[cron] falha ao gravar ${fonte}:`, erro);
       feito.gravacaoFalhou = true;
@@ -177,9 +207,19 @@ export async function executarColeta(entrada: {
     const pendentes = [...emCurso.entries()];
     emCurso.clear();
     if (pendentes.some(([, onde]) => onde === "banco")) {
-      feito.prazoEsgotado = true;
       feito.gravacaoFalhou = true;
-      console.error("[cron] a execucao passou do prazo: o banco nao respondeu a tempo (fora do ar, travado ou recusando conexao)");
+      const recusou = entrada.memoria?.recusouEm;
+      if (recusou != null && agora() - recusou < RECUSA_RECENTE_MS) {
+        // O banco nao esta travado: esta recusando conexao, e o driver espera
+        // um intervalo crescente antes de tentar de novo. Mesmo tratamento do
+        // banco fora abaixo, sem dizer que o prazo acabou.
+        console.error("[cron] podas, aviso e limpeza do cache pulados: o banco esta recusando conexao");
+        feito.podaFalhou = historico ? null : true;
+        feito.cacheInvalidado = historico ? null : false;
+        return feito;
+      }
+      feito.prazoEsgotado = true;
+      console.error("[cron] a execucao passou do prazo: o banco nao respondeu a tempo");
       return feito;
     }
     // Quem demorou foi a Vercel ou o Google. O banco nao esta implicado, e a

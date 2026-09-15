@@ -149,6 +149,55 @@ describe("roteiro da coleta diaria", () => {
     expect(ordem).not.toContain("invalidar");
   });
 
+  it("segunda execucao com o banco recusando: o driver faz esperar, mas a resposta nao diz prazo esgotado", async () => {
+    // Medido na rodada: na mesma instancia a primeira volta em 0,5 s, a
+    // segunda espera ~20 s e a terceira estourava o prazo com prazoEsgotado:true.
+    const memoria = { recusouEm: null as number | null };
+    const recusando: PassosDoCron = {
+      ...passosCertos([]),
+      gravarLinhas: () => Promise.reject(recusado()),
+      registrarColeta: () => Promise.reject(recusado()),
+    };
+    const primeira = executarColeta({
+      inicio: Date.now(),
+      limiteMs: LIMITE_MS,
+      historico: false,
+      vercel: INTERVALO,
+      busca: INTERVALO,
+      passos: recusando,
+      memoria,
+    });
+    await vi.advanceTimersByTimeAsync(10);
+    expect((await primeira).prazoEsgotado).toBe(false);
+    expect(memoria.recusouEm).not.toBeNull();
+
+    const ordem: string[] = [];
+    const esperandoReconectar: PassosDoCron = {
+      ...passosCertos(ordem),
+      gravarLinhas: async () => {
+        await dormir(45_000);
+        throw recusado();
+      },
+      registrarColeta: () => Promise.reject(recusado()),
+    };
+    const segunda = executarColeta({
+      inicio: Date.now(),
+      limiteMs: LIMITE_MS,
+      historico: false,
+      vercel: INTERVALO,
+      busca: INTERVALO,
+      passos: esperandoReconectar,
+      memoria,
+    });
+    await vi.advanceTimersByTimeAsync(LIMITE_MS + 5_000);
+    expect(await segunda).toMatchObject({ prazoEsgotado: false, podaFalhou: true, cacheInvalidado: false });
+    expect(ordem).not.toContain("invalidar");
+
+    // Sem recusa recente, o mesmo corte e banco travado.
+    const semMemoria = await rodar({ ...passosCertos([]), gravarLinhas: NUNCA });
+    expect(semMemoria.feito.prazoEsgotado).toBe(true);
+  });
+
   it("Vercel ou Google lentos: o corte nao culpa o banco, e podas, aviso e limpeza seguem", async () => {
     const ordem: string[] = [];
     const registros: string[] = [];

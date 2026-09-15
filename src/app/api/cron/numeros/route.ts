@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { lerPublicados } from "@/lib/conteudo-db";
 import { exigirSegredoDoCron, statusDoCron } from "@/lib/cron";
-import { executarColeta, type Resumo } from "@/lib/execucao-do-cron";
+import { executarColeta, type MemoriaDoBanco, type Resumo } from "@/lib/execucao-do-cron";
 import { coletarBusca, configDaBusca } from "@/lib/fonte-search-console";
 import { coletarVercel, configDaVercel } from "@/lib/fonte-vercel";
 import {
@@ -40,6 +40,9 @@ const FOLGA_PARA_RESPONDER_MS = 3_000;
 
 /** O teto de espera pelo Telegram, quando o prazo do aviso ainda permite. */
 const TEMPO_DO_TELEGRAM_MS = 5_000;
+
+/** Vive enquanto a instancia vive, como a conexao do driver cuja espera ela explica. */
+const memoriaDoBanco: MemoriaDoBanco = { recusouEm: null };
 
 const NOME_DA_FONTE: Record<Fonte, string> = {
   vercel: "visitas (Vercel)",
@@ -114,6 +117,7 @@ export async function GET(req: Request) {
     historico: janela.historico,
     vercel: janela.vercel,
     busca: janela.busca,
+    memoria: memoriaDoBanco,
     passos: {
       primeiroDiaGuardado,
       coletar: async (fonte, intervalo, { prazo, guardadoDesde }) => {
