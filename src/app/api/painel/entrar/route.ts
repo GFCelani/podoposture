@@ -52,15 +52,24 @@ const PRAZO_DO_CORPO_MS = 5_000;
  * ficar trancada 15 minutos com a senha certa.
  *
  * E ocupada DEPOIS de ler o corpo, pelo motivo oposto. Dentro da vaga, a
- * leitura a prendia pelo tempo que ela levasse, e ela nao tem prazo nenhum:
- * duas conexoes lentas, de graca e sem senha nenhuma, bastavam para a dona da
+ * leitura a prendia pelo tempo que ela levasse (ate o prazo acima): duas
+ * conexoes lentas, de graca e sem senha nenhuma, bastavam para a dona da
  * clinica levar 429 ao clicar em Entrar. Ler antes nao afrouxa o limite de
  * tentativas — quem le o corpo ainda nao contou tentativa nem chegou ao
- * `scrypt` —, e o que se gasta com quem ja estourou o limite sao 4 KB e o
- * prazo curto acima.
+ * `scrypt`.
+ *
+ * Mas a leitura fora da vaga nao pode ficar sem teto nenhum: cada leitura
+ * pendurada segura um buffer de ate 4 KB e um temporizador por ate 5 s, e mil
+ * conexoes lentas somavam mil de cada. Por isso sao DOIS tetos: `MAXIMO_LENDO`,
+ * folgado, so em volta da leitura (uma pessoa entrando nunca chega perto dele),
+ * e `MAXIMO_EM_VOO`, apertado, em volta do limite de tentativas e do `scrypt`.
  */
 const MAXIMO_EM_VOO = 2;
 let emVoo = 0;
+
+/** Leituras de corpo simultaneas nesta instancia. Ver o comentario acima. */
+const MAXIMO_LENDO = 50;
+let lendo = 0;
 
 /**
  * O que a tela mostra para a senha errada: o que conferir e o que fazer quando
@@ -80,8 +89,21 @@ export async function POST(req: Request) {
     );
   }
 
-  // 2. o corpo, com teto em bytes reais e prazo — fora da vaga (ver acima)
-  const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO, PRAZO_DO_CORPO_MS);
+  // 2. o corpo, com teto em bytes reais e prazo — fora da vaga do scrypt, mas
+  // dentro do teto folgado de leituras (ver acima)
+  if (lendo >= MAXIMO_LENDO) {
+    return NextResponse.json(
+      { erro: "Muitas tentativas ao mesmo tempo. Tente de novo em instantes." },
+      { status: 429, headers: { "Retry-After": "5" } },
+    );
+  }
+  lendo += 1;
+  let leitura: Awaited<ReturnType<typeof lerCorpoLimitado>>;
+  try {
+    leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO, PRAZO_DO_CORPO_MS);
+  } finally {
+    lendo -= 1;
+  }
   if (!leitura.ok) {
     return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 413 });
   }
