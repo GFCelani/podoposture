@@ -198,7 +198,8 @@ Contado da aba aberta até a home publicada; digitar o texto novo não conta.
 3. **Não conseguir desfazer.** Todo campo alterado tem "voltar ao texto original" ao lado,
    e o texto original aparece escrito, não só um botão.
 4. **Campo medido virar texto livre.** Onde o layout foi medido à mão (título do hero), o
-   campo diz o limite de caracteres por linha e avisa antes de passar, não depois.
+   limite é de largura, não de letras: cada linha tem um contador que mostra quanto do espaço
+   ao lado das figuras ela ocupa e avisa antes de passar, não depois.
 5. **Foto recusada no iPhone.** O Safari não gera WebP; o envio cai para JPEG sozinho e ela
    nunca vê a palavra "formato".
 6. **Sessão vencer no meio.** Mesma promessa do blog: a mensagem diz que nada se perdeu.

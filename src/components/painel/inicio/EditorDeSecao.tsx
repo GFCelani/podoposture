@@ -642,8 +642,8 @@ export function EditorDeSecao({
         {chave === "hero" && (
           <>
             <p className={NOTA}>
-              O título foi medido para caber ao lado das figuras: cada linha tem um limite de caracteres e
-              quebra exatamente onde você quebrar. Antes de publicar, confira como vai ficar numa tela de
+              O título foi medido para caber ao lado das figuras: cada linha precisa caber nesse espaço, e o
+              título quebra exatamente onde você quebrar. Antes de publicar, confira como vai ficar numa tela de
               notebook ou computador, não só no celular.
             </p>
             {/* Aviso honesto: public/og.png e uma captura fixa do topo, e o painel nao a refaz. */}
