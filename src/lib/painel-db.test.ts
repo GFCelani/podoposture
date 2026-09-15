@@ -36,7 +36,9 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
   }, 30_000);
 
   beforeEach(async () => {
-    await banco.bancoDoPainel()`TRUNCATE painel_tentativas, painel_auditoria, painel_manutencao`;
+    // RESTART IDENTITY: a poda por volume depende do id de cada acao, e sem
+    // recomecar a contagem um teste cairia num multiplo do passo por acaso.
+    await banco.bancoDoPainel()`TRUNCATE painel_tentativas, painel_auditoria, painel_manutencao RESTART IDENTITY`;
   });
 
   afterAll(async () => {
@@ -131,6 +133,64 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
     await banco.registrarAuditoria("post-editado", "x", null);
     const [{ total }] = await sql<{ total: number }[]>`SELECT COUNT(*)::int AS total FROM painel_auditoria`;
     expect(total).toBe(2006);
+  });
+
+  it("enxurrada de acoes: a cada passo apaga um lote do excedente, sem esperar as 24 h", async () => {
+    const sql = banco.bancoDoPainel();
+    // Poda por tempo recente: so a regra por volume pode apagar aqui.
+    await banco.podarDadosDoPainel();
+    await sql`
+      INSERT INTO painel_auditoria (acao, detalhe)
+      SELECT 'login-falhou', 'n' || g FROM generate_series(1, 2500) g`;
+    // A proxima acao cai num multiplo do passo.
+    const [{ ultimo }] = await sql<{ ultimo: string }[]>`SELECT MAX(id)::text AS ultimo FROM painel_auditoria`;
+    const proximo = Math.ceil((Number(ultimo) + 1) / banco.PASSO_DA_PODA_POR_VOLUME) * banco.PASSO_DA_PODA_POR_VOLUME;
+    await sql`SELECT setval(pg_get_serial_sequence('painel_auditoria', 'id'), ${proximo - 1})`;
+
+    await banco.registrarAuditoria("login-falhou", "ultima", null);
+
+    const [{ total }] = await sql<{ total: number }[]>`SELECT COUNT(*)::int AS total FROM painel_auditoria`;
+    expect(total).toBe(2000);
+    const [{ detalhe }] = await sql<{ detalhe: string }[]>`
+      SELECT detalhe FROM painel_auditoria ORDER BY id DESC LIMIT 1`;
+    expect(detalhe).toBe("ultima");
+  });
+
+  it("o lote tem teto: excedente enorme sai aos poucos, e nunca todo dentro de uma requisicao", async () => {
+    const sql = banco.bancoDoPainel();
+    await banco.podarDadosDoPainel();
+    const excedente = banco.LOTE_DA_PODA_POR_VOLUME + 500;
+    await sql`
+      INSERT INTO painel_auditoria (acao, detalhe)
+      SELECT 'login-falhou', 'n' || g FROM generate_series(1, ${2000 + excedente - 1}) g`;
+    const [{ ultimo }] = await sql<{ ultimo: string }[]>`SELECT MAX(id)::text AS ultimo FROM painel_auditoria`;
+    const proximo = Math.ceil((Number(ultimo) + 1) / banco.PASSO_DA_PODA_POR_VOLUME) * banco.PASSO_DA_PODA_POR_VOLUME;
+    await sql`SELECT setval(pg_get_serial_sequence('painel_auditoria', 'id'), ${proximo - 1})`;
+
+    await banco.registrarAuditoria("login-falhou", "ultima", null);
+
+    const [{ total }] = await sql<{ total: number }[]>`SELECT COUNT(*)::int AS total FROM painel_auditoria`;
+    expect(total).toBe(2000 + excedente - banco.LOTE_DA_PODA_POR_VOLUME);
+  });
+
+  it("senha errada nao dispara a poda por tempo, que fica para as acoes do painel e a tarefa da noite", async () => {
+    const sql = banco.bancoDoPainel();
+    // Nenhuma poda registrada: qualquer outra acao podaria agora.
+    await sql`INSERT INTO painel_tentativas (chave, em) VALUES ('antiga', NOW() - INTERVAL '2 hours')`;
+    const [{ ultimo }] = await sql<{ ultimo: string | null }[]>`
+      SELECT last_value::text AS ultimo FROM painel_auditoria_id_seq`;
+    // Longe de um multiplo do passo, para a regra por volume nao entrar.
+    const base = Math.ceil((Number(ultimo ?? 0) + 2) / banco.PASSO_DA_PODA_POR_VOLUME) * banco.PASSO_DA_PODA_POR_VOLUME;
+    await sql`SELECT setval(pg_get_serial_sequence('painel_auditoria', 'id'), ${base + 1})`;
+
+    await banco.registrarAuditoria("login-falhou", null, "203.0.113.9");
+    const [{ tentativas }] = await sql<{ tentativas: number }[]>`
+      SELECT COUNT(*)::int AS tentativas FROM painel_tentativas`;
+    expect(tentativas).toBe(1);
+
+    await banco.registrarAuditoria("login-ok", null, "203.0.113.9");
+    const [{ depois }] = await sql<{ depois: number }[]>`SELECT COUNT(*)::int AS depois FROM painel_tentativas`;
+    expect(depois).toBe(0);
   });
 
   it("com menos de 2.000 acoes nao apaga nada", async () => {

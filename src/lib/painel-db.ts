@@ -446,6 +446,15 @@ export async function buscarImagem(id: string): Promise<ImagemGuardada | null> {
 const MAX_ORIGEM = 45;
 const MAX_AUDITORIA = 2000;
 
+/**
+ * A cada quantas acoes registradas o excedente da auditoria e apagado, e quanto
+ * no maximo por vez. O lote maior que o passo faz o excedente encolher mesmo
+ * com gravacao sem parar; e o limite do lote deixa o DELETE pequeno o bastante
+ * para rodar dentro de qualquer requisicao, inclusive a de login.
+ */
+export const PASSO_DA_PODA_POR_VOLUME = 200;
+export const LOTE_DA_PODA_POR_VOLUME = 1000;
+
 /** Nunca lanca: falha ao registrar nao pode derrubar a acao que estava sendo feita. */
 export async function registrarAuditoria(
   acao: string,
@@ -453,21 +462,48 @@ export async function registrarAuditoria(
   origem: string | null,
 ): Promise<void> {
   if (!bancoConfigurado()) return;
+  let id: number;
   try {
     await garantirTabelas();
     const sql = bancoDoPainel();
-    await sql`
+    const [linha] = await sql<{ id: string }[]>`
       INSERT INTO painel_auditoria (acao, detalhe, origem)
-      VALUES (${acao}, ${detalhe}, ${origem ? origem.slice(0, MAX_ORIGEM) : null})`;
+      VALUES (${acao}, ${detalhe}, ${origem ? origem.slice(0, MAX_ORIGEM) : null})
+      RETURNING id`;
+    id = Number(linha?.id ?? 0);
   } catch (erro) {
     console.error("[painel] falha ao registrar auditoria:", erro);
     return;
   }
   try {
-    await podarSeVenceu();
+    // Por volume, alem do tempo: so com a regra de 24 h, uma enxurrada de senhas
+    // erradas enchia a tabela ate a poda seguinte, e essa poda apagava milhoes
+    // de linhas de uma vez dentro de uma requisicao. Um lote a cada N acoes
+    // mantem o excedente perto de zero o tempo todo.
+    if (id > 0 && id % PASSO_DA_PODA_POR_VOLUME === 0) await podarAuditoriaEmLote();
+    // A poda por tempo nao roda na senha errada: esse caminho e o do ataque, e
+    // quem espera atras dele e a dona tentando entrar. As acoes do painel e a
+    // tarefa da noite cuidam dela.
+    if (acao !== "login-falhou") await podarSeVenceu();
   } catch (erro) {
     console.error("[painel] falha ao podar os dados do painel:", erro);
   }
+}
+
+/** Apaga ate um lote das acoes mais antigas que as 2.000 mais recentes. */
+async function podarAuditoriaEmLote(): Promise<void> {
+  const sql = bancoDoPainel();
+  await sql`
+    DELETE FROM painel_auditoria WHERE id IN (
+      SELECT id FROM painel_auditoria
+      WHERE id < (
+        SELECT COALESCE(MIN(id), 0) FROM (
+          SELECT id FROM painel_auditoria ORDER BY id DESC LIMIT ${MAX_AUDITORIA}
+        ) recentes
+      )
+      ORDER BY id
+      LIMIT ${LOTE_DA_PODA_POR_VOLUME}
+    )`;
 }
 
 /**
@@ -482,6 +518,10 @@ export const INTERVALO_DA_PODA_MS = 24 * 60 * 60 * 1000;
 
 /** As duas limpezas, e a marca de quando rodaram. `sql` e o da transacao de quem chama. */
 async function podar(sql: postgres.TransactionSql): Promise<void> {
+  // Quanto a poda pode segurar o banco. So nesta transacao, com SET LOCAL: na
+  // conexao inteira seria parametro de inicio de sessao, que alguns poolers
+  // recusam. Poda que passa disso desfaz, e a proxima tenta de novo.
+  await sql`SET LOCAL statement_timeout = '20s'`;
   await sql`
     DELETE FROM painel_tentativas
     WHERE em < ${new Date(Date.now() - RETENCAO_DE_TENTATIVAS_MS)}`;
