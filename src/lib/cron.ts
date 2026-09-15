@@ -74,6 +74,20 @@ export function exigirSegredoDoCron(req: Request): Response | null {
  * As dependencias entram por parametro para isto ser testado sem subir Next
  * nem banco.
  */
+/**
+ * O status HTTP da execucao do cron.
+ *
+ * O painel de execucoes da Vercel so olha o status. A autocura pulada era
+ * anotada no diario das coletas com fonte `cache`, que a tela de Números filtra
+ * de proposito — ninguem lia —, e a resposta saia 200: o site podia passar dias
+ * sem invalidar e tudo parecia verde. Agora ela conta como falha, igual a coleta.
+ *
+ * `cacheInvalidado` null = a autocura nem foi tentada (lote de historico).
+ */
+export function statusDoCron(execucao: { coletaFalhou: boolean; cacheInvalidado: boolean | null }): 200 | 502 {
+  return execucao.coletaFalhou || execucao.cacheInvalidado === false ? 502 : 200;
+}
+
 export async function invalidarCacheSeOBancoResponde(passos: {
   /** Uma leitura publica de verdade, pelo mesmo caminho que as paginas usam. */
   provarLeitura: () => Promise<unknown>;

@@ -2,7 +2,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { lerPublicados } from "@/lib/conteudo-db";
-import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde } from "@/lib/cron";
+import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde, statusDoCron } from "@/lib/cron";
 import { coletarBusca, configDaBusca } from "@/lib/fonte-search-console";
 import { coletarVercel, configDaVercel } from "@/lib/fonte-vercel";
 import {
@@ -153,6 +153,8 @@ export async function GET(req: Request) {
   const janela = janelaDaColeta(new Date(inicio), new URL(req.url).searchParams.get("desde"));
   if ("erro" in janela) return NextResponse.json({ erro: janela.erro }, { status: 400 });
 
+  // null no lote de historico, onde a autocura nao roda.
+  let cacheInvalidado: boolean | null = null;
   if (!janela.historico) {
     // Autocura do cache do site (o porque inteiro esta em lib/cron.ts). So na
     // coleta da noite: o backfill roda em lotes seguidos, e invalidar o site a
@@ -165,7 +167,7 @@ export async function GET(req: Request) {
     // o tempo — se ela estourar, nada e invalidado, esteja a chamada onde
     // estiver. Quem cuida do prazo e o `prazo` abaixo, que reserva
     // FOLGA_PARA_GRAVAR_MS dos 60 s para o handler fechar e responder.
-    await invalidarCacheSeOBancoResponde({
+    cacheInvalidado = await invalidarCacheSeOBancoResponde({
       // A mesma leitura publica que a home faz, pelo mesmo disjuntor.
       provarLeitura: () => lerComDisjuntor(lerPublicados),
       invalidar: () => revalidatePath("/", "layout"),
@@ -192,15 +194,18 @@ export async function GET(req: Request) {
     await avisarSeFalhouDuasNoites(resumos);
   }
 
-  const falhou = resumos.some((r) => r.situacao === "erro");
+  const coletaFalhou = resumos.some((r) => r.situacao === "erro");
   return NextResponse.json(
     {
       fontes: resumos,
       historico: janela.historico,
       ajustadoAoTeto: janela.ajustadoAoTeto,
       proximoDesde: janela.proximoDesde,
+      // Na resposta, e nao so no diario: e o que aparece no log da execucao.
+      cacheInvalidado,
     },
-    // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o status.
-    { status: falhou ? 502 : 200 },
+    // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o
+    // status — tanto a coleta que falhou quanto a autocura pulada.
+    { status: statusDoCron({ coletaFalhou, cacheInvalidado }) },
   );
 }

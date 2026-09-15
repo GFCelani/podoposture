@@ -167,6 +167,10 @@ export async function registrarColeta(registro: RegistroDeColeta): Promise<void>
  * fontes de verdade, entao esta linha nao vira "a coleta de visitas falhou" nem
  * dispara aviso por Telegram. E rastro para quem for descobrir por que o site
  * passou um dia mostrando o texto padrao.
+ *
+ * O ALARME nao e esta linha, que nenhuma tela mostra: e a resposta do cron, que
+ * sai 502 com `cacheInvalidado: false` e acende a execucao no painel da Vercel
+ * (ver `statusDoCron` em lib/cron.ts).
  */
 export async function registrarCachePulado(motivo: string): Promise<void> {
   await garantirTabelasDeNumeros();

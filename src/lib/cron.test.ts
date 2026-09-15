@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde } from "./cron";
+import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde, statusDoCron } from "./cron";
 
 const SEGREDO = "s3gredo-do-cron-com-folga";
 
@@ -134,5 +134,21 @@ describe("autocura do cache do site", () => {
 
     expect(invalidou).toBe(false);
     expect(invalidar).not.toHaveBeenCalled();
+  });
+});
+
+describe("status da execucao do cron", () => {
+  it("autocura pulada responde 502, mesmo com a coleta certa", () => {
+    // Antes saia 200: a autocura pulada ficava so no diario que ninguem le.
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: false })).toBe(502);
+  });
+
+  it("coleta com erro responde 502", () => {
+    expect(statusDoCron({ coletaFalhou: true, cacheInvalidado: true })).toBe(502);
+  });
+
+  it("tudo certo, ou lote de historico sem autocura, responde 200", () => {
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: true })).toBe(200);
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null })).toBe(200);
   });
 });
