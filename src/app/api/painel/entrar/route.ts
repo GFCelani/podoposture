@@ -72,9 +72,10 @@ let emVoo = 0;
  * Leituras de corpo simultaneas. Um teto global unico de 50 deixava um script
  * ocupar todas as vagas e recusar a dona; agora so a origem que passa do
  * proprio teto e recusada, e com o total cheio a leitura corre com prazo curto
- * em vez de recusar. Ver lib/vagas-de-leitura.ts.
+ * em vez de recusar. Acima do teto absoluto recusa de qualquer origem: e o que
+ * limita, de fato, a memoria das leituras penduradas. Ver lib/vagas-de-leitura.ts.
  */
-const vagasDeLeitura = criarVagasDeLeitura({ maximoPorOrigem: 4, maximoTotal: 200 });
+const vagasDeLeitura = criarVagasDeLeitura({ maximoPorOrigem: 4, maximoTotal: 200, maximoAbsoluto: 400 });
 
 /** Prazo da leitura quando as vagas estao cheias: 4 KB de quem esta entrando chegam bem antes. */
 const PRAZO_CURTO_DO_CORPO_MS = 1_000;
@@ -116,6 +117,16 @@ export async function POST(req: Request) {
     );
   } finally {
     vagasDeLeitura.liberar(origemDaLeitura);
+  }
+  if (!leitura.ok && leitura.motivo === "interrompida") {
+    // O corpo nao chegou a tempo: conexao lenta (o 4G do consultorio) ou prazo
+    // curto com o servidor cheio. "Requisição inválida. Recarregue" mandava
+    // recarregar uma pagina que estava certa, e o erro se repetia igual.
+    // 503, e nao 408: navegador que recebe 408 pode reenviar o pedido sozinho.
+    return NextResponse.json(
+      { erro: "A conexão está lenta e a senha não chegou a tempo. Tente de novo em instantes." },
+      { status: 503, headers: { "Retry-After": "5" } },
+    );
   }
   if (!leitura.ok) {
     return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 413 });
