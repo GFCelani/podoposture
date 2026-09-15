@@ -138,6 +138,14 @@ describe("mensagemDeFalhaAoSalvar", () => {
     );
   });
 
+  it("recusa de proposito (409) devolve o motivo do servidor, sem mandar tentar de novo", () => {
+    const motivo =
+      "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Seus textos” e use “Tirar do site e guardar”.";
+    const mensagem = mensagemDeFalhaAoSalvar(409, motivo);
+    expect(mensagem).toBe(motivo);
+    expect(mensagem).not.toMatch(/tente de novo/);
+  });
+
   it.each([404, 413, 500, 502, 503])("status %s sempre diz que o texto nao se perdeu", (status) => {
     const mensagem = mensagemDeFalhaAoSalvar(status, "Não foi possível salvar o post.");
     expect(mensagem).toMatch(/continua/);

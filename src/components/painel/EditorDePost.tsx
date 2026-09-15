@@ -104,7 +104,7 @@ function ids(...lista: (string | false | null | undefined)[]): string | undefine
 type Saida = "topo" | "fim";
 
 export function EditorDePost({
-  post,
+  post: postAoAbrir,
   semBanco,
   aoSalvar,
   aoCancelar,
@@ -116,6 +116,10 @@ export function EditorDePost({
   aoCancelar: () => void;
   aoPerderSessao: () => void;
 }) {
+  // Estado, e nao so a prop: um texto que abriu como "novo" pode descobrir no
+  // servidor que ja esta publicado (envio repetido, ver `salvar`). Dali em
+  // diante o editor trata ele como o texto no ar que ele e.
+  const [post, setPost] = useState<PostDoPainel | null>(postAoAbrir);
   const inicial: DadosDoPost = post
     ? {
         titulo: post.titulo,
@@ -388,6 +392,39 @@ export function EditorDePost({
 
   /* -------- salvar -------- */
 
+  /**
+   * O envio repetido de um texto novo foi recusado porque ele ja esta no ar.
+   *
+   * A mensagem do servidor manda usar "Tirar do site e guardar", mas neste
+   * editor o texto ainda era novo e esse botao nunca aparecia: ela ficava entre
+   * uma instrucao impossivel e um "tente de novo" que dava o mesmo 409. Relendo
+   * o texto pelo id, o editor passa a trata-lo como publicado — o que ela
+   * escreveu fica na tela, a copia muda para a chave do texto salvo e o botao
+   * de confirmacao aparece onde ela esta. Devolve false se nao deu para reler,
+   * e ai vale a mensagem do servidor.
+   */
+  async function passarAoTextoNoAr(id: string): Promise<boolean> {
+    try {
+      const resposta = await fetch(`/api/painel/posts/${id}`);
+      if (!resposta.ok) return false;
+      const corpo = await resposta.json().catch(() => null);
+      const salvo: PostDoPainel | undefined = corpo?.post;
+      // Saiu do ar entre a recusa e a releitura: repetir o envio ja passa.
+      if (!salvo || salvo.id !== id || !salvo.publicado) return false;
+      // A copia de texto novo vive noutra chave; sem apagar, ela voltaria
+      // sozinha na proxima vez que ela abrisse "Escrever texto".
+      apagarCopia();
+      setPost(salvo);
+      setAviso(null);
+      // O mesmo estado do segundo clique: o botao vira "Tirar do site e
+      // guardar" e o aviso abaixo dele explica o que acontece.
+      setConfirmandoRascunho(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function salvar(publicar: boolean) {
     if (emCurso.current || enviandoAgora.current) return;
     const dados = { ...campos, publicado: publicar };
@@ -433,6 +470,7 @@ export function EditorDePost({
 
       if (!resposta.ok) {
         const corpo = await resposta.json().catch(() => ({}));
+        if (resposta.status === 409 && !post && idDoNovo && (await passarAoTextoNoAr(idDoNovo))) return;
         if (corpo?.erros) setErros(corpo.erros);
         setAviso(mensagemDeFalhaAoSalvar(resposta.status, corpo?.erro));
         return;

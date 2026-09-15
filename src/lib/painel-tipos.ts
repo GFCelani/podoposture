@@ -254,7 +254,10 @@ export function mensagemAoSalvar(publicarAgora: boolean, estavaNoAr: boolean): s
 export function mensagemDeFalhaAoSalvar(status: number, doServidor: unknown): string {
   const motivo =
     typeof doServidor === "string" && doServidor ? doServidor : "Não foi possível salvar.";
-  if (status === 400) return motivo;
+  // 409 e uma recusa de proposito, com a saida escrita pelo servidor ("use
+  // Tirar do site e guardar"). O sufixo "tente de novo" mandava repetir o que
+  // vai ser recusado de novo, e ela ficava num laco sem saida.
+  if (status === 400 || status === 409) return motivo;
   if (status === 404) {
     return "Este texto foi apagado em outra janela. O que você escreveu continua nesta tela: copie antes de sair.";
   }
