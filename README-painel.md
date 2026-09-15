@@ -91,6 +91,9 @@ noite perdida ou chamada duplicada. Para trazer o histórico uma vez, chame
 `/api/cron/numeros?desde=AAAA-MM-DD` com o cabeçalho
 `Authorization: Bearer <CRON_SECRET>` e repita com o `proximoDesde` da resposta
 até ele vir vazio. Cada chamada traz um lote de 14 dias, até 16 meses para trás.
+Se o lote não conseguir gravar no banco, a resposta vem com status 502 e o
+`proximoDesde` repete a data do próprio lote: é só chamar de novo com ele, sem
+pular para a frente.
 
 ### 4. Se o site não estiver na Vercel
 
