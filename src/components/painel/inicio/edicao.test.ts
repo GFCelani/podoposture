@@ -27,6 +27,7 @@ import {
   moverItem,
   paraEdicao,
   removerItem,
+  respostaAoConflito,
   resumoDaSecao,
   semErrosEm,
   situacaoDoTamanho,
@@ -357,6 +358,23 @@ describe("textos para a tela", () => {
     expect(mensagemDeFalha(400, "Confira os campos destacados.")).toBe("Confira os campos destacados.");
     expect(mensagemDeFalha(502, "Não foi possível salvar agora.")).toBe("Não foi possível salvar agora.");
     expect(mensagemDeFalha(500, 42)).toContain("Tente de novo");
+  });
+
+  it("conflito ao desfazer diz que o site continua no ar e nao junta o formulario", () => {
+    for (const alvo of ["publicado", "rascunho"] as const) {
+      const resposta = respostaAoConflito(alvo);
+      expect(resposta.juntarFormulario).toBe(false);
+      expect(resposta.aviso).toMatch(/Nada foi (alterado|descartado) agora/);
+      expect(resposta.aviso).toContain("continua no ar");
+      expect(resposta.aviso).not.toMatch(/campos/);
+    }
+    expect(respostaAoConflito("publicado").aviso).toContain("Voltar ao original");
+  });
+
+  it("conflito ao salvar ou publicar junta o que ela mudou com a versao nova", () => {
+    const resposta = respostaAoConflito(null);
+    expect(resposta.juntarFormulario).toBe(true);
+    expect(resposta.aviso).toMatch(/Juntamos o que você alterou/);
   });
 });
 

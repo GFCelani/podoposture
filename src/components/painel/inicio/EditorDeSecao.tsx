@@ -19,6 +19,7 @@ import { ErroAoEnviarImagem, enviarImagem } from "@/lib/preparar-imagem";
 import { CampoDoEditor, ContextoDoEditor, type AcoesDoEditor } from "./CamposDaSecao";
 import {
   CANAL_DA_PAGINA_INICIAL,
+  respostaAoConflito,
   apagarCopiaLocal,
   aplicarCopia,
   armazemDoNavegador,
@@ -402,17 +403,23 @@ export function EditorDeSecao({
     const secaoDaResposta = ehObjeto(lido) && ehObjeto(lido.secao) ? (lido.secao as EstadoDaSecao<unknown>) : null;
 
     if (resposta.status === 409) {
+      const conflito = respostaAoConflito(alvo);
       if (secaoDaResposta) {
         aoAtualizar(secaoDaResposta);
         const versaoNova = baseDaSecao(chave, secaoDaResposta);
-        setDados((atuais) => aplicarCopia(chave, versaoNova, atuais, referencia));
+        if (conflito.juntarFormulario) {
+          setDados((atuais) => aplicarCopia(chave, versaoNova, atuais, referencia));
+        } else {
+          // Descartar ou voltar ao original: nada a juntar. Formulario sem
+          // alteracao passa a mostrar a versao atual; com alteracao nao salva,
+          // fica como esta — o pedido recusado nao pode apagar o que ela escreve.
+          setDados((atuais) => (JSON.stringify(atuais) === JSON.stringify(referencia) ? versaoNova : atuais));
+        }
         setSalvo(versaoNova);
       }
       setPreviaDe(null);
       setLinkDaPrevia(null);
-      setAviso(
-        "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora para não apagar essa mudança. Juntamos o que você alterou com a versão mais nova: confira os campos e veja de novo como vai ficar.",
-      );
+      setAviso(conflito.aviso);
       return null;
     }
 

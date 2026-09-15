@@ -17,6 +17,7 @@ import {
   PAGINAS_DE_DESTINO,
   conferirCampo,
   ehChaveDeSecao,
+  type AlvoDoDescarte,
   type Campo,
   type ChaveDeSecao,
   type Destino,
@@ -437,6 +438,38 @@ export function mensagemDeFalha(status: number, erroDoServidor: unknown): string
   if (status === 400 || status === 413) return doServidor ?? "Confira os campos destacados.";
   if (status === 404) return `${doServidor ?? "Essa seção não existe."} Recarregue a página e tente de novo.`;
   return doServidor ?? `Não foi possível salvar agora. ${guardado} Tente de novo em instantes.`;
+}
+
+/**
+ * O que fazer quando a rota responde 409 (a secao mudou em outra janela).
+ *
+ * Depende do que ela tentou. Salvando ou publicando, o que ela mudou e juntado
+ * com a versao nova, e ela confere. Descartando ou voltando ao original, nao ha
+ * o que juntar — ela queria DESFAZER, e juntar o formulario com a versao nova
+ * trazia de volta campos que ela mandou jogar fora. Ali a mensagem precisa dizer
+ * o que mais importa para quem acabou de clicar num botao que mexe no site:
+ * nada foi alterado, e o texto que esta no ar continua no ar.
+ *
+ * `alvo` e o do DELETE (null no PUT de salvar/publicar).
+ */
+export function respostaAoConflito(alvo: AlvoDoDescarte | null): { juntarFormulario: boolean; aviso: string } {
+  const mudou = "Esta seção mudou em outra janela ou aparelho depois que você a abriu.";
+  if (alvo === "publicado") {
+    return {
+      juntarFormulario: false,
+      aviso: `${mudou} Nada foi alterado agora: o texto do site continua no ar como estava. O editor já conhece a versão mais nova; confira e, se ainda quiser, clique de novo em “Voltar ao original”.`,
+    };
+  }
+  if (alvo === "rascunho") {
+    return {
+      juntarFormulario: false,
+      aviso: `${mudou} Nada foi descartado agora, e o texto do site continua no ar como estava. O editor já conhece a versão mais nova; confira e, se ainda quiser, descarte de novo.`,
+    };
+  }
+  return {
+    juntarFormulario: true,
+    aviso: `${mudou} Nada foi salvo agora para não apagar essa mudança. Juntamos o que você alterou com a versão mais nova: confira os campos e veja de novo como vai ficar.`,
+  };
 }
 
 /* ------------------------------------------------------ copia no navegador */
