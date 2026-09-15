@@ -15,9 +15,13 @@ import { PageShell } from "@/components/page-shell";
  * noite chama. Mudou uma dessas pecas, este texto muda junto, e a data do fim
  * tambem.
  *
- * O paragrafo do painel diz que a limpeza depende da tarefa diaria de proposito:
- * ela e que garante o prazo sem trafego, e prometer um prazo que so vale
- * quando alguem usa o painel seria prometer o que o codigo nao cumpre.
+ * O paragrafo do painel descreve as duas vias da limpeza como o codigo as faz:
+ * a tarefa diaria (`podarDadosDoPainel`) e, sem ela, a primeira acao do painel
+ * depois de 24 h da ultima poda (`podarSeVenceu`, marca no banco). A frase
+ * antiga dizia "na proxima vez que alguem usar essa area", mas a poda rodava a
+ * cada 100 gravacoes contadas em memoria, e em serverless isso quase nunca
+ * acontecia. E diz o atraso que cada via da: ate um dia com a tarefa, e sem
+ * ela ate o proximo uso do painel, que pode ser semanas depois.
  *
  * Pagina estatica, sem leitura de banco: nao ha o que possa derruba-la.
  */
@@ -78,11 +82,14 @@ export default function Privacidade() {
               A área em que a clínica publica os textos fica fora da contagem. O único cookie do
               site é o de acesso a essa área, usado só pela equipe da clínica. Quem tenta entrar
               nela tem o endereço de IP guardado, só para segurança, em dois lugares: na contagem de
-              tentativas de senha, apagada uma hora depois, e no registro das ações dessa área, que
-              guarda as 2.000 mais recentes — nesse registro o endereço fica até sair pelas 2.000,
-              o que pode levar bem mais de uma hora. A limpeza dos dois é feita uma vez por dia pela
-              tarefa automática do site; se ela não estiver ligada, a limpeza acontece na próxima
-              vez que alguém usar essa área.
+              tentativas de senha, que guarda cada tentativa por uma hora, e no registro das ações
+              dessa área, que guarda as 2.000 mais recentes — nesse registro o endereço fica até sair
+              pelas 2.000, o que pode levar bem mais de uma hora. Uma limpeza apaga as tentativas com
+              mais de uma hora e as ações além das 2.000. Ela roda uma vez por dia pela tarefa
+              automática do site; se a tarefa não estiver ligada, roda na primeira ação feita nessa
+              área depois de 24 horas da última limpeza. Por isso o que já passou do prazo fica
+              guardado até a limpeza seguinte: no máximo um dia a mais com a tarefa ligada; sem ela,
+              até a próxima vez que essa área for usada.
             </li>
           </ul>
 
@@ -110,7 +117,7 @@ export default function Privacidade() {
           </p>
 
           <p>
-            <em>Texto atualizado em 14 de setembro de 2026.</em>
+            <em>Texto atualizado em 15 de setembro de 2026.</em>
           </p>
         </div>
       </div>

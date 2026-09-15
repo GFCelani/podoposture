@@ -134,7 +134,7 @@ let tabelasProntas = false;
  * Cria o que faltar. So o painel chama: leitura publica nao cria tabela (ver
  * `listarPublicadosSemCorpo`). Idempotente, roda uma vez por instancia.
  *
- * Nao ha arquivo de migracao de proposito: sao quatro tabelas que cabem na
+ * Nao ha arquivo de migracao de proposito: sao cinco tabelas que cabem na
  * tela, e a unica mudanca de forma ate hoje (o formato da imagem) coube num
  * ALTER idempotente. Um sistema de migracao aqui seria cerimonia.
  */
@@ -195,6 +195,15 @@ async function garantirTabelas() {
       em    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )`;
   await sql`CREATE INDEX IF NOT EXISTS tentativas_chave ON painel_tentativas (chave, em DESC)`;
+
+  // Quando rodou a ultima poda dos dados do painel. No banco, e nao em memoria,
+  // pelo mesmo motivo das tentativas: um contador por instancia serverless zera
+  // a cada instancia nova e nunca chega ao ponto de podar (ver `podarSeVenceu`).
+  await sql`
+    CREATE TABLE IF NOT EXISTS painel_manutencao (
+      nome TEXT PRIMARY KEY,
+      em   TIMESTAMPTZ NOT NULL
+    )`;
 
   tabelasProntas = true;
 }
@@ -436,8 +445,6 @@ export async function buscarImagem(id: string): Promise<ImagemGuardada | null> {
 
 const MAX_ORIGEM = 45;
 const MAX_AUDITORIA = 2000;
-const PODAR_A_CADA = 100;
-let gravacoesDesdeAPoda = 0;
 
 /** Nunca lanca: falha ao registrar nao pode derrubar a acao que estava sendo feita. */
 export async function registrarAuditoria(
@@ -452,19 +459,14 @@ export async function registrarAuditoria(
     await sql`
       INSERT INTO painel_auditoria (acao, detalhe, origem)
       VALUES (${acao}, ${detalhe}, ${origem ? origem.slice(0, MAX_ORIGEM) : null})`;
-
-    gravacoesDesdeAPoda += 1;
-    if (gravacoesDesdeAPoda >= PODAR_A_CADA) {
-      gravacoesDesdeAPoda = 0;
-      await sql`
-        DELETE FROM painel_auditoria WHERE id < (
-          SELECT COALESCE(MIN(id), 0) FROM (
-            SELECT id FROM painel_auditoria ORDER BY id DESC LIMIT ${MAX_AUDITORIA}
-          ) recentes
-        )`;
-    }
   } catch (erro) {
     console.error("[painel] falha ao registrar auditoria:", erro);
+    return;
+  }
+  try {
+    await podarSeVenceu();
+  } catch (erro) {
+    console.error("[painel] falha ao podar os dados do painel:", erro);
   }
 }
 
@@ -475,22 +477,11 @@ export async function registrarAuditoria(
  */
 export const RETENCAO_DE_TENTATIVAS_MS = 60 * 60 * 1000;
 
-/**
- * Apaga o que passou do prazo prometido na pagina de privacidade, sem depender
- * de ninguem usar o painel.
- *
- * As duas podas que ja existiam sao oportunistas: a das tentativas roda dentro
- * de `contarERegistrarTentativa`, e a da auditoria a cada 100 gravacoes. Num
- * site de uma clinica, onde o painel passa dias sem ser aberto, elas
- * simplesmente nao rodam — o IP de quem tentou entrar ficava guardado ate a
- * proxima tentativa de alguem, que pode ser semanas depois, e o registro de
- * acoes podia parar acima das 2.000. A pagina de privacidade promete uma hora e
- * 2.000; quem cumpre a promessa quando nao ha trafego e esta funcao, chamada
- * pela coleta da noite.
- */
-export async function podarDadosDoPainel(): Promise<void> {
-  await garantirTabelas();
-  const sql = bancoDoPainel();
+/** De quanto em quanto tempo a poda roda, pela tarefa da noite ou pelo uso do painel. */
+export const INTERVALO_DA_PODA_MS = 24 * 60 * 60 * 1000;
+
+/** As duas limpezas, e a marca de quando rodaram. `sql` e o da transacao de quem chama. */
+async function podar(sql: postgres.TransactionSql): Promise<void> {
   await sql`
     DELETE FROM painel_tentativas
     WHERE em < ${new Date(Date.now() - RETENCAO_DE_TENTATIVAS_MS)}`;
@@ -500,6 +491,52 @@ export async function podarDadosDoPainel(): Promise<void> {
         SELECT id FROM painel_auditoria ORDER BY id DESC LIMIT ${MAX_AUDITORIA}
       ) recentes
     )`;
+}
+
+/**
+ * Apaga o que passou do prazo prometido na pagina de privacidade, sem depender
+ * de ninguem usar o painel.
+ *
+ * A poda das tentativas roda dentro de `contarERegistrarTentativa`, mas so
+ * quando alguem tenta entrar. Num site de uma clinica, onde o painel passa dias
+ * sem ser aberto, o IP de quem tentou entrar ficava guardado ate a proxima
+ * tentativa de alguem, que pode ser semanas depois. Quem cumpre a promessa
+ * quando nao ha trafego e esta funcao, chamada pela coleta da noite.
+ */
+export async function podarDadosDoPainel(): Promise<void> {
+  await garantirTabelas();
+  await bancoDoPainel().begin(async (sql) => {
+    await podar(sql);
+    await sql`
+      INSERT INTO painel_manutencao (nome, em) VALUES ('poda', NOW())
+      ON CONFLICT (nome) DO UPDATE SET em = NOW()`;
+  });
+}
+
+/**
+ * A poda sem a tarefa da noite: roda na primeira acao registrada depois de 24 h
+ * da ultima.
+ *
+ * Antes era a cada 100 gravacoes, contadas em memoria. Em serverless o contador
+ * zera a cada instancia nova, e um painel com poucas acoes por dia nunca chegava
+ * a 100 numa instancia so — sem a tarefa diaria, a limpeza que a privacidade
+ * promete simplesmente nao acontecia. Por tempo e com a marca no banco, vale
+ * para qualquer instancia.
+ *
+ * A marca e tomada e a poda feita na MESMA transacao, e o UPDATE so pega a
+ * linha se ela venceu: duas acoes simultaneas nao podam duas vezes, e uma poda
+ * que falha desfaz a marca, entao a proxima acao tenta de novo.
+ */
+async function podarSeVenceu(): Promise<void> {
+  const vencida = new Date(Date.now() - INTERVALO_DA_PODA_MS);
+  await bancoDoPainel().begin(async (sql) => {
+    const tomada = await sql`
+      INSERT INTO painel_manutencao (nome, em) VALUES ('poda', NOW())
+      ON CONFLICT (nome) DO UPDATE SET em = NOW()
+      WHERE painel_manutencao.em < ${vencida}
+      RETURNING nome`;
+    if (tomada.length > 0) await podar(sql);
+  });
 }
 
 /* ------------------------------------------------------------- tentativas */
