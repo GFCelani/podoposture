@@ -1,6 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { BancoEmPausa, PrazoEsgotado, comPrazo, conexaoCaida, criarDisjuntor, emConstrucao } from "./disjuntor";
+import {
+  BancoEmPausa,
+  PRAZO_ABRINDO_CONEXAO_MS,
+  PRAZO_DA_LEITURA_MS,
+  PrazoEsgotado,
+  TEMPO_PARA_ABRIR_CONEXAO_S,
+  comPrazo,
+  conexaoCaida,
+  criarDisjuntor,
+  emConstrucao,
+} from "./disjuntor";
 
 function erroCom(code: string) {
   return Object.assign(new Error(code), { code });
@@ -101,7 +111,7 @@ describe("criarDisjuntor", () => {
 
   it("banco travado: leitura que nunca volta estoura o prazo, abre a pausa e as seguintes nem esperam", async () => {
     const r = relogio();
-    const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora, prazoMs: 30 });
+    const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora, prazoMs: 30, prazoAbrindoMs: 30 });
     const travada = vi.fn(() => new Promise<never>(() => {}));
     await expect(disjuntor.ler(travada)).rejects.toBeInstanceOf(PrazoEsgotado);
     // Sem segunda tentativa: esperar o prazo de novo so dobraria a fila.
@@ -112,6 +122,51 @@ describe("criarDisjuntor", () => {
     // A sondagem da pausa tambem tem prazo.
     await expect(disjuntor.sondar(travada)).rejects.toBeInstanceOf(PrazoEsgotado);
     expect(travada).toHaveBeenCalledTimes(2);
+  });
+
+  it("leitura que precisa abrir a conexao ganha o prazo longo; com a conexao aberta, o curto", async () => {
+    // O caso da rodada: banco acordando em 6 s estourava os 5 s antes de
+    // conectar, e a pagina ia para o cache com o conteudo padrao.
+    const r = relogio();
+    const disjuntor = criarDisjuntor({
+      pausaMs: () => 15_000,
+      agora: r.agora,
+      prazoMs: 20,
+      prazoAbrindoMs: 400,
+      ociosoMs: 10_000,
+    });
+    const lenta = () => new Promise<string>((resolver) => setTimeout(() => resolver("conteudo"), 80));
+
+    // Primeira da instancia: abre a conexao, cabe no prazo longo.
+    await expect(disjuntor.ler(lenta)).resolves.toBe("conteudo");
+
+    // Conexao aberta e recente: a mesma demora ja e banco preso.
+    r.andar(9_999);
+    await expect(disjuntor.ler(lenta)).rejects.toBeInstanceOf(PrazoEsgotado);
+    expect(disjuntor.emPausa()).toBe(true);
+
+    // Depois da pausa e de a conexao ficar ociosa, volta o prazo longo.
+    r.andar(15_000);
+    await expect(disjuntor.ler(lenta)).resolves.toBe("conteudo");
+  });
+
+  it("no build toda leitura usa o prazo longo", async () => {
+    const r = relogio();
+    const disjuntor = criarDisjuntor({
+      pausaMs: () => 60_000,
+      agora: r.agora,
+      prazoMs: 20,
+      prazoAbrindoMs: 400,
+      sempreAbrindo: () => true,
+    });
+    const lenta = () => new Promise<number>((resolver) => setTimeout(() => resolver(1), 80));
+    await expect(disjuntor.ler(lenta)).resolves.toBe(1);
+    await expect(disjuntor.ler(lenta)).resolves.toBe(1);
+  });
+
+  it("o prazo de quem abre a conexao fica acima do connect_timeout", () => {
+    expect(PRAZO_ABRINDO_CONEXAO_MS).toBeGreaterThan(TEMPO_PARA_ABRIR_CONEXAO_S * 1000);
+    expect(PRAZO_DA_LEITURA_MS).toBeLessThan(PRAZO_ABRINDO_CONEXAO_MS);
   });
 
   it("comPrazo devolve o valor que chega a tempo", async () => {

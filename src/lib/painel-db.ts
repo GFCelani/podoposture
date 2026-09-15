@@ -4,8 +4,10 @@ import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 
 import {
+  OCIOSIDADE_DA_CONEXAO_S,
   PAUSA_EM_EXECUCAO_MS,
   PAUSA_NO_BUILD_MS,
+  TEMPO_PARA_ABRIR_CONEXAO_S,
   criarDisjuntor,
   emConstrucao,
 } from "./disjuntor";
@@ -88,8 +90,9 @@ export function bancoDoPainel() {
     // Uma conexao por instancia: em serverless, cada instancia e efemera e
     // abrir um pool de dez seria esgotar o limite do banco a toa.
     max: 1,
-    idle_timeout: 20,
-    connect_timeout: 10,
+    // Os dois moram no disjuntor: o prazo das leituras publicas e medido contra eles.
+    idle_timeout: OCIOSIDADE_DA_CONEXAO_S,
+    connect_timeout: TEMPO_PARA_ABRIR_CONEXAO_S,
     ssl: url.includes("localhost") || url.includes("127.0.0.1") ? false : "require",
     onnotice: () => {},
   });
@@ -103,6 +106,9 @@ export function bancoDoPainel() {
  */
 const disjuntorPublico = criarDisjuntor({
   pausaMs: () => (emConstrucao() ? PAUSA_NO_BUILD_MS : PAUSA_EM_EXECUCAO_MS),
+  // No build as paginas disputam uma conexao por worker, abrindo e em fila: o
+  // prazo curto ali tirava paginas com o conteudo padrao por um banco lento.
+  sempreAbrindo: () => emConstrucao(),
 });
 
 /**

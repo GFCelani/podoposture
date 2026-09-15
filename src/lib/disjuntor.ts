@@ -62,6 +62,26 @@ export const PAUSA_EM_EXECUCAO_MS = 15_000;
  */
 export const PRAZO_DA_LEITURA_MS = 5_000;
 
+/** O `connect_timeout` da conexao do site (painel-db.ts), em segundos. */
+export const TEMPO_PARA_ABRIR_CONEXAO_S = 10;
+
+/** O `idle_timeout` da conexao do site: parada por isto, ela e fechada. */
+export const OCIOSIDADE_DA_CONEXAO_S = 20;
+
+/**
+ * O prazo quando a leitura provavelmente precisa abrir a conexao antes: a
+ * primeira da instancia, a primeira depois de a conexao ter ficado ociosa e
+ * fechado, e toda leitura do build.
+ *
+ * Acima do `connect_timeout` de proposito. Com os 5 s valendo tambem aqui, um
+ * banco que levava 6 s para acordar fazia a primeira leitura estourar sem nunca
+ * ter tido a chance de conectar: a pausa abria, o build tirava as paginas com o
+ * conteudo padrao, e a prova do cron das 6h falhava toda manha de banco frio.
+ * Quem espera isto e so a primeira visita; com o banco travado de verdade, a
+ * pausa abre depois dela e as seguintes nem esperam.
+ */
+export const PRAZO_ABRINDO_CONEXAO_MS = TEMPO_PARA_ABRIR_CONEXAO_S * 1000 + 2_000;
+
 /** Lancado quando a leitura passa do prazo. Conta como falha e abre a pausa. */
 export class PrazoEsgotado extends Error {
   constructor(ms: number) {
@@ -101,20 +121,39 @@ export type Disjuntor = {
 export function criarDisjuntor(opcoes: {
   pausaMs: () => number;
   agora?: () => number;
-  /** Prazo de cada tentativa; padrao PRAZO_DA_LEITURA_MS. */
+  /** Prazo de cada tentativa com a conexao ja aberta; padrao PRAZO_DA_LEITURA_MS. */
   prazoMs?: number;
+  /** Prazo quando a conexao pode estar fechada; padrao PRAZO_ABRINDO_CONEXAO_MS. */
+  prazoAbrindoMs?: number;
+  /**
+   * Depois de quanto tempo sem leitura certa a conexao conta como fechada.
+   * Padrao: metade do `idle_timeout`, para nao apostar no limite — as escritas
+   * do painel e do cron tambem mantem a conexao viva, e o disjuntor nao as ve.
+   */
+  ociosoMs?: number;
+  /** Quando toda leitura usa o prazo longo (o build, com uma conexao por worker). */
+  sempreAbrindo?: () => boolean;
 }): Disjuntor {
   const agora = opcoes.agora ?? Date.now;
   const prazoMs = opcoes.prazoMs ?? PRAZO_DA_LEITURA_MS;
+  const prazoAbrindoMs = opcoes.prazoAbrindoMs ?? PRAZO_ABRINDO_CONEXAO_MS;
+  const ociosoMs = opcoes.ociosoMs ?? (OCIOSIDADE_DA_CONEXAO_S * 1000) / 2;
+  // Quando uma leitura deu certo pela ultima vez: diz se a conexao ainda deve
+  // estar aberta. O relogio nao tem como separar abrir conexao de consulta
+  // presa, entao o prazo longo fica so onde abrir e provavel.
+  let acertouEm: number | null = null;
   // Toda tentativa passa por aqui: leitura que nao volta vira falha comum.
-  const tentar = <T>(leitura: () => Promise<T>): Promise<T> => {
+  const tentar = async <T>(leitura: () => Promise<T>): Promise<T> => {
+    const abrindo = opcoes.sempreAbrindo?.() === true || acertouEm === null || agora() - acertouEm >= ociosoMs;
     let promessa: Promise<T>;
     try {
       promessa = leitura();
     } catch (erro) {
       promessa = Promise.reject(erro);
     }
-    return comPrazo(promessa, prazoMs);
+    const valor = await comPrazo(promessa, abrindo ? prazoAbrindoMs : prazoMs);
+    acertouEm = agora();
+    return valor;
   };
   let falhouEm: number | null = null;
   // O `falhouEm` da pausa que ja teve sua tentativa direta. Guardar o instante,
