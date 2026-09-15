@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AVISO_SAIU_DO_AR,
+  situacaoDaReleitura,
   ehEstreia,
   enderecoPodeMudar,
   envioMudaOSite,
@@ -129,6 +131,23 @@ describe("mensagemAoSalvar", () => {
     [false, false, "Rascunho guardado. Ele ainda não está no site."],
   ])("publicar=%s, estava no ar=%s", (publicar, estavaNoAr, esperada) => {
     expect(mensagemAoSalvar(publicar, estavaNoAr)).toBe(esperada);
+  });
+});
+
+describe("situacaoDaReleitura", () => {
+  const id = "0b0f0a8e-1111-4222-8333-444455556666";
+  it("texto no ar, texto que saiu do ar entre a recusa e a releitura, e resposta que nao da para usar", () => {
+    expect(situacaoDaReleitura({ id, publicado: true }, id)).toBe("no-ar");
+    // Saiu do ar: nao pode cair na mensagem do servidor, que diz "ja esta publicado".
+    expect(situacaoDaReleitura({ id, publicado: false }, id)).toBe("fora-do-ar");
+    expect(situacaoDaReleitura({ id: "outro", publicado: true }, id)).toBe("ilegivel");
+    expect(situacaoDaReleitura(undefined, id)).toBe("ilegivel");
+    expect(situacaoDaReleitura({ id }, id)).toBe("ilegivel");
+  });
+
+  it("o aviso de texto fora do ar cita o botao que existe na tela e nao manda tirar do ar", () => {
+    expect(AVISO_SAIU_DO_AR).toContain("“Guardar como rascunho”");
+    expect(AVISO_SAIU_DO_AR).not.toMatch(/já está publicado|Tirar do site/);
   });
 });
 

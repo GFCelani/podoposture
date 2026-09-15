@@ -7,9 +7,11 @@ import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
 import {
+  AVISO_SAIU_DO_AR,
   CATEGORIAS,
   LIMITES_POST,
   errosComCampo,
+  situacaoDaReleitura,
   mensagemAoSalvar,
   mensagemDeFalhaAoSalvar,
   rascunhoPrecisaConfirmar,
@@ -408,13 +410,24 @@ export function EditorDePost({
       const resposta = await fetch(`/api/painel/posts/${id}`);
       if (!resposta.ok) return false;
       const corpo = await resposta.json().catch(() => null);
-      const salvo: PostDoPainel | undefined = corpo?.post;
-      // Saiu do ar entre a recusa e a releitura: repetir o envio ja passa.
-      if (!salvo || salvo.id !== id || !salvo.publicado) return false;
+      const situacao = situacaoDaReleitura(corpo?.post, id);
+      if (situacao === "ilegivel") return false;
+      if (situacao === "fora-do-ar") {
+        // Saiu do ar entre a recusa e a releitura: repetir o envio ja passa. A
+        // mensagem do servidor mandaria tirar do ar pela lista um texto que la
+        // aparece como rascunho.
+        setAviso(AVISO_SAIU_DO_AR);
+        return true;
+      }
+      const salvo = corpo.post as PostDoPainel;
       // A copia de texto novo vive noutra chave; sem apagar, ela voltaria
       // sozinha na proxima vez que ela abrisse "Escrever texto".
       apagarCopia();
       setPost(salvo);
+      // `publicado` entra na comparacao de "alterado": o formulario de texto
+      // novo tinha false, e sem alinhar o texto ficava "alterado" para sempre
+      // (aviso ao fechar a aba e copia identica recuperada depois).
+      setCampos((c) => ({ ...c, publicado: salvo.publicado }));
       setAviso(null);
       // O mesmo estado do segundo clique: o botao vira "Tirar do site e
       // guardar" e o aviso abaixo dele explica o que acontece.

@@ -235,6 +235,25 @@ export function repetirTiraDoAr(
 }
 
 /**
+ * O que a releitura do texto diz, depois do 409 de "ja esta publicado".
+ *
+ * - `no-ar`: o editor passa a tratar o texto como publicado.
+ * - `fora-do-ar`: outra janela tirou do ar entre a recusa e a releitura. A
+ *   mensagem do servidor ("ja esta publicado, tire do ar pela lista") diria o
+ *   contrario do que a lista mostra; o aviso certo e `AVISO_SAIU_DO_AR`.
+ * - `ilegivel`: nao deu para reler, e ai vale a mensagem do servidor.
+ */
+export function situacaoDaReleitura(salvo: unknown, id: string): "no-ar" | "fora-do-ar" | "ilegivel" {
+  if (typeof salvo !== "object" || salvo === null) return "ilegivel";
+  const lido = salvo as Partial<PostDoPainel>;
+  if (lido.id !== id || typeof lido.publicado !== "boolean") return "ilegivel";
+  return lido.publicado ? "no-ar" : "fora-do-ar";
+}
+
+export const AVISO_SAIU_DO_AR =
+  "Este texto saiu do site em outra janela enquanto você salvava, e nada desta tela foi guardado ainda. Clique de novo em “Guardar como rascunho” para guardar o que está aqui.";
+
+/**
  * O envio de um texto pelo POST muda o que o site mostra?
  *
  * Muda quando o texto fica publicado ou quando ja estava no ar antes (o POST
