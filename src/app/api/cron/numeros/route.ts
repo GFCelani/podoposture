@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { lerPublicados } from "@/lib/conteudo-db";
 import { exigirSegredoDoCron, invalidarCacheSeOBancoResponde, statusDoCron } from "@/lib/cron";
+import { PrazoEsgotado, comPrazo } from "@/lib/disjuntor";
 import { coletarBusca, configDaBusca } from "@/lib/fonte-search-console";
 import { coletarVercel, configDaVercel } from "@/lib/fonte-vercel";
 import {
@@ -41,6 +42,9 @@ export const maxDuration = 60;
 
 /** Reserva, dentro dos 60 s, para gravar o que chegou depois que as chamadas param. */
 const FOLGA_PARA_GRAVAR_MS = 12_000;
+
+/** Reserva, dentro dos 60 s, para montar e devolver a resposta quando o prazo total acaba. */
+const FOLGA_PARA_RESPONDER_MS = 3_000;
 
 const NOME_DA_FONTE: Record<Fonte, string> = {
   vercel: "visitas (Vercel)",
@@ -153,8 +157,49 @@ export async function GET(req: Request) {
   const janela = janelaDaColeta(new Date(inicio), new URL(req.url).searchParams.get("desde"));
   if ("erro" in janela) return NextResponse.json({ erro: janela.erro }, { status: 400 });
 
-  // null no lote de historico, onde a autocura nao roda.
-  let cacheInvalidado: boolean | null = null;
+  // O que a execucao conseguiu fazer, preenchido aos poucos: se o prazo total
+  // estourar no meio, a resposta sai com o que ja se sabe.
+  // cacheInvalidado null = lote de historico, onde a autocura nao roda.
+  const feito: { cacheInvalidado: boolean | null; resumos: Resumo[] } = { cacheInvalidado: null, resumos: [] };
+
+  // Prazo total, abaixo do maxDuration. Com o banco travado (conexao aceita e
+  // nenhuma resposta) cada gravacao esperava para sempre e a execucao levava
+  // 80 s ate cair pelo limite da plataforma, sem resposta e sem log do motivo.
+  // Assim ela responde 502 dizendo que o prazo acabou.
+  const limite = inicio + maxDuration * 1000 - FOLGA_PARA_RESPONDER_MS;
+  let prazoEsgotado = false;
+  try {
+    await comPrazo(executar(janela, inicio, feito), limite - Date.now());
+  } catch (erro) {
+    if (!(erro instanceof PrazoEsgotado)) throw erro;
+    prazoEsgotado = true;
+    console.error("[cron] a execucao passou do prazo total: o banco nao respondeu a tempo");
+  }
+
+  const { cacheInvalidado, resumos } = feito;
+  const coletaFalhou = prazoEsgotado || resumos.some((r) => r.situacao === "erro");
+  return NextResponse.json(
+    {
+      fontes: resumos,
+      historico: janela.historico,
+      ajustadoAoTeto: janela.ajustadoAoTeto,
+      proximoDesde: janela.proximoDesde,
+      // Na resposta, e nao so no diario: e o que aparece no log da execucao.
+      cacheInvalidado,
+      prazoEsgotado,
+    },
+    // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o
+    // status — tanto a coleta que falhou quanto a autocura pulada.
+    { status: statusDoCron({ coletaFalhou, cacheInvalidado }) },
+  );
+}
+
+/** O trabalho da execucao, anotando em `feito` conforme avanca. */
+async function executar(
+  janela: Exclude<ReturnType<typeof janelaDaColeta>, { erro: string }>,
+  inicio: number,
+  feito: { cacheInvalidado: boolean | null; resumos: Resumo[] },
+): Promise<void> {
   if (!janela.historico) {
     // Autocura do cache do site (o porque inteiro esta em lib/cron.ts). So na
     // coleta da noite: o backfill roda em lotes seguidos, e invalidar o site a
@@ -167,7 +212,7 @@ export async function GET(req: Request) {
     // o tempo — se ela estourar, nada e invalidado, esteja a chamada onde
     // estiver. Quem cuida do prazo e o `prazo` abaixo, que reserva
     // FOLGA_PARA_GRAVAR_MS dos 60 s para o handler fechar e responder.
-    cacheInvalidado = await invalidarCacheSeOBancoResponde({
+    feito.cacheInvalidado = await invalidarCacheSeOBancoResponde({
       // A mesma leitura publica que a home faz, pelo mesmo disjuntor.
       provarLeitura: () => lerComDisjuntor(lerPublicados),
       invalidar: () => revalidatePath("/", "layout"),
@@ -176,12 +221,17 @@ export async function GET(req: Request) {
   }
 
   const prazo = inicio + maxDuration * 1000 - FOLGA_PARA_GRAVAR_MS;
-  const resumos = (
-    await Promise.all([
+  // Cada fonte anota o proprio resumo quando termina, para a resposta de prazo
+  // esgotado ainda contar a que chegou ao fim.
+  await Promise.all(
+    [
       processar("vercel", janela.vercel, prazo, janela.historico),
       processar("busca", janela.busca, prazo, janela.historico),
-    ])
-  ).filter((r): r is Resumo => r !== null);
+    ].map(async (emCurso) => {
+      const resumo = await emCurso;
+      if (resumo) feito.resumos.push(resumo);
+    }),
+  );
 
   if (!janela.historico) {
     await podarNumeros().catch((erro) => console.error("[cron] falha ao podar numeros:", erro));
@@ -191,21 +241,6 @@ export async function GET(req: Request) {
     await podarDadosDoPainel().catch((erro) =>
       console.error("[cron] falha ao podar os dados do painel:", erro),
     );
-    await avisarSeFalhouDuasNoites(resumos);
+    await avisarSeFalhouDuasNoites(feito.resumos);
   }
-
-  const coletaFalhou = resumos.some((r) => r.situacao === "erro");
-  return NextResponse.json(
-    {
-      fontes: resumos,
-      historico: janela.historico,
-      ajustadoAoTeto: janela.ajustadoAoTeto,
-      proximoDesde: janela.proximoDesde,
-      // Na resposta, e nao so no diario: e o que aparece no log da execucao.
-      cacheInvalidado,
-    },
-    // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o
-    // status — tanto a coleta que falhou quanto a autocura pulada.
-    { status: statusDoCron({ coletaFalhou, cacheInvalidado }) },
-  );
 }

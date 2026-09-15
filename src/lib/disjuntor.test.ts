@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { BancoEmPausa, conexaoCaida, criarDisjuntor, emConstrucao } from "./disjuntor";
+import { BancoEmPausa, PrazoEsgotado, comPrazo, conexaoCaida, criarDisjuntor, emConstrucao } from "./disjuntor";
 
 function erroCom(code: string) {
   return Object.assign(new Error(code), { code });
@@ -97,6 +97,26 @@ describe("criarDisjuntor", () => {
     const leitura = vi.fn().mockResolvedValue(2);
     await expect(disjuntor.sondar(leitura)).resolves.toBe(2);
     expect(leitura).toHaveBeenCalledTimes(1);
+  });
+
+  it("banco travado: leitura que nunca volta estoura o prazo, abre a pausa e as seguintes nem esperam", async () => {
+    const r = relogio();
+    const disjuntor = criarDisjuntor({ pausaMs: () => 15_000, agora: r.agora, prazoMs: 30 });
+    const travada = vi.fn(() => new Promise<never>(() => {}));
+    await expect(disjuntor.ler(travada)).rejects.toBeInstanceOf(PrazoEsgotado);
+    // Sem segunda tentativa: esperar o prazo de novo so dobraria a fila.
+    expect(travada).toHaveBeenCalledTimes(1);
+    expect(disjuntor.emPausa()).toBe(true);
+    await expect(disjuntor.ler(travada)).rejects.toBeInstanceOf(BancoEmPausa);
+
+    // A sondagem da pausa tambem tem prazo.
+    await expect(disjuntor.sondar(travada)).rejects.toBeInstanceOf(PrazoEsgotado);
+    expect(travada).toHaveBeenCalledTimes(2);
+  });
+
+  it("comPrazo devolve o valor que chega a tempo", async () => {
+    await expect(comPrazo(Promise.resolve(7), 1_000)).resolves.toBe(7);
+    await expect(comPrazo(new Promise<never>(() => {}), 10)).rejects.toBeInstanceOf(PrazoEsgotado);
   });
 
   it("conexao que cai duas vezes seguidas conta como falha", async () => {

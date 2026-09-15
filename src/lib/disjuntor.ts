@@ -53,6 +53,39 @@ export function emConstrucao(env: Record<string, string | undefined> = process.e
 export const PAUSA_NO_BUILD_MS = 60_000;
 export const PAUSA_EM_EXECUCAO_MS = 15_000;
 
+/**
+ * Quanto uma leitura publica pode esperar o banco. O `connect_timeout` so vale
+ * para abrir a conexao: com o banco travado (conexao aceita, nenhuma resposta)
+ * a consulta esperava para sempre, o indice do blog passava de 90 s e, como a
+ * leitura nunca falhava, a pausa nunca abria. Uma leitura normal leva dezenas de
+ * milissegundos.
+ */
+export const PRAZO_DA_LEITURA_MS = 5_000;
+
+/** Lancado quando a leitura passa do prazo. Conta como falha e abre a pausa. */
+export class PrazoEsgotado extends Error {
+  constructor(ms: number) {
+    super(`o banco nao respondeu em ${ms} ms`);
+    this.name = "PrazoEsgotado";
+  }
+}
+
+/**
+ * A promessa, ou `PrazoEsgotado` se ela nao terminar em `ms`. Nao cancela o
+ * trabalho de baixo (o driver nao tem como); so devolve o controle a quem chamou.
+ */
+export function comPrazo<T>(promessa: Promise<T>, ms: number): Promise<T> {
+  let temporizador: ReturnType<typeof setTimeout> | undefined;
+  const esgotou = new Promise<never>((_, rejeitar) => {
+    temporizador = setTimeout(() => rejeitar(new PrazoEsgotado(ms)), Math.max(0, ms));
+    // Nao segura o processo vivo so por causa do relogio.
+    (temporizador as { unref?: () => void }).unref?.();
+  });
+  // A promessa perdida nao pode virar rejeicao sem tratamento depois do prazo.
+  promessa.catch(() => {});
+  return Promise.race([promessa, esgotou]).finally(() => clearTimeout(temporizador));
+}
+
 export type Disjuntor = {
   /** Roda a leitura: uma segunda tentativa se a conexao caiu, e pausa depois de falhar. */
   ler<T>(leitura: () => Promise<T>): Promise<T>;
@@ -68,8 +101,21 @@ export type Disjuntor = {
 export function criarDisjuntor(opcoes: {
   pausaMs: () => number;
   agora?: () => number;
+  /** Prazo de cada tentativa; padrao PRAZO_DA_LEITURA_MS. */
+  prazoMs?: number;
 }): Disjuntor {
   const agora = opcoes.agora ?? Date.now;
+  const prazoMs = opcoes.prazoMs ?? PRAZO_DA_LEITURA_MS;
+  // Toda tentativa passa por aqui: leitura que nao volta vira falha comum.
+  const tentar = <T>(leitura: () => Promise<T>): Promise<T> => {
+    let promessa: Promise<T>;
+    try {
+      promessa = leitura();
+    } catch (erro) {
+      promessa = Promise.reject(erro);
+    }
+    return comPrazo(promessa, prazoMs);
+  };
   let falhouEm: number | null = null;
   // O `falhouEm` da pausa que ja teve sua tentativa direta. Guardar o instante,
   // e nao um booleano, faz a marca valer so para aquela janela: uma falha nova
@@ -85,7 +131,7 @@ export function criarDisjuntor(opcoes: {
   async function ler<T>(leitura: () => Promise<T>): Promise<T> {
     if (emPausa()) throw new BancoEmPausa();
     try {
-      const valor = await leitura();
+      const valor = await tentar(leitura);
       fechar();
       return valor;
     } catch (primeiro) {
@@ -94,7 +140,7 @@ export function criarDisjuntor(opcoes: {
         throw primeiro;
       }
       try {
-        const valor = await leitura();
+        const valor = await tentar(leitura);
         fechar();
         return valor;
       } catch (segundo) {
@@ -118,7 +164,7 @@ export function criarDisjuntor(opcoes: {
       // espera o banco nao entram na fila atras dela.
       sondadaEm = falhouEm;
       try {
-        const valor = await leitura();
+        const valor = await tentar(leitura);
         // O banco voltou: home e indice do blog saem da pausa junto.
         fechar();
         return valor;
