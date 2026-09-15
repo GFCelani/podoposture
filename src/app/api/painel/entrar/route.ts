@@ -11,6 +11,7 @@ import {
 import { registrarAuditoria } from "@/lib/painel-db";
 import { conferirSenha, hashConfigurado } from "@/lib/senha";
 import { criarBilhete, ehLocalhost, opcoesDoCookie, segredoConfigurado } from "@/lib/sessao";
+import { criarVagasDeLeitura } from "@/lib/vagas-de-leitura";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,16 +61,23 @@ const PRAZO_DO_CORPO_MS = 5_000;
  *
  * Mas a leitura fora da vaga nao pode ficar sem teto nenhum: cada leitura
  * pendurada segura um buffer de ate 4 KB e um temporizador por ate 5 s, e mil
- * conexoes lentas somavam mil de cada. Por isso sao DOIS tetos: `MAXIMO_LENDO`,
- * folgado, so em volta da leitura (uma pessoa entrando nunca chega perto dele),
- * e `MAXIMO_EM_VOO`, apertado, em volta do limite de tentativas e do `scrypt`.
+ * conexoes lentas somavam mil de cada. Por isso a leitura tem vagas proprias
+ * (`vagasDeLeitura`), por origem e com teto total, e `MAXIMO_EM_VOO`, apertado,
+ * fica em volta do limite de tentativas e do `scrypt`.
  */
 const MAXIMO_EM_VOO = 2;
 let emVoo = 0;
 
-/** Leituras de corpo simultaneas nesta instancia. Ver o comentario acima. */
-const MAXIMO_LENDO = 50;
-let lendo = 0;
+/**
+ * Leituras de corpo simultaneas. Um teto global unico de 50 deixava um script
+ * ocupar todas as vagas e recusar a dona; agora so a origem que passa do
+ * proprio teto e recusada, e com o total cheio a leitura corre com prazo curto
+ * em vez de recusar. Ver lib/vagas-de-leitura.ts.
+ */
+const vagasDeLeitura = criarVagasDeLeitura({ maximoPorOrigem: 4, maximoTotal: 200 });
+
+/** Prazo da leitura quando as vagas estao cheias: 4 KB de quem esta entrando chegam bem antes. */
+const PRAZO_CURTO_DO_CORPO_MS = 1_000;
 
 /**
  * O que a tela mostra para a senha errada: o que conferir e o que fazer quando
@@ -90,19 +98,24 @@ export async function POST(req: Request) {
   }
 
   // 2. o corpo, com teto em bytes reais e prazo — fora da vaga do scrypt, mas
-  // dentro do teto folgado de leituras (ver acima)
-  if (lendo >= MAXIMO_LENDO) {
+  // dentro das vagas de leitura (ver acima)
+  const origemDaLeitura = ipDaRequisicao(cabecalhos);
+  const modo = vagasDeLeitura.ocupar(origemDaLeitura);
+  if (modo === "recusado") {
     return NextResponse.json(
       { erro: "Muitas tentativas ao mesmo tempo. Tente de novo em instantes." },
       { status: 429, headers: { "Retry-After": "5" } },
     );
   }
-  lendo += 1;
   let leitura: Awaited<ReturnType<typeof lerCorpoLimitado>>;
   try {
-    leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO, PRAZO_DO_CORPO_MS);
+    leitura = await lerCorpoLimitado(
+      req,
+      TAMANHO_MAXIMO,
+      modo === "curto" ? PRAZO_CURTO_DO_CORPO_MS : PRAZO_DO_CORPO_MS,
+    );
   } finally {
-    lendo -= 1;
+    vagasDeLeitura.liberar(origemDaLeitura);
   }
   if (!leitura.ok) {
     return NextResponse.json({ erro: "Requisição inválida. Recarregue a página e tente de novo." }, { status: 413 });
