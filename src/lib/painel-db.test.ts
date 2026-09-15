@@ -31,7 +31,9 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
     await sql`DROP TABLE IF EXISTS painel_manutencao`;
     // A primeira chamada recria o que falta (garantirTabelas roda uma vez).
     await banco.podarDadosDoPainel();
-  });
+    // 30 s, e nao os 10 padrao: com a suite inteira em paralelo no mesmo banco,
+    // os DROP e o DDL esperam as outras conexoes e ja passaram de 10 s.
+  }, 30_000);
 
   beforeEach(async () => {
     await banco.bancoDoPainel()`TRUNCATE painel_tentativas, painel_auditoria, painel_manutencao`;
