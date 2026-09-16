@@ -274,25 +274,6 @@ body {
   }
 }
 
-/* Trama de curvas de nivel do fundo do hero (trama-topografica.tsx).
-   16px em 150s, de ida e volta: um pixel a cada nove segundos, que e' lento
-   demais para o olho pegar como movimento e o bastante para o fundo nao ser
-   uma chapa parada. Um transform so, e o repouso no estilo base, entao com
-   movimento reduzido a trama fica na posicao do HTML.
-   will-change promove a camada uma vez: a trama e' do tamanho do hero e
-   repintar isso a cada quadro seria caro; deslocar a camada pronta nao e'. */
-.trama-deriva {
-  transform: none;
-  will-change: transform;
-  animation: trama-deriva 150s ease-in-out infinite alternate;
-}
-
-@keyframes trama-deriva {
-  to {
-    transform: translate3d(-16px, 11px, 0);
-  }
-}
-
 /* Sonar das articulacoes. O ponto respira em opacidade; a onda nasce no ponto,
    expande e some. Base da onda e' opacity 0: com movimento reduzido nao ha
    onda, so o ponto parado. Ver vault/startup-lp-loop-css-precisa-de-opacity-0-na-base */
