@@ -58,6 +58,10 @@ const SESSAO_TERMINOU_NO_TEXTO =
 // senha; a frase generica calaria a promessa de que nada se perdeu.
 const SESSAO_TERMINOU_NA_PAGINA_INICIAL =
   "Sua sessão terminou. O que você digitou continua guardado neste navegador: entre de novo para continuar de onde parou.";
+// Sair que falhou no servidor. Sem este aviso a tela mostraria a senha como se
+// tivesse dado certo, e o cookie continuaria valendo por ate 8h.
+const FALHA_AO_SAIR =
+  "Não foi possível encerrar a sessão agora. Se este computador é compartilhado, feche o navegador; a senha volta a ser pedida em até 8 horas.";
 
 export function Painel() {
   const [tela, setTela] = useState<Tela>({ nome: "carregando" });
@@ -158,9 +162,16 @@ export function Painel() {
   }, []);
 
   async function sair() {
-    await fetch("/api/painel/sair", { method: "POST" }).catch(() => {});
+    // A tela volta para a senha em qualquer caso: prender alguem numa sessao
+    // que ela pediu para encerrar seria pior que avisar. O que nao pode e' a
+    // falha passar calada — o cookie dura 8h, entao "sair" que nao apagou
+    // deixa o painel destrancado para quem usar o computador depois.
+    const recado = await fetch("/api/painel/sair", { method: "POST" })
+      .then(async (r) => (r.ok ? null : ((await r.json().catch(() => null))?.erro ?? FALHA_AO_SAIR)))
+      .catch(() => FALHA_AO_SAIR);
+
     abaDeVolta.current = "textos";
-    setAviso(null);
+    setAviso(recado);
     setVisitadas([]);
     setTela({ nome: "entrar" });
   }

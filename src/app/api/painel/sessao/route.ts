@@ -28,6 +28,13 @@ export const dynamic = "force-dynamic";
  * A guarda continua na primeira linha. O teste de rotas protegidas registra
  * esta rota como sonda e exige `exigirSessao()` aqui do mesmo jeito — o que ele
  * deixa de exigir e so o `return auth.resposta`.
+ *
+ * Sem try/catch de proposito. Sonda que quebra tranca o painel inteiro, entao a
+ * tentacao e' embrulhar tudo — mas o teste de rotas protegidas exige
+ * `exigirSessao()` como PRIMEIRA instrucao, e um `try` esconderia isso do
+ * parser. Esta rota nao toca no banco e nao faz mais nada depois da guarda, de
+ * modo que o unico caminho de excecao realista e' a propria guarda, que ja
+ * falha fechada: 503 sem segredo, 401 com bilhete ruim.
  */
 export async function GET() {
   const auth = await exigirSessao();
