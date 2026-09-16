@@ -69,6 +69,32 @@ const MAXIMO_EM_VOO = 2;
 let emVoo = 0;
 
 /**
+ * A vaga acima do teto para quem ja acertou a senha nesta instancia.
+ *
+ * A reserva das vagas de leitura cobria so a leitura do corpo: logo adiante o
+ * teto de pedidos simultaneos e global, entao duas conexoes de terceiro ainda
+ * faziam a dona levar 429 — a mesma mensagem, no passo seguinte. Uma vaga a
+ * mais, so para origem lembrada, devolve a ela o clique em Entrar.
+ *
+ * A reserva e de UMA vaga, e nao uma por origem lembrada: ela so vale para a
+ * origem que ainda nao tem pedido em voo, entao o teto de `scrypt` simultaneo
+ * sobe de 2 para 3 por mais gente que tenha entrado aqui. O limite de tentativas
+ * por origem continua valendo por baixo, e uma origem lembrada que insista gasta
+ * as proprias tentativas como qualquer outra.
+ */
+const VAGA_RESERVADA = 1;
+
+/** Quantos pedidos de cada origem estao no `scrypt` agora. Some quando zera. */
+const emVooPorOrigem = new Map<string, number>();
+
+function contarEmVoo(origem: string | null, quanto: 1 | -1): void {
+  if (origem === null) return;
+  const restantes = (emVooPorOrigem.get(origem) ?? 0) + quanto;
+  if (restantes <= 0) emVooPorOrigem.delete(origem);
+  else emVooPorOrigem.set(origem, restantes);
+}
+
+/**
  * Leituras de corpo simultaneas. Um teto global unico de 50 deixava um script
  * ocupar todas as vagas e recusar a dona; agora so a origem que passa do
  * proprio teto e recusada, e com o total cheio a leitura corre com prazo curto
@@ -140,7 +166,11 @@ export async function POST(req: Request) {
   }
 
   // 3. teto de pedidos simultaneos, em memoria e sem contar tentativa
-  if (emVoo >= MAXIMO_EM_VOO) {
+  const naReserva =
+    origemDaLeitura !== null &&
+    vagasDeLeitura.lembra(origemDaLeitura) &&
+    (emVooPorOrigem.get(origemDaLeitura) ?? 0) === 0;
+  if (emVoo >= MAXIMO_EM_VOO + (naReserva ? VAGA_RESERVADA : 0)) {
     return NextResponse.json(
       { erro: "Muitas tentativas ao mesmo tempo. Tente de novo em instantes." },
       { status: 429, headers: { "Retry-After": "5" } },
@@ -148,10 +178,12 @@ export async function POST(req: Request) {
   }
 
   emVoo += 1;
+  contarEmVoo(origemDaLeitura, 1);
   try {
     return await entrar(leitura.texto, cabecalhos);
   } finally {
     emVoo -= 1;
+    contarEmVoo(origemDaLeitura, -1);
   }
 }
 
@@ -212,8 +244,11 @@ async function entrar(corpo: string, cabecalhos: Headers): Promise<NextResponse>
     value: criarBilhete(segredo),
   });
   await registrarAuditoria("login-ok", null, origem);
-  // Acertou a senha: daqui para frente esta origem tem vaga de leitura reservada
-  // nesta instancia, e um flood de terceiro nao consegue mais recusa-la.
+  // Acertou a senha: daqui para frente esta origem tem vaga reservada nesta
+  // instancia nos dois lugares em que o flood de terceiro a recusava — a leitura
+  // do corpo (`vagasDeLeitura`) e o teto de pedidos simultaneos (VAGA_RESERVADA).
+  // Enquanto ela nao tiver entrado nenhuma vez aqui, o flood ainda a recusa: a
+  // memoria e por instancia.
   vagasDeLeitura.lembrarOrigem(origem);
   // Senha certa nao conta no limite. `limparTentativas` nunca lanca, entao um
   // banco lento aqui atrasa a resposta mas nao desfaz o login que ja deu certo.

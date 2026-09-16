@@ -46,6 +46,12 @@ export type VagasDeLeitura = {
    * e por isso a lista fica curta: e a reserva inteira que ela dimensiona.
    */
   lembrarOrigem(origem: string | null): void;
+  /**
+   * Se esta origem ja acertou a senha nesta instancia. A rota de entrada
+   * consulta isto para dar a ela a vaga reservada de `scrypt`, que e o outro
+   * lugar onde um flood de terceiro conseguia recusa-la.
+   */
+  lembra(origem: string | null): boolean;
   total(): number;
 };
 
@@ -115,6 +121,7 @@ export function criarVagasDeLeitura(opcoes: {
         if (maisAntiga !== undefined) lembradas.delete(maisAntiga);
       }
     },
+    lembra: (origem) => origem !== null && lembradas.has(origem),
     total: () => total,
   };
 }

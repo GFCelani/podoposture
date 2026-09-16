@@ -70,6 +70,20 @@ describe("vagas de leitura do corpo do login", () => {
     expect(vagas.ocupar("203.0.113.3")).toBe("curto");
   });
 
+  it("lembra so quem acertou a senha, e nada sem origem conhecida", () => {
+    // E o que da a vaga reservada de scrypt na rota de entrada.
+    const vagas = criarVagasDeLeitura({ maximoPorOrigem: 4, maximoTotal: 8, maximoAbsoluto: 12, origensLembradas: 2 });
+    expect(vagas.lembra("203.0.113.20")).toBe(false);
+    expect(vagas.lembra(null)).toBe(false);
+    vagas.lembrarOrigem("203.0.113.20");
+    expect(vagas.lembra("203.0.113.20")).toBe(true);
+    expect(vagas.lembra("2001:db8::ff")).toBe(false);
+    // Sai da lista pela ponta antiga como qualquer outra.
+    vagas.lembrarOrigem("203.0.113.21");
+    vagas.lembrarOrigem("203.0.113.22");
+    expect(vagas.lembra("203.0.113.20")).toBe(false);
+  });
+
   it("a chave de origem desconhecida e texto comum, sem caractere nulo literal no arquivo", async () => {
     const { readFileSync } = await import("node:fs");
     const fonte = readFileSync(new URL("./vagas-de-leitura.ts", import.meta.url), "utf8");
