@@ -4,6 +4,7 @@ import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
 import { SectionMark } from "./layers";
+import { TramaTopografica } from "./trama-topografica";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -91,6 +92,10 @@ export function Hero() {
           sizes="100vw"
           className="object-cover object-[34%_45%] opacity-[0.18]"
         />
+        {/* A trama de curvas de nivel entra AQUI, dentro do fundo e depois
+            da foto: e' a ultima camada do fundo e a primeira coisa que o
+            documento pinta no hero. Ver trama-topografica.tsx. */}
+        <TramaTopografica />
       </div>
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do
