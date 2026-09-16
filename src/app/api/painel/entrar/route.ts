@@ -72,10 +72,17 @@ let emVoo = 0;
  * Leituras de corpo simultaneas. Um teto global unico de 50 deixava um script
  * ocupar todas as vagas e recusar a dona; agora so a origem que passa do
  * proprio teto e recusada, e com o total cheio a leitura corre com prazo curto
- * em vez de recusar. Acima do teto absoluto recusa de qualquer origem: e o que
- * limita, de fato, a memoria das leituras penduradas. Ver lib/vagas-de-leitura.ts.
+ * em vez de recusar. Acima do teto absoluto le so quem ja entrou nesta
+ * instancia, dentro de uma reserva de 8 x 4 leituras — assim a memoria das
+ * leituras penduradas continua limitada (432 no pior caso) sem que o trafego de
+ * terceiro consiga recusar a dona. Ver lib/vagas-de-leitura.ts.
  */
-const vagasDeLeitura = criarVagasDeLeitura({ maximoPorOrigem: 4, maximoTotal: 200, maximoAbsoluto: 400 });
+const vagasDeLeitura = criarVagasDeLeitura({
+  maximoPorOrigem: 4,
+  maximoTotal: 200,
+  maximoAbsoluto: 400,
+  origensLembradas: 8,
+});
 
 /** Prazo da leitura quando as vagas estao cheias: 4 KB de quem esta entrando chegam bem antes. */
 const PRAZO_CURTO_DO_CORPO_MS = 1_000;
@@ -205,6 +212,9 @@ async function entrar(corpo: string, cabecalhos: Headers): Promise<NextResponse>
     value: criarBilhete(segredo),
   });
   await registrarAuditoria("login-ok", null, origem);
+  // Acertou a senha: daqui para frente esta origem tem vaga de leitura reservada
+  // nesta instancia, e um flood de terceiro nao consegue mais recusa-la.
+  vagasDeLeitura.lembrarOrigem(origem);
   // Senha certa nao conta no limite. `limparTentativas` nunca lanca, entao um
   // banco lento aqui atrasa a resposta mas nao desfaz o login que ja deu certo.
   await esquecerTentativas(origem);
