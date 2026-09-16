@@ -79,11 +79,19 @@ export const OCIOSIDADE_DA_CONEXAO_S = 20;
  * a chance de conectar: a pausa abria, o build tirava as paginas com o conteudo
  * padrao, e a prova do cron das 6h falhava toda manha de banco frio.
  *
- * Quem paga esta espera: a primeira visita da instancia e, com o banco fora, a
- * primeira leitura de cada janela de pausa — uma por janela, nao uma por visita,
- * porque durante a pausa as outras nem chegam ao banco. Com a pausa de 15 s em
- * execucao, isso da uma espera de ate 12 s a cada 15 s de banco travado, e nao
- * uma so no comeco.
+ * Quem paga esta espera: TODA visita que ja estava dentro do prazo quando a
+ * pausa abriu, e nao uma so. A pausa so abre depois que uma leitura falha, e as
+ * visitas simultaneas comecaram todas antes disso — medido com o banco pausado,
+ * 10 pedidos simultaneos a /nosso-blog levaram de 12,2 s a 12,5 s, 10 de 10 (e
+ * todos responderam 200, com o conteudo padrao). O que a pausa
+ * economiza e a rodada seguinte: quem chega depois nem tenta o banco. Com a
+ * pausa de 15 s em execucao, o custo e uma rodada de ate 12 s a cada 15 s de
+ * banco fora, paga por quantas visitas houver nessa rodada.
+ *
+ * Deduplicar a tentativa em voo nao resolveria aqui: cada chamador passa a
+ * propria leitura (indice do blog, post, conteudo da home) e o que elas
+ * compartilham e a conexao, nao o resultado — entregar a promessa de uma as
+ * outras devolveria o dado errado. Cortar essa espera e assunto da conexao.
  */
 export const PRAZO_ABRINDO_CONEXAO_MS = TEMPO_PARA_ABRIR_CONEXAO_S * 1000 + 2_000;
 
