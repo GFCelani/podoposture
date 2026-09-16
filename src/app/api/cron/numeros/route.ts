@@ -159,7 +159,9 @@ export async function GET(req: Request) {
       prazoEsgotado,
     },
     // 502 deixa a falha visivel no painel de execucoes da Vercel, que olha o
-    // status — a coleta que falhou, a autocura pulada e a poda que falhou.
-    { status: statusDoCron({ coletaFalhou, cacheInvalidado, podaFalhou }) },
+    // status — a coleta que falhou, a gravacao que falhou, a autocura pulada e a
+    // poda que falhou. A gravacao entra por fora de `coletaFalhou` porque o corte
+    // com o banco recusando conexao nao deixa resumo nenhum para trair a falha.
+    { status: statusDoCron({ coletaFalhou, cacheInvalidado, podaFalhou, gravacaoFalhou }) },
   );
 }

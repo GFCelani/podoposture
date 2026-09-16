@@ -86,13 +86,24 @@ export function exigirSegredoDoCron(req: Request): Response | null {
  *
  * A poda que falhou tambem: o prazo do IP de quem tenta entrar e promessa da
  * pagina de privacidade, e ela falhando toda noite saia 200 sem ninguem saber.
+ *
+ * `gravacaoFalhou` entra separado porque ela pode ser a UNICA marca de falha: um
+ * lote do historico com o banco recusando conexao e cortado antes de qualquer
+ * fonte chegar ao fim, e a resposta saia 200 com a lista de fontes vazia — o
+ * contrario do que o README-painel promete a quem repete o backfill na mao.
  */
 export function statusDoCron(execucao: {
   coletaFalhou: boolean;
   cacheInvalidado: boolean | null;
   podaFalhou?: boolean | null;
+  gravacaoFalhou?: boolean;
 }): 200 | 502 {
-  return execucao.coletaFalhou || execucao.cacheInvalidado === false || execucao.podaFalhou === true ? 502 : 200;
+  return execucao.coletaFalhou ||
+    execucao.gravacaoFalhou === true ||
+    execucao.cacheInvalidado === false ||
+    execucao.podaFalhou === true
+    ? 502
+    : 200;
 }
 
 export async function invalidarCacheSeOBancoResponde(passos: {

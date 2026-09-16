@@ -153,8 +153,17 @@ describe("status da execucao do cron", () => {
     expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null, podaFalhou: null })).toBe(200);
   });
 
+  it("lote do historico cortado com o banco recusando: gravacao falhou, sem resumo nenhum, responde 502", () => {
+    // O corte com o banco fora nao deixa fonte no resumo nem tenta poda ou
+    // autocura; sem a gravacao na conta, o backfill via 200 e a lista vazia.
+    expect(
+      statusDoCron({ coletaFalhou: false, cacheInvalidado: null, podaFalhou: null, gravacaoFalhou: true }),
+    ).toBe(502);
+  });
+
   it("tudo certo, ou lote de historico sem autocura, responde 200", () => {
     expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: true })).toBe(200);
     expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null })).toBe(200);
+    expect(statusDoCron({ coletaFalhou: false, cacheInvalidado: null, gravacaoFalhou: false })).toBe(200);
   });
 });
