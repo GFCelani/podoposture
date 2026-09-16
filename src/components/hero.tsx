@@ -4,6 +4,7 @@ import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
 import { SectionMark } from "./layers";
+import { TramaHero } from "./trama-hero";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -91,6 +92,9 @@ export function Hero() {
           sizes="100vw"
           className="object-cover object-[34%_45%] opacity-[0.18]"
         />
+        {/* Camada 0b: a trama de curvas de nivel, dentro da caixa do fundo e
+            depois da foto. Ver trama-hero.tsx. */}
+        <TramaHero />
       </div>
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do

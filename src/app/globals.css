@@ -408,6 +408,96 @@ body {
 }
 
 /* ===============================================================
+   HERO — trama de curvas de nivel (camada de fundo). Ver trama-hero.tsx.
+
+   --trama-forca e' a opacidade da camada inteira, e e' o unico numero a
+   mexer se ela ficar forte ou fraca demais.
+
+   Os dois pocos de mascara NAO abrem buraco: sao elipses de alfa parcial que
+   atenuam. A trama e' fundo e pode passar por tras do conteudo; o que ela nao
+   pode e' disputar com ele, entao chega na tinta do titulo e no campo das
+   figuras com cerca de um terco da forca que tem no vazio. Sobre o titulo
+   isso tem um efeito colateral util: o contraste do texto, que e' medido
+   sobre a composicao final, praticamente nao se move.
+
+   As duas mascaras vivem em elementos ANINHADOS de proposito. Duas camadas de
+   mask-image no mesmo elemento se somam (uniao), que e' o oposto do que se
+   quer aqui; mascara de pai multiplica a do filho, e multiplicar e' o que faz
+   os dois pocos coexistirem.
+
+   As elipses sao em porcentagem da caixa do hero, entao acompanham a faixa
+   sozinhas; so o arranjo muda em lg, quando o texto deixa de ocupar a largura
+   toda e as figuras saem de baixo dele para o lado direito.
+   =============================================================== */
+
+.hero-trama {
+  /* Abaixo de lg a coluna e' unica e o conteudo ocupa quase toda a caixa:
+     sobra pouco fundo livre, entao a camada inteira entra mais fraca e o poco
+     e' um platou largo em vez de uma elipse. */
+  --trama-forca: 0.11;
+  position: absolute;
+  inset: 0;
+  opacity: var(--trama-forca);
+  /* empilhado: um poco so, sobre o miolo, que e' onde esta todo o conteudo */
+  -webkit-mask-image: radial-gradient(
+    ellipse 78% 62% at 50% 44%,
+    rgb(0 0 0 / 0.2) 0 72%,
+    #000 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 78% 62% at 50% 44%,
+    rgb(0 0 0 / 0.2) 0 72%,
+    #000 100%
+  );
+}
+
+.hero-trama-poco {
+  height: 100%;
+}
+
+/* 1px de verdade em qualquer largura: com preserveAspectRatio="slice" a
+   escala do viewBox muda por janela, e sem isto a linha engrossaria justo no
+   telefone, onde sobra menos fundo livre. */
+.hero-trama path {
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+@media (min-width: 1024px) {
+  /* Coluna de texto. A elipse cobre do numeral (17% da altura) a' curva de
+     marcha (90%), e nao so a mancha do titulo: o degrau de alfa comeca em 55%
+     do raio justamente para o subtitulo e os botoes, que ficam na metade de
+     baixo, receberem a mesma atenuacao do titulo e nao a da borda. */
+  .hero-trama {
+    --trama-forca: 0.14;
+    -webkit-mask-image: radial-gradient(
+      ellipse 46% 52% at 22% 53%,
+      rgb(0 0 0 / 0.22) 0 55%,
+      #000 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 46% 52% at 22% 53%,
+      rgb(0 0 0 / 0.22) 0 55%,
+      #000 100%
+    );
+  }
+
+  /* campo das figuras, as linhas de referencia e a faixa dos rotulos */
+  .hero-trama-poco {
+    -webkit-mask-image: radial-gradient(
+      ellipse 30% 46% at 74% 52%,
+      rgb(0 0 0 / 0.3) 0 58%,
+      #000 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 30% 46% at 74% 52%,
+      rgb(0 0 0 / 0.3) 0 58%,
+      #000 100%
+    );
+  }
+}
+
+/* ===============================================================
    HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
    Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
    ===============================================================
