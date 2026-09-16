@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { PRAZO_ABRINDO_CONEXAO_MS } from "./disjuntor";
 import {
   FALHA_AO_GRAVAR,
   FOLGA_PARA_GRAVAR_MS,
@@ -185,6 +186,12 @@ describe("roteiro da coleta diaria", () => {
     const ordem: string[] = [];
     const esperandoReconectar: PassosDoCron = {
       ...passosCertos(ordem),
+      // Com o banco recusando, o driver faz TODO passo esperar o intervalo
+      // crescente antes de falhar — inclusive a leitura do primeiro dia.
+      primeiroDiaGuardado: async () => {
+        await dormir(45_000);
+        throw recusado();
+      },
       gravarLinhas: async () => {
         await dormir(45_000);
         throw recusado();
@@ -209,7 +216,9 @@ describe("roteiro da coleta diaria", () => {
     expect(await segunda).toMatchObject({ prazoEsgotado: false, podaFalhou: true, cacheInvalidado: false });
     expect(ordem).not.toContain("invalidar");
     // O ponto: nao esperar de novo o intervalo com que o driver tenta reconectar.
-    expect(terminouEm - comecou).toBeLessThan(5_000);
+    // Paga uma vez o prazo de abrir conexao, que e o que da chance ao banco que
+    // voltou (ver o teste seguinte), e nao os ~37 s do driver.
+    expect(terminouEm - comecou).toBeLessThan(PRAZO_ABRINDO_CONEXAO_MS + 2_000);
 
     // Sem recusa recente, o mesmo corte e banco travado.
     const semMemoria = await rodar({ ...passosCertos([]), gravarLinhas: NUNCA });
@@ -337,6 +346,102 @@ describe("roteiro da coleta diaria", () => {
       podaFalhou: null,
     });
     expect(feito.resumos.map((r) => r.erro)).toEqual([FALHA_AO_GRAVAR, FALHA_AO_GRAVAR]);
-    expect(terminouEm - inicio).toBeLessThan(5_000);
+    // O primeiro passo de cada fonte paga o prazo de abrir conexao — e o preco
+    // de o banco que voltou ser alcancado — e os seguintes correm no prazo curto.
+    expect(terminouEm - inicio).toBeLessThan(PRAZO_ABRINDO_CONEXAO_MS + 3_000);
+  });
+
+  it("banco que recusou e voltou: a execucao seguinte na mesma instancia acorda ele e grava", async () => {
+    // A regressao: com o prazo curto valendo ja no primeiro passo, nada alcancava
+    // o banco enquanto a recusa estivesse na memoria. A conexao e uma so, abrir
+    // ela com o banco frio das 6h levou 6 s medidos, e o passo abandonado seguia
+    // ocupando a conexao — o backfill repetia o mesmo lote em 502 pelos 5 minutos
+    // inteiros, com o banco de pe.
+    const memoria = { recusouEm: Date.now() };
+    const ordem: string[] = [];
+    const certos = passosCertos(ordem);
+    let acordou = false;
+    const acordar = async () => {
+      if (acordou) return;
+      await dormir(6_000);
+      acordou = true;
+    };
+    const passos: PassosDoCron = {
+      ...certos,
+      primeiroDiaGuardado: async (fonte) => {
+        await acordar();
+        return certos.primeiroDiaGuardado(fonte);
+      },
+      gravarLinhas: async (linhas) => {
+        await acordar();
+        return certos.gravarLinhas(linhas);
+      },
+      registrarColeta: async (registro) => {
+        await acordar();
+        return certos.registrarColeta(registro);
+      },
+    };
+    const inicio = Date.now();
+    const execucao = executarColeta({
+      inicio,
+      limiteMs: LIMITE_MS,
+      historico: false,
+      vercel: INTERVALO,
+      busca: INTERVALO,
+      passos,
+      memoria,
+    });
+    await vi.advanceTimersByTimeAsync(LIMITE_MS + 5_000);
+    const feito = await execucao;
+    expect(feito).toMatchObject({ gravacaoFalhou: false, prazoEsgotado: false, cacheInvalidado: true });
+    expect(ordem).toContain("gravar");
+    // O banco respondeu: a proxima execucao nao herda mais o prazo curto.
+    expect(memoria.recusouEm).toBeNull();
+  });
+
+  it("uma fonte falha e a outra encontra o banco de pe: a recusa sai da memoria e a gravacao dela nao e cortada", async () => {
+    // Qualquer passo no banco que da certo apaga a recusa, e nao so a gravacao:
+    // aqui quem prova que o banco responde e a leitura do primeiro dia guardado.
+    const memoria = { recusouEm: null as number | null };
+    const ordem: string[] = [];
+    const certos = passosCertos(ordem);
+    let gravacoes = 0;
+    let registros = 0;
+    const passos: PassosDoCron = {
+      ...certos,
+      // A vercel espera o banco frio acordar; a busca cai antes disso.
+      primeiroDiaGuardado: async () => {
+        await dormir(6_000);
+        return null;
+      },
+      gravarLinhas: async (linhas) => {
+        gravacoes += 1;
+        if (gravacoes === 1) throw recusado();
+        // Com o banco ja de pe, a gravacao leva mais que o prazo curto.
+        await dormir(3_000);
+        return certos.gravarLinhas(linhas);
+      },
+      registrarColeta: async (registro) => {
+        registros += 1;
+        if (registros === 1) throw recusado();
+        return certos.registrarColeta(registro);
+      },
+    };
+    const inicio = Date.now();
+    const execucao = executarColeta({
+      inicio,
+      limiteMs: LIMITE_MS,
+      historico: false,
+      vercel: INTERVALO,
+      busca: INTERVALO,
+      passos,
+      memoria,
+    });
+    await vi.advanceTimersByTimeAsync(LIMITE_MS + 5_000);
+    const feito = await execucao;
+    expect(feito.resumos.find((r) => r.fonte === "vercel")).toMatchObject({ situacao: "ok" });
+    expect(feito.resumos.find((r) => r.fonte === "busca")?.erro).toBe(FALHA_AO_GRAVAR);
+    expect(ordem).toContain("gravar");
+    expect(memoria.recusouEm).toBeNull();
   });
 });

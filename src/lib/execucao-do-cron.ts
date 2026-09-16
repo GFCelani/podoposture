@@ -1,5 +1,5 @@
 import { invalidarCacheSeOBancoResponde } from "./cron";
-import { PrazoEsgotado, comPrazo } from "./disjuntor";
+import { PRAZO_ABRINDO_CONEXAO_MS, PrazoEsgotado, comPrazo } from "./disjuntor";
 import type { Fonte, Intervalo, LinhaDoDia, ResultadoDaColeta, SituacaoDaColeta } from "./numeros-tipos";
 
 /**
@@ -22,8 +22,9 @@ import type { Fonte, Intervalo, LinhaDoDia, ResultadoDaColeta, SituacaoDaColeta 
  */
 
 /**
- * O que a noite reserva, depois da coleta, para podar, avisar e provar a leitura.
- * O lote do historico nao faz nenhum dos tres e so reserva o salvamento abaixo.
+ * O que a noite reserva, depois da coleta E do salvamento, para podar, avisar e
+ * provar a leitura. O lote do historico nao faz nenhum dos tres e so reserva o
+ * salvamento abaixo.
  */
 export const RESERVA_PARA_O_FIM_MS = 20_000;
 
@@ -32,8 +33,9 @@ export const RESERVA_PARA_O_FIM_MS = 20_000;
  * no ultimo instante ainda pode levar 15 s (o teto por chamada do Google), e a
  * gravacao vem depois dela.
  *
- * Com isto e a reserva acima, a janela para as chamadas e de 20 s. Revisada
- * depois do salvamento: continua bastando. A Vercel faz 21 consultas em 4 vias
+ * Com isto, a reserva acima e o salvamento abaixo, a janela para as chamadas e
+ * de 17 s na noite e de 37 s no lote do historico, que nao poda nem prova.
+ * Revisada depois do salvamento: continua bastando. A Vercel faz 21 consultas em 4 vias
  * (~3 s medidos em chamada de teste) mais uma espera unica de ate 5 s se vier
  * 429, e o Google faz 3 consultas sequenciais de uma pagina cada — a pagina leva
  * 25 000 linhas e o site nao chega perto disso, entao a paginacao nao se repete.
@@ -55,6 +57,13 @@ export const FOLGA_PARA_GRAVAR_MS = 17_000;
  * Tres segundos porque o que se espera aqui e o coletor DEVOLVER o parcial, nao
  * terminar: nenhuma chamada nova comeca depois do prazo das chamadas e cada uma
  * ja tem teto proprio (10 s na Vercel, 15 s no Google).
+ *
+ * O custo e o mesmo nos dois modos, e sai da coleta, nao do fim: a janela das
+ * chamadas encolhe 3 s e a espera acontece so quando o corte pegou alguma fonte
+ * nas chamadas. Antes a noite gastava estes 3 s por cima da reserva do fim, e os
+ * dois `registrarColeta` do corte ficavam com 6 s em vez de 9 s para os dois —
+ * com banco lento o segundo estourava, o `.catch` engolia, a noite perdida nao
+ * entrava na conta e o aviso de duas noites seguidas nunca disparava.
  */
 export const SALVAMENTO_APOS_O_CORTE_MS = 3_000;
 
@@ -133,7 +142,8 @@ function conexaoRecusada(erro: unknown): boolean {
 const RECUSA_RECENTE_MS = 5 * 60 * 1000;
 
 /**
- * O prazo de cada passo no banco enquanto a instancia lembra de uma recusa.
+ * O prazo de um passo no banco depois que outro passo DESTA execucao ja falhou,
+ * com a recusa ainda na memoria da instancia.
  *
  * A espera crescente do driver nao da para cancelar — `comPrazo` devolve o
  * controle a quem chamou, e a promessa de baixo segue pendurada ate o driver
@@ -142,9 +152,19 @@ const RECUSA_RECENTE_MS = 5 * 60 * 1000;
  * que a primeira disse em 0,5 s. Uma leitura certa leva dezenas de
  * milissegundos, entao 1 s nao corta banco vivo, so a espera do driver.
  *
+ * Por que so DEPOIS da primeira falha, e nao desde o primeiro passo: a conexao e
+ * uma so, `garantirTabelasDeNumeros` roda tres DDL antes de qualquer consulta, e
+ * abrir a conexao com o banco frio das 6h levou 6 s medidos (ver
+ * PRAZO_ABRINDO_CONEXAO_MS no disjuntor). Com 1 s valendo ja no primeiro passo,
+ * o passo abandonado seguia ocupando a conexao e o banco que tinha VOLTADO nunca
+ * era alcancado: o backfill repetia o mesmo lote em 502 pelos 5 minutos inteiros
+ * de memoria, com o banco de pe, e a coleta das 6h nao invalidava o cache nessa
+ * janela. Por isso o primeiro passo de cada execucao paga o prazo de abrir
+ * conexao, e so o que vem depois de uma falha corre neste prazo curto.
+ *
  * O prazo estourado nao renova a memoria da recusa: so uma recusa de verdade
- * renova. Assim a memoria expira sozinha em 5 minutos e o banco que voltou e
- * encontrado na proxima execucao, sem ficar preso a este prazo curto.
+ * renova. Assim a memoria expira sozinha em 5 minutos, e qualquer passo no banco
+ * que der certo antes disso ja a apaga (ver `noRitmoDoBanco`).
  */
 const PRAZO_COM_BANCO_RECUSADO_MS = 1_000;
 
@@ -175,9 +195,10 @@ export async function executarColeta(entrada: {
   const { passos, historico } = entrada;
   const agora = entrada.agora ?? Date.now;
   const limite = entrada.inicio + entrada.limiteMs;
-  // O lote do historico nao poda, nao avisa e nao prova: do fim ele so reserva o
-  // salvamento, para o corte tambem gravar o que ja tinha chegado.
-  const fimDaColeta = limite - (historico ? SALVAMENTO_APOS_O_CORTE_MS : RESERVA_PARA_O_FIM_MS);
+  // A janela de salvamento sai da coleta nos dois modos, para o corte gravar o
+  // que ja tinha chegado sem comer a reserva do fim. O lote do historico nao
+  // poda, nao avisa e nao prova: do fim ele so reserva o salvamento.
+  const fimDaColeta = limite - SALVAMENTO_APOS_O_CORTE_MS - (historico ? 0 : RESERVA_PARA_O_FIM_MS);
   const prazoDasChamadas = fimDaColeta - FOLGA_PARA_GRAVAR_MS;
   const fimDoSalvamento = fimDaColeta + SALVAMENTO_APOS_O_CORTE_MS;
   const restaAte = (instante: number) => instante - agora();
@@ -199,13 +220,44 @@ export async function executarColeta(entrada: {
   const salvando = new Set<Fonte>();
   const podeEscrever = (fonte: Fonte) => !cortado || salvando.has(fonte);
 
+  // Se algum passo no banco DESTA execucao ja falhou. Antes disso o prazo curto
+  // nao vale: o primeiro passo precisa do tempo de abrir a conexao, senao o
+  // banco que voltou nunca e alcancado (ver PRAZO_COM_BANCO_RECUSADO_MS).
+  let passoDoBancoFalhou = false;
+
   const recusouHaPouco = () => {
     const recusou = entrada.memoria?.recusouEm;
     return recusou != null && agora() - recusou < RECUSA_RECENTE_MS;
   };
-  /** Todo passo no banco passa por aqui (ver PRAZO_COM_BANCO_RECUSADO_MS). */
-  const noRitmoDoBanco = <T>(passo: () => Promise<T>): Promise<T> =>
-    recusouHaPouco() ? comPrazo(passo(), PRAZO_COM_BANCO_RECUSADO_MS) : passo();
+  /**
+   * Todo passo que e SO banco passa por aqui: os da coleta, o registro do corte,
+   * as podas, a prova de leitura e a anotacao de cache pulado. Fica de fora o
+   * aviso de duas noites, que tambem chama o Telegram — corta-lo em 1 s por
+   * causa de uma leitura calaria o alerta, e ele ja tem prazo proprio
+   * (FIM_DO_AVISO_ANTES_DO_LIMITE_MS).
+   */
+  const noRitmoDoBanco = <T>(passo: () => Promise<T>): Promise<T> => {
+    const prazo = !recusouHaPouco()
+      ? null
+      : passoDoBancoFalhou
+        ? PRAZO_COM_BANCO_RECUSADO_MS
+        : PRAZO_ABRINDO_CONEXAO_MS;
+    const corrente = prazo === null ? passo() : comPrazo(passo(), prazo);
+    return corrente.then(
+      (valor) => {
+        // O banco respondeu: a recusa guardada nao explica mais nada, e os
+        // passos seguintes voltam a correr sem prazo nenhum daqui. Vale para
+        // QUALQUER passo, e nao so para a gravacao — quem acorda o banco costuma
+        // ser a leitura do primeiro dia guardado, no comeco da execucao.
+        if (entrada.memoria) entrada.memoria.recusouEm = null;
+        return valor;
+      },
+      (erro) => {
+        passoDoBancoFalhou = true;
+        throw erro;
+      },
+    );
+  };
 
   async function noBanco<T>(fonte: Fonte, passo: () => Promise<T>): Promise<T> {
     if (!podeEscrever(fonte)) throw new PrazoEsgotado(0);
@@ -235,8 +287,6 @@ export async function executarColeta(entrada: {
           const dias = new Set(resultado.linhas.map((l) => l.dia)).size;
           console.error(`[cron] ${fonte}: o corte por prazo ainda gravou ${dias} dia(s), ${linhas} linha(s)`);
         }
-        // O banco aceitou: uma recusa antiga nao explica mais um corte daqui para frente.
-        if (entrada.memoria) entrada.memoria.recusouEm = null;
         const situacao: SituacaoDaColeta = resultado.erro ? "erro" : "ok";
         await noBanco(fonte, () =>
           passos.registrarColeta({ fonte, situacao, historico, ate: resultado.ate, linhas, erro: resultado.erro }),
@@ -281,11 +331,12 @@ export async function executarColeta(entrada: {
       if (recusouHaPouco()) {
         // O banco nao esta travado: esta recusando conexao, e o driver espera um
         // intervalo crescente antes de tentar de novo. Chegar ate aqui ficou
-        // raro — quem comeca a execucao com a recusa na memoria falha em 1 s (ver
-        // PRAZO_COM_BANCO_RECUSADO_MS) e nao chega ao corte. Sobra o caso em que
-        // a recusa so ficou conhecida durante esta execucao: uma fonte falhou na
-        // hora e a outra pegou a espera do driver. Mesmo tratamento do banco fora
-        // abaixo, sem dizer que o prazo acabou.
+        // raro — quem comeca a execucao com a recusa na memoria gasta no maximo
+        // o prazo de abrir a conexao no primeiro passo e o prazo curto nos
+        // seguintes (ver PRAZO_COM_BANCO_RECUSADO_MS), e sai bem antes do corte.
+        // Sobra o caso em que a recusa so ficou conhecida durante esta execucao:
+        // uma fonte falhou na hora e a outra pegou a espera do driver. Mesmo
+        // tratamento do banco fora abaixo, sem dizer que o prazo acabou.
         console.error("[cron] podas, aviso e limpeza do cache pulados: o banco esta recusando conexao");
         feito.podaFalhou = historico ? null : true;
         feito.cacheInvalidado = historico ? null : false;
@@ -318,7 +369,9 @@ export async function executarColeta(entrada: {
       // Registrada aqui porque o trabalho cortado nao registra mais nada, e sem
       // o registro a noite perdida nao entra na conta do aviso de duas noites.
       await comPrazo(
-        passos.registrarColeta({ fonte, situacao: "erro", historico, ate: null, linhas: 0, erro: TEMPO_DAS_CHAMADAS_ACABOU }),
+        noRitmoDoBanco(() =>
+          passos.registrarColeta({ fonte, situacao: "erro", historico, ate: null, linhas: 0, erro: TEMPO_DAS_CHAMADAS_ACABOU }),
+        ),
         restaAte(limite - FIM_DAS_PODAS_ANTES_DO_LIMITE_MS),
       ).catch(() => {});
     }
@@ -340,7 +393,7 @@ export async function executarColeta(entrada: {
   const fimDasPodas = limite - FIM_DAS_PODAS_ANTES_DO_LIMITE_MS;
   try {
     await comPrazo(
-      passos.podarNumeros().catch((erro) => console.error("[cron] falha ao podar numeros:", erro)),
+      noRitmoDoBanco(() => passos.podarNumeros()).catch((erro) => console.error("[cron] falha ao podar numeros:", erro)),
       restaAte(fimDasPodas),
     );
     // O prazo do IP de quem tenta entrar e o teto do registro de acoes sao
@@ -349,7 +402,7 @@ export async function executarColeta(entrada: {
     // O resultado vai para a resposta e para o status: falhando calada toda
     // noite, os IPs ficavam guardados por dias contra o texto da /privacidade.
     feito.podaFalhou = await comPrazo(
-      passos.podarDadosDoPainel().then(
+      noRitmoDoBanco(() => passos.podarDadosDoPainel()).then(
         () => false,
         (erro) => {
           console.error("[cron] falha ao podar os dados do painel:", erro);
@@ -387,9 +440,9 @@ export async function executarColeta(entrada: {
   // de responder: nao sobra etapa de banco entre a leitura que passou e o
   // momento em que o Next aplica a limpeza.
   feito.cacheInvalidado = await invalidarCacheSeOBancoResponde({
-    provarLeitura: () => comPrazo(passos.provarLeitura(), restaAte(limite)),
+    provarLeitura: () => comPrazo(noRitmoDoBanco(() => passos.provarLeitura()), restaAte(limite)),
     invalidar: passos.invalidar,
-    anotarQuePulou: (motivo) => comPrazo(passos.anotarQuePulou(motivo), restaAte(limite)),
+    anotarQuePulou: (motivo) => comPrazo(noRitmoDoBanco(() => passos.anotarQuePulou(motivo)), restaAte(limite)),
   });
   return feito;
 }
