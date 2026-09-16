@@ -159,9 +159,10 @@ describe("roteiro da coleta diaria", () => {
     expect(ordem).not.toContain("invalidar");
   });
 
-  it("segunda execucao com o banco recusando: o driver faz esperar, mas a resposta nao diz prazo esgotado", async () => {
+  it("segunda execucao com o banco recusando: responde como a primeira, sem repetir a espera do driver", async () => {
     // Medido na rodada: na mesma instancia a primeira volta em 0,5 s, a
-    // segunda espera ~20 s e a terceira estourava o prazo com prazoEsgotado:true.
+    // segunda esperava ~37 s o driver reconectar — para dizer o mesmo — e a
+    // terceira estourava o prazo com prazoEsgotado:true.
     const memoria = { recusouEm: null as number | null };
     const recusando: PassosDoCron = {
       ...passosCertos([]),
@@ -190,8 +191,9 @@ describe("roteiro da coleta diaria", () => {
       },
       registrarColeta: () => Promise.reject(recusado()),
     };
+    const comecou = Date.now();
     const segunda = executarColeta({
-      inicio: Date.now(),
+      inicio: comecou,
       limiteMs: LIMITE_MS,
       historico: false,
       vercel: INTERVALO,
@@ -199,9 +201,15 @@ describe("roteiro da coleta diaria", () => {
       passos: esperandoReconectar,
       memoria,
     });
+    let terminouEm = 0;
+    void segunda.then(() => {
+      terminouEm = Date.now();
+    });
     await vi.advanceTimersByTimeAsync(LIMITE_MS + 5_000);
     expect(await segunda).toMatchObject({ prazoEsgotado: false, podaFalhou: true, cacheInvalidado: false });
     expect(ordem).not.toContain("invalidar");
+    // O ponto: nao esperar de novo o intervalo com que o driver tenta reconectar.
+    expect(terminouEm - comecou).toBeLessThan(5_000);
 
     // Sem recusa recente, o mesmo corte e banco travado.
     const semMemoria = await rodar({ ...passosCertos([]), gravarLinhas: NUNCA });
@@ -299,5 +307,36 @@ describe("roteiro da coleta diaria", () => {
 
     const travado = await rodar({ ...passosCertos([]), gravarLinhas: NUNCA }, true);
     expect(travado.feito).toMatchObject({ prazoEsgotado: true, gravacaoFalhou: true, resumos: [] });
+  });
+
+  it("lote do historico com o banco recusando: responde rapido, acusa a gravacao e lista as fontes", async () => {
+    // O backfill e chamado em sequencia: da segunda chamada em diante a recusa
+    // ja esta na memoria da instancia. Antes a resposta vinha aos ~37 s, com a
+    // lista de fontes vazia e status 200 — contra o que o README-painel promete.
+    const memoria = { recusouEm: Date.now() };
+    const inicio = Date.now();
+    const execucao = executarColeta({
+      inicio,
+      limiteMs: LIMITE_MS,
+      historico: true,
+      vercel: INTERVALO,
+      busca: INTERVALO,
+      passos: { ...passosCertos([]), primeiroDiaGuardado: NUNCA, gravarLinhas: NUNCA, registrarColeta: NUNCA },
+      memoria,
+    });
+    let terminouEm = 0;
+    void execucao.then(() => {
+      terminouEm = Date.now();
+    });
+    await vi.advanceTimersByTimeAsync(LIMITE_MS + 5_000);
+    const feito = await execucao;
+    expect(feito).toMatchObject({
+      prazoEsgotado: false,
+      gravacaoFalhou: true,
+      cacheInvalidado: null,
+      podaFalhou: null,
+    });
+    expect(feito.resumos.map((r) => r.erro)).toEqual([FALHA_AO_GRAVAR, FALHA_AO_GRAVAR]);
+    expect(terminouEm - inicio).toBeLessThan(5_000);
   });
 });

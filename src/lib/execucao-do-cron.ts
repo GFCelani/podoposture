@@ -133,6 +133,22 @@ function conexaoRecusada(erro: unknown): boolean {
 const RECUSA_RECENTE_MS = 5 * 60 * 1000;
 
 /**
+ * O prazo de cada passo no banco enquanto a instancia lembra de uma recusa.
+ *
+ * A espera crescente do driver nao da para cancelar — `comPrazo` devolve o
+ * controle a quem chamou, e a promessa de baixo segue pendurada ate o driver
+ * desistir sozinho. O que da para fazer e nao esperar por ela: com a recusa ja
+ * conhecida, a chamada seguinte do backfill levava ~37 s (medido) para dizer o
+ * que a primeira disse em 0,5 s. Uma leitura certa leva dezenas de
+ * milissegundos, entao 1 s nao corta banco vivo, so a espera do driver.
+ *
+ * O prazo estourado nao renova a memoria da recusa: so uma recusa de verdade
+ * renova. Assim a memoria expira sozinha em 5 minutos e o banco que voltou e
+ * encontrado na proxima execucao, sem ficar preso a este prazo curto.
+ */
+const PRAZO_COM_BANCO_RECUSADO_MS = 1_000;
+
+/**
  * O que a instancia lembra do banco entre uma execucao e outra.
  *
  * Existe por causa do driver: depois de uma conexao recusada, cada tentativa
@@ -183,10 +199,18 @@ export async function executarColeta(entrada: {
   const salvando = new Set<Fonte>();
   const podeEscrever = (fonte: Fonte) => !cortado || salvando.has(fonte);
 
+  const recusouHaPouco = () => {
+    const recusou = entrada.memoria?.recusouEm;
+    return recusou != null && agora() - recusou < RECUSA_RECENTE_MS;
+  };
+  /** Todo passo no banco passa por aqui (ver PRAZO_COM_BANCO_RECUSADO_MS). */
+  const noRitmoDoBanco = <T>(passo: () => Promise<T>): Promise<T> =>
+    recusouHaPouco() ? comPrazo(passo(), PRAZO_COM_BANCO_RECUSADO_MS) : passo();
+
   async function noBanco<T>(fonte: Fonte, passo: () => Promise<T>): Promise<T> {
     if (!podeEscrever(fonte)) throw new PrazoEsgotado(0);
     emCurso.set(fonte, "banco");
-    return passo();
+    return noRitmoDoBanco(passo);
   }
 
   async function processar(fonte: Fonte, intervalo: Intervalo | null): Promise<void> {
@@ -227,9 +251,11 @@ export async function executarColeta(entrada: {
       if (!podeEscrever(fonte)) return;
       console.error(`[cron] falha ao gravar ${fonte}:`, erro);
       feito.gravacaoFalhou = true;
-      await passos
-        .registrarColeta({ fonte, situacao: "erro", historico, ate: null, linhas: 0, erro: FALHA_AO_GRAVAR })
-        .catch(() => {});
+      // Tambem no ritmo do banco: este registro e o ultimo passo de uma fonte que
+      // acabou de falhar, e era ele que segurava a resposta com o banco recusando.
+      await noRitmoDoBanco(() =>
+        passos.registrarColeta({ fonte, situacao: "erro", historico, ate: null, linhas: 0, erro: FALHA_AO_GRAVAR }),
+      ).catch(() => {});
       resumo = { fonte, situacao: "erro", intervalo, linhas: 0, ate: null, erro: FALHA_AO_GRAVAR };
     }
     emCurso.delete(fonte);
@@ -252,11 +278,14 @@ export async function executarColeta(entrada: {
     const pendentes = [...emCurso.entries()];
     if (pendentes.some(([, onde]) => onde === "banco")) {
       feito.gravacaoFalhou = true;
-      const recusou = entrada.memoria?.recusouEm;
-      if (recusou != null && agora() - recusou < RECUSA_RECENTE_MS) {
-        // O banco nao esta travado: esta recusando conexao, e o driver espera
-        // um intervalo crescente antes de tentar de novo. Mesmo tratamento do
-        // banco fora abaixo, sem dizer que o prazo acabou.
+      if (recusouHaPouco()) {
+        // O banco nao esta travado: esta recusando conexao, e o driver espera um
+        // intervalo crescente antes de tentar de novo. Chegar ate aqui ficou
+        // raro — quem comeca a execucao com a recusa na memoria falha em 1 s (ver
+        // PRAZO_COM_BANCO_RECUSADO_MS) e nao chega ao corte. Sobra o caso em que
+        // a recusa so ficou conhecida durante esta execucao: uma fonte falhou na
+        // hora e a outra pegou a espera do driver. Mesmo tratamento do banco fora
+        // abaixo, sem dizer que o prazo acabou.
         console.error("[cron] podas, aviso e limpeza do cache pulados: o banco esta recusando conexao");
         feito.podaFalhou = historico ? null : true;
         feito.cacheInvalidado = historico ? null : false;
