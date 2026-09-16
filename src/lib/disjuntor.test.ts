@@ -150,6 +150,30 @@ describe("criarDisjuntor", () => {
     await expect(disjuntor.ler(lenta)).resolves.toBe("conteudo");
   });
 
+  it("segunda tentativa depois da conexao caida tambem ganha o prazo longo", async () => {
+    // O caso da rodada: a conexao guardada morreu, a segunda tentativa abre uma
+    // nova e o banco leva 6 s para acordar. Com o prazo curto — escolhido pela
+    // ultima leitura certa, de segundos atras — ela estourava antes de conectar,
+    // a pausa abria e as paginas se refaziam com o conteudo padrao.
+    const r = relogio();
+    const disjuntor = criarDisjuntor({
+      pausaMs: () => 15_000,
+      agora: r.agora,
+      prazoMs: 20,
+      prazoAbrindoMs: 400,
+      ociosoMs: 10_000,
+    });
+    await expect(disjuntor.ler(() => Promise.resolve("quente"))).resolves.toBe("quente");
+
+    const leitura = vi
+      .fn()
+      .mockRejectedValueOnce(erroCom("ECONNRESET"))
+      .mockImplementationOnce(() => new Promise<string>((resolver) => setTimeout(() => resolver("conteudo"), 80)));
+    await expect(disjuntor.ler(leitura)).resolves.toBe("conteudo");
+    expect(leitura).toHaveBeenCalledTimes(2);
+    expect(disjuntor.emPausa()).toBe(false);
+  });
+
   it("no build toda leitura usa o prazo longo", async () => {
     const r = relogio();
     const disjuntor = criarDisjuntor({
