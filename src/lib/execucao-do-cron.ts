@@ -23,7 +23,7 @@ import type { Fonte, Intervalo, LinhaDoDia, ResultadoDaColeta, SituacaoDaColeta 
 
 /**
  * O que a noite reserva, depois da coleta, para podar, avisar e provar a leitura.
- * O lote do historico nao faz nenhum dos tres e usa o tempo todo para coletar.
+ * O lote do historico nao faz nenhum dos tres e so reserva o salvamento abaixo.
  */
 export const RESERVA_PARA_O_FIM_MS = 20_000;
 
@@ -31,8 +31,32 @@ export const RESERVA_PARA_O_FIM_MS = 20_000;
  * Da ultima chamada nova ate o fim da etapa de coleta. Uma chamada que comeca
  * no ultimo instante ainda pode levar 15 s (o teto por chamada do Google), e a
  * gravacao vem depois dela.
+ *
+ * Com isto e a reserva acima, a janela para as chamadas e de 20 s. Revisada
+ * depois do salvamento: continua bastando. A Vercel faz 21 consultas em 4 vias
+ * (~3 s medidos em chamada de teste) mais uma espera unica de ate 5 s se vier
+ * 429, e o Google faz 3 consultas sequenciais de uma pagina cada — a pagina leva
+ * 25 000 linhas e o site nao chega perto disso, entao a paginacao nao se repete.
+ * Alargar a janela sairia da poda, do aviso ou da prova de leitura, que e o que
+ * decide se o cache do site pode ser invalidado.
  */
 export const FOLGA_PARA_GRAVAR_MS = 17_000;
+
+/**
+ * Depois do corte por prazo, quanto as fontes que ainda estavam nas chamadas
+ * ganham para devolver o que ja chegou e grava-lo.
+ *
+ * Antes o corte descartava tudo: o que a Vercel e o Google ja tinham entregue
+ * ficava pendurado numa promessa que nao podia mais escrever, e a noite inteira
+ * se perdia por causa de uma consulta atrasada. Gravar o parcial nao estraga
+ * nada — a gravacao e upsert por (fonte, dia, dimensao, chave) e a janela e
+ * refeita na noite seguinte — e evita dia vazio no arquivo.
+ *
+ * Tres segundos porque o que se espera aqui e o coletor DEVOLVER o parcial, nao
+ * terminar: nenhuma chamada nova comeca depois do prazo das chamadas e cada uma
+ * ja tem teto proprio (10 s na Vercel, 15 s no Google).
+ */
+export const SALVAMENTO_APOS_O_CORTE_MS = 3_000;
 
 /** Ate quanto antes do limite as podas podem correr: o resto e do aviso e da prova. */
 const FIM_DAS_PODAS_ANTES_DO_LIMITE_MS = 11_000;
@@ -135,8 +159,11 @@ export async function executarColeta(entrada: {
   const { passos, historico } = entrada;
   const agora = entrada.agora ?? Date.now;
   const limite = entrada.inicio + entrada.limiteMs;
-  const fimDaColeta = limite - (historico ? 0 : RESERVA_PARA_O_FIM_MS);
+  // O lote do historico nao poda, nao avisa e nao prova: do fim ele so reserva o
+  // salvamento, para o corte tambem gravar o que ja tinha chegado.
+  const fimDaColeta = limite - (historico ? SALVAMENTO_APOS_O_CORTE_MS : RESERVA_PARA_O_FIM_MS);
   const prazoDasChamadas = fimDaColeta - FOLGA_PARA_GRAVAR_MS;
+  const fimDoSalvamento = fimDaColeta + SALVAMENTO_APOS_O_CORTE_MS;
   const restaAte = (instante: number) => instante - agora();
 
   const feito: Feito = { cacheInvalidado: null, podaFalhou: null, resumos: [], prazoEsgotado: false, gravacaoFalhou: false };
@@ -149,9 +176,15 @@ export async function executarColeta(entrada: {
   // gravacao atrasada entraria na fila da conexao unica atras das podas e da
   // prova, e um registro atrasado contaria a mesma noite duas vezes.
   let cortado = false;
+  // A excecao: a fonte que estava nas chamadas quando o corte veio ganha a
+  // janela de salvamento para gravar o que ja tinha chegado (ver
+  // SALVAMENTO_APOS_O_CORTE_MS). Fora dessa janela ela volta a ser trabalho
+  // cortado como qualquer outro.
+  const salvando = new Set<Fonte>();
+  const podeEscrever = (fonte: Fonte) => !cortado || salvando.has(fonte);
 
   async function noBanco<T>(fonte: Fonte, passo: () => Promise<T>): Promise<T> {
-    if (cortado) throw new PrazoEsgotado(0);
+    if (!podeEscrever(fonte)) throw new PrazoEsgotado(0);
     emCurso.set(fonte, "banco");
     return passo();
   }
@@ -172,6 +205,12 @@ export async function executarColeta(entrada: {
         // Grava o que chegou mesmo com erro: dia que veio inteiro nao precisa
         // esperar a proxima noite por causa de outro dia que falhou.
         const linhas = await noBanco(fonte, () => passos.gravarLinhas(resultado.linhas));
+        if (cortado) {
+          // O que o corte salvou. Sem este numero o log dizia so que o prazo
+          // acabou, e nao dava para saber se a noite entrou no arquivo.
+          const dias = new Set(resultado.linhas.map((l) => l.dia)).size;
+          console.error(`[cron] ${fonte}: o corte por prazo ainda gravou ${dias} dia(s), ${linhas} linha(s)`);
+        }
         // O banco aceitou: uma recusa antiga nao explica mais um corte daqui para frente.
         if (entrada.memoria) entrada.memoria.recusouEm = null;
         const situacao: SituacaoDaColeta = resultado.erro ? "erro" : "ok";
@@ -185,7 +224,7 @@ export async function executarColeta(entrada: {
       // Anotada mesmo depois do corte: a recusa que chega atrasada e o que
       // explica o corte da proxima execucao nesta instancia.
       if (conexaoRecusada(erro) && entrada.memoria) entrada.memoria.recusouEm = agora();
-      if (cortado) return;
+      if (!podeEscrever(fonte)) return;
       console.error(`[cron] falha ao gravar ${fonte}:`, erro);
       feito.gravacaoFalhou = true;
       await passos
@@ -195,17 +234,22 @@ export async function executarColeta(entrada: {
     }
     emCurso.delete(fonte);
     // Cada fonte anota o proprio resumo quando termina, para a resposta de prazo
-    // esgotado ainda contar a que chegou ao fim.
-    if (!cortado) feito.resumos.push(resumo);
+    // esgotado ainda contar a que chegou ao fim — e a que terminou dentro da
+    // janela de salvamento conta igual.
+    if (podeEscrever(fonte)) feito.resumos.push(resumo);
   }
 
+  const tarefas = new Map<Fonte, Promise<void>>([
+    ["vercel", processar("vercel", entrada.vercel)],
+    ["busca", processar("busca", entrada.busca)],
+  ]);
+
   try {
-    await comPrazo(Promise.all([processar("vercel", entrada.vercel), processar("busca", entrada.busca)]), restaAte(fimDaColeta));
+    await comPrazo(Promise.all(tarefas.values()), restaAte(fimDaColeta));
   } catch (erro) {
     if (!(erro instanceof PrazoEsgotado)) throw erro;
     cortado = true;
     const pendentes = [...emCurso.entries()];
-    emCurso.clear();
     if (pendentes.some(([, onde]) => onde === "banco")) {
       feito.gravacaoFalhou = true;
       const recusou = entrada.memoria?.recusouEm;
@@ -225,7 +269,20 @@ export async function executarColeta(entrada: {
     // Quem demorou foi a Vercel ou o Google. O banco nao esta implicado, e a
     // noite segue: as podas e a prova ainda dizem se ele responde.
     console.error("[cron] as chamadas a Vercel ou ao Google passaram do prazo da coleta");
+
+    // Antes de desistir, a janela de salvamento: a fonte que devolver o parcial
+    // nela ainda grava, e sai com o resumo da propria coleta em vez do erro de
+    // tempo abaixo.
+    for (const [fonte] of pendentes) salvando.add(fonte);
+    await comPrazo(
+      Promise.all(pendentes.map(([fonte]) => tarefas.get(fonte) ?? Promise.resolve())),
+      restaAte(fimDoSalvamento),
+    ).catch(() => {});
+    salvando.clear();
+
     for (const [fonte] of pendentes) {
+      // Voltou dentro da janela e ja anotou o proprio resumo.
+      if (!emCurso.has(fonte)) continue;
       const intervalo = fonte === "vercel" ? entrada.vercel : entrada.busca;
       if (!intervalo) continue;
       feito.resumos.push({ fonte, situacao: "erro", intervalo, linhas: 0, ate: null, erro: TEMPO_DAS_CHAMADAS_ACABOU });

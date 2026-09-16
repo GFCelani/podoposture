@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FALHA_AO_GRAVAR, executarColeta, type PassosDoCron } from "./execucao-do-cron";
-import type { Intervalo, ResultadoDaColeta } from "./numeros-tipos";
+import {
+  FALHA_AO_GRAVAR,
+  FOLGA_PARA_GRAVAR_MS,
+  SALVAMENTO_APOS_O_CORTE_MS,
+  executarColeta,
+  type PassosDoCron,
+} from "./execucao-do-cron";
+import type { Intervalo, LinhaDoDia, ResultadoDaColeta } from "./numeros-tipos";
 
 const LIMITE_MS = 57_000;
 const INTERVALO: Intervalo = { inicio: "2026-09-10", fim: "2026-09-14" };
@@ -10,6 +16,10 @@ const dormir = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 function recusado() {
   return Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:55499"), { code: "ECONNREFUSED" });
+}
+
+function linhaDoDia(dia: string): LinhaDoDia {
+  return { fonte: "busca", dia, dimensao: "total", chave: "", visitas: 0, pessoas: 0, cliques: 3, aparicoes: 9, posicao: 4 };
 }
 
 /** Passos que dao certo na hora, anotando a ordem em que foram chamados. */
@@ -218,6 +228,38 @@ describe("roteiro da coleta diaria", () => {
     expect(registros).toContain("busca:erro");
     expect(ordem).toContain("podarPainel");
     expect(ordem.at(-1)).toBe("invalidar");
+  });
+
+  it("corte por prazo: a fonte que devolve o parcial na janela de salvamento ainda grava", async () => {
+    // Antes o corte descartava tudo: o que a Vercel e o Google ja tinham
+    // entregue morria numa promessa que nao podia mais escrever, e a noite
+    // inteira se perdia por causa de uma consulta atrasada.
+    const ordem: string[] = [];
+    const gravadas: LinhaDoDia[] = [];
+    const passos: PassosDoCron = {
+      ...passosCertos(ordem),
+      coletar: async (fonte, _intervalo, { prazo }) => {
+        if (fonte === "vercel") return { linhas: [], ate: "2026-09-14", erro: null };
+        // Devolve dois dias ja coletados depois do corte, ainda na janela de salvamento.
+        await dormir(prazo - Date.now() + FOLGA_PARA_GRAVAR_MS + SALVAMENTO_APOS_O_CORTE_MS - 1_000);
+        return {
+          linhas: [linhaDoDia("2026-09-10"), linhaDoDia("2026-09-11")],
+          ate: null,
+          erro: "o tempo da função acabou antes do fim da coleta",
+        };
+      },
+      gravarLinhas: async (linhas) => {
+        ordem.push("gravar");
+        gravadas.push(...linhas);
+        return linhas.length;
+      },
+    };
+    const { feito, duracao } = await rodar(passos);
+    expect(gravadas.map((l) => l.dia)).toEqual(["2026-09-10", "2026-09-11"]);
+    const busca = feito.resumos.find((r) => r.fonte === "busca");
+    expect(busca).toMatchObject({ situacao: "erro", linhas: 2 });
+    expect(feito).toMatchObject({ prazoEsgotado: false, cacheInvalidado: true });
+    expect(duracao).toBeLessThanOrEqual(LIMITE_MS);
   });
 
   it("coleta que usa o prazo inteiro: gravar, podar, avisar e provar ainda cabem antes do limite", async () => {
