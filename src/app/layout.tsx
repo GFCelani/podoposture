@@ -3,9 +3,11 @@ import { Newsreader, Public_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { DevMedida } from "../components/dev-medida";
 
+import { AnalyticsDoSite } from "@/components/analytics";
 import { NegocioLocalJsonLd } from "@/components/json-ld";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import {
-  DESCRICAO_PADRAO,
+  derivarContato,
   GOOGLE_SITE_VERIFICATION,
   SITE_URL,
 } from "@/lib/site";
@@ -47,41 +49,52 @@ const plexMono = IBM_Plex_Mono({
 
 const TITULO_PADRAO = "Podoposture | Coluna Vertebral, Dor Crônica";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    // as paginas internas passam so o proprio nome; a marca entra por aqui
-    default: TITULO_PADRAO,
-    template: "%s | Podoposture",
-  },
-  description: DESCRICAO_PADRAO,
-  alternates: { canonical: "/" },
-  robots: { index: true, follow: true },
-  // sem esta tag a clinica perde a posse do Search Console no dia em que o
-  // dominio deixar o GoDaddy; redundante com a verificacao por DNS, de proposito
-  verification: { google: GOOGLE_SITE_VERIFICATION },
-  openGraph: {
-    type: "website",
-    locale: "pt_BR",
-    siteName: "Podoposture",
-    title: TITULO_PADRAO,
-    description: DESCRICAO_PADRAO,
-    url: "/",
-    // public/og.png: captura do proprio hero em 1200x630, para o cartao nunca
-    // divergir do site. Regerar quando o hero mudar.
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Podoposture" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITULO_PADRAO,
-    description: DESCRICAO_PADRAO,
-    images: ["/og.png"],
-  },
-};
+/**
+ * A descricao vem do painel ("Descricao para o Google"), por isso os metadados
+ * sao gerados e nao constantes. A leitura e a mesma da pagina, deduplicada, e
+ * cai no padrao sem banco.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const descricao = (await lerConteudoDoSite()).contato.descricaoParaBuscadores;
 
-export default function RootLayout({
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      // as paginas internas passam so o proprio nome; a marca entra por aqui
+      default: TITULO_PADRAO,
+      template: "%s | Podoposture",
+    },
+    description: descricao,
+    alternates: { canonical: "/" },
+    robots: { index: true, follow: true },
+    // sem esta tag a clinica perde a posse do Search Console no dia em que o
+    // dominio deixar o GoDaddy; redundante com a verificacao por DNS, de proposito
+    verification: { google: GOOGLE_SITE_VERIFICATION },
+    openGraph: {
+      type: "website",
+      locale: "pt_BR",
+      siteName: "Podoposture",
+      title: TITULO_PADRAO,
+      description: descricao,
+      url: "/",
+      // public/og.png: captura do proprio hero em 1200x630, para o cartao nunca
+      // divergir do site. Regerar quando o hero mudar — inclusive pelo painel.
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Podoposture" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITULO_PADRAO,
+      description: descricao,
+      images: ["/og.png"],
+    },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const contato = derivarContato((await lerConteudoDoSite()).contato);
+
   return (
     <html lang="pt-BR">
       <body
@@ -92,8 +105,13 @@ export default function RootLayout({
         <a href="#conteudo" className="pular-para-conteudo">
           Pular para o conteúdo
         </a>
-        <NegocioLocalJsonLd />
+        <NegocioLocalJsonLd contato={contato} />
         {children}
+        {/* So na Vercel: fora dela /_vercel/insights/script.js nao existe, e a
+            tag deixava 404 e erro de tipo MIME no console de toda pagina. Na
+            Vercel o erro so aparece enquanto o Web Analytics estiver desligado,
+            e liga-lo e o primeiro passo dos numeros (README-painel). */}
+        {process.env.VERCEL === "1" && <AnalyticsDoSite />}
         <DevMedida />
       </body>
     </html>

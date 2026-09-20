@@ -1,16 +1,37 @@
 import Image from "next/image";
 import Link from "next/link";
+
+import {
+  dividirPeloDestaque,
+  hrefDaPagina,
+  hrefDoDestino,
+  precisaDeEspacoAntes,
+  type ConteudoResponsabilidade,
+} from "@/lib/conteudo-tipos";
+
 import { ButtonLink } from "./button-link";
-import { MARCAS_CLINICAS, Regua30 } from "./illustrations";
+import { MARCAS_CLINICAS, ReguaDosAnos } from "./illustrations";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
  * A credencial com a pratica real ao lado: avaliacao postural na clinica.
  * As tres marcas de competencia viram faixa secundaria sob a foto, com a
- * regua dos 30 anos fechando a coluna. Sem caixa em volta de texto.
+ * regua dos anos de experiencia fechando a coluna. Sem caixa em volta de texto.
  */
-export function ClinicalResponsibility() {
+export function ClinicalResponsibility({
+  conteudo,
+  anos,
+  whatsapp,
+}: {
+  conteudo: ConteudoResponsabilidade;
+  /** Anos de experiencia do cadastro de contato: um traco por ano na regua. */
+  anos: number;
+  whatsapp: string;
+}) {
+  const { titulo, destaque, paragrafo1, paragrafo2, botao, imagem } = conteudo;
+  const grifo = dividirPeloDestaque(titulo, destaque);
+
   return (
     <section
       id="responsabilidade-clinica"
@@ -24,43 +45,42 @@ export function ClinicalResponsibility() {
             <Reveal variante="cortina">
               <SectionMark n="03" />
               <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
-                Cuidado com{" "}
-                <mark className="marca-grifo marca-grifo-claro">
-                  Responsabilidade
-                </mark>{" "}
-                Clínica
+                {grifo ? (
+                  <>
+                    {grifo.antes}
+                    <mark className="marca-grifo marca-grifo-claro">{grifo.destaque}</mark>
+                    {grifo.depois}
+                  </>
+                ) : (
+                  titulo
+                )}
               </h2>
             </Reveal>
 
             <Reveal delay={110}>
               <p className="mt-9 max-w-[56ch] text-[1.125rem] leading-[1.75] text-ink">
-                Os atendimentos são realizados pela{" "}
+                {paragrafo1.antes}{" "}
                 <Link
-                  href="/responsável-técnica"
+                  href={hrefDaPagina(paragrafo1.link.destino)}
                   className="inline-block py-1 font-display text-[1.25rem] font-medium text-accent underline decoration-rule underline-offset-[6px] transition-colors duration-[160ms] hover:decoration-accent"
                 >
-                  Dra. Claudia Meirelles
+                  {paragrafo1.link.rotulo}
                 </Link>
-                , Osteopata, Posturóloga e Acupunturista com 30 anos de
-                experiência clínica, com atuação em dor crônica, postura e
-                regulação do sistema nervoso.
+                {precisaDeEspacoAntes(paragrafo1.depois) ? " " : ""}
+                {paragrafo1.depois}
               </p>
             </Reveal>
 
             <Reveal delay={190}>
               <p className="mt-6 max-w-[56ch] text-[1.0625rem] leading-[1.7] text-ink">
-                O acompanhamento é individual, com decisões clínicas ajustadas
-                ao longo do processo, conforme a resposta de cada corpo
+                {paragrafo2}
               </p>
             </Reveal>
 
             <Reveal delay={270}>
               <div className="mt-10">
-                <ButtonLink
-                  href="/nosso-blog#317e3e15-aeff-4937-84dc-dee4b53f6797"
-                  variant="secondary"
-                >
-                  Acesse o nosso Blog
+                <ButtonLink href={hrefDoDestino(botao.destino, whatsapp)} variant="secondary">
+                  {botao.rotulo}
                 </ButtonLink>
               </div>
             </Reveal>
@@ -71,10 +91,10 @@ export function ClinicalResponsibility() {
             <Reveal delay={140}>
               <figure className="rounded-lg border border-rule bg-paper p-3 shadow-plate">
                 <Image
-                  src="/img/galeria/avaliacao-postural.webp"
-                  alt="Paciente em avaliação postural sobre a plataforma, de perfil ao espelho"
-                  width={857}
-                  height={1072}
+                  src={imagem.src}
+                  alt={imagem.alt}
+                  width={imagem.largura}
+                  height={imagem.altura}
                   sizes="(min-width: 1024px) 440px, 100vw"
                   className="aspect-[4/3] w-full rounded-md object-cover saturate-[0.88]"
                 />
@@ -89,11 +109,11 @@ export function ClinicalResponsibility() {
                   </div>
                 ))}
                 <div className="hidden flex-1 sm:block">
-                  <Regua30 className="w-full" />
+                  <ReguaDosAnos anos={anos} className="w-full" />
                 </div>
               </div>
               <div className="mt-4 sm:hidden">
-                <Regua30 className="w-full" />
+                <ReguaDosAnos anos={anos} className="w-full" />
               </div>
             </Reveal>
           </div>

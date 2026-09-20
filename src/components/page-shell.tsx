@@ -2,6 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { contatoDoCabecalho, derivarContato } from "@/lib/site";
+
 import { FloatingWhatsApp } from "./floating-whatsapp";
 import { PageGrid, SeamRuler } from "./layers";
 import { Reveal } from "./reveal";
@@ -84,7 +87,13 @@ export type Capa = {
   alt: string;
 };
 
-export function PageShell({
+/*
+ * Async, e le o conteudo do site por conta propria: cabecalho, rodape, faixa
+ * social e disco flutuante mostram o contato editado no painel, e as paginas
+ * que usam esta casca (paginas, posts, indice do blog, 404) nao precisam saber
+ * disso. A leitura e' deduplicada pelo `cache` do React e nunca lanca.
+ */
+export async function PageShell({
   tipo,
   titulo,
   tituloLinhas,
@@ -122,10 +131,12 @@ export function PageShell({
 }) {
   const Emblema = glifo ? GLYPHS[glifo] : undefined;
   const duasColunas = tipo !== "post" && Boolean(midia);
+  const conteudo = await lerConteudoDoSite();
+  const contato = derivarContato(conteudo.contato);
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader contato={contatoDoCabecalho(contato)} />
       <main id="conteudo">
         {/* data-hero: o observador do flutuante procurava "main > section", que
             nesta casca cai na faixa social do rodape; o disco aparecia no topo
@@ -286,10 +297,10 @@ export function PageShell({
         {children}
 
         <SeamRuler />
-        <SocialBand />
+        <SocialBand titulo={conteudo["redes-secao"].titulo} redes={contato.redes} />
       </main>
-      <SiteFooter />
-      <FloatingWhatsApp />
+      <SiteFooter contato={contato} />
+      <FloatingWhatsApp whatsapp={contato.whatsapp} />
     </>
   );
 }

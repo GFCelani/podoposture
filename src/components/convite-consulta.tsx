@@ -1,3 +1,6 @@
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { derivarContato } from "@/lib/site";
+
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
@@ -17,8 +20,14 @@ import { Reveal } from "./reveal";
  *
  * O id existe para o disco flutuante se calar quando este bloco esta na tela —
  * dois convites verdes ao mesmo tempo competem entre si.
+ *
+ * Le o cadastro de contato sozinho, em vez de receber por prop, porque a pagina
+ * dos posts (fora desta frente) o usa sem argumento. A leitura e' a mesma da
+ * pagina, deduplicada pelo `cache` do React: nao ha consulta a mais.
  */
-export function ConviteConsulta() {
+export async function ConviteConsulta() {
+  const contato = derivarContato((await lerConteudoDoSite()).contato);
+
   return (
     <section
       id="convite-consulta"
@@ -51,17 +60,17 @@ export function ConviteConsulta() {
 
           <div className="mt-10 md:col-span-2 md:mt-0 lg:col-span-4 lg:col-start-9">
             <Reveal delay={200}>
-              <ButtonLink href="https://wa.me/5521992035643" variant="primary">
+              <ButtonLink href={contato.whatsapp} variant="primary">
                 Falar sobre o meu caso
               </ButtonLink>
 
               <p className="mt-8">
                 <a
-                  href="tel:552122554845"
+                  href={contato.telefoneFixo.href}
                   className="sublinha inline-flex min-h-[44px] items-center text-[1.0625rem] text-accent"
                   style={{ fontFamily: "var(--mono)" }}
                 >
-                  (21) 2255-4845
+                  {contato.telefoneFixo.curto}
                 </a>
               </p>
 

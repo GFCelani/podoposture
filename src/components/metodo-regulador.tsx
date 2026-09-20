@@ -1,26 +1,15 @@
+import { hrefDoDestino, type ConteudoMetodo } from "@/lib/conteudo-tipos";
+
 import { ButtonLink } from "./button-link";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
-/**
- * Destino do botao. A pagina do metodo ainda nao existe: com null o botao
- * nasce inativo (aria-disabled, sem href; ver ButtonLink). Quando a pagina
- * entrar no ar, a mudanca e' esta linha.
+/*
+ * O texto vem do painel (padrao em conteudo-padrao.ts, copy da cliente com as
+ * duas grafias intencionais). O botao aceita destino "nenhum": enquanto a
+ * pagina do metodo nao existe, ele nasce inativo (aria-disabled, sem href; ver
+ * ButtonLink).
  */
-const DESTINO_DO_METODO: string | null = null;
-
-/**
- * Copy da cliente, verbatim. Duas grafias, as duas intencionais: "MÉTODO
- * REGULADOR®" no titulo, "Método RegulaDOR" no corpo e no botao. Nao
- * uniformizar. O hifen em "da dor - desde" tambem e' dela.
- */
-const TITULO = "MÉTODO REGULADOR";
-const ABERTURA = "Dor persistente não é analisada por uma única estrutura.";
-const CORPO = [
-  "O Método RegulaDOR organiza a avaliação clínica para compreender diferentes fatores que podem participar da manutenção da dor - desde os sinais dos tecidos e a função musculoesquelética até o processamento do sistema nervoso, o movimento, o estado do organismo e o contexto do paciente.",
-  "A partir dessa leitura, são definidos os recursos terapêuticos mais adequados para cada caso.",
-];
-const BOTAO = "Conheça o Método RegulaDOR";
 
 /**
  * Secao 06 da home, entre a abordagem (05) e as condicoes tratadas (07).
@@ -38,7 +27,9 @@ const BOTAO = "Conheça o Método RegulaDOR";
  * movimento reduzido os fios ficam inteiros e parados, porque o repouso vive
  * no traco base, nao na animacao.
  */
-export function MetodoRegulador() {
+export function MetodoRegulador({ conteudo, whatsapp }: { conteudo: ConteudoMetodo; whatsapp: string }) {
+  const { titulo, abertura, corpo, botao } = conteudo;
+
   return (
     <section
       id="metodo-regulador"
@@ -55,9 +46,10 @@ export function MetodoRegulador() {
               {/* Caixa alta e' a escrita da cliente, nao CSS: por isso o
                   tracking abre em vez de fechar, que e' o que versal pede
                   em corpo de display. O ® desce de tamanho e sobe de linha,
-                  mas continua no texto. */}
+                  mas continua no texto. Por isso o painel recusa ® digitado
+                  no titulo: sairia dobrado. */}
               <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[0.04em] text-paper">
-                {TITULO}
+                {titulo}
                 <span className="align-super text-[0.5em] tracking-normal">®</span>
               </h2>
             </Reveal>
@@ -70,7 +62,7 @@ export function MetodoRegulador() {
           <div className="mt-14 lg:col-span-6 lg:col-start-7 lg:mt-0">
             <Reveal delay={120}>
               <p className="max-w-[26ch] font-display text-[clamp(1.5rem,2.6vw,2.125rem)] leading-[1.3] font-medium text-balance text-paper">
-                {ABERTURA}
+                {abertura}
               </p>
             </Reveal>
 
@@ -80,9 +72,9 @@ export function MetodoRegulador() {
                 className="mt-10 h-px w-full max-w-[420px] bg-paper/[0.14]"
               />
               <div className="mt-10 max-w-[58ch] space-y-6">
-                {CORPO.map((paragrafo) => (
+                {corpo.map((paragrafo, i) => (
                   <p
-                    key={paragrafo}
+                    key={i}
                     className="text-[1.0625rem] leading-[1.75] text-on-deep-muted"
                   >
                     {paragrafo}
@@ -93,8 +85,8 @@ export function MetodoRegulador() {
 
             <Reveal delay={360}>
               <div className="mt-11">
-                <ButtonLink href={DESTINO_DO_METODO} variant="secondary-deep">
-                  {BOTAO}
+                <ButtonLink href={hrefDoDestino(botao.destino, whatsapp)} variant="secondary-deep">
+                  {botao.rotulo}
                 </ButtonLink>
               </div>
             </Reveal>

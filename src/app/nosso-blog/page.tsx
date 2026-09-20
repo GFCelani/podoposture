@@ -6,14 +6,20 @@ import { TrilhaJsonLd } from "@/components/json-ld";
 import { PageGrid, SectionMark } from "@/components/layers";
 import { PageShell } from "@/components/page-shell";
 import { Reveal } from "@/components/reveal";
-import { BLOG_INDEX, CATEGORIES, TODOS_OS_POSTS } from "@/lib/posts";
+import { BLOG_INDEX } from "@/lib/posts";
+import { categoriasDoSite, todosOsPosts } from "@/lib/posts-do-site";
 
 /**
  * Indice do blog.
  *
  * No GoDaddy esta pagina era renderizada por JavaScript — o HTML servido trazia
- * so um spinner, e por isso ela nao tinha uma palavra indexavel. Aqui ela e
- * estatica: os 68 posts sao renderizados no HTML.
+ * so um spinner, e por isso ela nao tinha uma palavra indexavel. Aqui os posts
+ * saem no HTML.
+ *
+ * A lista vem de `posts-do-site.ts`, as duas fontes juntas: os 68 migrados e o
+ * que o painel publicar. Ela lia so o JSON, e um texto publicado pelo painel
+ * nunca aparecia aqui nem nos temas. Sem banco, ou com o banco fora, a lista
+ * volta a ser exatamente a do JSON.
  */
 
 const TITULO = "Nosso Blog";
@@ -65,11 +71,11 @@ export default async function IndiceDoBlog({
   searchParams: Promise<{ categoria?: string; p?: string }>;
 }) {
   const { categoria, p } = await searchParams;
+  // As duas leituras dividem uma consulta so ao banco (ver posts-do-site.ts).
+  const [todos, temas] = await Promise.all([todosOsPosts(), categoriasDoSite()]);
   // os links de tema no rodape da home apontam para ?categoria=X; sem este
   // filtro eles levavam ao indice completo, prometendo um recorte que nao existia
-  const filtrados = categoria
-    ? TODOS_OS_POSTS.filter((p) => p.category === categoria)
-    : TODOS_OS_POSTS;
+  const filtrados = categoria ? todos.filter((p) => p.category === categoria) : todos;
   // o destaque so existe na primeira pagina: nas seguintes ele repetiria o
   // mesmo artigo no topo de toda vitrine
   const [primeiro, ...demais] = filtrados;
@@ -236,16 +242,16 @@ export default async function IndiceDoBlog({
               )}
             </div>
 
-            {CATEGORIES.length > 0 && (
+            {temas.length > 0 && (
               <aside className="mt-20 md:col-span-2 md:mt-0 lg:col-span-4">
                 <div className="lg:sticky lg:top-36">
                   <Reveal>
-                  <SectionMark n={String(CATEGORIES.length).padStart(2, "0")} />
+                  <SectionMark n={String(temas.length).padStart(2, "0")} />
                   <h2 className="mt-5 font-display text-[1.375rem] leading-[1.25] font-semibold text-ink-strong">
                     Temas
                   </h2>
                   <ul className="mt-6 space-y-3 border-t border-rule pt-6">
-                    {CATEGORIES.map((tema) => (
+                    {temas.map((tema) => (
                       <li key={tema.label}>
                         <Link
                           href={tema.href}

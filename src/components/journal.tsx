@@ -1,10 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BLOG_INDEX, CATEGORIES, POSTS } from "@/lib/posts";
+import { BLOG_INDEX, type Post, type Tema } from "@/lib/posts";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
-export function Journal() {
+/**
+ * O titulo vem do painel; posts e temas vem do blog (JSON + banco), lidos por
+ * quem renderiza a pagina. Antes esta secao importava a lista do JSON direto,
+ * e texto publicado pelo painel nunca aparecia na pagina inicial.
+ */
+export function Journal({
+  titulo,
+  posts,
+  categorias,
+}: {
+  titulo: string;
+  posts: Post[];
+  categorias: Tema[];
+}) {
   return (
     <section
       id="conteudos"
@@ -16,14 +29,14 @@ export function Journal() {
         <Reveal variante="cortina">
           <SectionMark n="10" />
           <h2 className="mt-9 max-w-[22ch] font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
-            Conteúdos Para Compreender Melhor O Seu Corpo
+            {titulo}
           </h2>
         </Reveal>
 
         <div className="mt-14 md:grid md:grid-cols-6 md:gap-x-8 lg:grid-cols-12 lg:gap-x-6">
           <div className="md:col-span-4 lg:col-span-8">
             <ul>
-              {POSTS.map((post, i) => (
+              {posts.map((post, i) => (
                 <li key={post.href}>
                   <Reveal delay={(i % 5) * 80}>
                     <article className="group flex gap-6 rounded-md border-t border-rule px-3 py-8 transition-[background-color,border-color] duration-[260ms] hover:border-accent/40 hover:bg-surface/60 sm:gap-8">
@@ -143,7 +156,7 @@ export function Journal() {
                   aria-labelledby="journal-categorias"
                   className="mt-6 space-y-1"
                 >
-                  {CATEGORIES.map((category) => (
+                  {categorias.map((category) => (
                     <li key={category.href}>
                       <Link
                         href={category.href}
