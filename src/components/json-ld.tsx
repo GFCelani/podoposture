@@ -7,42 +7,46 @@
  * horario. Aqui o schema fica mais rico que o do site antigo, nao mais pobre.
  */
 
-import {
-  CLINICA,
-  DESCRICAO_PADRAO,
-  RESPONSAVEL,
-  SAME_AS,
-  SITE_NAME,
-  SITE_URL,
-  urlAbsoluta,
-} from "@/lib/site";
+import { SITE_NAME, SITE_URL, urlAbsoluta, type ContatoDoSite } from "@/lib/site";
 
 type Json = Record<string, unknown>;
 
+/**
+ * JSON dentro de <script> precisa do "<" escapado.
+ *
+ * `JSON.stringify` escapa aspas e barra invertida, mas nao "<". O analisador de
+ * HTML nao sabe que esta dentro de JSON: ele fecha a tag no primeiro `</script`
+ * que encontrar, e o que vier depois vira marcacao de verdade. Um titulo com
+ * `</script><script>...` sairia daqui como script executavel numa pagina
+ * publica e indexada.
+ *
+ * O comentario que estava aqui dizia "nao ha entrada de usuario neste caminho".
+ * Era verdade enquanto a unica fonte era o extrator Python. O painel abriu uma
+ * segunda fonte — titulo, resumo e capa vem do banco — e a frase virou mentira
+ * sem que uma linha deste arquivo mudasse. Achado por auditoria cega.
+ *
+ * `<` e a mesma coisa que "<" para quem le o JSON, entao nada muda para o
+ * buscador.
+ */
 function JsonLd({ dados }: { dados: Json }) {
   return (
     <script
       type="application/ld+json"
-      // conteudo proprio, montado em build a partir de constantes tipadas —
-      // nao ha entrada de usuario neste caminho
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(dados) }}
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(dados).replace(/</g, "\\u003c") }}
     />
   );
 }
 
 const ID_CLINICA = `${SITE_URL}/#clinica`;
 
-const ENDERECO = {
-  "@type": "PostalAddress",
-  streetAddress: CLINICA.rua,
-  addressLocality: CLINICA.bairro,
-  addressRegion: CLINICA.estado,
-  postalCode: CLINICA.cep,
-  addressCountry: CLINICA.pais,
-};
-
-/** Identidade do negocio e do site. Vai no layout, uma vez por pagina. */
-export function NegocioLocalJsonLd() {
+/**
+ * Identidade do negocio e do site. Vai no layout, uma vez por pagina.
+ *
+ * Nome da responsavel, descricao, endereco e redes vem do painel: sao
+ * exatamente os campos que passam pelo escape de `JsonLd` acima.
+ */
+export function NegocioLocalJsonLd({ contato }: { contato: ContatoDoSite }) {
+  const { clinica } = contato;
   return (
     <JsonLd
       dados={{
@@ -52,17 +56,24 @@ export function NegocioLocalJsonLd() {
             "@type": ["MedicalClinic", "LocalBusiness"],
             "@id": ID_CLINICA,
             name: SITE_NAME,
-            description: DESCRICAO_PADRAO,
+            description: contato.descricao,
             url: SITE_URL,
-            telephone: CLINICA.telefone,
-            address: ENDERECO,
+            telephone: clinica.telefone,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: clinica.rua,
+              addressLocality: clinica.bairro,
+              addressRegion: clinica.estado,
+              postalCode: clinica.cep,
+              addressCountry: clinica.pais,
+            },
             geo: {
               "@type": "GeoCoordinates",
-              latitude: CLINICA.latitude,
-              longitude: CLINICA.longitude,
+              latitude: clinica.latitude,
+              longitude: clinica.longitude,
             },
             image: urlAbsoluta("/og.png"),
-            sameAs: SAME_AS,
+            sameAs: contato.sameAs,
             medicalSpecialty: ["Osteopathic", "PhysicalTherapy"],
             availableService: [
               "Osteopatia",
@@ -76,7 +87,7 @@ export function NegocioLocalJsonLd() {
             ].map((nome) => ({ "@type": "MedicalTherapy", name: nome })),
             areaServed: {
               "@type": "City",
-              name: CLINICA.cidade,
+              name: clinica.cidade,
             },
           },
           {
@@ -90,8 +101,8 @@ export function NegocioLocalJsonLd() {
           {
             "@type": "Person",
             "@id": `${SITE_URL}/#responsavel`,
-            name: RESPONSAVEL.nome,
-            jobTitle: RESPONSAVEL.titulo,
+            name: contato.responsavel.nome,
+            jobTitle: contato.responsavel.titulo,
             worksFor: { "@id": ID_CLINICA },
           },
         ],

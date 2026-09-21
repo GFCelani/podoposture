@@ -64,9 +64,34 @@ foi extraído e falha se alguma página perdeu texto. Quando uma URL não respon
 piorar em relação ao que existe hoje, não atingir um número bonito.
 
 Estado atual: **87/88 respondendo 200**, e 1 em paridade com a origem
-(`/home/f/chinelos-100%-...`, cujo `%` solto não é escape válido: dá 500 aqui e
-no GoDaddy; a forma escapada, que é a que o Google indexa, responde 200 nos
-dois). Passar no gate é critério de corte, não recomendação.
+(`/home/f/chinelos-100%-...`, cujo `%` solto não é escape válido). Esse endereço
+agora responde **404 em vez de 500** — e nenhum texto se perde, porque a forma
+escapada (`%25`), que é a que o Google indexa, responde **200**. Medido em
+`next start`; o porquê está em `src/lib/rotas-do-middleware.ts`. Passar no gate
+é critério de corte, não recomendação.
+
+## Quando algo dá errado
+
+Quatro redes, uma por classe de erro. Todas em português, com saída.
+
+| Situação | Arquivo | O que a pessoa vê |
+|---|---|---|
+| Endereço que não existe | `src/app/not-found.tsx` | 404 com os destinos reais do menu |
+| Uma página quebrou | `src/app/error.tsx` | 500 com "tentar de novo" e link para o contato |
+| O layout raiz quebrou | `src/app/global-error.tsx` | documento próprio, sem depender de estilo nem fonte do site |
+| O painel quebrou | `src/app/publicar/error.tsx` | fala com a clínica: o site segue no ar e o texto continua guardado |
+
+Dois detalhes que valem saber:
+
+- **Endereço indecodificável vira 404, não 500.** A decisão está em
+  `src/lib/rotas-do-middleware.ts` (pura e testada): `%` que não abre escape
+  válido nunca chega ao roteador. Não tente reescrevê-lo para a rota ASCII do
+  texto — já foi medido, e o Next falha ao decodificar o parâmetro antes disso
+  (`failed to decode param`), devolvendo 500 de novo.
+- **Nunca acrescente `loading.tsx`** num segmento que chame `notFound()`. Ele
+  liga o streaming, e com streaming o Next responde **200 em vez de 404** —
+  convite para o Google indexar página de erro como conteúdo. Há um teste
+  (`src/lib/rotas-de-erro.test.ts`) que falha se alguém tentar.
 
 ## Duas armadilhas que já custaram tempo
 
@@ -104,9 +129,26 @@ não renderiza WebP em Open Graph, e o cartão sai sem imagem. O
 4. Definir `NEXT_PUBLIC_SITE_URL` na Vercel.
 5. Baixar o TTL do DNS para 300s **24h antes** da troca.
 6. Manter o plano GoDaddy pago por 30 dias — rollback é reverter o DNS.
+7. **No momento de apontar o DNS**, cadastrar `DOMINIO_NO_AR=1` na Vercel e fazer um
+   deploy novo. O `robots.txt` é gerado no build: sem a variável, e sem o deploy depois
+   dela, o site entra no ar dizendo aos buscadores para não rastrear nenhuma das 88 URLs.
+   Conferir `https://podoposture.com.br/robots.txt` logo depois (tem que ter `Allow: /`).
 
 ## Escopo deliberadamente fora
 
-Sem Google Ads, Meta Pixel, GTM ou qualquer analytics novo. O GA4 existente da
-cliente (`G-3EQ3LHKN49`) e a verificação do Search Console são **preservados**,
-nunca substituídos.
+Sem Google Ads, Meta Pixel, GTM nem Google Analytics.
+
+**Correção de uma afirmação antiga deste arquivo.** Ele dizia que o GA4 da
+cliente (`G-3EQ3LHKN49`) estava preservado. Não está, e nunca esteve: nenhuma
+versão do código, em nenhum branch, instala a tag do GA4 (`git log --all -S
+G-3EQ3LHKN49` só encontra este README). O site novo não envia nada ao Google
+Analytics. Reinstalar o GA4 exige banner de consentimento, porque ele grava
+cookie de rastreamento e `/privacidade` hoje afirma que não há nenhum. É decisão
+da clínica, não do código.
+
+A verificação do Search Console continua: meta tag em `src/lib/site.ts`,
+redundante com a verificação por DNS.
+
+A medição que existe é a Web Analytics da Vercel (sem cookie, com o painel fora
+da contagem) somada ao Search Console, e as duas são lidas pela aba Números do
+painel. Detalhes em `README-painel.md` e em `/privacidade`.

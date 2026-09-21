@@ -1,10 +1,19 @@
 import Image from "next/image";
+import { Fragment } from "react";
+
+import {
+  dividirPeloDestaque,
+  hrefDoDestino,
+  segmentosDoSubtitulo,
+  type ConteudoHero,
+  type SegmentoDoSubtitulo,
+} from "@/lib/conteudo-tipos";
 
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
 import { SectionMark } from "./layers";
-import { TramaTopografica } from "./trama-topografica";
+import { TramaHero } from "./trama-hero";
 
 /**
  * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
@@ -63,7 +72,117 @@ const ESCALA_BOTAO =
   "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
   "lg:[@media(max-height:860px)]:py-[10px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
-export function Hero() {
+/**
+ * A forma de cada botao e da POSICAO, e fica no codigo: o primeiro e o convite
+ * verde, o segundo o de contorno. O painel edita so rotulo e destino; um
+ * icone ou uma variante trocados mudariam a hierarquia que a fila mede.
+ */
+const FORMA_DOS_BOTOES = [
+  { variant: "primary", icone: "balao" },
+  { variant: "secondary-deep", icone: "pergunta" },
+] as const;
+
+/**
+ * O titulo em blocos, um por linha escrita. A primeira linha vira um bloco por
+ * palavra abaixo de sm: no telefone "Integracao terapeutica" nao cabe numa
+ * linha so, e a quebra continua escolhida, nao emergente. Cada linha menos a
+ * ultima termina com espaco, para o texto copiado sair corrido.
+ */
+function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: string }) {
+  return linhas.map((linha, i) => {
+    const fim = i < linhas.length - 1 ? " " : "";
+    if (i === 0) {
+      const palavras = linha.split(" ");
+      return (
+        <span key={i} className="block">
+          {palavras.map((palavra, j) => (
+            <span key={j} className="block sm:inline">
+              {palavra}
+              {j < palavras.length - 1 ? " " : fim}
+            </span>
+          ))}
+        </span>
+      );
+    }
+    // A regra do descritor garante o grifo na 2a linha; se um dia faltar, a
+    // linha sai sem grifo em vez de sumir.
+    const partes = i === 1 ? dividirPeloDestaque(linha, destaque) : null;
+    return (
+      <span key={i} className="block">
+        {partes ? (
+          <>
+            {partes.antes}
+            <mark className="marca-grifo">{partes.destaque}</mark>
+            {partes.depois}
+          </>
+        ) : (
+          linha
+        )}
+        {fim}
+      </span>
+    );
+  });
+}
+
+/** "\n" vira quebra que so vale a partir de sm, seguida do espaco que a linha corrida precisa. */
+function ComQuebras({ texto }: { texto: string }) {
+  return texto.split("\n").map((parte, i) => (
+    <Fragment key={i}>
+      {i > 0 && (
+        <>
+          <br className="hidden sm:inline" />{" "}
+        </>
+      )}
+      {parte}
+    </Fragment>
+  ));
+}
+
+/**
+ * "Item •" indivisivel. Os segmentos saem de `linhas.join(QUEBRA)` em ordem,
+ * sem sobra, entao o deslocamento de cada caractere no texto inteiro diz em
+ * que linha ele esta. Numa linha que tem bullet, o espaco que nao vem logo
+ * depois de um "•" vira NBSP: a unica quebra possivel passa a ser depois do
+ * bullet.
+ */
+const QUEBRA = "\n";
+const NBSP = "\u00a0";
+
+function unirItens(segmentos: SegmentoDoSubtitulo[], linhas: string[]): SegmentoDoSubtitulo[] {
+  const texto = linhas.join(QUEBRA);
+  const comBullet: boolean[] = [];
+  let linha = 0;
+  for (let i = 0; i < texto.length; i += 1) {
+    if (texto[i] === QUEBRA) linha += 1;
+    comBullet.push(linhas[linha]?.includes("•") ?? false);
+  }
+  let deslocamento = 0;
+  return segmentos.map((segmento) => {
+    const inicio = deslocamento;
+    deslocamento += segmento.texto.length;
+    // Por unidade de codigo, como o .length e o slice que geraram o segmento.
+    let unido = "";
+    for (let j = 0; j < segmento.texto.length; j += 1) {
+      const k = inicio + j;
+      const ch = segmento.texto[j];
+      unido += ch === " " && comBullet[k] && texto[k - 1] !== "•" ? NBSP : ch;
+    }
+    return { ...segmento, texto: unido };
+  });
+}
+
+export function Hero({
+  conteudo,
+  whatsapp,
+  anosDeExperiencia,
+}: {
+  conteudo: ConteudoHero;
+  whatsapp: string;
+  /** contato.anosDeExperiencia: vira a linha em mono abaixo do subtitulo. */
+  anosDeExperiencia: number;
+}) {
+  const segmentos = segmentosDoSubtitulo(conteudo.subtituloLinhas, conteudo.destaquesDoSubtitulo);
+
   return (
     <section
       data-tone="deep"
@@ -92,10 +211,9 @@ export function Hero() {
           sizes="100vw"
           className="object-cover object-[34%_45%] opacity-[0.18]"
         />
-        {/* A trama de curvas de nivel entra AQUI, dentro do fundo e depois
-            da foto: e' a ultima camada do fundo e a primeira coisa que o
-            documento pinta no hero. Ver trama-topografica.tsx. */}
-        <TramaTopografica />
+        {/* Camada 0b: a trama de curvas de nivel, dentro da caixa do fundo e
+            depois da foto. Ver trama-hero.tsx. */}
+        <TramaHero />
       </div>
 
       {/* O hero e' a unica banda com contentor mais largo que os 1240px do
@@ -161,20 +279,19 @@ export function Hero() {
             segunda colocada. Quem precisou de remedicao foi o
             --hero-texto-dir, e so nas duas faixas xl; o porque esta no
             comentario do bloco HERO em globals.css.
+
+            O [overflow-wrap:break-word] fica, e nao por causa do titulo largo:
+            desde 2026-09-14 a linha que nao cabe e recusada no servidor
+            (lib/largura-do-titulo.ts), entao ela nao chega mais ate aqui. Ele
+            continua porque a 320px o corpo cai para 32px e uma linha de 22
+            caracteres ainda passa da largura da coluna — sem ele, a pagina
+            rolaria para o lado no telefone.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
-            <span className="block">
-              <span className="block sm:inline">Integração </span>
-              <span className="block sm:inline">terapêutica </span>
-            </span>
-            <span className="block">
-              <mark className="marca-grifo">efetiva</mark> e inovadora{" "}
-            </span>
-            <span className="block">com resultados </span>
-            <span className="block">rápidos e eficazes</span>
+            <TituloEmLinhas linhas={conteudo.tituloLinhas} destaque={conteudo.destaque} />
           </h1>
 
           {/*
@@ -189,25 +306,35 @@ export function Hero() {
             A medida vai em ch, nao em px, para a linha ficar no confortavel
             de leitura em qualquer degrau de corpo.
 
-            Sairam daqui, a pedido: "fisioterapeuta especialista", "pelo
+            O TEXTO NAO MORA MAIS AQUI. Desde o painel (2026-09), titulo,
+            subtitulo e botoes vem de `conteudo` (ConteudoHero), editavel pela
+            Dra. Claudia; o padrao, que vale com o banco vazio e no "voltar ao
+            padrao", esta em CONTEUDO_PADRAO.hero (lib/conteudo-padrao.ts). A
+            credencial que a cliente mandou em 2026-09-20 entrou LA, verbatim,
+            com o bullet como separador e o hifen simples em "Copacabana - Rio
+            de Janeiro". Mudar a copy e' mudar la, nao aqui.
+
+            Sairam do padrao, a pedido: "fisioterapeuta especialista", "pelo
             COFFITO" e a frase "Osteopatia, posturologia e acupuntura em
             Copacabana, Rio de Janeiro". So o hero mudou. As duas primeiras
             continuam na copy migrada da cliente (pages.json, paginas de
             Responsavel Tecnica e Curriculo Profissional) e a terceira segue
-            em DESCRICAO_PADRAO (site.ts), que e' a meta description, o
+            em contato.descricaoParaBuscadores, que e' a meta description, o
             manifest e o JSON-LD.
 
-            CADA "ITEM •" E' INDIVISIVEL. Os trechos vao em spans com
-            whitespace-nowrap, entao o bullet nunca abre a linha nem fica
-            orfao no fim dela, em nenhuma largura, inclusive abaixo de sm onde
-            os <br> somem e o texto flui sozinho.
+            Quatro linhas, e nao tres: o descritor do painel exige exatamente
+            quatro linhas preenchidas (validarLinhas), e o padrao tem de passar
+            na mesma regra que o editor. A lista cai em 24 / 25 / 29 / 27
+            caracteres, a particao mais regular das cinco competencias em tres
+            linhas, com o endereco na quarta.
 
-            Quebra escrita em tres linhas a partir de sm, nao emergente: nao
-            ha text-balance aqui, que decide por heuristica propria e varia
-            entre maquinas. Das particoes possiveis da lista em duas linhas,
-            esta e' a de menor irregularidade, com 318 / 361 / 232px em 18px
-            de corpo. O bloco fica a ~59% da largura do titulo, a mesma
-            proporcao do subtitulo anterior.
+            CADA "ITEM •" E' INDIVISIVEL. Como o texto agora e' dado, e nao
+            JSX, a regra vive na renderizacao (unirItens, abaixo): numa linha
+            com bullet, todo espaco que nao vem logo depois de um "•" vira
+            espaco inseparavel. O bullet nunca abre linha nem fica orfao,
+            inclusive abaixo de sm, onde os <br> somem e o texto flui. Linha
+            sem bullet (o endereco, ou um texto que a cliente escreva no painel
+            sem bullets) quebra normalmente.
             A medida de 480px e' guarda, nao forma: quem desenha a borda sao
             as quebras. Ela existe para o bloco nunca quebrar sozinho se a
             fonte de fallback medir diferente.
@@ -216,34 +343,33 @@ export function Hero() {
             className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
-            <span className="whitespace-nowrap">
-              <span className="font-medium text-paper">
-                Dra. Claudia Meirelles
-              </span>{" "}
-              •
-            </span>{" "}
-            <span className="whitespace-nowrap">Osteopatia •</span>{" "}
-            {/* o espaco antes do <br> e' o que segura a linha abaixo de sm,
-                onde o <br> some e o texto volta a fluir sozinho */}
-            <br className="hidden sm:inline" />
-            <span className="whitespace-nowrap">Acupuntura •</span>{" "}
-            <span className="whitespace-nowrap">Posturologia •</span>{" "}
-            <span className="whitespace-nowrap">Neuromodulação</span>{" "}
-            <br className="hidden sm:inline" />
-            <span className="whitespace-nowrap">Copacabana - Rio de Janeiro</span>
+            {/* Os trechos em destaque sao segmentos de texto, nunca HTML: o
+                primeiro leva peso, o segundo so a cor. */}
+            {unirItens(segmentos, conteudo.subtituloLinhas).map((segmento, i) =>
+              segmento.destaque === null ? (
+                <ComQuebras key={i} texto={segmento.texto} />
+              ) : (
+                <span
+                  key={i}
+                  className={segmento.destaque === 0 ? "font-medium text-paper" : "text-paper"}
+                >
+                  <ComQuebras texto={segmento.texto} />
+                </span>
+              ),
+            )}
           </p>
 
           {/*
             "30 anos de experiencia clinica", que a cliente pediu para incluir
             "onde couber melhor".
             Escolhido: linha de metadado em mono, separada do bloco por um fio,
-            e nao uma terceira linha do paragrafo. O paragrafo acima ja e' uma
+            e nao mais uma linha do paragrafo. O paragrafo acima ja e' uma
             enumeracao com bullets; um "30 anos" ali dentro entraria lendo como
             mais um item da lista de competencias, no mesmo peso e no mesmo
             registro. Em mono ele muda de registro e vira o que e': uma medida.
-            E' tambem o que o resto do site faz com numero, rotulo e metadado,
-            e e' de onde a Regua30 (illustrations.tsx) tira os 30 tracos: se o
-            numero mudar, ela muda junto.
+            O numero sai de contato.anosDeExperiencia, o mesmo que a regua da
+            secao 03 usa para desenhar um traco por ano: editado no painel, os
+            dois mudam juntos. So o numero e' dado; a frase fica no codigo.
             O fio e' elemento, nao caractere: copy de site nao usa travessao.
           */}
           <p
@@ -259,7 +385,7 @@ export function Hero() {
               aria-hidden="true"
               className="h-px w-6 shrink-0 bg-accent-light/45"
             />
-            30 anos de experiência clínica
+            {anosDeExperiencia} anos de experiência clínica
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
@@ -270,31 +396,28 @@ export function Hero() {
               o embrulho os encolheria, entao no telefone a curva continua
               presa a largura do bloco. */}
           <div className="sm:w-fit">
-            {/* Acao do hero. Rotulos e destinos ja existentes na pagina:
-              o primario e' o par completo da secao 09, rotulo e destino; o
-              secundario
-              e' o CTA da Avaliacao Clinica da Dor Persistente, a porta de
-              entrada clinica. */}
+            {/* Acao do hero. No padrao, o primario e' o par completo da
+              secao 09, rotulo e destino; o secundario e' o CTA da Avaliacao
+              Clinica da Dor Persistente, a porta de entrada clinica. O teto de
+              24 caracteres do rotulo e' o que a borda medida em lg aguenta. */}
             <div
               className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-6"
               style={{ ["--in-delay" as string]: "620ms" }}
             >
-              <ButtonLink
-                href="https://wa.me/5521992035643"
-                variant="primary"
-                icone="balao"
-                className={ESCALA_BOTAO}
-              >
-                Envie uma mensagem
-              </ButtonLink>
-              <ButtonLink
-                href="/tratamento-da-dor"
-                variant="secondary-deep"
-                icone="pergunta"
-                className={ESCALA_BOTAO}
-              >
-                Quero mais informações
-              </ButtonLink>
+              {conteudo.botoes.map((botao, i) => {
+                const forma = FORMA_DOS_BOTOES[i] ?? FORMA_DOS_BOTOES[1];
+                return (
+                  <ButtonLink
+                    key={i}
+                    href={hrefDoDestino(botao.destino, whatsapp)}
+                    variant={forma.variant}
+                    icone={forma.icone}
+                    className={ESCALA_BOTAO}
+                  >
+                    {botao.rotulo}
+                  </ButtonLink>
+                );
+              })}
             </div>
 
             {/* Curva de forca da marcha: o duplo pico de cada passo, o

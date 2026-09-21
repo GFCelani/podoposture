@@ -100,12 +100,19 @@ export function rotuloDaPagina(pagina: Pagina): string {
   return tituloDaPagina(pagina).replace(/(?<!\.\.)\.$/, "");
 }
 
-/** Descricao para <meta>: a do site antigo quando existe, senao o 1o paragrafo. */
-export function descricaoDaPagina(pagina: Pagina): string {
+/**
+ * Descricao para <meta>: a do site antigo quando existe, senao o 1o paragrafo.
+ *
+ * `reserva` e a "Descricao para o Google" publicada no painel. Parametro, e
+ * nao leitura aqui, porque este modulo nao toca banco: quem renderiza a pagina
+ * ja leu o conteudo e passa. Sem ela, a descricao editada nao chegava a
+ * /curriculo-profissional, que cai na reserva e a mostra ate como subtitulo.
+ */
+export function descricaoDaPagina(pagina: Pagina, reserva: string = DESCRICAO_PADRAO): string {
   if (pagina.descricaoOriginal) return pagina.descricaoOriginal;
   const m = pagina.html.match(/<p>([\s\S]*?)<\/p>/);
   const texto = m ? m[1].replace(/<[^>]+>/g, "").trim() : "";
-  return texto.length > 60 ? `${texto.slice(0, 155).trimEnd()}…` : DESCRICAO_PADRAO;
+  return texto.length > 60 ? `${texto.slice(0, 155).trimEnd()}…` : reserva;
 }
 
 import { DESCRICAO_PADRAO } from "./site";

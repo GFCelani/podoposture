@@ -12,21 +12,22 @@ import { useElementoNaTela, usePassouHero } from "@/lib/use-passou-hero";
  * aparecem juntos — e chegam a se sobrepor no celular.
  *
  * O destino era o link curto do WhatsApp Business, diferente do numero escrito
- * em todo o resto do site. Agora e' o mesmo (21) 99203-5643 do bloco de
- * contato: um canal so, uma conversa so.
+ * em todo o resto do site. Agora e' o mesmo numero do cadastro de contato,
+ * que chega por prop: componente de cliente nao le banco, e o link escrito a
+ * mao aqui ficava para tras quando o numero mudava no painel.
  *
  * Entrada: sobe girando de leve, com overshoot.
  * Repouso: anel que emana a cada 3s e o balao que acena a cada 7s.
  * Icone proprio: balao de conversa com fone, nao o glifo da Meta.
  */
-export function FloatingWhatsApp() {
+export function FloatingWhatsApp({ whatsapp }: { whatsapp: string }) {
   const passou = usePassouHero();
   const conviteNaTela = useElementoNaTela("#convite-consulta");
   const visivel = passou && !conviteNaTela;
 
   return (
     <a
-      href="https://wa.me/5521992035643"
+      href={whatsapp}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar Sobre o Meu Caso"
