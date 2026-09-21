@@ -37,7 +37,13 @@ MARCADOR_NUM = re.compile(r"^\s*(?:<strong>\s*)?(\d+)[.)]\s+")
 # NAO entra: os titulos da autora sao quase todos perguntas — "O Que e Zumbido
 # Somatossensorial?", "Como Funciona a Neuromodulacao Auricular Vagal?" — e
 # barra-los aqui derrubaria justamente os casos que a regra existe para pegar.
-FIM_DE_FRASE = re.compile(r"[.;]\s*$")
+#
+# O fecho de aspas (ou de parenteses) depois do ponto continua sendo fim de
+# frase. Sem esta parte, fala entre aspas em negrito passava pela guarda e
+# virava titulo de secao: no post de 2026-09-20 as duas falas atribuidas ao
+# organismo, "Preciso proteger essa regiao." e "Esse movimento pode ser
+# seguro.", terminam em .” e eram promovidas a <h3>.
+FIM_DE_FRASE = re.compile(r"[.;][\"'”’»)\]]?\s*$")
 
 
 def texto_de(fragmento: str) -> str:
