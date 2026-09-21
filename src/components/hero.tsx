@@ -255,11 +255,11 @@ export function Hero({
           texto ja esta na goteira de 40px da grade). O preco e' que a
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[114px] lg:[@media(max-height:860px)]:pb-7">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[var(--hv-topo)] lg:[@media(max-height:860px)]:pb-7">
         {/* .hero-texto (globals.css): na janela baixa o bloco inteiro anda
-            56px para a direita, a composicao aprovada para laptop; na janela
-            da cliente (1536x730 e 1280x586) o recuo sai. O porque da faixa
-            estreita esta no bloco "JANELA DA CLIENTE" do globals.css. */}
+            56px para a direita, a composicao aprovada para laptop. Vale para
+            qualquer altura ate 860px, sem faixa por maquina (ver o bloco
+            "Recuo do bloco de texto" no globals.css). */}
         <div className="hero-texto relative z-10 lg:col-span-9">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque sobreFoto />
@@ -315,7 +315,7 @@ export function Hero({
             rolaria para o lado no telefone.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
+            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 lg:[@media(max-height:860px)]:mt-[var(--hv-titulo)] text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <TituloEmLinhas linhas={conteudo.tituloLinhas} destaque={conteudo.destaque} />
@@ -387,7 +387,7 @@ export function Hero({
             inseparavel. Linha sem bullet quebra normalmente.
           */}
           <p
-            className="rule-in mt-[22px] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[540px] lg:text-[14px] xl:max-w-[615px] xl:text-[16px] lg:[@media(max-height:860px)]:mt-[20px] lg:[@media(max-height:860px)]:max-w-[425px] lg:[@media(max-height:860px)]:text-[13px] lg:[@media(max-height:860px)]:font-[450] lg:[@media(max-height:860px)]:tracking-[-0.006em] xl:[@media(max-height:860px)]:max-w-[500px]"
+            className="rule-in mt-[22px] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[540px] lg:text-[14px] xl:max-w-[615px] xl:text-[16px] lg:[@media(max-height:860px)]:mt-[var(--hv-subtitulo)] lg:[@media(max-height:860px)]:max-w-[425px] lg:[@media(max-height:860px)]:text-[13px] lg:[@media(max-height:860px)]:font-[450] lg:[@media(max-height:860px)]:tracking-[-0.006em] xl:[@media(max-height:860px)]:max-w-[500px]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
             <Pedacos pedacos={credencial} />
@@ -438,7 +438,7 @@ export function Hero({
               Clinica da Dor Persistente, a porta de entrada clinica. O teto de
               24 caracteres do rotulo e' o que a borda medida em lg aguenta. */}
             <div
-              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-6"
+              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-[var(--hv-botoes)]"
               style={{ ["--in-delay" as string]: "620ms" }}
             >
               {conteudo.botoes.map((botao, i) => {
@@ -477,7 +477,7 @@ export function Hero({
             <svg
               aria-hidden="true"
               viewBox="0 0 420 46"
-              className="rule-in mt-8 h-auto w-full max-w-[440px] sm:max-w-none lg:mt-10 [@media(max-height:860px)]:mt-4"
+              className="rule-in mt-8 h-auto w-full max-w-[440px] sm:max-w-none lg:mt-10 [@media(max-height:860px)]:mt-4 lg:[@media(max-height:860px)]:mt-[var(--hv-curva)]"
               style={{ ["--in-delay" as string]: "760ms" }}
             >
               <path

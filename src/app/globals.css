@@ -641,49 +641,23 @@ body {
   .hero-texto {
     padding-left: 56px;
   }
-}
 
-/* ===============================================================
-   HERO — JANELA DA CLIENTE (2026-09-21)
-
-   A cliente abre o site num Dell Inspiron 14 7460: painel de 1920x1080 com o
-   Windows em 125%, o que da 1536 de largura em pixels de CSS e, no Chrome
-   maximizado sem barra de favoritos, 730 de altura (738 no Windows 10, cuja
-   barra de tarefas e' 8px mais baixa). Em 150% seriam 1280x586.
-   Nessa janela o recuo acima e o par centrado abriam 76px entre a marca do
-   cabecalho e o texto, e 164px entre o texto e as figuras, contra 20 e 57 em
-   1440x900. Aqui o recuo sai e o par encosta no texto: 20 e 57, como 1440.
-
-   POR QUE UMA FAIXA ESTREITA, E NAO "JANELA BAIXA". O laptop em que o site e'
-   desenhado (Dell Inspiron 15 5510) tem o MESMO painel logico: 1920x1080 a
-   125%, 1536 de largura. So a altura separa os dois, porque o Chrome dele
-   mostra a barra de favoritos em todas as abas: 1536x695, contra 730 da
-   cliente. O corte em 712 fica no meio. Isto e' fragil de proposito e por
-   falta de alternativa: se a cliente ligar a barra de favoritos, ela cai em
-   ~695 e ve a composicao de laptop; se a barra do outro laptop for
-   desligada, ele passa a ver a da cliente. Nenhuma media query distingue
-   dois paineis iguais.
-
-   O teto de 33px no deslocamento do par: numa janela curta a altura das
-   figuras sai da janela, nao do campo, e centrar o par no campo largo abre o
-   vao em dois; com o teto a sobra vai inteira para o lado dos rotulos, onde
-   os fios a absorvem, e o vao fica em 57px (33 + os 24 de folga).
-   =============================================================== */
-@media (min-width: 1500px) and (max-width: 1560px) and (min-height: 712px) and (max-height: 770px),
-  (min-width: 1280px) and (max-width: 1300px) and (min-height: 540px) and (max-height: 610px) {
-  .hero-texto {
-    padding-left: 0;
-  }
-
-  .hero-campo {
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 527px);
-  }
-
-  .hero-par {
-    left: min(
-      calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2),
-      33px
-    );
+  /* RESPIRO VERTICAL DA JANELA BAIXA (2026-09-21). Uma composicao so para
+     qualquer altura ate 860px, sem faixa por maquina: os espacos entre as
+     pecas do bloco de texto seguem a altura da janela, em linha reta.
+     A ancora e' 695px, a janela aprovada (1536x695): ali cada espaco da
+     exatamente o valor fixo que tinha antes (114 / 24 / 20 / 24 / 16).
+     Com mais altura o bloco respira um pouco mais, com teto; com menos, ele
+     aperta ate o piso, que e' o que faz 1280x586 caber na dobra com a curva
+     de marcha inteira (sem isto o hero passava 26px da janela). Cada k e'
+     (valor em 695 - piso) / 109, os 109px entre 695 e 586.
+     O topo tem piso de 106: abaixo disso o numeral encosta no cabecalho. */
+  :root {
+    --hv-topo: clamp(106px, calc(114px + (100svh - 695px) * 0.073), 124px);
+    --hv-titulo: clamp(12px, calc(24px + (100svh - 695px) * 0.11), 30px);
+    --hv-subtitulo: clamp(14px, calc(20px + (100svh - 695px) * 0.055), 24px);
+    --hv-botoes: clamp(12px, calc(24px + (100svh - 695px) * 0.11), 30px);
+    --hv-curva: clamp(10px, calc(16px + (100svh - 695px) * 0.055), 20px);
   }
 }
 
