@@ -62,11 +62,11 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
        separador e hifen simples em "Copacabana - Rio de Janeiro". Substitui a
        frase com "fisioterapeuta especialista ... pelo COFFITO". Os "30 anos de
        experiencia clinica" sairam daqui: viraram a linha em mono abaixo do
-       subtitulo, com o numero de contato.anosDeExperiencia (ver hero.tsx). */
+       subtitulo, com o numero de contato.anosDeExperiencia (ver hero.tsx).
+       Duas linhas desde 2026-09-21, como a cliente escreveu: credencial e
+       lugar. */
     subtituloLinhas: [
-      "Dra. Claudia Meirelles •",
-      "Osteopatia • Acupuntura •",
-      "Posturologia • Neuromodulação",
+      "Dra. Claudia Meirelles • Osteopatia • Acupuntura • Posturologia • Neuromodulação",
       "Copacabana - Rio de Janeiro",
     ],
     destaquesDoSubtitulo: ["Dra. Claudia Meirelles"],

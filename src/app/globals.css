@@ -589,9 +589,8 @@ body {
 
   @media (max-height: 860px) {
     .hero-campo {
-      /* 571 - 56: o pl-14 da janela baixa saiu do hero.tsx em 2026-09-20, e
-         estes 56px estavam contados aqui. */
-      --hero-texto-dir: 515px;
+      /* conta o recuo de 56px de .hero-texto na janela baixa */
+      --hero-texto-dir: 571px;
     }
   }
 
@@ -605,30 +604,6 @@ body {
     top: 0;
     left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
     gap: var(--hero-vao);
-  }
-
-  /* JANELA BAIXA: teto para o deslocamento do par (2026-09-20).
-     Numa janela curta a altura das figuras e' limitada pela propria janela,
-     nao pela largura do campo: em 1536x730 elas saem com 361px de largura
-     contra 456px em 1440x900, numa janela MAIS larga. O campo, esse, continua
-     largo, e centrar o par nele abria um vao de 164px entre o fim do texto e
-     o comeco das figuras, contra 57px em 1440. Era a "distribuicao estranha"
-     que a cliente viu: texto e figuras lidos como duas ilhas, com os fios de
-     referencia atravessando o vazio entre elas.
-     A altura nao tem conserto — em 730px de janela as figuras nao cabem no
-     tamanho de 1440. O que tem conserto e' a composicao: a sobra de largura
-     para de ser dividida em dois e vai inteira para o lado dos rotulos, onde
-     ja existem fios que a absorvem. O teto de 33px mantem o vao em 57px, o
-     mesmo de 1440, porque a folga entre o texto e o campo ja e' 24px.
-     Fica fora da janela alta de proposito: em 1440x900 o par centrado sobra
-     so 32px de cada lado e ja esta certo. */
-  @media (max-height: 860px) {
-    .hero-par {
-      left: min(
-        calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2),
-        33px
-      );
-    }
   }
 
   .hero-linha {
@@ -649,13 +624,66 @@ body {
 
   @media (max-height: 860px) {
     .hero-campo {
-      /* 583 - 56, pelo mesmo motivo do valor de lg: o pl-14 saiu. */
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 527px);
+      /* conta o recuo de 56px de .hero-texto na janela baixa */
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 583px);
     }
   }
 
   .hero-rotulo {
     display: flex;
+  }
+}
+
+/* Recuo do bloco de texto na janela baixa: numeral, titulo, subtitulo,
+   botoes e curva andam 56px para a direita. E' a composicao aprovada para
+   laptop, e os dois --hero-texto-dir da janela baixa contam este recuo. */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .hero-texto {
+    padding-left: 56px;
+  }
+}
+
+/* ===============================================================
+   HERO — JANELA DA CLIENTE (2026-09-21)
+
+   A cliente abre o site num Dell Inspiron 14 7460: painel de 1920x1080 com o
+   Windows em 125%, o que da 1536 de largura em pixels de CSS e, no Chrome
+   maximizado sem barra de favoritos, 730 de altura (738 no Windows 10, cuja
+   barra de tarefas e' 8px mais baixa). Em 150% seriam 1280x586.
+   Nessa janela o recuo acima e o par centrado abriam 76px entre a marca do
+   cabecalho e o texto, e 164px entre o texto e as figuras, contra 20 e 57 em
+   1440x900. Aqui o recuo sai e o par encosta no texto: 20 e 57, como 1440.
+
+   POR QUE UMA FAIXA ESTREITA, E NAO "JANELA BAIXA". O laptop em que o site e'
+   desenhado (Dell Inspiron 15 5510) tem o MESMO painel logico: 1920x1080 a
+   125%, 1536 de largura. So a altura separa os dois, porque o Chrome dele
+   mostra a barra de favoritos em todas as abas: 1536x695, contra 730 da
+   cliente. O corte em 712 fica no meio. Isto e' fragil de proposito e por
+   falta de alternativa: se a cliente ligar a barra de favoritos, ela cai em
+   ~695 e ve a composicao de laptop; se a barra do outro laptop for
+   desligada, ele passa a ver a da cliente. Nenhuma media query distingue
+   dois paineis iguais.
+
+   O teto de 33px no deslocamento do par: numa janela curta a altura das
+   figuras sai da janela, nao do campo, e centrar o par no campo largo abre o
+   vao em dois; com o teto a sobra vai inteira para o lado dos rotulos, onde
+   os fios a absorvem, e o vao fica em 57px (33 + os 24 de folga).
+   =============================================================== */
+@media (min-width: 1500px) and (max-width: 1560px) and (min-height: 712px) and (max-height: 770px),
+  (min-width: 1280px) and (max-width: 1300px) and (min-height: 540px) and (max-height: 610px) {
+  .hero-texto {
+    padding-left: 0;
+  }
+
+  .hero-campo {
+    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 527px);
+  }
+
+  .hero-par {
+    left: min(
+      calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2),
+      33px
+    );
   }
 }
 

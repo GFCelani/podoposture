@@ -530,9 +530,14 @@ export const DESCRITORES: Descritores = {
       subtituloLinhas: {
         tipo: "linhas",
         rotulo: "Apresentação",
-        quantidade: 4,
-        maxPorLinha: 53,
-        ajuda: "Quatro linhas, com até 53 caracteres cada.",
+        /* Duas linhas desde 2026-09-21: credencial e lugar. A de cima e' longa
+           (81 caracteres no padrao) e o hero a compoe na medida do titulo; se
+           passar dela, quebra depois de um bullet, entao o teto aqui e' so a
+           trava de seguranca. Ver o comentario do subtitulo em hero.tsx. */
+        quantidade: 2,
+        maxPorLinha: 90,
+        ajuda:
+          "Duas linhas: na primeira, o nome e as especialidades separados por •; na segunda, o lugar. Até 90 caracteres cada.",
       },
       destaquesDoSubtitulo: {
         tipo: "lista",

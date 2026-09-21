@@ -143,7 +143,12 @@ describe("cada lista respeita minimo e maximo", () => {
     // estreita, de proposito: 22 letras medias ja sao mais largas que a linha de
     // referencia e caem na regra de largura, que e outro limite (ver abaixo).
     expect(errosDe("hero", "tituloLinhas.0", "l".repeat(22))).toEqual({});
-    expect(errosDe("hero", "subtituloLinhas.3", "a".repeat(54))["subtituloLinhas.3"]).toMatch(/53/);
+    // A apresentacao tem duas linhas desde 2026-09-21, com teto de 90.
+    expect(errosDe("hero", "subtituloLinhas.1", "a".repeat(91))["subtituloLinhas.1"]).toMatch(/90/);
+    expect(errosDe("hero", "subtituloLinhas.0", "a".repeat(90))).toEqual({
+      "destaquesDoSubtitulo.0": expect.any(String),
+    });
+    expect(errosDe("hero", "subtituloLinhas", ["a", "b", "c", "d"]).subtituloLinhas).toMatch(/exatamente 2/);
     expect(errosDe("hero", "tituloLinhas.2", "")["tituloLinhas.2"]).toBe("Preencha a linha 3.");
   });
 
@@ -345,7 +350,7 @@ describe("regras entre campos", () => {
         errosDe("hero", "destaquesDoSubtitulo", ["Claudia Meirelles", "Dra. Claudia"])["destaquesDoSubtitulo.1"],
     ).toMatch(/sobrepor/);
     // atravessando a quebra da 1a para a 2a linha
-    expect(errosDe("hero", "destaquesDoSubtitulo", ["Meirelles • Osteopatia"])).toEqual({});
+    expect(errosDe("hero", "destaquesDoSubtitulo", ["Neuromodulação Copacabana"])).toEqual({});
     // Desde 2026-09-20 o padrao tem um destaque so: os "30 anos" sairam do
     // subtitulo para a linha em mono, que le contato.anosDeExperiencia.
     expect(hero.destaquesDoSubtitulo).toEqual(["Dra. Claudia Meirelles"]);
@@ -486,7 +491,7 @@ describe("apoio para renderizar", () => {
     expect(segmentosDoSubtitulo(subtituloLinhas, destaquesDoSubtitulo)).toEqual([
       { texto: "Dra. Claudia Meirelles", destaque: 0 },
       {
-        texto: " •\nOsteopatia • Acupuntura •\nPosturologia • Neuromodulação\nCopacabana - Rio de Janeiro",
+        texto: " • Osteopatia • Acupuntura • Posturologia • Neuromodulação\nCopacabana - Rio de Janeiro",
         destaque: null,
       },
     ]);

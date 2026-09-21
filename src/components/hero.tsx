@@ -124,15 +124,31 @@ function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: stri
   });
 }
 
-/** "\n" vira quebra que so vale a partir de sm, seguida do espaco que a linha corrida precisa. */
-function ComQuebras({ texto }: { texto: string }) {
-  return texto.split("\n").map((parte, i) => (
+/**
+ * Os segmentos do subtitulo agrupados por linha escrita: cada "\n" fecha uma
+ * linha. Um trecho em destaque que atravesse a quebra vira dois pedacos, um
+ * em cada linha, com o mesmo destaque.
+ */
+function porLinha(segmentos: SegmentoDoSubtitulo[]): SegmentoDoSubtitulo[][] {
+  const linhas: SegmentoDoSubtitulo[][] = [[]];
+  for (const segmento of segmentos) {
+    segmento.texto.split("\n").forEach((parte, i) => {
+      if (i > 0) linhas.push([]);
+      if (parte) linhas[linhas.length - 1].push({ ...segmento, texto: parte });
+    });
+  }
+  return linhas;
+}
+
+/**
+ * O bullet separa sem pontilhar: azul claro da marca, um tom abaixo do texto
+ * das especialidades. Cheio, e nao translucido: a 70% ele caia para 2,4:1 sobre
+ * a foto do fundo; cheio fica acima de 4:1.
+ */
+function ComBullets({ texto }: { texto: string }) {
+  return texto.split("•").map((parte, i) => (
     <Fragment key={i}>
-      {i > 0 && (
-        <>
-          <br className="hidden sm:inline" />{" "}
-        </>
-      )}
+      {i > 0 && <span className="text-accent-light">•</span>}
       {parte}
     </Fragment>
   ));
@@ -171,6 +187,19 @@ function unirItens(segmentos: SegmentoDoSubtitulo[], linhas: string[]): Segmento
   });
 }
 
+/** Pedacos de uma linha do subtitulo: destaque 0 com peso, 1 so com a cor. */
+function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
+  return pedacos.map((pedaco, i) =>
+    pedaco.destaque === null ? (
+      <ComBullets key={i} texto={pedaco.texto} />
+    ) : (
+      <span key={i} className={pedaco.destaque === 0 ? "font-semibold text-paper" : "text-paper"}>
+        <ComBullets texto={pedaco.texto} />
+      </span>
+    ),
+  );
+}
+
 export function Hero({
   conteudo,
   whatsapp,
@@ -182,6 +211,10 @@ export function Hero({
   anosDeExperiencia: number;
 }) {
   const segmentos = segmentosDoSubtitulo(conteudo.subtituloLinhas, conteudo.destaquesDoSubtitulo);
+  // Linha 1: a credencial, em sans. Linha 2: o lugar, que vai para a linha
+  // de dado em mono junto com os anos de pratica (ver o comentario la).
+  const [credencial = [], ...demais] = porLinha(unirItens(segmentos, conteudo.subtituloLinhas));
+  const lugar = demais.flat();
 
   return (
     <section
@@ -223,17 +256,11 @@ export function Hero({
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[114px] lg:[@media(max-height:860px)]:pb-7">
-        {/* Havia aqui um pl-14 so na janela baixa, que empurrava numeral,
-            titulo, subtitulo, botoes e curva 56px para a direita. Saiu em
-            2026-09-20: era ele que fazia a abertura sair torta no laptop da
-            cliente (Dell Inspiron 7460, 14" a 1920x1080, Windows em 125%, o
-            que da 1536x730 de janela em pixels de CSS).
-            Medido: o recuo entre a borda do texto e a borda da marca no
-            cabecalho era de 20px em 1440x900, a referencia, e de 76px em
-            1536x730. Com o pl-14 fora volta a 20. Os dois valores de
-            --hero-texto-dir da janela baixa desceram 56px junto, no
-            globals.css, porque eles contavam este recuo. */}
-        <div className="relative z-10 lg:col-span-9">
+        {/* .hero-texto (globals.css): na janela baixa o bloco inteiro anda
+            56px para a direita, a composicao aprovada para laptop; na janela
+            da cliente (1536x730 e 1280x586) o recuo sai. O porque da faixa
+            estreita esta no bloco "JANELA DA CLIENTE" do globals.css. */}
+        <div className="hero-texto relative z-10 lg:col-span-9">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque sobreFoto />
           </div>
@@ -303,8 +330,6 @@ export function Hero({
             fit-content sobre a fila de botoes, e e' dele que a curva de
             marcha tira a medida. Um paragrafo largo la dentro esticaria a
             curva ate a largura da coluna.
-            A medida vai em ch, nao em px, para a linha ficar no confortavel
-            de leitura em qualquer degrau de corpo.
 
             O TEXTO NAO MORA MAIS AQUI. Desde o painel (2026-09), titulo,
             subtitulo e botoes vem de `conteudo` (ConteudoHero), editavel pela
@@ -322,70 +347,82 @@ export function Hero({
             em contato.descricaoParaBuscadores, que e' a meta description, o
             manifest e o JSON-LD.
 
-            Quatro linhas, e nao tres: o descritor do painel exige exatamente
-            quatro linhas preenchidas (validarLinhas), e o padrao tem de passar
-            na mesma regra que o editor. A lista cai em 24 / 25 / 29 / 27
-            caracteres, a particao mais regular das cinco competencias em tres
-            linhas, com o endereco na quarta.
+            DUAS LINHAS (2026-09-21): credencial e lugar. A de cima pode
+            quebrar dentro de si so em tela estreita, e so depois de um bullet.
 
-            CADA "ITEM •" E' INDIVISIVEL. Como o texto agora e' dado, e nao
-            JSX, a regra vive na renderizacao (unirItens, abaixo): numa linha
-            com bullet, todo espaco que nao vem logo depois de um "•" vira
-            espaco inseparavel. O bullet nunca abre linha nem fica orfao,
-            inclusive abaixo de sm, onde os <br> somem e o texto flui. Linha
-            sem bullet (o endereco, ou um texto que a cliente escreva no painel
-            sem bullets) quebra normalmente.
-            A medida de 480px e' guarda, nao forma: quem desenha a borda sao
-            as quebras. Ela existe para o bloco nunca quebrar sozinho se a
-            fonte de fallback medir diferente.
+            A MEDIDA E' A DO TITULO. A primeira linha tem 81 caracteres e o
+            campo das figuras comeca logo depois da linha mais larga do titulo
+            (--hero-texto-dir), com fios de referencia atravessando a altura do
+            subtitulo: passar dali seria cruzar os fios. Por isso o corpo nao e'
+            um numero solto, e' um quarto do titulo em cada faixa, e a linha
+            de cima cai com 95 a 98% da largura dele:
+              janela alta   lg 56 -> 14px   xl 64 -> 16px   (601 contra 615)
+              janela baixa  lg 44 -> 13px   xl 52 -> 13px   (488 contra 500)
+            O salto de 4 para 1 e' deliberado: o titulo manda, a credencial
+            assina. Em lg na janela baixa o titulo tem 423px e a linha nao cabe
+            em corpo legivel; ali ela quebra uma vez, depois de um bullet.
+            O max-w de cada faixa e' a propria medida do titulo: se a cliente
+            escrever no painel uma linha mais longa, ela quebra depois de um
+            bullet em vez de invadir as figuras. A regra de largura do painel e'
+            por caractere (maxPorLinha) porque a tabela de larguras de
+            largura-do-titulo.ts e' da Newsreader; esta guarda e' a de pixel.
+
+            DOIS REGISTROS, NAO TRES CAMADAS. A segunda linha escrita (o lugar)
+            nao fica sozinha embaixo da credencial: ela vai para a linha de dado
+            em mono, ao lado dos anos de pratica, separados por um fio. Assim o
+            bloco sob o titulo tem duas linhas e dois registros, credencial em
+            sans e dado em mono, e nao tres linhas pequenas empilhadas. O
+            texto e' o da cliente, letra por letra; a caixa alta e' so CSS,
+            como em todo metadado mono do site.
+            Medido: em 11px a linha de dado da 208 + 16 de fio + 233 = 481px,
+            dentro dos 500 do titulo no laptop.
+
+            Hierarquia na credencial: o nome em papel e peso 600; as
+            especialidades no tom do hero, em 450 na janela baixa (13px em
+            peso 400 fica fino demais sobre o azul); o bullet mais apagado,
+            para separar sem pontilhar.
+
+            CADA "ITEM •" E' INDIVISIVEL (unirItens, acima): numa linha com
+            bullet, todo espaco que nao vem logo depois de um "•" vira espaco
+            inseparavel. Linha sem bullet quebra normalmente.
           */}
           <p
-            className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
+            className="rule-in mt-[22px] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[540px] lg:text-[14px] xl:max-w-[615px] xl:text-[16px] lg:[@media(max-height:860px)]:mt-[20px] lg:[@media(max-height:860px)]:max-w-[425px] lg:[@media(max-height:860px)]:text-[13px] lg:[@media(max-height:860px)]:font-[450] lg:[@media(max-height:860px)]:tracking-[-0.006em] xl:[@media(max-height:860px)]:max-w-[500px]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
-            {/* Os trechos em destaque sao segmentos de texto, nunca HTML: o
-                primeiro leva peso, o segundo so a cor. */}
-            {unirItens(segmentos, conteudo.subtituloLinhas).map((segmento, i) =>
-              segmento.destaque === null ? (
-                <ComQuebras key={i} texto={segmento.texto} />
-              ) : (
-                <span
-                  key={i}
-                  className={segmento.destaque === 0 ? "font-medium text-paper" : "text-paper"}
-                >
-                  <ComQuebras texto={segmento.texto} />
-                </span>
-              ),
-            )}
+            <Pedacos pedacos={credencial} />
           </p>
 
           {/*
-            "30 anos de experiencia clinica", que a cliente pediu para incluir
-            "onde couber melhor".
-            Escolhido: linha de metadado em mono, separada do bloco por um fio,
-            e nao mais uma linha do paragrafo. O paragrafo acima ja e' uma
-            enumeracao com bullets; um "30 anos" ali dentro entraria lendo como
-            mais um item da lista de competencias, no mesmo peso e no mesmo
-            registro. Em mono ele muda de registro e vira o que e': uma medida.
+            A linha de dado: o lugar (2a linha do subtitulo, do painel) e os
+            anos de pratica, que a cliente pediu para incluir "onde couber
+            melhor". Em mono o "30 anos" muda de registro e vira o que e', uma
+            medida, em vez de ler como mais um item da lista de competencias.
             O numero sai de contato.anosDeExperiencia, o mesmo que a regua da
             secao 03 usa para desenhar um traco por ano: editado no painel, os
             dois mudam juntos. So o numero e' dado; a frase fica no codigo.
-            O fio e' elemento, nao caractere: copy de site nao usa travessao.
+            O fio vai grudado nos anos, e nao solto entre os dois itens: se a
+            linha quebrar numa tela estreita, a segunda abre com o fio, em vez
+            de a primeira terminar com ele pendurado. O fio e' elemento, nao
+            caractere: copy de site nao usa travessao. Mesmo fio do SectionMark
+            em banda escura, e nao a cor de acao, que e' do CTA e de mais nada.
           */}
           <p
-            className="rule-in mt-4 flex items-center gap-3 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-5 lg:[@media(max-height:860px)]:mt-3"
+            className="rule-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-3.5 xl:text-[0.75rem] lg:[@media(max-height:860px)]:tracking-[0.11em] xl:[@media(max-height:860px)]:text-[0.6875rem]"
             style={{
               fontFamily: "var(--mono)",
               ["--in-delay" as string]: "520ms",
             }}
           >
-            {/* mesmo fio do SectionMark em banda escura. Nao usa a cor de
-                acao: ela e' do CTA e de mais nada. */}
-            <span
-              aria-hidden="true"
-              className="h-px w-6 shrink-0 bg-accent-light/45"
-            />
-            {anosDeExperiencia} anos de experiência clínica
+            {lugar.length > 0 && (
+              <span>
+                <Pedacos pedacos={lugar} />
+              </span>
+            )}
+            <span className="flex items-center gap-3">
+              <span aria-hidden="true" className="h-px w-4 shrink-0 bg-accent-light/45" />
+              {anosDeExperiencia} anos de experiência clínica
+            </span>
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content
