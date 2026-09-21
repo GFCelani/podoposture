@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Saida do `vercel build`: codigo gerado, ja fora do git pelo .gitignore.
+    // Os launchers dela usam require() e faziam `eslint .` falhar por duas
+    // regras que nao sao nossas.
+    ".vercel/**",
   ]),
 ]);
 

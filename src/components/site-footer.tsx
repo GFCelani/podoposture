@@ -6,6 +6,7 @@ import {
   MAPS_DIRECOES,
   TELEFONES,
 } from "@/lib/site";
+import { BrandMark } from "./brand-mark";
 import { PageGrid } from "./layers";
 import { SocialLinks } from "./social-links";
 
@@ -152,14 +153,23 @@ export function SiteFooter() {
           <SocialLinks tone="dark" className="shrink-0" />
         </div>
 
-        <p
-          className="mt-10 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
-          style={{ fontFamily: "var(--mono)" }}
-        >
-          {/* O ©2020 congelado veio do site antigo e era o defeito n1 da
-              AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
-          © {new Date().getFullYear()} Podoposture
-        </p>
+        {/* A marca fecha o rodape, ao lado do ano. Em banda escura as letras
+            azuis do master nao passariam em contraste, entao vao em papel; o
+            verde dos discos e das vertebras nao muda, e e' o que carrega a
+            identidade. A propria cliente ja usa a marca em branco por cima de
+            foto no material dela. */}
+        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-4">
+          <BrandMark tone="deep" className="h-7 w-auto shrink-0" />
+
+          <p
+            className="text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"
+            style={{ fontFamily: "var(--mono)" }}
+          >
+            {/* O ©2020 congelado veio do site antigo e era o defeito n1 da
+                AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
+            © {new Date().getFullYear()} Podoposture
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -20,10 +20,16 @@ import { SiteHeader } from "@/components/site-header";
  * posts.json), entao esta rota nao entra nele sozinha. O middleware tambem
  * nao a toca: ele so reescreve slug que existe em rotas.json.
  *
- * Tres paginas ja receberam foto ilustrativa de acervo livre e sairam da
- * lista (ver ilustracao-da-pagina.ts). As de RPG e DTM tambem receberam, mas
- * ficam ate a cliente aprovar. Quando as fotos chegarem, esta pagina pode ser
- * apagada inteira.
+ * Estado em 2026-09-20. O acervo que a cliente mandou resolveu as duas
+ * placas que existiam, retrato da responsavel tecnica e neuromodulacao
+ * auricular, e ainda trocou a foto de banco da pagina de Neuromodulacao por
+ * foto da propria clinica. Nao ha mais PlaceholderFoto em nenhuma pagina.
+ *
+ * O que sobra sao quatro paginas com foto ilustrativa de acervo livre, que
+ * funcionam mas nao mostram a clinica, e uma foto de atendimento real que
+ * existe e esta desligada por falta de autorizacao (ver
+ * AGUARDANDO_AUTORIZACAO em ilustracao-da-pagina.ts). Quando as fotos
+ * chegarem, esta pagina pode ser apagada inteira.
  */
 
 export const metadata: Metadata = {
@@ -40,32 +46,35 @@ type Pedido = {
   nota?: string;
 };
 
-const SO_FOTO_REAL =
-  "Nenhum acervo de fotos livres mostra este procedimento. Só uma foto feita na clínica resolve.";
+const ILUSTRATIVA =
+  "Hoje a página usa uma foto de acervo livre, marcada como ilustrativa na legenda. Ela funciona, mas não é a sua clínica.";
 
 const PEDIDOS: Pedido[] = [
-  {
-    pagina: "Currículo Profissional",
-    foto: "Retrato da responsável técnica",
-    comPaciente: false,
-  },
   {
     pagina: "RPG",
     foto: "Sessão de RPG na sala de exame",
     comPaciente: true,
-    nota: "Já tem uma foto ilustrativa, de acervo livre e sem rosto. Precisa do seu aval: se ela representa a sessão, a página fica como está; se não, entra uma foto sua.",
+    nota: ILUSTRATIVA + " Sem rosto na cena.",
   },
   {
     pagina: "Tratamento da DTM",
     foto: "Avaliação da ATM em consulta",
     comPaciente: true,
-    nota: "Já tem uma foto ilustrativa, de acervo livre, em que aparece o rosto de um modelo. Precisa do seu aval: se ela representa a avaliação e o rosto não confunde o paciente, a página fica como está; se não, entra uma foto sua.",
+    nota:
+      ILUSTRATIVA +
+      " E nesta aparece o rosto de um modelo, o que pode confundir com paciente seu.",
   },
   {
-    pagina: "Tratamento do Zumbido",
-    foto: "Aplicação de neuromodulação auricular",
+    pagina: "Dor Lombar Crônica",
+    foto: "Palpação da região lombar",
     comPaciente: true,
-    nota: SO_FOTO_REAL,
+    nota: ILUSTRATIVA + " Sem rosto na cena.",
+  },
+  {
+    pagina: "Tratamento da Dor",
+    foto: "Avaliação da coluna em pé",
+    comPaciente: true,
+    nota: ILUSTRATIVA + " Sem rosto na cena.",
   },
 ];
 
@@ -123,19 +132,19 @@ export default function FotosQueFaltam() {
 
             <Reveal delay={180}>
               <p className="mt-6 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-ink md:mt-7 md:text-[1.125rem]">
-                {total} páginas ainda dependem de fotografia sua. Em duas
-                delas há hoje uma placa dizendo o que deveria estar ali; nas de
-                RPG e DTM, uma foto ilustrativa que espera o seu aval. O site
-                não fica quebrado assim, mas essas páginas não mostram a
-                clínica.
+                As fotos que você mandou resolveram as duas placas que ainda
+                existiam no site: o seu retrato, agora na página de Currículo
+                Profissional, e a aplicação de neuromodulação auricular, na
+                página de Zumbido. Não há mais nenhuma placa de foto faltando.
               </p>
             </Reveal>
 
             <Reveal delay={260}>
               <p className="mt-5 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-ink">
-                Neuromodulação, Dor Lombar Crônica e Tratamento da Dor já
-                receberam foto ilustrativa de acervo livre, sem rosto, e
-                saíram desta lista.
+                Sobram {total.toLowerCase()} páginas que usam foto de acervo
+                livre, marcada como ilustrativa na legenda. Elas funcionam, e o
+                site não fica quebrado assim; mas são as únicas páginas de
+                tratamento que não mostram a sua clínica.
               </p>
             </Reveal>
 
@@ -171,9 +180,11 @@ export default function FotosQueFaltam() {
 
                 <Reveal delay={110}>
                   <p className="mt-7 max-w-[56ch] text-[1.0625rem] leading-[1.75] text-paper">
-                    {EXTENSO[comPaciente]} das {total.toLowerCase()} fotos
-                    mostram um atendimento, com paciente na cena. Publicar
-                    essas imagens exige autorização de quem aparece, e a
+                    {comPaciente === PEDIDOS.length
+                      ? `As ${total.toLowerCase()} fotos mostram`
+                      : `${EXTENSO[comPaciente]} das ${total.toLowerCase()} fotos mostram`}{" "}
+                    um atendimento, com paciente na cena. Publicar essas
+                    imagens exige autorização de quem aparece, e a
                     responsabilidade é sua, como responsável técnica.
                   </p>
                 </Reveal>
@@ -323,18 +334,19 @@ export default function FotosQueFaltam() {
               <Reveal delay={100}>
                 <div className="border-t border-rule pt-7">
                   <h3 className="max-w-[24ch] font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
-                    O seu retrato é decisão sua, não só agendamento
+                    Há uma foto de atendimento pronta, e desligada
                   </h3>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-ink">
-                    Hoje não existe nenhuma fotografia sua no site. A imagem
-                    que estava com o seu nome no site antigo é uma peça
-                    gráfica de um post sobre zumbido, não um retrato.
+                    No que você mandou havia uma foto de sessão de
+                    flexo-distração, com paciente na maca. Ela está recortada e
+                    pronta no código, mas não vai ao ar: tem paciente na cena, e
+                    isso depende de autorização por escrito.
                   </p>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-muted">
-                    Se preferir não aparecer, a página funciona sem rosto e a
-                    placa sai do mesmo jeito. Só me diga qual dos dois
-                    caminhos, para eu não deixar a página esperando uma foto
-                    que não vem.
+                    Mesmo com autorização, eu refaria a cena: é foto de celular,
+                    com luz chapada e a maca cortada na diagonal. Ela fica
+                    abaixo das outras da galeria. Me diga se quer que eu ligue
+                    assim mesmo.
                   </p>
                 </div>
               </Reveal>
@@ -342,16 +354,16 @@ export default function FotosQueFaltam() {
               <Reveal delay={190}>
                 <div className="mt-10 border-t border-rule pt-7 md:mt-0">
                   <h3 className="max-w-[24ch] font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
-                    Duas delas saem na mesma sessão
+                    As quatro saem na mesma tarde
                   </h3>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-ink">
-                    Tratamento da DTM e Tratamento do Zumbido usam a mesma sala
-                    e o mesmo aparelho. Dá para resolver as duas numa tarde,
-                    com o mesmo paciente e a mesma autorização.
+                    RPG, DTM, dor lombar e avaliação da dor usam a mesma sala e
+                    as mesmas mãos. Com um paciente, uma autorização e meia
+                    hora, as quatro páginas trocam de foto de uma vez.
                   </p>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-muted">
-                    Sobram o seu retrato e, se a foto ilustrativa não servir,
-                    a sessão de RPG.
+                    Se preferir não envolver paciente, as quatro cenas também
+                    funcionam enquadrando só as mãos e a região tratada.
                   </p>
                 </div>
               </Reveal>

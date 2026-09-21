@@ -102,21 +102,49 @@ const FOTOS: Record<string, Foto> = {
     altura: 1200,
   },
 
+  /* As tres abaixo chegaram no acervo que a cliente mandou em 2026-09-20 e
+     sao fotografia da propria clinica, nao acervo livre. As duas de
+     neuromodulacao sao a mesma sessao, em dois enquadramentos; a cliente ja
+     as publicou com a marca d'agua dela, e o recorte 4:5 entra abaixo da
+     marca para o logotipo nao aparecer dentro da foto num site que ja tem a
+     marca no cabecalho. Nenhuma das duas mostra rosto. */
+  "currículo-profissional": {
+    src: `${GALERIA}/retrato-responsavel-tecnica.webp`,
+    alt: "Dra. Claudia Meirelles, de jaleco branco, no consultório; atrás dela, os certificados de formação emoldurados na parede.",
+    legenda: "A responsável técnica, diante dos certificados de formação.",
+    largura: 1024,
+    altura: 1280,
+  },
+  "tratamento-do-zumbido": {
+    src: `${GALERIA}/neuromodulacao-auricular.webp`,
+    alt: "Orelha com dois eletrodos de neuromodulação presos: um clipe metálico de cabo amarelo na parte interna e um clipe branco na borda.",
+    legenda: "Os eletrodos da neuromodulação auricular, na posição de aplicação.",
+    largura: 712,
+    altura: 890,
+  },
+  "neuromodulação": {
+    src: `${GALERIA}/neuromodulacao-auricular-dupla.webp`,
+    alt: "Orelha de uma paciente deitada, com dois eletrodos brancos presos junto à entrada do canal auditivo e os cabos descendo pelo cabelo.",
+    legenda: "Aplicação auricular: os eletrodos ficam na orelha, e a sessão é feita deitado.",
+    largura: 704,
+    altura: 880,
+  },
+
   /* Fotos de acervo livre, no lugar de cena que a clinica ainda nao
      fotografou. Nao sao da Podoposture, e a legenda diz isso. Sem rosto
      identificavel, para ninguem tomar a pessoa por paciente ou equipe; a
      unica excecao e' a de DTM, logo abaixo. Ficam fora de /img/galeria, que
-     e' so foto real. Estas quatro sob a licenca Pexels (pexels.com/license):
+     e' so foto real. Estas tres sob a licenca Pexels (pexels.com/license):
      uso comercial, sem atribuicao obrigatoria. Recorte 4:5 a partir do
-     original. */
-  "neuromodulação": {
-    // pexels.com/photo/30483052, Cansu Hangül
-    src: "/img/eletroestimulacao-no-joelho.webp",
-    alt: "Mão posicionando um eletrodo adesivo na perna, junto ao joelho, com cabos laranja e azul ligados aos eletrodos.",
-    legenda: "Imagem ilustrativa: eletrodos de superfície para estimulação elétrica.",
-    largura: 1200,
-    altura: 1500,
-  },
+     original.
+
+     Eram quatro ate 2026-09-20. A de neuromodulacao mostrava eletrodo
+     adesivo no joelho, e o acervo da cliente trouxe a foto da aplicacao
+     auricular que a clinica de fato faz; a de banco saiu. As outras tres
+     continuam porque o acervo nao tem a cena: o que ele tem de RPG, de
+     avaliacao da dor e de palpacao lombar sao fotos de banco com a marca
+     d'agua da clinica aplicada por cima, o que nao e' foto real, e trocar
+     banco sem marca por banco com marca nao melhora nada. */
   "dor-lombar-crônica": {
     // pexels.com/photo/5793807, Yan Krukau
     src: "/img/palpacao-lombar.webp",
@@ -155,18 +183,45 @@ const FOTOS: Record<string, Foto> = {
 };
 
 /**
- * O que falta fotografar. Duas paginas nao tem cena honesta nem no acervo da
- * clinica nem em acervo livre: o retrato da responsavel tecnica nao pode vir
- * de banco, e eletrodo auricular de taVNS nao aparece em nenhum dos cinco
- * acervos (o que existe e' acupuntura auricular e clipe de EEG, outro
- * procedimento). Cada rotulo aqui vira um PlaceholderFoto no lugar da foto e
- * uma linha no pedido a cliente. Quando a foto chegar, ela entra em FOTOS e a
- * linha sai daqui.
+ * Pronta no codigo, desligada no site.
+ *
+ * Unica fotografia do acervo que mostra um atendimento acontecendo: paciente
+ * em decubito ventral na maca de flexo-distracao, com a grade postural da
+ * clinica ao fundo. Ela NAO entra em FOTOS e portanto nao vai ao ar. Duas
+ * razoes, e as duas precisam cair para ela subir:
+ *
+ *   1. Autorizacao. Ha paciente na cena. O rosto nao aparece, mas a pessoa
+ *      esta em roupa minima e em atendimento, e isso nao se publica sem
+ *      autorizacao por escrito. So a cliente pode dizer se tem.
+ *   2. Enquadramento. E' foto de celular, de pe, com luz chapada e a maca
+ *      cortada na diagonal. Mesmo autorizada, ela fica abaixo das outras da
+ *      galeria. Vale refazer a cena, nao so liberar esta.
+ *
+ * Para ligar: mover este objeto para dentro de FOTOS, na chave
+ * "flexo-distração", no lugar de SALA.
  */
-const PLACEHOLDERS: Record<string, string> = {
-  "currículo-profissional": "retrato da responsável técnica",
-  "tratamento-do-zumbido": "aplicação de neuromodulação auricular",
+const AGUARDANDO_AUTORIZACAO: Record<string, Foto> = {
+  "flexo-distração": {
+    src: `${GALERIA}/flexo-distracao-em-sessao.webp`,
+    alt: "Paciente deitada de bruços na maca de flexo-distração, com fitas de apoio nas costas; ao fundo, a grade de avaliação postural da clínica.",
+    legenda: "Sessão de flexo-distração na sala de exame.",
+    largura: 864,
+    altura: 1080,
+  },
 };
+void AGUARDANDO_AUTORIZACAO;
+
+/**
+ * O que falta fotografar. Vazio desde 2026-09-20: as duas pendencias eram o
+ * retrato da responsavel tecnica, que nao podia vir de banco, e o eletrodo
+ * auricular de taVNS, que nao existia em nenhum acervo livre. As duas
+ * chegaram no material que a cliente mandou e estao em FOTOS.
+ *
+ * Cada rotulo aqui vira um PlaceholderFoto no lugar da foto e uma linha no
+ * pedido a cliente, em /fotos-que-faltam. Voltar a preencher este mapa se
+ * alguma pagina nova nascer sem foto.
+ */
+const PLACEHOLDERS: Record<string, string> = {};
 
 /* Os slugs chegam do JSON com acento. Normalizar as chaves uma vez evita a
    divergencia NFC/NFD entre Windows e Linux que ja custou caro nas rotas. */

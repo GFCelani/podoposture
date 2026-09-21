@@ -11,3 +11,8 @@ _previews/
 # cache local do crawl do site GoDaddy (nao versionar)
 .cache/
 __pycache__/
+
+# material bruto que a cliente manda (fica fora do repo)
+fotos-site/
+fotos-site.zip
+preview.webp
