@@ -105,10 +105,17 @@ export function Hero() {
           margem esquerda do hero nao bate mais com a do cabecalho e a das
           secoes abaixo nessas larguras. Foi pedido. */}
       <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[114px] lg:[@media(max-height:860px)]:pb-7">
-        {/* O recuo extra na janela baixa e' o "tudo mais para a direita": vale
-            para o numeral, o titulo, os botoes e a curva de marcha, e nao
-            para a peca grafica, que e' absoluta e ancorada a direita. */}
-        <div className="relative z-10 lg:col-span-9 lg:[@media(max-height:860px)]:pl-14">
+        {/* Havia aqui um pl-14 so na janela baixa, que empurrava numeral,
+            titulo, subtitulo, botoes e curva 56px para a direita. Saiu em
+            2026-09-20: era ele que fazia a abertura sair torta no laptop da
+            cliente (Dell Inspiron 7460, 14" a 1920x1080, Windows em 125%, o
+            que da 1536x730 de janela em pixels de CSS).
+            Medido: o recuo entre a borda do texto e a borda da marca no
+            cabecalho era de 20px em 1440x900, a referencia, e de 76px em
+            1536x730. Com o pl-14 fora volta a 20. Os dois valores de
+            --hero-texto-dir da janela baixa desceram 56px junto, no
+            globals.css, porque eles contavam este recuo. */}
+        <div className="relative z-10 lg:col-span-9">
           <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque sobreFoto />
           </div>
@@ -171,10 +178,10 @@ export function Hero() {
           </h1>
 
           {/*
-            Subtitulo: quem responde, com que titulos, e onde. Sao dados
-            verificaveis do proprio site (site.ts para o endereco e o nome,
-            pagina do Curriculo Profissional para os titulos do COFFITO), nao
-            argumento de venda: nada de selo, badge ou numero sem fonte.
+            Subtitulo: quem responde, com que competencias, e onde. Texto da
+            cliente, verbatim, recebido em 2026-09-20. Nao reescrever aqui:
+            ela mandou a linha pronta, com o bullet como separador e com o
+            hifen simples em "Copacabana - Rio de Janeiro".
             Entra FORA do embrulho da acao, e nao dentro: o embrulho e'
             fit-content sobre a fila de botoes, e e' dele que a curva de
             marcha tira a medida. Um paragrafo largo la dentro esticaria a
@@ -182,35 +189,25 @@ export function Hero() {
             A medida vai em ch, nao em px, para a linha ficar no confortavel
             de leitura em qualquer degrau de corpo.
 
-            O tempo de pratica clinica estava pendente e a clinica confirmou
-            em 2026-09-05: 30 anos. Entra colado na credencial, e nao no fim do
-            paragrafo, porque o tempo e' da pessoa e nao da cidade; e entra com
-            as MESMAS palavras da secao 03 ("com 30 anos de experiencia
-            clinica"), nao com uma segunda formulacao do mesmo dado, porque as
-            duas ficam visiveis na mesma pagina. A Regua30 em illustrations.tsx
-            desenha 30 tracos a partir deste numero: se ele mudar, ela muda
-            junto.
-            As outras duas formas que sobraram do site antigo ("quase 30 anos"
-            na pagina da responsavel tecnica, "quase tres decadas" no
-            curriculo) sao copy da cliente e continuam como estao.
-          */}
-          {/*
-            Quebra escrita em quatro linhas, a partir de sm. Antes eram tres
-            linhas que o navegador decidia sozinho, e o bloco saia com 617px
-            de largura contra 585 do titulo: 105%, nem igual nem
-            decisivamente menor, que e' a distancia que le como descuido.
-            Em quatro linhas o mesmo texto cai em 437 / 452 / 460 / 397 e o
-            paragrafo passa a ser uma coluna de leitura a 58% do titulo, com
-            medida de ~55 caracteres.
-            As quebras foram escolhidas enumerando todas as particoes das 26
-            palavras e minimizando a fracao da caixa que sobra vazia; nao ha
-            text-balance aqui, que decide por heuristica propria e varia entre
-            maquinas. A copy e' a mesma, palavra por palavra: so muda onde a
-            linha corta.
-            Abaixo de sm o <br> some e o texto volta a fluir sozinho: na
-            coluna do telefone a linha mais larga das quatro (388px em 16px)
-            nao caberia, e escrever quebra que nao cabe e' pior que nao
-            escrever.
+            Sairam daqui, a pedido: "fisioterapeuta especialista", "pelo
+            COFFITO" e a frase "Osteopatia, posturologia e acupuntura em
+            Copacabana, Rio de Janeiro". So o hero mudou. As duas primeiras
+            continuam na copy migrada da cliente (pages.json, paginas de
+            Responsavel Tecnica e Curriculo Profissional) e a terceira segue
+            em DESCRICAO_PADRAO (site.ts), que e' a meta description, o
+            manifest e o JSON-LD.
+
+            CADA "ITEM •" E' INDIVISIVEL. Os trechos vao em spans com
+            whitespace-nowrap, entao o bullet nunca abre a linha nem fica
+            orfao no fim dela, em nenhuma largura, inclusive abaixo de sm onde
+            os <br> somem e o texto flui sozinho.
+
+            Quebra escrita em tres linhas a partir de sm, nao emergente: nao
+            ha text-balance aqui, que decide por heuristica propria e varia
+            entre maquinas. Das particoes possiveis da lista em duas linhas,
+            esta e' a de menor irregularidade, com 318 / 361 / 232px em 18px
+            de corpo. O bloco fica a ~59% da largura do titulo, a mesma
+            proporcao do subtitulo anterior.
             A medida de 480px e' guarda, nao forma: quem desenha a borda sao
             as quebras. Ela existe para o bloco nunca quebrar sozinho se a
             fonte de fallback medir diferente.
@@ -219,19 +216,50 @@ export function Hero() {
             className="rule-in mt-[22px] max-w-[52ch] text-[1rem] leading-[1.6] text-on-hero sm:max-w-[480px] lg:mt-[26px] lg:text-[1.125rem] xl:text-[1.1875rem] lg:[@media(max-height:860px)]:mt-[18px] lg:[@media(max-height:860px)]:text-[1rem]"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
-            <span className="font-medium text-paper">
-              Dra. Claudia Meirelles
-            </span>
-            , fisioterapeuta especialista
-            <br className="hidden sm:inline" /> em Osteopatia e Acupuntura pelo
-            COFFITO, com{" "}
-            <span className="text-paper">
-              30
-              <br className="hidden sm:inline" /> anos de experiência clínica
-            </span>
-            . Osteopatia, posturologia
-            <br className="hidden sm:inline" /> e acupuntura em Copacabana, Rio
-            de Janeiro.
+            <span className="whitespace-nowrap">
+              <span className="font-medium text-paper">
+                Dra. Claudia Meirelles
+              </span>{" "}
+              •
+            </span>{" "}
+            <span className="whitespace-nowrap">Osteopatia •</span>{" "}
+            {/* o espaco antes do <br> e' o que segura a linha abaixo de sm,
+                onde o <br> some e o texto volta a fluir sozinho */}
+            <br className="hidden sm:inline" />
+            <span className="whitespace-nowrap">Acupuntura •</span>{" "}
+            <span className="whitespace-nowrap">Posturologia •</span>{" "}
+            <span className="whitespace-nowrap">Neuromodulação</span>{" "}
+            <br className="hidden sm:inline" />
+            <span className="whitespace-nowrap">Copacabana - Rio de Janeiro</span>
+          </p>
+
+          {/*
+            "30 anos de experiencia clinica", que a cliente pediu para incluir
+            "onde couber melhor".
+            Escolhido: linha de metadado em mono, separada do bloco por um fio,
+            e nao uma terceira linha do paragrafo. O paragrafo acima ja e' uma
+            enumeracao com bullets; um "30 anos" ali dentro entraria lendo como
+            mais um item da lista de competencias, no mesmo peso e no mesmo
+            registro. Em mono ele muda de registro e vira o que e': uma medida.
+            E' tambem o que o resto do site faz com numero, rotulo e metadado,
+            e e' de onde a Regua30 (illustrations.tsx) tira os 30 tracos: se o
+            numero mudar, ela muda junto.
+            O fio e' elemento, nao caractere: copy de site nao usa travessao.
+          */}
+          <p
+            className="rule-in mt-4 flex items-center gap-3 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-5 lg:[@media(max-height:860px)]:mt-3"
+            style={{
+              fontFamily: "var(--mono)",
+              ["--in-delay" as string]: "520ms",
+            }}
+          >
+            {/* mesmo fio do SectionMark em banda escura. Nao usa a cor de
+                acao: ela e' do CTA e de mais nada. */}
+            <span
+              aria-hidden="true"
+              className="h-px w-6 shrink-0 bg-accent-light/45"
+            />
+            30 anos de experiência clínica
           </p>
 
           {/* A medida deste embrulho e' a da fila de botoes (fit-content

@@ -518,7 +518,9 @@ body {
 
   @media (max-height: 860px) {
     .hero-campo {
-      --hero-texto-dir: 571px;
+      /* 571 - 56: o pl-14 da janela baixa saiu do hero.tsx em 2026-09-20, e
+         estes 56px estavam contados aqui. */
+      --hero-texto-dir: 515px;
     }
   }
 
@@ -532,6 +534,30 @@ body {
     top: 0;
     left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
     gap: var(--hero-vao);
+  }
+
+  /* JANELA BAIXA: teto para o deslocamento do par (2026-09-20).
+     Numa janela curta a altura das figuras e' limitada pela propria janela,
+     nao pela largura do campo: em 1536x730 elas saem com 361px de largura
+     contra 456px em 1440x900, numa janela MAIS larga. O campo, esse, continua
+     largo, e centrar o par nele abria um vao de 164px entre o fim do texto e
+     o comeco das figuras, contra 57px em 1440. Era a "distribuicao estranha"
+     que a cliente viu: texto e figuras lidos como duas ilhas, com os fios de
+     referencia atravessando o vazio entre elas.
+     A altura nao tem conserto — em 730px de janela as figuras nao cabem no
+     tamanho de 1440. O que tem conserto e' a composicao: a sobra de largura
+     para de ser dividida em dois e vai inteira para o lado dos rotulos, onde
+     ja existem fios que a absorvem. O teto de 33px mantem o vao em 57px, o
+     mesmo de 1440, porque a folga entre o texto e o campo ja e' 24px.
+     Fica fora da janela alta de proposito: em 1440x900 o par centrado sobra
+     so 32px de cada lado e ja esta certo. */
+  @media (max-height: 860px) {
+    .hero-par {
+      left: min(
+        calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2),
+        33px
+      );
+    }
   }
 
   .hero-linha {
@@ -552,7 +578,8 @@ body {
 
   @media (max-height: 860px) {
     .hero-campo {
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 583px);
+      /* 583 - 56, pelo mesmo motivo do valor de lg: o pl-14 saiu. */
+      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 527px);
     }
   }
 
