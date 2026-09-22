@@ -585,9 +585,10 @@ export function Hero({
             ))}
             {/* Mapa de dor: cada figura vai num embrulho do tamanho exato
                 do desenho, com os pontos clicaveis por cima (mapa-de-dor.tsx).
-                Seis por figura, nove condicoes: ma postura, dor lombar e
-                hernia de disco nas duas vistas, com a mesma regra de lugar
-                nas duas; cada uma das outras so na vista que a le. */}
+                Sete na frontal, seis no perfil, dez condicoes: ma postura,
+                dor lombar e hernia de disco nas duas vistas, com a mesma
+                regra de lugar nas duas; cada uma das outras so na vista que
+                a le. */}
             <div className="hero-par">
               <div className="pd-fig pd-fig--frontal">
                 <FiguraCorpo vista="frontal" mapa className="rule-in hero-figura" />

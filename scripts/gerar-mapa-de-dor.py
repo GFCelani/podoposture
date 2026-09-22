@@ -2,7 +2,7 @@
 """
 Gera a geometria do mapa de dor do hero, em dois arquivos:
 
-  src/components/mapa-de-dor-pontos.ts   os doze pontos (posicao, rota, copy,
+  src/components/mapa-de-dor-pontos.ts   os treze pontos (posicao, rota, copy,
                                          fio e alvo). Vai para o cliente, entao
                                          e' pequeno de proposito.
   src/components/mapa-de-dor-desenho.ts  a coluna das duas vistas e a cadeia.
@@ -152,7 +152,7 @@ def main():
 
     escreve(
         "mapa-de-dor-pontos.ts",
-        "Os doze pontos clicaveis do mapa de dor do hero, seis por figura.",
+        "Os treze pontos clicaveis do mapa de dor do hero, sete na frontal e seis no perfil.",
         TIPOS_PONTOS,
         "MAPA_DE_DOR_PONTOS",
         "PontosDaVista",

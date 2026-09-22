@@ -669,7 +669,7 @@ body {
                 traco fino, nada animado alem do ponto que corre a cadeia.
      coluna     azul em CONTORNO, no tratamento da silhueta: estrutura de
                 fundo, legivel mas secundaria.
-     acao       12 pontos verdes: anel verde com nucleo verde, onda lenta,
+     acao       13 pontos verdes: anel verde com nucleo verde, onda lenta,
                 e no hover 1,35x mais halo mais rotulo. So eles tem cor de
                 acao, so eles tem massa redonda, so eles reagem.
    =============================================================== */
@@ -678,7 +678,7 @@ body {
    texto leva z-10 (para ficar acima da foto de fundo) e a caixa dela e'
    lg:col-span-9 de 12, bem mais larga que a tinta do titulo: sem isto ela
    passava por cima da figura frontal e as linhas do <h1> (blocos da largura
-   da coluna) comiam o clique dos seis pontos da frontal, de lg para cima.
+   da coluna) comiam o clique dos sete pontos da frontal, de lg para cima.
    Nao muda tinta: --hero-texto-dir ja poe a caixa do campo depois da borda
    visual do texto, e o campo continua pointer-events: none, entao so os
    pontos recebem ponteiro e os botoes do hero seguem clicaveis. */
@@ -713,12 +713,14 @@ body {
 
 /* O alvo: o maior que a anatomia permite, com teto de 44px. Sai da distancia
    ate o vizinho mais proximo da mesma figura (--alvo-u, gerado) e cresce com
-   a figura, porque distancia entre pontos e' desenho. Piso de 26px, acima dos
-   24px da WCAG 2.5.8. Em 1440 os doze chegam aos 44px; em 390 a figura tem
-   405px, e os pares que a anatomia poe a 43u (tempora e ATM, lombar e disco)
-   ficam em 31px. Dois alvos vizinhos se encostam, nao se sobrepoem. */
+   a figura, porque distancia entre pontos e' desenho. Piso de 24px, o minimo
+   da WCAG 2.5.8. Em 1440 os treze chegam aos 44px; em 390 a figura tem
+   405px, os pares que a anatomia poe a 43u (tempora e ATM, lombar e disco)
+   ficam em 31px, e o par mais apertado, cervical e ATM a 33u (onde a cliente
+   marcou), cai no piso: 24px cada, a 24px um do outro. Dois alvos vizinhos
+   se encostam, nao se sobrepoem. */
 .pd-ponto {
-  --alvo: clamp(26px, calc(var(--hero-fig-h) * var(--alvo-u, 36) / 560), 44px);
+  --alvo: clamp(24px, calc(var(--hero-fig-h) * var(--alvo-u, 36) / 560), 44px);
   --fio: max(14px, calc(var(--hero-fig-h) * var(--fio-u) / 560));
   position: absolute;
   left: var(--x);

@@ -1,7 +1,7 @@
 /**
  * GERADO por scripts/gerar-mapa-de-dor.py. Nao editar a mao: regerar.
  *
- * Os doze pontos clicaveis do mapa de dor do hero, seis por figura.
+ * Os treze pontos clicaveis do mapa de dor do hero, sete na frontal e seis no perfil.
  * Coordenadas no viewBox da figura (frontal 221 x 560, perfil 118 x 560).
  * Curva sagital: spline suavizado sobre COLUNA_PERFIL_X, erro maximo de
  * 0.48u contra a medida.
@@ -66,7 +66,22 @@ export const MAPA_DE_DOR_PONTOS: Record<VistaDoMapa, PontosDaVista> = {
         "dur": 3.8,
         "fase": 1.6,
         "fioU": 12.7,
-        "alvoU": 43.1
+        "alvoU": 33.3
+      },
+      {
+        "chave": "cervical",
+        "rotulo": [
+          "dor cervical"
+        ],
+        "x": 110.5,
+        "y": 102.5,
+        "lado": "dir",
+        "rota": "/tratamento-da-dor",
+        "aria": "Dor cervical, vista frontal. Abrir a página Tratamento da Dor",
+        "dur": 4.1,
+        "fase": 3.5,
+        "fioU": 29.7,
+        "alvoU": 33.3
       },
       {
         "chave": "postura",

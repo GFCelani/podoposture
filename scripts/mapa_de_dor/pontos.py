@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Os doze pontos do mapa de dor: posição no viewBox, rota e copy verbatim
-da cliente. Os da coluna de perfil saem da geometria (desenho.niveis).
+"""Os treze pontos do mapa de dor (sete na frontal, seis no perfil): posição
+no viewBox, rota e copy verbatim da cliente. Os da coluna de perfil saem da geometria (desenho.niveis).
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -105,6 +105,20 @@ FRONTAL = [
         dur=3.8, fase=1.6,
     ),
     dict(
+        chave="cervical",
+        rotulo="dor cervical",
+        # onde a cliente marcou, em verde, no print do celular de 2026-09-22
+        # (WhatsApp Image 2026-09-22 at 10.58.52.jpeg): medido por pixel
+        # contra os núcleos de cefaleia, DTM e Morton no mesmo print, escala
+        # 1,369 px/u nos dois eixos. Cai sobre o eixo, na base do pescoço,
+        # onde o contorno já abre para o ombro. Só na frontal, como marcado.
+        x=EIXO_FRONTAL, y=102.5, lado="dir",
+        rota="/tratamento-da-dor",
+        aria="Dor cervical, vista frontal. Abrir a página Tratamento da Dor",
+        onde="base do pescoço, sobre o eixo",
+        dur=4.1, fase=3.5,
+    ),
+    dict(
         chave="postura",
         rotulo="má postura",
         # de frente a coluna é reta sobre o prumo, e é o prumo que a
@@ -149,8 +163,13 @@ PERFIL = pontos_do_perfil()
 
 
 # Guarda de sanidade: abaixo desta distância (unidades do viewBox) dois alvos
-# se sobreporiam mesmo no piso de 26px, na figura de 405px do telefone.
-FOLGA_MINIMA = 36.0
+# se sobreporiam mesmo no piso de 24px, na figura de 405px do telefone
+# (24 * 560 / 405 = 33,2u). O par mais apertado é cervical e DTM, a 33,3u:
+# em 390 os dois alvos ficam em 24px e se encostam, sem se sobrepor. Na
+# janela baixa de laptop (1280x586) a figura cai a 397px e o par fica a
+# 23,7px de centro a centro: 0,3px de sobreposição no piso, aceite para
+# manter o mínimo da WCAG em vez de mover o ponto de onde a cliente marcou.
+FOLGA_MINIMA = 33.2
 
 # Folga entre o fim do fio e a tinta da figura: a placa do rótulo começa
 # depois do contorno, medido naquele y.
