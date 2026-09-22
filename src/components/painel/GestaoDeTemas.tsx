@@ -311,8 +311,11 @@ function LinhaDoTema({
         return;
       }
       const movidos = tema.textos;
+      const um = movidos === 1;
       const para =
-        destino === "sem-tema" ? "ficaram sem tema" : `foram para “${outros.find((t) => t.id === destino)?.nome ?? ""}”`;
+        destino === "sem-tema"
+          ? `${um ? "ficou" : "ficaram"} sem tema`
+          : `${um ? "foi" : "foram"} para “${outros.find((t) => t.id === destino)?.nome ?? ""}”`;
       await aoMudar(
         movidos > 0 ? `Tema “${tema.nome}” apagado. ${plural(movidos, "texto", "textos")} ${para}.` : `Tema “${tema.nome}” apagado.`,
         movidos > 0,
