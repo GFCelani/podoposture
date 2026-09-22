@@ -1813,3 +1813,29 @@ a:focus-visible .marca-vertebra {
     padding-left: 1.5rem;
   }
 }
+
+/* ===============================================================
+   HERO — linha de dado no desktop (2026-09-21)
+
+   Desktop = janela de 1920x945 (monitor 1920x1080 a 100%, Chrome
+   maximizado). Ali o titulo e a credencial estao no mesmo degrau de 1440
+   (64px e 16px) e a linha de dado, em 12px, terminava 60px antes da
+   credencial. Aqui ela cresce ate as duas terminarem na mesma borda.
+
+   Conta: Plex Mono avanca 0.6em por caractere; sao 57 caracteres e 40px de
+   intervalos (dois gap-x-3 e o fio de 16px). Em 13.5px, 0.138em de tracking
+   poe o fim da ultima letra na borda da credencial; e' o 0.14em de antes,
+   so maior. O tracking vai tambem depois da ultima letra, e a borda medida
+   e' a da letra.
+
+   ESCOPO. So 1600px ou mais de largura E mais de 860 de altura. Assim nao
+   pega 1440x900 (largura), nem os laptops 1536x695, 1536x730 e 1280x586
+   (altura), nem tablet e telefone. CSS sem camada, depois dos utilitarios:
+   vence o xl:text-[0.75rem] sem depender de ordem de variante.
+   =============================================================== */
+@media (min-width: 1600px) and (min-height: 861px) {
+  .hero-dado {
+    font-size: 13.5px;
+    letter-spacing: 0.138em;
+  }
+}
