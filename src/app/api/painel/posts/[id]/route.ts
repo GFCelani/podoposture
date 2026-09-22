@@ -5,7 +5,9 @@ import { NextResponse } from "next/server";
 import { lerCorpoLimitado } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
+import { htmlParaMarkdown } from "@/lib/html-para-markdown";
 import {
+  TemaInexistente,
   apagarPost,
   atualizarPost,
   bancoConfigurado,
@@ -13,8 +15,9 @@ import {
   registrarAuditoria,
 } from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
-import { camposDoCorpo, validarPost } from "@/lib/painel-tipos";
-import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
+import { camposDoCorpo, validarPost, type PostDoPainel } from "@/lib/painel-tipos";
+import { BLOG_INDEX, caminhoDaRota } from "@/lib/posts";
+import { nomesDosTemas } from "@/lib/temas-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,6 +26,19 @@ const TAMANHO_MAXIMO = 256 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Contexto = { params: Promise<{ id: string }> };
+
+const TEMA_SUMIU = "Esse tema acabou de ser apagado. Escolha outro da lista.";
+
+/**
+ * O corpo como o editor edita. Post do GoDaddy (`formato: html`) vai convertido
+ * para Markdown; o do painel ja e Markdown. Ver html-para-markdown.ts.
+ */
+function comoOEditorVe(post: PostDoPainel): PostDoPainel {
+  return post.formato === "html" ? { ...post, corpo: htmlParaMarkdown(post.corpo) } : post;
+}
+
+/** Quebra de linha do navegador e espaco das pontas nao contam como edicao. */
+const semRuido = (texto: string) => texto.replace(/\r\n?/g, "\n").trim();
 
 /**
  * Guarda + validacoes comuns aos tres verbos.
@@ -62,7 +78,7 @@ export async function GET(_req: Request, ctx: Contexto) {
   try {
     const post = await buscarPorId(pronto.id);
     if (!post) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
-    return NextResponse.json({ post });
+    return NextResponse.json({ post: comoOEditorVe(post) });
   } catch (erro) {
     console.error("[painel] falha ao ler post:", erro);
     return NextResponse.json({ erro: "Não foi possível ler o post." }, { status: 502 });
@@ -93,23 +109,40 @@ export async function PUT(req: Request, ctx: Contexto) {
   const campos = camposDoCorpo(bruto as Record<string, unknown>);
   if (!campos.resumo) campos.resumo = resumoAutomatico(campos.corpo);
 
-  const erros = validarPost(campos);
-  if (Object.keys(erros).length > 0) {
-    return NextResponse.json({ erro: "Confira os campos destacados.", erros }, { status: 400 });
-  }
-
   try {
-    const post = await atualizarPost(pronto.id, campos);
+    const atual = await buscarPorId(pronto.id);
+    if (!atual) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
+
+    // A capa que o texto ja tem vale mesmo fora de /img/post/ (a dos posts do
+    // GoDaddy mora em /img/blog/). Os temas vem do banco.
+    const erros = validarPost(campos, { temas: await nomesDosTemas(), capaAceita: atual.capa });
+    if (Object.keys(erros).length > 0) {
+      return NextResponse.json({ erro: "Confira os campos destacados.", erros }, { status: 400 });
+    }
+
+    // Post do GoDaddy cujo texto ela nao mexeu (so titulo, resumo, tema ou
+    // capa): o corpo continua o HTML de sempre, e a pagina so muda no que ela
+    // mudou. Mexeu no texto: vai o Markdown do editor.
+    let formato: PostDoPainel["formato"] = "markdown";
+    if (atual.formato === "html" && semRuido(campos.corpo) === semRuido(htmlParaMarkdown(atual.corpo))) {
+      campos.corpo = atual.corpo;
+      formato = "html";
+    }
+
+    const post = await atualizarPost(pronto.id, campos, formato);
     if (!post) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
 
     await registrarAuditoria("post-editado", post.slug, ipDaRequisicao(await headers()));
     revalidatePath(BLOG_INDEX);
-    revalidatePath(hrefDoPost(post.slug));
+    revalidatePath(caminhoDaRota(post.slug));
     revalidatePath("/");
     revalidatePath("/sitemap.xml");
 
-    return NextResponse.json({ post });
+    return NextResponse.json({ post: comoOEditorVe(post) });
   } catch (erro) {
+    if (erro instanceof TemaInexistente) {
+      return NextResponse.json({ erro: "Confira os campos destacados.", erros: { categoria: TEMA_SUMIU } }, { status: 400 });
+    }
     console.error("[painel] falha ao atualizar post:", erro);
     return NextResponse.json({ erro: "Não foi possível salvar o post." }, { status: 502 });
   }
@@ -126,7 +159,7 @@ export async function DELETE(_req: Request, ctx: Contexto) {
 
     await registrarAuditoria("post-apagado", post?.slug ?? null, ipDaRequisicao(await headers()));
     revalidatePath(BLOG_INDEX);
-    if (post) revalidatePath(hrefDoPost(post.slug));
+    if (post) revalidatePath(caminhoDaRota(post.slug));
     revalidatePath("/");
     revalidatePath("/sitemap.xml");
 

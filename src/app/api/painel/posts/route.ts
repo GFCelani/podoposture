@@ -6,6 +6,7 @@ import { lerCorpoLimitado } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import {
+  TemaInexistente,
   TiraDoArSemConfirmacao,
   bancoConfigurado,
   buscarPorId,
@@ -15,7 +16,8 @@ import {
 } from "@/lib/painel-db";
 import { resumoAutomatico } from "@/lib/markdown";
 import { camposDoCorpo, envioMudaOSite, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
-import { BLOG_INDEX, BRUTOS_DO_JSON, hrefDoPost } from "@/lib/posts";
+import { BLOG_INDEX, caminhoDaRota } from "@/lib/posts";
+import { nomesDosTemas } from "@/lib/temas-db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +28,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A saida para quem mandou como rascunho um texto que ja esta no ar. */
 const JA_ESTA_PUBLICADO =
-  "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Seus textos” e use “Tirar do site e guardar”.";
+  "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Meu blog” e use “Tirar do site e guardar”.";
+
+/** O tema escolhido foi apagado em outra janela entre a escolha e o envio. */
+const TEMA_SUMIU = "Esse tema acabou de ser apagado. Escolha outro da lista.";
 
 async function lerCorpo(req: Request): Promise<Record<string, unknown> | null> {
   const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO);
@@ -44,16 +49,13 @@ export async function GET() {
   const auth = await exigirSessao();
   if (!auth.ok) return auth.resposta;
 
-  // Quantos textos vivem no repositorio, fora desta lista. Vai na resposta, e
-  // nao escrito na tela, porque o numero muda quando o acervo muda — e o
-  // navegador nao pode importar o JSON dos posts sem levar o acervo inteiro.
-  const doRepositorio = BRUTOS_DO_JSON.length;
-
+  // Desde a migracao do acervo, a lista tem todos os posts do blog: os do
+  // GoDaddy e os escritos aqui. Sem banco ela fica vazia e a aba explica.
   if (!bancoConfigurado()) {
-    return NextResponse.json({ posts: [], semBanco: true, doRepositorio });
+    return NextResponse.json({ posts: [], semBanco: true });
   }
   try {
-    return NextResponse.json({ posts: await listarTodos(), semBanco: false, doRepositorio });
+    return NextResponse.json({ posts: await listarTodos(), semBanco: false });
   } catch (erro) {
     console.error("[painel] falha ao listar posts:", erro);
     return NextResponse.json({ erro: "Não foi possível ler os posts." }, { status: 502 });
@@ -82,12 +84,13 @@ export async function POST(req: Request) {
   // duplicar. Qualquer outra coisa e ignorada e o servidor escolhe o id.
   const id = typeof bruto.id === "string" && UUID.test(bruto.id) ? bruto.id.toLowerCase() : undefined;
 
-  const erros = validarPost(campos);
-  if (Object.keys(erros).length > 0) {
-    return NextResponse.json({ erro: "Confira os campos destacados.", erros }, { status: 400 });
-  }
-
   try {
+    // Os temas vem do banco: a lista e gerida pelo painel.
+    const erros = validarPost(campos, { temas: await nomesDosTemas() });
+    if (Object.keys(erros).length > 0) {
+      return NextResponse.json({ erro: "Confira os campos destacados.", erros }, { status: 400 });
+    }
+
     // Repetir o envio com o mesmo id atualiza em vez de duplicar (ver
     // `criarPost`). O que ele nao pode fazer e tirar do ar, calado, um texto que
     // ja esta publicado: no editor isso pede um segundo clique ("Tirar do site e
@@ -119,7 +122,7 @@ export async function POST(req: Request) {
     // outro envio publicar.
     if (envioMudaOSite({ publicado: estavaPublicado }, post)) {
       revalidatePath(BLOG_INDEX);
-      revalidatePath(hrefDoPost(post.slug));
+      revalidatePath(caminhoDaRota(post.slug));
       revalidatePath("/");
       // O sitemap tambem e montado no build: sem isto, o post existe, abre pela
       // URL e nunca e anunciado ao buscador.
@@ -130,6 +133,9 @@ export async function POST(req: Request) {
   } catch (erro) {
     if (erro instanceof TiraDoArSemConfirmacao) {
       return NextResponse.json({ erro: JA_ESTA_PUBLICADO }, { status: 409 });
+    }
+    if (erro instanceof TemaInexistente) {
+      return NextResponse.json({ erro: "Confira os campos destacados.", erros: { categoria: TEMA_SUMIU } }, { status: 400 });
     }
     console.error("[painel] falha ao salvar post:", erro);
     return NextResponse.json({ erro: "Não foi possível salvar o post." }, { status: 502 });

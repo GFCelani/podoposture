@@ -8,7 +8,6 @@ import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost }
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
 import {
   AVISO_SAIU_DO_AR,
-  CATEGORIAS,
   LIMITES_POST,
   errosComCampo,
   situacaoDaReleitura,
@@ -17,6 +16,7 @@ import {
   rascunhoPrecisaConfirmar,
   rotuloDaData,
   validarPost,
+  type ContextoDoPost,
   type DadosDoPost,
   type ErrosPost,
   type PostDoPainel,
@@ -60,10 +60,11 @@ const BOTAO_FORMATO =
 const FOCO_NO_ROTULO =
   "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
 
+// Texto novo nasce sem tema: ela escolhe (a lista vem do banco).
 const VAZIO: DadosDoPost = {
   titulo: "",
   resumo: "",
-  categoria: CATEGORIAS[0],
+  categoria: "",
   capa: "",
   corpo: "",
   publicado: false,
@@ -169,6 +170,38 @@ export function EditorDePost({
 
   const alterado = JSON.stringify(campos) !== JSON.stringify(inicial);
   const travado = salvando !== null;
+
+  /* -------- temas: vem do banco, geridos em "Meu blog" > Temas -------- */
+
+  const [temas, setTemas] = useState<string[] | null>(null);
+  const [erroDosTemas, setErroDosTemas] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    void (async () => {
+      try {
+        const resposta = await fetch("/api/painel/temas", { cache: "no-store" });
+        if (resposta.status === 401 || resposta.status === 403) return;
+        const corpo = await resposta.json().catch(() => ({}));
+        const nomes = Array.isArray(corpo?.temas)
+          ? (corpo.temas as { nome?: unknown }[]).map((t) => t.nome).filter((n): n is string => typeof n === "string")
+          : null;
+        if (vivo) {
+          if (nomes) setTemas(nomes);
+          else setErroDosTemas(true);
+        }
+      } catch {
+        if (vivo) setErroDosTemas(true);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  // Enquanto a lista nao chega, o tema que o texto ja tem vale: sem isto, sair
+  // do campo antes da resposta acusava "esse tema nao existe mais".
+  const temasValidos = temas ?? (inicial.categoria ? [inicial.categoria] : []);
+  const contexto: ContextoDoPost = { temas: temasValidos, capaAceita: postAoAbrir?.capa };
 
   useEffect(() => {
     // O editor substitui a lista inteira: sem mover o foco, quem usa teclado
@@ -291,13 +324,13 @@ export function EditorDePost({
     if (pendente) setPendente(null);
     // Aviso que ja esta na tela some assim que o campo fica certo. Aviso novo
     // so aparece ao sair do campo, nunca no meio da digitacao.
-    if (erros[campo]) setErros((e) => errosComCampo(e, novos, campo));
+    if (erros[campo]) setErros((e) => errosComCampo(e, novos, campo, contexto));
   }
 
   // ui-ux-pro-max ux: Forms/Inline Validation — avisa ao sair do campo, e so
   // sobre ele
   function aoSairDo(campo: keyof DadosDoPost) {
-    setErros((e) => errosComCampo(e, campos, campo));
+    setErros((e) => errosComCampo(e, campos, campo, contexto));
   }
 
   /**
@@ -441,7 +474,7 @@ export function EditorDePost({
   async function salvar(publicar: boolean) {
     if (emCurso.current || enviandoAgora.current) return;
     const dados = { ...campos, publicado: publicar };
-    const encontrados = validarPost(dados);
+    const encontrados = validarPost(dados, contexto);
     setErros(encontrados);
     if (Object.keys(encontrados).length > 0) {
       setConfirmandoRascunho(false);
@@ -665,12 +698,19 @@ export function EditorDePost({
             aria-describedby={erros.categoria ? "erro-categoria" : undefined}
             className={entrada}
           >
-            {CATEGORIAS.map((t) => (
+            <option value="">Sem tema</option>
+            {/* O tema atual entra mesmo antes da lista chegar do servidor. */}
+            {(temas ?? temasValidos).map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
           </select>
+          {erroDosTemas && (
+            <p className="mt-2 text-[0.875rem] text-muted">
+              Não foi possível carregar a lista de temas agora. O tema atual continua; os outros aparecem ao reabrir o texto.
+            </p>
+          )}
           {erros.categoria && (
             <p id="erro-categoria" role="alert" className={erroDoCampo}>
               {erros.categoria}

@@ -6,12 +6,15 @@ import {
   ehEstreia,
   enderecoPodeMudar,
   envioMudaOSite,
+  erroNoNomeDoTema,
   errosComCampo,
   mensagemAoSalvar,
   mensagemDeFalhaAoSalvar,
   rascunhoPrecisaConfirmar,
   repetirTiraDoAr,
+  normalizarNomeDoTema,
   validarPost,
+  type ContextoDoPost,
   type DadosDoPost,
 } from "./painel-tipos";
 
@@ -23,6 +26,9 @@ const CERTO: DadosDoPost = {
   corpo: "Um texto com mais de quarenta caracteres, para passar do minimo.",
   publicado: true,
 };
+
+/** Os temas que existem no banco, no momento da validacao. */
+const CONTEXTO: ContextoDoPost = { temas: ["Dor Crônica", "Zumbido e Tinnitus"] };
 
 describe("enderecoPodeMudar", () => {
   it("rascunho que nunca foi ao ar troca de endereco quando o titulo muda", () => {
@@ -64,16 +70,55 @@ describe("ehEstreia", () => {
 
 describe("validarPost", () => {
   it("corpo feito so de espacos e quebras de linha nao passa por texto", () => {
-    expect(validarPost({ ...CERTO, corpo: "\n".repeat(60) }).corpo).toBe("Escreva o texto antes de salvar.");
-    expect(validarPost({ ...CERTO, corpo: `${" ".repeat(50)}curto${" ".repeat(50)}` }).corpo).toMatch(/pelo menos/);
-    expect(validarPost(CERTO).corpo).toBeUndefined();
+    expect(validarPost({ ...CERTO, corpo: "\n".repeat(60) }, CONTEXTO).corpo).toBe("Escreva o texto antes de salvar.");
+    expect(validarPost({ ...CERTO, corpo: `${" ".repeat(50)}curto${" ".repeat(50)}` }, CONTEXTO).corpo).toMatch(/pelo menos/);
+    expect(validarPost(CERTO, CONTEXTO).corpo).toBeUndefined();
+  });
+});
+
+describe("validarPost: tema e capa", () => {
+  it("sem tema e uma escolha valida — 64 dos posts do GoDaddy nao tem tema", () => {
+    expect(validarPost({ ...CERTO, categoria: "" }, CONTEXTO).categoria).toBeUndefined();
+  });
+
+  it("tema que existe no banco passa", () => {
+    expect(validarPost({ ...CERTO, categoria: "Zumbido e Tinnitus" }, CONTEXTO).categoria).toBeUndefined();
+  });
+
+  it("tema que nao existe (apagado em outra janela) e recusado", () => {
+    expect(validarPost({ ...CERTO, categoria: "Tema apagado" }, CONTEXTO).categoria).toMatch(/não existe mais/);
+  });
+
+  it("a capa do GoDaddy que o texto ja tem continua valendo", () => {
+    const capa = "/img/blog/dra-claudia-meirelles-1-d1712737.webp";
+    expect(validarPost({ ...CERTO, capa }, { ...CONTEXTO, capaAceita: capa }).capa).toBeUndefined();
+  });
+
+  it("mas uma capa de /img/blog/ que o texto NAO tinha e recusada", () => {
+    const capa = "/img/blog/outra-foto.webp";
+    expect(validarPost({ ...CERTO, capa }, { ...CONTEXTO, capaAceita: "/img/blog/a-dele.webp" }).capa).toMatch(/inválida/);
+    expect(validarPost({ ...CERTO, capa }, CONTEXTO).capa).toMatch(/inválida/);
+  });
+});
+
+describe("nome de tema", () => {
+  it("normaliza espacos e forma Unicode", () => {
+    expect(normalizarNomeDoTema("  Dor   crônica ")).toBe("Dor crônica");
+    expect(normalizarNomeDoTema("Dor cro\u0302nica")).toBe("Dor crônica");
+  });
+
+  it("recusa vazio, curto e longo", () => {
+    expect(erroNoNomeDoTema("")).toMatch(/Escreva/);
+    expect(erroNoNomeDoTema("a")).toMatch(/2 letras/);
+    expect(erroNoNomeDoTema("x".repeat(61))).toMatch(/Máximo/);
+    expect(erroNoNomeDoTema("Zumbido")).toBeNull();
   });
 });
 
 describe("errosComCampo", () => {
   it("sair do titulo nao acusa o corpo que ela ainda nem escreveu", () => {
     const dados = { ...CERTO, titulo: "", corpo: "" };
-    expect(errosComCampo({}, dados, "titulo")).toEqual({
+    expect(errosComCampo({}, dados, "titulo", CONTEXTO)).toEqual({
       titulo: "O texto precisa de um título.",
     });
   });
@@ -81,19 +126,19 @@ describe("errosComCampo", () => {
   it("campo corrigido perde o aviso, e os outros avisos ficam", () => {
     const antes = { titulo: "O texto precisa de um título.", corpo: "Escreva o texto antes de salvar." };
     const dados = { ...CERTO, corpo: "" };
-    expect(errosComCampo(antes, dados, "titulo")).toEqual({
+    expect(errosComCampo(antes, dados, "titulo", CONTEXTO)).toEqual({
       corpo: "Escreva o texto antes de salvar.",
     });
   });
 
   it("devolve a mesma mensagem que a validacao completa, que e a do servidor", () => {
     const dados = { ...CERTO, corpo: "curto" };
-    expect(errosComCampo({}, dados, "corpo").corpo).toBe(validarPost(dados).corpo);
+    expect(errosComCampo({}, dados, "corpo", CONTEXTO).corpo).toBe(validarPost(dados, CONTEXTO).corpo);
   });
 
   it("nao altera o objeto recebido", () => {
     const antes = { titulo: "x" };
-    errosComCampo(antes, CERTO, "titulo");
+    errosComCampo(antes, CERTO, "titulo", CONTEXTO);
     expect(antes).toEqual({ titulo: "x" });
   });
 });

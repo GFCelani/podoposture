@@ -6,16 +6,11 @@ import { ArtigoJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
 import { PostsRelacionados } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
-import {
-  BLOG_INDEX,
-  SLUGS_DE_POST_A_GERAR,
-  hrefDoPost,
-  postsRelacionados,
-} from "@/lib/posts";
-import { buscarPostDoSite } from "@/lib/posts-do-site";
+import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
+import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
 
 /**
- * Os 68 posts do blog.
+ * Os posts do blog — os do GoDaddy e os escritos pelo painel.
  *
  * A URL continua sendo /home/f/<slug> — a mesma do GoDaddy. E feia, mas e a que
  * o Google ja ranqueia: mante-la significa migrar de plataforma sem um unico
@@ -25,11 +20,12 @@ import { buscarPostDoSite } from "@/lib/posts-do-site";
  */
 
 /**
- * Os 68 do repositorio continuam sendo gerados no build — sao eles que o Google
- * ja conhece, e nenhum depende do banco estar de pe para existir.
+ * Todo post publicado e gerado no build — os do GoDaddy, que o Google ja
+ * conhece, e os do painel. Com banco, a lista vem dele; sem banco, do JSON
+ * (ver posts-do-site.ts).
  */
-export function generateStaticParams() {
-  return SLUGS_DE_POST_A_GERAR.map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await slugsDePostAGerar()).map((slug) => ({ slug }));
 }
 
 /**
@@ -89,7 +85,7 @@ export default async function PostDoBlog({
   if (!post) notFound();
 
   const caminho = hrefDoPost(post.slug);
-  const relacionados = postsRelacionados(post.slug, 3);
+  const relacionados = await relacionadosDoSite(post.slug, 3);
 
   return (
     <>

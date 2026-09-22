@@ -18,7 +18,7 @@ import { Numeros } from "./Numeros";
  * venha ela de onde vier. O componente nao guarda "esta autenticado" em lugar
  * nenhum — ele so reage ao que o servidor responde.
  *
- * Depois de entrar, a primeira aba e "Seus textos", a LISTA do que ja existe, e
+ * Depois de entrar, a primeira aba e "Meu blog", a LISTA do que ja existe, e
  * nao um formulario em branco: quem volta uma vez por mes quer primeiro ver o
  * que ja escreveu (ver design-system/JOURNEY.md, loop de retorno).
  *
@@ -40,7 +40,7 @@ import { Numeros } from "./Numeros";
 type Aba = "textos" | "inicio" | "numeros";
 
 const ABAS: readonly { id: Aba; rotulo: string }[] = [
-  { id: "textos", rotulo: "Seus textos" },
+  { id: "textos", rotulo: "Meu blog" },
   { id: "inicio", rotulo: "Página inicial" },
   { id: "numeros", rotulo: "Números" },
 ];

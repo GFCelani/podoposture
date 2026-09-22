@@ -3,14 +3,26 @@ import "server-only";
 import { cache } from "react";
 
 import { BancoEmPausa, emConstrucao } from "./disjuntor";
-import { contarPalavras, markdownParaHtml } from "./markdown";
-import { buscarPorSlug, lerComDisjuntor, listarPublicadosSemCorpo, sondarComDisjuntor } from "./painel-db";
+import { markdownParaHtml } from "./markdown";
+import {
+  bancoConfigurado,
+  buscarPorSlug,
+  lerComDisjuntor,
+  listarPublicadosSemCorpo,
+  sondarComDisjuntor,
+} from "./painel-db";
 import { rotuloDaData, slugValido, type ResumoDoPainel } from "./painel-tipos";
 import {
   BRUTOS_DO_JSON,
+  MAPA_ASCII_POSTS,
+  SLUGS_DE_POST_A_GERAR,
+  SLUGS_DO_ACERVO,
   TODOS_OS_POSTS,
   buscarPost,
   paraPost,
+  postsRelacionados,
+  relacionadosEm,
+  rotaDoPost,
   temasComTotal,
   type Post,
   type PostBruto,
@@ -18,159 +30,171 @@ import {
 } from "./posts";
 
 /**
- * As duas fontes do blog, reunidas.
+ * De onde o blog le.
  *
- * Os 68 posts migrados do GoDaddy continuam num JSON do repositorio, e nao vao
- * para o banco. Nao e preguica: sao eles que sustentam as URLs indexadas, o
- * gate de migracao compara palavra por palavra contra o site antigo, e mover
- * esse conteudo seria arriscar tudo isso para ganhar uniformidade. O banco e
- * so aditivo — guarda o que a clinica escrever daqui em diante.
+ * **Com banco configurado, so do banco.** Os 69 posts do GoDaddy moram no
+ * Postgres desde 2026-09-21, junto com o que o painel escreve, e sao editaveis
+ * como qualquer texto do painel. A importacao (`painel-db.ts`, `importarAcervo`)
+ * guarda o corpo verbatim, a data e a posicao de cada um, e este modulo devolve
+ * exatamente o que o JSON devolvia — `acervo-no-banco.test.ts` compara os dois
+ * post a post, e o diff do HTML servido antes x depois conferiu as paginas.
  *
- * Toda pagina que lista posts (indice do blog, home, sitemap) passa por aqui.
- * Ler `TODOS_OS_POSTS` direto de `posts.ts` foi o que deixou o texto publicado
- * pelo painel fora do indice do blog: ele existia na URL e no sitemap, e em
- * nenhuma lista.
+ * **Sem banco configurado, so do JSON**, como sempre foi: preview sem banco,
+ * maquina local, e a producao antes de a variavel existir. Nenhuma variavel e
+ * obrigatoria para o site de pe.
+ *
+ * **Banco configurado e fora do ar: erro, nunca conteudo velho.** Cair para o
+ * JSON aqui mostraria a versao antiga de um texto editado, traria de volta um
+ * texto apagado — e essa versao podia ficar no cache depois que o banco
+ * voltasse. Erro nao fica em cache: a pagina ja guardada continua servida (o
+ * Next mantem a ultima boa quando a regeneracao falha), e a que nao existe
+ * responde erro ate o banco voltar. No build, a falha derruba o build — e a
+ * Vercel mantem o deploy anterior no ar, que e exatamente o que se quer.
  *
  * `server-only` porque a leitura do banco nao pode acabar no bundle do
- * navegador. Componentes de cliente continuam importando `posts.ts`, que so
- * enxerga o JSON.
+ * navegador.
  */
 
-/** Post do banco na mesma forma dos migrados, para o resto do site nao notar. */
-function brutoDoPainel(p: ResumoDoPainel, corpo: string): PostBruto {
-  const quando = p.publicadoEm ?? p.criadoEm;
+/** A data que a pagina mostra: a do GoDaddy nos posts do acervo, a da publicacao nos do painel. */
+function dataDoPost(p: ResumoDoPainel): string {
+  return p.dataOriginal ?? p.publicadoEm ?? p.criadoEm;
+}
+
+/**
+ * A ordem do blog: mais recente primeiro; no mesmo dia, a ordem do JSON.
+ *
+ * O JSON ordenava por `dataISO` com sort estavel, entao dois posts do mesmo
+ * dia saiam na ordem do arquivo — sete dias do acervo tem mais de um post, um
+ * deles tem sete. `ordem_original` e essa posicao. Post do painel nao tem, e
+ * a data dele traz a hora, entao nunca empata com um do acervo.
+ */
+function ordemDoBlog(a: ResumoDoPainel, b: ResumoDoPainel): number {
+  const porData = dataDoPost(b).localeCompare(dataDoPost(a));
+  if (porData !== 0) return porData;
+  const pa = a.ordemOriginal ?? Number.MAX_SAFE_INTEGER;
+  const pb = b.ordemOriginal ?? Number.MAX_SAFE_INTEGER;
+  return pa - pb;
+}
+
+function contarPalavrasDoHtml(html: string): number {
+  const texto = html.replace(/<[^>]+>/g, " ").trim();
+  return texto ? texto.split(/\s+/).length : 0;
+}
+
+/** Post do banco na mesma forma dos do JSON, para o resto do site nao notar. */
+function brutoDoBanco(p: ResumoDoPainel, html: string): PostBruto {
+  const dataISO = dataDoPost(p);
   return {
     slug: p.slug,
     titulo: p.titulo,
     resumo: p.resumo,
-    dataISO: quando,
-    dataRotulo: rotuloDaData(quando),
+    dataISO,
+    dataRotulo: rotuloDaData(dataISO),
     categorias: p.categoria ? [p.categoria] : [],
     capa: p.capa,
-    html: markdownParaHtml(corpo),
-    palavras: contarPalavras(corpo),
+    html,
+    palavras: contarPalavrasDoHtml(html),
     imagens: [],
   };
 }
 
-const SLUGS_DO_REPOSITORIO = new Set(BRUTOS_DO_JSON.map((p) => p.slug.normalize("NFC")));
+/** O corpo como a pagina renderiza: o do acervo verbatim, o do painel convertido. */
+function htmlDoCorpo(post: { formato: ResumoDoPainel["formato"]; corpo: string }): string {
+  return post.formato === "html" ? post.corpo : markdownParaHtml(post.corpo);
+}
+
+/** A rota ASCII (ou o proprio slug) de volta para o slug real do post. */
+function slugReal(slug: string): string {
+  return (MAPA_ASCII_POSTS.get(slug) ?? slug).normalize("NFC");
+}
 
 /**
- * Os publicados pelo painel, na forma da listagem, sem o corpo.
+ * Os publicados, sem o corpo, ja na ordem do blog.
  *
  * `cache` porque o mesmo render pede a lista mais de uma vez (o indice do blog
  * quer os posts e os temas): sem ele cada pedido era uma consulta, e o banco
- * aqui tem uma conexao so por instancia.
- *
- * Falha do banco nao derruba o blog: o `catch` devolve lista vazia e o site
- * mostra o que o JSON tem, que e o acervo inteiro de hoje. O oposto — pagina
- * de erro porque o Postgres piscou — seria trocar 68 artigos que funcionam por
- * nenhum.
- *
- * Pelo disjuntor: /nosso-blog e dinamica, e sem ele cada visita com o banco
- * fora esperava o connect_timeout inteiro, em fila na conexao unica.
+ * aqui tem uma conexao so por instancia. Pelo disjuntor: /nosso-blog e
+ * dinamica, e sem ele cada visita com o banco fora esperava o connect_timeout
+ * inteiro, em fila na conexao unica.
  */
-const novosDoBanco = cache(async (): Promise<Post[]> => {
+const publicadosDoBanco = cache(async (): Promise<ResumoDoPainel[]> => {
   try {
     const resumos = await lerComDisjuntor(listarPublicadosSemCorpo);
-    return (
-      resumos
-        // Slug repetido entre as fontes: o do repositorio vence, porque e o que
-        // ja esta indexado.
-        .filter((p) => !SLUGS_DO_REPOSITORIO.has(p.slug.normalize("NFC")))
-        // Corpo vazio: a forma de listagem nao carrega o texto.
-        .map((p) => paraPost(brutoDoPainel(p, "")))
-    );
+    return [...resumos].sort(ordemDoBlog);
   } catch (erro) {
-    if (!(erro instanceof BancoEmPausa)) {
-      console.error("[blog] banco indisponivel, servindo so os posts do repositorio:", erro);
-    }
-    return [];
+    if (!(erro instanceof BancoEmPausa)) console.error("[blog] banco indisponivel ao listar os posts:", erro);
+    throw new Error("banco indisponivel ao listar os posts do blog", { cause: erro });
   }
 });
 
-/** Todos os posts, do mais recente para o mais antigo. */
+/** Todos os posts, do mais recente para o mais antigo. Lista nova a cada chamada. */
 export async function todosOsPosts(): Promise<Post[]> {
-  const novos = await novosDoBanco();
-  // Lista nova a cada chamada: o resultado em cache e dividido pelo render
-  // inteiro, e um `sort` de quem chama reordenaria a lista de todo mundo.
-  return [...TODOS_OS_POSTS, ...novos].sort((a, b) => b.dateISO.localeCompare(a.dateISO));
+  if (!bancoConfigurado()) return [...TODOS_OS_POSTS];
+  return (await publicadosDoBanco()).map((p) => paraPost(brutoDoBanco(p, "")));
 }
 
-/** Temas com pelo menos um post, das duas fontes, ordenados por volume. */
+/** Temas com pelo menos um post, ordenados por volume. */
 export async function categoriasDoSite(): Promise<Tema[]> {
-  const novos = await novosDoBanco();
-  return temasComTotal([
-    ...BRUTOS_DO_JSON.map((p) => p.categorias),
-    ...novos.map((p) => (p.category ? [p.category] : [])),
-  ]);
+  if (!bancoConfigurado()) return temasComTotal(BRUTOS_DO_JSON.map((p) => p.categorias));
+  return temasComTotal((await publicadosDoBanco()).map((p) => (p.categoria ? [p.categoria] : [])));
 }
 
 /**
- * Um post do painel por endereco, com o corpo ja convertido.
+ * Um post por endereco, com o corpo pronto para a pagina.
  *
  * `cache` porque a pagina do post chama `buscarPostDoSite` duas vezes, em
- * `generateMetadata` e no componente; sem ele eram duas consultas e duas
- * conversoes de Markdown por visita.
+ * `generateMetadata` e no componente.
  *
- * `undefined` so quando o banco respondeu que o texto nao existe. Com o banco
- * fora, a pagina chamava `notFound()` e o 404 ia para o cache com status 404:
- * um texto publicado ficava fora do ar para o Google e para quem abria o link
- * ate a proxima invalidacao. Em execucao a falha lanca: erro nao fica em cache
- * e a visita seguinte tenta de novo.
- *
- * O que NAO da para prometer, e o comentario aqui prometia, e que "a versao ja
- * guardada continua servida". Ela continua enquanto existir: depois de uma
- * invalidacao — publicar qualquer coisa, ou a coleta da noite — nao ha versao
- * guardada nenhuma, e ate o banco voltar a pagina do texto responde erro.
- *
- * Por isso a pausa do disjuntor vale aqui pela metade. A pausa existe para a
- * LISTA do blog, que toda visita pede e que tem os 68 posts do JSON para
- * mostrar sem banco nenhum; esta leitura e de um post so, e desistir sem tentar
- * seria responder erro num texto publicado enquanto o banco ja voltou. Mas
- * tentar em TODA visita trazia de volta a fila de 10 s na conexao unica. Entao:
- * uma tentativa direta por janela de pausa (`sondarComDisjuntor`). Se acerta, o
- * disjuntor fecha e home e indice voltam ao banco junto; as outras visitas da
- * mesma janela respondem erro na hora, sem esperar, e erro nao fica em cache.
- *
- * No build a falha segue virando `undefined`, porque la nenhum post do banco e
- * pre-gerado e erro derrubaria o build.
+ * `undefined` so quando o banco respondeu que o texto nao existe. Falha lanca:
+ * erro nao fica em cache, e a visita seguinte tenta de novo. Em execucao com
+ * uma tentativa direta por janela de pausa (`sondarComDisjuntor`) — esta
+ * leitura e de um post so, e desistir sem tentar seria responder erro num texto
+ * publicado enquanto o banco ja voltou. No build, a pausa inteira vale, e a
+ * falha derruba o build (ver o topo do arquivo).
  */
 const postDoBanco = cache(async (slug: string): Promise<PostBruto | undefined> => {
   const buscar = async (): Promise<PostBruto | undefined> => {
     const post = await buscarPorSlug(slug);
-    return post ? brutoDoPainel(post, post.corpo) : undefined;
+    return post ? brutoDoBanco(post, htmlDoCorpo(post)) : undefined;
   };
   try {
-    // No build a pausa inteira vale: la a falha vira `undefined`, e sondar em
-    // cada uma das paginas seria esperar o timeout de novo em cada uma.
     return await (emConstrucao() ? lerComDisjuntor(buscar) : sondarComDisjuntor(buscar));
   } catch (erro) {
-    if (!(erro instanceof BancoEmPausa)) {
-      console.error("[blog] banco indisponivel ao buscar post do painel:", erro);
-    }
-    if (emConstrucao()) return undefined;
-    throw new Error("banco indisponivel ao buscar post do painel", { cause: erro });
+    if (!(erro instanceof BancoEmPausa)) console.error("[blog] banco indisponivel ao buscar post:", erro);
+    throw new Error("banco indisponivel ao buscar post", { cause: erro });
   }
 });
 
 /**
- * O post de um endereco, venha ele de onde vier.
+ * O post de um endereco.
  *
- * O repositorio e consultado primeiro, e pelo `buscarPost`, que traduz a rota
- * ASCII de volta para o slug acentuado: 59 dos 68 posts migrados tem acento, o
- * Next 16.3.4 nao serve rota com caractere nao-ASCII (#73965), e sem essa
- * traducao nenhum deles era encontrado — o gate de migracao ja acusou 59 URLs
- * indexadas dando 404 por isso.
+ * A rota chega em ASCII: boa parte dos posts do acervo tem acento no slug, o
+ * Next 16.3.4 nao serve rota com caractere nao-ASCII (#73965) e o middleware
+ * reescreve o acentuado para o ASCII (`rotas.json`). `slugReal` desfaz a
+ * traducao antes de procurar.
  *
- * So depois o banco, e so com um post por consulta. Antes esta funcao carregava
- * todos os publicados, com corpo, e convertia o Markdown de todos para achar um.
- * Endereco que nao tem a forma de um slug do painel nem chega ao banco: o
- * painel so gera slug ASCII, entao nao ha o que procurar.
+ * Endereco que nao e do acervo nem tem a forma de um slug do painel nem chega
+ * ao banco: nao ha o que procurar, e robo varrendo URL inventada nao gasta
+ * consulta.
  */
 export async function buscarPostDoSite(slug: string): Promise<PostBruto | undefined> {
-  const doRepositorio = buscarPost(slug);
-  if (doRepositorio) return doRepositorio;
-  if (!slugValido(slug)) return undefined;
-  return postDoBanco(slug);
+  if (!bancoConfigurado()) return buscarPost(slug);
+  const real = slugReal(slug);
+  if (!SLUGS_DO_ACERVO.has(real) && !slugValido(real)) return undefined;
+  return postDoBanco(real);
+}
+
+/** Os relacionados do fim de um post. Mesma regra para as duas fontes (`relacionadosEm`). */
+export async function relacionadosDoSite(slug: string, quantos = 3): Promise<Post[]> {
+  if (!bancoConfigurado()) return postsRelacionados(slug, quantos);
+  return relacionadosEm(await todosOsPosts(), slugReal(slug), quantos);
+}
+
+/**
+ * As rotas de post que o build pre-gera: todos os publicados, na forma ASCII.
+ * Post apagado pelo painel sai daqui; post novo entra sem esperar visita.
+ */
+export async function slugsDePostAGerar(): Promise<string[]> {
+  if (!bancoConfigurado()) return [...SLUGS_DE_POST_A_GERAR];
+  return (await publicadosDoBanco()).map((p) => rotaDoPost(p.slug));
 }

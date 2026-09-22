@@ -13,30 +13,46 @@ export const PREFIXO_IMAGEM = "/img/post/";
  */
 
 /**
- * Categorias oferecidas no painel.
+ * Temas.
  *
- * Sao os assuntos que a clinica de fato trata, e tres delas ja existem nos
- * posts migrados, com a grafia exata — assim a barra lateral do blog agrupa
- * post novo e post antigo na mesma linha em vez de criar um tema quase igual
- * ao lado do outro.
+ * Moravam aqui como lista fixa. Agora moram no banco (tabela `temas`) e a
+ * clinica cria, renomeia e apaga pelo painel. A lista nasceu dos temas que os
+ * posts ja tinham no GoDaddy — la tema e rotulo do proprio post, nao ha lista
+ * separada —, com a grafia exata, para o blog agrupar post novo e post antigo
+ * na mesma linha.
+ *
+ * Tema vazio ("") e "sem tema": 64 dos 69 posts do GoDaddy nunca tiveram um,
+ * e a pagina deles nao mostra tema nenhum. No banco vira NULL.
  */
-export const CATEGORIAS = [
-  "Dor Crônica",
-  "Coluna e Dor Lombar",
-  "Zumbido e Tinnitus",
-  "Bruxismo, DTM e Dor Orofacial",
-  "Dor de Cabeça e Cefaleias",
-  "Postura e Pisada",
-  "Osteopatia",
-  "Acupuntura",
-  "Neuromodulação",
-] as const;
+export const LIMITE_NOME_DO_TEMA = 60;
 
-export type Categoria = (typeof CATEGORIAS)[number];
+/** Espacos das pontas fora, espaco repetido vira um, forma Unicode unica. */
+export function normalizarNomeDoTema(nome: string): string {
+  return nome.normalize("NFC").replace(/\s+/g, " ").trim();
+}
+
+/** O erro do nome de um tema, ou null. Recebe o nome ja normalizado. */
+export function erroNoNomeDoTema(nome: string): string | null {
+  if (!nome) return "Escreva o nome do tema.";
+  if (nome.length < 2) return "O nome precisa de pelo menos 2 letras.";
+  if (nome.length > LIMITE_NOME_DO_TEMA) return `Máximo de ${LIMITE_NOME_DO_TEMA} caracteres.`;
+  return null;
+}
+
+/**
+ * O que a validacao do post precisa saber do banco.
+ *
+ * `temas`: os nomes que existem agora. `capaAceita`: a capa que o texto ja tem
+ * guardada — a dos posts do GoDaddy mora em /img/blog/, fora do caminho de
+ * envio do painel, e trocar o titulo de um deles nao pode ser recusado porque
+ * a capa "nao foi enviada pelo painel".
+ */
+export type ContextoDoPost = { temas: readonly string[]; capaAceita?: string };
 
 export type DadosDoPost = {
   titulo: string;
   resumo: string;
+  /** Nome do tema, ou "" para sem tema. */
   categoria: string;
   /** Caminho da capa, servida por /img/post/. Vazio = usa a capa de reserva. */
   capa: string;
@@ -52,6 +68,16 @@ export type PostDoPainel = DadosDoPost & {
   atualizadoEm: string;
   /** Data da PRIMEIRA publicacao. Continua preenchida se o texto sair do ar. */
   publicadoEm: string | null;
+  /**
+   * `html`: post do GoDaddy, com o corpo guardado exatamente como estava no
+   * JSON — e isso que deixa a pagina identica. Vira `markdown` na primeira vez
+   * que ela editar o CORPO; mudar so titulo, resumo, tema ou capa nao mexe nele.
+   */
+  formato: "markdown" | "html";
+  /** Data do GoDaddy (AAAA-MM-DD), a que a pagina mostra. So nos posts do acervo. */
+  dataOriginal: string | null;
+  /** Posicao no JSON: desempate dos dias com mais de um post, igual ao de antes. */
+  ordemOriginal: number | null;
 };
 
 /**
@@ -123,7 +149,7 @@ export function booleano(valor: unknown): boolean {
   return valor === true || valor === "true";
 }
 
-export function validarPost(dados: DadosDoPost): ErrosPost {
+export function validarPost(dados: DadosDoPost, contexto: ContextoDoPost): ErrosPost {
   const erros: ErrosPost = {};
 
   if (!dados.titulo) erros.titulo = "O texto precisa de um título.";
@@ -136,17 +162,21 @@ export function validarPost(dados: DadosDoPost): ErrosPost {
   if (dados.resumo.length > LIMITES_POST.resumo)
     erros.resumo = `Máximo de ${LIMITES_POST.resumo} caracteres.`;
 
-  if (!(CATEGORIAS as readonly string[]).includes(dados.categoria))
-    erros.categoria = "Escolha um dos temas da lista.";
+  // "" e sem tema. Qualquer outro valor tem que ser um tema que existe agora:
+  // a lista vem do banco, e o banco ainda confere de novo (chave estrangeira).
+  if (dados.categoria && !contexto.temas.includes(dados.categoria))
+    erros.categoria = "Esse tema não existe mais. Escolha outro da lista.";
 
   // A capa e opcional: sem ela o blog usa a de reserva, como ja faz com os
   // posts antigos que vieram sem imagem. Quando existe, passa pelo MESMO leitor
   // de nome que a rota de imagem usa — conferir so o prefixo deixava passar
   // `/img/post/"><svg onload=...`, que ia direto para o <Image> do indice do
-  // blog e para o JSON-LD.
-  if (dados.capa && !lerNomeDoArquivo(dados.capa.replace(PREFIXO_IMAGEM, "")))
+  // blog e para o JSON-LD. A excecao e a capa que o texto JA tem: a dos posts
+  // do GoDaddy mora em /img/blog/, veio do acervo e nao passa por aqui.
+  const capaGuardada = dados.capa !== "" && dados.capa === contexto.capaAceita;
+  if (!capaGuardada && dados.capa && !lerNomeDoArquivo(dados.capa.replace(PREFIXO_IMAGEM, "")))
     erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
-  else if (dados.capa && !dados.capa.startsWith(PREFIXO_IMAGEM))
+  else if (!capaGuardada && dados.capa && !dados.capa.startsWith(PREFIXO_IMAGEM))
     erros.capa = "Capa inválida — envie a imagem pelo próprio painel.";
 
   // Medido sem os espacos das pontas: uma tabela do Word que o conversor
@@ -174,10 +204,11 @@ export function errosComCampo(
   erros: ErrosPost,
   dados: DadosDoPost,
   campo: keyof DadosDoPost,
+  contexto: ContextoDoPost,
 ): ErrosPost {
   const novos = { ...erros };
   delete novos[campo];
-  const mensagem = validarPost(dados)[campo];
+  const mensagem = validarPost(dados, contexto)[campo];
   if (mensagem) novos[campo] = mensagem;
   return novos;
 }

@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { PostDoPainel } from "@/lib/painel-tipos";
+import type { PostDoPainel, ResumoDoPainel } from "@/lib/painel-tipos";
 import { armazemDaAba, deixarRecado, tomarRecado } from "@/lib/recado-do-editor";
 
+import { GestaoDeTemas } from "./GestaoDeTemas";
 /**
- * Aba "Seus textos": os posts escritos pelo painel.
+ * Aba "Meu blog": todos os posts do blog — os que vieram do GoDaddy e os
+ * escritos pelo painel — e, pelo botao "Temas", a lista de temas.
  *
  * E a entrada padrao do painel. Segue o contrato de aba descrito em
  * Painel.tsx; alem de `aoPerderSessao`, recebe `aoAbrirEditor`, porque o editor
@@ -37,10 +39,10 @@ export function AbaTextos({
   // Em ref, e nao so no estado: o editor precisa saber se ha banco, e ler o
   // estado aqui refaria `abrirEditor` e recarregaria a aba quando ele chega.
   const semBancoAgora = useRef(false);
-  const [posts, setPosts] = useState<PostDoPainel[]>([]);
+  const [posts, setPosts] = useState<ResumoDoPainel[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [semBanco, setSemBanco] = useState(false);
-  const [doRepositorio, setDoRepositorio] = useState<number | null>(null);
+  const [verTemas, setVerTemas] = useState(false);
   // Falha ao carregar e falha de uma acao sao avisos separados: recarregar a
   // lista depois de apagar nao pode apagar junto o aviso de que apagar falhou.
   const [erroDaLista, setErroDaLista] = useState<string | null>(null);
@@ -69,7 +71,6 @@ export function AbaTextos({
       setPosts(corpo.posts ?? []);
       setSemBanco(Boolean(corpo.semBanco));
       semBancoAgora.current = Boolean(corpo.semBanco);
-      setDoRepositorio(typeof corpo.doRepositorio === "number" ? corpo.doRepositorio : null);
       setErroDaLista(null);
     } catch {
       setErroDaLista(SEM_CONEXAO);
@@ -214,16 +215,32 @@ export function AbaTextos({
           tabIndex={-1}
           className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
         >
-          Seus textos
+          Meu blog
         </h1>
-        {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
-        <button
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setVerTemas((v) => !v)}
+            aria-expanded={verTemas}
+            aria-controls="painel-temas"
+            className="min-h-[48px] rounded-md border-[1.5px] border-accent/45 px-5 text-accent hover:border-accent"
+          >
+            {verTemas ? "Fechar temas" : "Temas"}
+          </button>
+          {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
+          <button
           onClick={() => void abrirEditor(null)}
           className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-6 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift"
         >
-          Escrever texto
-        </button>
+            Escrever texto
+          </button>
+        </div>
       </div>
+
+      {verTemas && (
+        <div id="painel-temas">
+          <GestaoDeTemas aoPerderSessao={aoPerderSessao} aoMudarTextos={() => void carregar()} />
+        </div>
+      )}
 
       {carregando ? (
         // ui-ux-pro-max ux: Animation/Loading States — sem isto, o estado vazio
@@ -258,13 +275,6 @@ export function AbaTextos({
         </ul>
       )}
 
-      {doRepositorio !== null && doRepositorio > 0 && (
-        <p className="mt-14 text-[0.875rem] leading-[1.6] text-muted">
-          {doRepositorio === 1
-            ? "O texto que já estava no site continua publicado normalmente — ele não aparece nesta lista porque faz parte do próprio site, e não precisa de edição."
-            : `Os ${doRepositorio.toLocaleString("pt-BR")} textos que já estavam no site continuam publicados normalmente — eles não aparecem nesta lista porque fazem parte do próprio site, e não precisam de edição.`}
-        </p>
-      )}
     </>
   );
 }
@@ -277,7 +287,7 @@ function LinhaDePost({
   aoFalhar,
   aoPerderSessao,
 }: {
-  post: PostDoPainel;
+  post: ResumoDoPainel;
   abrindo: boolean;
   aoEditar: () => void;
   aoApagado: () => void;
@@ -345,7 +355,7 @@ function LinhaDePost({
             <span className="text-[#8a6d1f]">Rascunho — ainda não está no site</span>
           )}
           {" · "}
-          {post.categoria}
+          {post.categoria || "Sem tema"}
         </p>
       </div>
 

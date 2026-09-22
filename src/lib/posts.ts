@@ -112,10 +112,26 @@ export const MAPA_ASCII_POSTS = new Map<string, string>(
   ),
 );
 
+/**
+ * O segmento de rota de um post: o ASCII quando ha traducao, senao o proprio
+ * slug. E o endereco que o Next de fato serve — o middleware reescreve o
+ * acentuado para ele —, entao e tambem o que o `revalidatePath` precisa: com
+ * rewrite, a doc do Next manda passar o DESTINO, nao o que aparece na barra.
+ */
+export function rotaDoPost(slug: string): string {
+  return (rotas.posts as Record<string, string>)[slug.normalize("NFC")] ?? slug;
+}
+
+/** O caminho a invalidar quando um post muda. Ver `rotaDoPost`. */
+export function caminhoDaRota(slug: string): string {
+  return `${PREFIXO_POST}${rotaDoPost(slug)}`;
+}
+
 /** Slugs das rotas geradas: o ASCII quando ha traducao, senao o proprio slug. */
-export const SLUGS_DE_POST_A_GERAR = BRUTOS.map(
-  (p) => (rotas.posts as Record<string, string>)[p.slug] ?? p.slug,
-);
+export const SLUGS_DE_POST_A_GERAR = BRUTOS.map((p) => rotaDoPost(p.slug));
+
+/** Os slugs do acervo do GoDaddy, em NFC. Endereco fora disto e de post do painel. */
+export const SLUGS_DO_ACERVO: ReadonlySet<string> = new Set(BRUTOS.map((p) => p.slug.normalize("NFC")));
 
 export function buscarPost(slug: string): PostBruto | undefined {
   const real = MAPA_ASCII_POSTS.get(slug) ?? slug;
@@ -123,12 +139,20 @@ export function buscarPost(slug: string): PostBruto | undefined {
   return BRUTOS.find((p) => p.slug.normalize("NFC") === alvo);
 }
 
-export function postsRelacionados(slug: string, quantos = 3): Post[] {
-  const atual = buscarPost(slug);
-  if (!atual) return POSTS.slice(0, quantos);
+/**
+ * Os relacionados de um post dentro de uma lista ja ordenada: primeiro os do
+ * mesmo tema, depois os mais recentes. Sem o post na lista, os mais recentes.
+ *
+ * Pura e separada da fonte: o JSON e o banco passam por esta mesma funcao, e
+ * por isso o fim de cada post sai igual venha a lista de onde vier.
+ */
+export function relacionadosEm(lista: readonly Post[], slug: string, quantos = 3): Post[] {
+  const alvo = slug.normalize("NFC");
+  const atual = lista.find((p) => p.slug.normalize("NFC") === alvo);
+  if (!atual) return lista.slice(0, quantos);
 
-  const categoria = atual.categorias[0];
-  const outros = TODOS_OS_POSTS.filter((p) => p.slug !== atual.slug);
+  const categoria = atual.category;
+  const outros = lista.filter((p) => p !== atual);
   const mesmaCategoria = categoria
     ? outros.filter((p) => p.category === categoria)
     : [];
@@ -137,6 +161,11 @@ export function postsRelacionados(slug: string, quantos = 3): Post[] {
   // vezes quando a categoria tem menos posts que `quantos`, duplicando a key no React
   const complemento = outros.filter((p) => !mesmaCategoria.includes(p));
   return [...mesmaCategoria, ...complemento].slice(0, quantos);
+}
+
+export function postsRelacionados(slug: string, quantos = 3): Post[] {
+  const atual = buscarPost(slug);
+  return relacionadosEm(TODOS_OS_POSTS, atual?.slug ?? slug, quantos);
 }
 
 export type Tema = { label: string; href: string; total: number };

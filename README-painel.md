@@ -5,7 +5,7 @@ de ninguém. Tem três abas:
 
 | Aba | Para quê |
 |---|---|
-| **Seus textos** | Escrever, publicar, despublicar e apagar textos do blog |
+| **Meu blog** | Escrever, editar, publicar, despublicar e apagar os textos do blog — os 69 do site antigo e os novos — e gerir os temas |
 | **Página inicial** | Trocar textos, listas, botões e fotos da home, com prévia antes de publicar |
 | **Números** | Ver quantas pessoas leram o site, de onde vieram e quais buscas no Google trouxeram gente |
 
@@ -18,8 +18,8 @@ Quem protege é a senha, a sessão assinada pelo servidor e o limite de tentativ
 ## O que precisa ser configurado (uma vez)
 
 Nada aqui é obrigatório para o site funcionar. **Sem nenhuma variável o site
-constrói, serve as 88 URLs, mostra os 68 textos e a página inicial com o texto
-de sempre.** Só o painel fica indisponível e os números ficam parados. Isso é de
+constrói, serve as 88 URLs, mostra os textos do blog (lidos do arquivo do
+repositório) e a página inicial com o texto de sempre.** Só o painel fica indisponível e os números ficam parados. Isso é de
 propósito: a funcionalidade nova não pode derrubar o site por falta de
 configuração. A lista completa, com o porquê de cada uma, está em
 `.env.example`.
@@ -29,7 +29,7 @@ configuração. A lista completa, com o porquê de cada uma, está em
 | Variável | Liga | Sem ela |
 |---|---|---|
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | A entrada no painel | Ninguém entra; o painel diz que não foi configurado |
-| `DATABASE_URL` | Textos novos, imagens enviadas, edição da página inicial, números guardados | O blog mostra os 68 textos e a home mostra o texto padrão; as abas explicam que falta o banco |
+| `DATABASE_URL` | O blog no banco (textos do site antigo e novos, editáveis), temas, imagens enviadas, edição da página inicial, números guardados | O blog mostra os textos do arquivo do repositório e a home mostra o texto padrão; as abas explicam que falta o banco |
 | `CRON_SECRET` | A coleta diária dos números (`/api/cron/numeros`) e a renovação diária do cache do site. **Cadastre assim que houver `DATABASE_URL`**, mesmo sem ligar os números | A coleta recusa todo pedido, inclusive o da Vercel. E uma página que tenha ido ao cache com o texto padrão durante uma queda do banco só se refaz na próxima publicação ou deploy |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` (opcional) | Visitas na aba Números | A aba diz "a contagem de visitas ainda não foi ligada", nunca "0 visitas" |
 | `GSC_SERVICE_ACCOUNT`, `GSC_SITE_URL` | Buscas no Google na aba Números | A aba diz "as buscas no Google ainda não foram ligadas" |
@@ -65,10 +65,27 @@ Qualquer Postgres serve (Neon, Supabase, ou um local). Crie um banco vazio e
 ponha a URL de conexão em `DATABASE_URL`. As tabelas se criam sozinhas no
 primeiro uso, e não há migração para rodar.
 
-Os 68 textos que vieram do site antigo e o texto padrão da página inicial
-**não** ficam neste banco. Eles continuam no próprio repositório, e é isso que
-garante que as URLs já indexadas pelo Google não dependam de o banco estar no
-ar.
+**O blog inteiro passa a morar no banco.** Na primeira vez que o site sobe com
+`DATABASE_URL`, os textos que vieram do site antigo (o arquivo
+`src/content/posts.json`) são copiados para cá sozinhos — com o corpo idêntico,
+a mesma data e a mesma ordem —, junto com os temas que eles tinham no GoDaddy.
+Dali em diante eles aparecem em **Meu blog** e se editam como qualquer texto.
+As páginas não mudam em nada: a migração foi conferida comparando o HTML de
+todas as páginas do blog antes e depois, byte a byte.
+
+Duas regras que valem a partir daí:
+
+- **Com banco configurado, o blog lê só do banco.** Se o banco cair, a página
+  que já estava pronta continua no ar, e a que não estava responde erro até ele
+  voltar — o site nunca mostra uma versão antiga de um texto editado nem traz
+  de volta um texto apagado. Um deploy feito com o banco fora falha, e a Vercel
+  mantém o deploy anterior no ar.
+- **Texto novo no arquivo entra sozinho no próximo deploy** (é assim que um
+  post publicado no GoDaddy chega aqui enquanto o domínio não muda). Texto que
+  já está no banco **não** é tocado de novo: corrigir o arquivo não muda nada,
+  a correção se faz pelo painel. Texto apagado pelo painel não volta.
+
+O texto padrão da página inicial continua no repositório, como antes.
 
 ### 3. Os números
 
@@ -127,10 +144,11 @@ Nada disto se resolve pelo código nem por quem só tem acesso ao repositório:
 
 ## Como ela usa
 
-### Seus textos
+### Meu blog
 
 1. Abre `/publicar` e digita a senha.
-2. Vê a lista do que já escreveu. O botão preenchido é **Escrever texto**.
+2. Vê a lista de todos os textos do blog, do mais recente para o mais antigo. O
+   botão preenchido é **Escrever texto**.
 3. Preenche título e tema, e cola o texto direto do Word: negrito, títulos e
    listas vêm junto.
 4. Usa o botão **Imagem** para inserir fotos no meio do texto, e **Escolher
@@ -138,6 +156,28 @@ Nada disto se resolve pelo código nem por quem só tem acesso ao repositório:
 5. **Ver como vai ficar** mostra o texto com a tipografia real do site.
 6. **Publicar no site** deixa no ar na hora. **Guardar como rascunho** salva sem
    publicar.
+
+Um texto do site antigo abre no mesmo editor. Enquanto ela mexe só no título,
+no resumo, no tema ou na capa, o corpo continua exatamente o do site antigo.
+Se mexer no texto, ele passa a ser salvo como os textos novos — as fotos, os
+negritos, os sublinhados, os grifos e os links continuam (o teste confere isso
+nos 69).
+
+### Temas
+
+O botão **Temas**, ao lado de Escrever texto, abre a lista de temas com quantos
+textos cada um tem. Dá para criar, renomear e apagar.
+
+- **Renomear** leva todos os textos do tema junto, e o site é refeito na hora.
+- **Apagar um tema sem textos** pede o segundo clique.
+- **Apagar um tema com textos** mostra quantos são e pede para onde eles vão —
+  outro tema ou "Deixar sem tema" —, sem nada escolhido de antemão, e só depois
+  pede a confirmação. Nenhum texto é apagado junto.
+- A trava não é só da tela: o servidor recusa apagar sem destino, e o próprio
+  banco recusa apagar tema que ainda tem texto (chave estrangeira).
+- "Sem tema" é uma escolha válida: 64 dos 69 textos do site antigo nunca
+  tiveram tema, e a página deles não mostra tema nenhum.
+- Um tema só aparece no site quando tem pelo menos um texto publicado.
 
 ### Página inicial
 
@@ -183,7 +223,7 @@ seção reabre sozinho.
 | Script malicioso dentro de um texto | O texto do blog é Markdown e a conversão não produz HTML executável |
 | Rastreador de terceiro dentro de um texto | Só imagem hospedada aqui vira imagem na página |
 | Consulta ao banco montada com texto de fora | Toda consulta é parametrizada |
-| Banco fora do ar derrubar o site | O blog serve os 68 textos e a home serve o texto padrão. Uma conexão que caiu ganha uma segunda tentativa; depois de uma falha real, as leituras do site param de tentar o banco por 15 segundos (60 no build). Um texto publicado pelo painel nunca vira 404 guardado em cache por causa do banco fora |
+| Banco fora do ar derrubar o site, ou mostrar texto velho | A página que já estava pronta continua no ar; a que não estava responde erro, que não vai para o cache, até o banco voltar. Nunca a versão antiga de um texto editado nem um texto apagado. Uma conexão que caiu ganha uma segunda tentativa; depois de uma falha real, as leituras do site param de tentar o banco por 15 segundos (60 no build). Deploy com o banco fora falha, e a Vercel mantém o anterior no ar. A home serve o texto padrão |
 | O painel sujar os números | A medição de visitas descarta tudo que começa com `/publicar` |
 | Identificar quem visita | Web Analytics sem cookie; o resumo diário guarda só totais, e é apagado depois de 3 anos (ver `/privacidade`) |
 
@@ -195,12 +235,12 @@ nasceu provando que pega: com a proteção removida de uma rota, o teste acusa.
 
 ## Perguntas que vão aparecer
 
-**Some algum texto antigo?** Não. Os 68 continuam exatamente onde estão, nas
-mesmas URLs.
+**Some algum texto antigo?** Não. Os 69 continuam exatamente onde estão, nas
+mesmas URLs e com a mesma página — agora editáveis em **Meu blog**.
 
-**E se o banco cair?** O blog continua mostrando os 68 textos do repositório e a
-home mostra o texto padrão. Só o que foi publicado pelo painel fica
-indisponível, e o painel avisa.
+**E se o banco cair?** As páginas do blog que já estavam prontas continuam no
+ar; as outras dão erro até o banco voltar, e o painel avisa. O site nunca volta
+a mostrar a versão antiga de um texto que ela editou.
 
 **O texto novo entra no Google?** Sim: ao publicar, o índice do blog, a página
 do texto e o sitemap são atualizados na hora.

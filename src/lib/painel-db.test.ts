@@ -198,7 +198,9 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
     const dados = {
       titulo: `Teste de envio cruzado ${id.slice(0, 8)}`,
       resumo: "Resumo.",
-      categoria: "Postura",
+      // Sem tema: o assunto aqui e o envio repetido. Tema inventado seria recusado
+      // pela chave estrangeira (temas-db.test.ts cobre isso).
+      categoria: "",
       capa: "",
       corpo: "Corpo do texto.",
       publicado: true,
@@ -227,7 +229,9 @@ describe.skipIf(!URL_DE_TESTE)("poda dos dados do painel no Postgres", () => {
     const dados = {
       titulo: `Teste de rascunho cruzado ${id.slice(0, 8)}`,
       resumo: "Resumo.",
-      categoria: "Postura",
+      // Sem tema: o assunto aqui e o envio repetido. Tema inventado seria recusado
+      // pela chave estrangeira (temas-db.test.ts cobre isso).
+      categoria: "",
       capa: "",
       corpo: "Corpo do texto.",
       publicado: true,

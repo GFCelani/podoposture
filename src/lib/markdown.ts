@@ -1,4 +1,6 @@
 import MarkdownIt from "markdown-it";
+import ins from "markdown-it-ins";
+import mark from "markdown-it-mark";
 
 import { lerNomeDoArquivo } from "./imagem-webp";
 
@@ -27,6 +29,18 @@ const md = new MarkdownIt({
   breaks: true,
   typographer: false,
 });
+
+/**
+ * `++texto++` e sublinhado, `==texto==` e marca-texto.
+ *
+ * Entraram com o acervo do GoDaddy: 19 trechos sublinhados e um grifado, que
+ * sumiriam na primeira vez que ela editasse um desses textos. O sublinhado sai
+ * como `<u>`, a mesma marca que o GoDaddy usava (o plugin escreveria `<ins>`).
+ * Continua sem HTML cru: sao duas sintaxes a mais, nao uma porta.
+ */
+md.use(ins).use(mark);
+md.renderer.rules.ins_open = () => "<u>";
+md.renderer.rules.ins_close = () => "</u>";
 
 /**
  * Link externo abre em nova aba e nao entrega a pagina de origem ao destino.
@@ -76,18 +90,33 @@ md.renderer.rules.image = (tokens, i) => {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
+  const tag = (largura: number | string, altura: number | string) =>
+    `<img src="${escapar(src)}" alt="${escapar(alt)}"` +
+    ` width="${largura}" height="${altura}"` +
+    ` loading="lazy" decoding="async">`;
+
+  // Foto do acervo do GoDaddy, arquivo estatico do proprio site. A medida nao
+  // esta no nome (o build antigo a escreveu no <img>), entao ela viaja no
+  // titulo da imagem: `![](/img/blog/x.webp "1024x768")`, que a conversao do
+  // HTML escreve sozinha (html-para-markdown.ts). O nome e conferido por uma
+  // regra estrita — letra minuscula, numero, ponto, hifen —, sem barra e sem
+  // aspas: nada de `../` nem de sair do atributo. Sem medida, nao vira imagem.
+  if (FOTO_DO_ACERVO.test(src)) {
+    const medida = /^(\d{1,5})x(\d{1,5})$/.exec(String(token.attrGet("title") ?? ""));
+    return medida ? tag(medida[1], medida[2]) : escapar(alt);
+  }
+
   const prefixo = "/img/post/";
   if (!src.startsWith(prefixo)) return escapar(alt);
 
   const medida = lerNomeDoArquivo(src.slice(prefixo.length));
   if (!medida) return escapar(alt);
 
-  return (
-    `<img src="${escapar(src)}" alt="${escapar(alt)}"` +
-    ` width="${medida.largura}" height="${medida.altura}"` +
-    ` loading="lazy" decoding="async">`
-  );
+  return tag(medida.largura, medida.altura);
 };
+
+/** O endereco de uma foto do acervo em /img/blog/. Ver a regra de imagem acima. */
+export const FOTO_DO_ACERVO = /^\/img\/blog\/[a-z0-9][a-z0-9._-]*\.(webp|jpe?g|png)$/;
 
 /** Converte o corpo do post em HTML pronto para a pagina. */
 export function markdownParaHtml(texto: string): string {
