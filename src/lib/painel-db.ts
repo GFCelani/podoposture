@@ -22,6 +22,7 @@ import {
   type ResumoDoPainel,
 } from "./painel-tipos";
 import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS, type PostBruto } from "./posts";
+import { urlParaODriver } from "./url-do-banco";
 
 /**
  * Enderecos que os 68 posts migrados ja ocupam.
@@ -86,7 +87,9 @@ let conexao: ReturnType<typeof postgres> | null = null;
 export function bancoDoPainel() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) throw new Error("DATABASE_URL ausente");
-  conexao ??= postgres(url, {
+  // A URL do Neon traz `channel_binding`, que este driver nao entende e que
+  // derruba a conexao (ver url-do-banco.ts).
+  conexao ??= postgres(urlParaODriver(url), {
     // Uma conexao por instancia: em serverless, cada instancia e efemera e
     // abrir um pool de dez seria esgotar o limite do banco a toa.
     max: 1,
