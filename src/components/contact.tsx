@@ -2,8 +2,19 @@ import type { ConteudoContatoSecao } from "@/lib/conteudo-tipos";
 import type { ContatoDoSite } from "@/lib/site";
 
 import { ButtonLink } from "./button-link";
+import { MapaSobDemanda } from "./mapa-sob-demanda";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
+
+/**
+ * Na rota /contato a secao e' a primeira tela, e a entrada por scroll deixava
+ * o paragrafo de abertura invisivel ate o JavaScript acordar: o Lighthouse
+ * mediu 7,1 s de atraso de renderizacao no LCP do celular. Ali o conteudo
+ * nasce visivel; na home, onde a secao chega por rolagem, a entrada continua.
+ */
+function SemEntrada({ children }: { children: React.ReactNode; delay?: number; variante?: string }) {
+  return <div>{children}</div>;
+}
 
 /**
  * Na home e' a secao 09 de uma sequencia; na rota /contato e' a pagina inteira.
@@ -26,6 +37,7 @@ export function Contact({
   comoSecao?: boolean;
 }) {
   const { endereco, telefones, email, horario, whatsapp, mapsEmbed, mapsDirecoes } = contato;
+  const Entrada = comoSecao ? Reveal : SemEntrada;
 
   return (
     <section
@@ -38,12 +50,12 @@ export function Contact({
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
         {comoSecao && (
-          <Reveal variante="cortina">
+          <Entrada variante="cortina">
             {numero && <SectionMark n={numero} />}
             <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-semibold tracking-[-0.018em] text-balance text-ink-strong">
               {textos.titulo}
             </h2>
-          </Reveal>
+          </Entrada>
         )}
 
         <div
@@ -52,7 +64,7 @@ export function Contact({
           <div className="lg:col-span-6">
             {/* Na home vem depois do h2 da secao; na pagina /contato e' o
                 primeiro titulo do corpo, e como h3 pulava um degrau do h1. */}
-            <Reveal delay={110}>
+            <Entrada delay={110}>
               {comoSecao ? (
                 <h3 className="font-display text-[1.375rem] leading-[1.3] font-medium text-ink-strong">
                   {textos.subtitulo}
@@ -62,25 +74,25 @@ export function Contact({
                   {textos.subtitulo}
                 </h2>
               )}
-            </Reveal>
+            </Entrada>
 
-            <Reveal delay={180}>
+            <Entrada delay={180}>
               <p className="mt-6 max-w-[56ch] text-[1.0625rem] leading-[1.7] text-ink">
                 {textos.paragrafo}
               </p>
-            </Reveal>
+            </Entrada>
 
-            <Reveal delay={260}>
+            <Entrada delay={260}>
               <div className="mt-12">
                 <ButtonLink href={whatsapp} variant="primary">
                   {textos.rotuloDoBotao}
                 </ButtonLink>
               </div>
-            </Reveal>
+            </Entrada>
 
             {/* O outro jeito de conversar. Estava preso na ficha de endereco,
                 que e' sobre onde a clinica fica, nao sobre falar com ela. */}
-            <Reveal delay={340}>
+            <Entrada delay={340}>
               <div
                 aria-hidden="true"
                 className="mt-12 h-px w-full max-w-[26rem] bg-rule"
@@ -145,7 +157,7 @@ export function Contact({
                   </dd>
                 </div>
               </dl>
-            </Reveal>
+            </Entrada>
           </div>
 
           {/* A pilha ocupa a largura inteira da coluna, entao o disco e' o maior que
@@ -176,56 +188,19 @@ export function Contact({
               Lagoa, entao da para situar o endereco na Zona Sul sem o pino
               perder a leitura.
 
+              O iframe so e' montado no clique (`mapa-sob-demanda.tsx`): ate
+              la o disco mostra uma capa desenhada do mesmo recorte.
+
               O mapa vai com a cor propria do Google, nao dessaturado: ele e' a
               unica imagem de rua da pagina, e verde de parque com azul de mar
               e' o que faz a Zona Sul ser reconhecida de relance. A saturacao
               sobe um pouco acima do embed cru para o mapa nao apagar ao lado
               da banda de areia.
             */}
-            <Reveal delay={240}>
-              <div className="relative mx-auto w-full max-w-[420px] lg:max-w-none">
-                <div className="relative aspect-[4/3] w-full min-[390px]:aspect-square">
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 hidden rounded-full border border-dashed border-rule min-[390px]:block"
-                  />
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden min-[390px]:block">
-                    {["top-0 left-1/2 -translate-x-1/2 h-3 w-px",
-                      "bottom-0 left-1/2 -translate-x-1/2 h-3 w-px",
-                      "left-0 top-1/2 -translate-y-1/2 w-3 h-px",
-                      "right-0 top-1/2 -translate-y-1/2 w-3 h-px"].map((pos) => (
-                      <span key={pos} className={`absolute bg-accent/35 ${pos}`} />
-                    ))}
-                  </div>
-
-                  <div className="absolute inset-0 overflow-hidden rounded-lg border border-rule bg-surface shadow-plate min-[390px]:inset-5 min-[390px]:rounded-full">
-                    <iframe
-                      title={`Mapa: ${endereco.completo}`}
-                      src={mapsEmbed}
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      className="absolute -inset-[180px] block h-[calc(100%+360px)] w-[calc(100%+360px)] border-0 saturate-[1.2]"
-                    />
-                  </div>
-                </div>
-
-                <p
-                  className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[0.6875rem] tracking-[0.04em] text-muted"
-                  style={{ fontFamily: "var(--mono)" }}
-                >
-                  <span>Dados do mapa © Google</span>
-                  <a
-                    href="https://www.google.com/intl/pt-BR/help/terms_maps/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="sublinha inline-flex min-h-[28px] items-center rounded-sm text-accent transition-colors duration-[160ms] hover:text-accent-deep"
-                  >
-                    Termos
-                  </a>
-                </p>
-              </div>
-            </Reveal>
-            <Reveal delay={330}>
+            <Entrada delay={240}>
+              <MapaSobDemanda src={mapsEmbed} titulo={`Mapa: ${endereco.completo}`} />
+            </Entrada>
+            <Entrada delay={330}>
               <div className="mt-3 rounded-lg border border-rule bg-paper p-8 shadow-plate">
                 {/* A ficha inteira e' o alvo do "como chegar": quem le um
                     endereco num site de clinica esta quase sempre indo para o
@@ -273,7 +248,7 @@ export function Contact({
                   </p>
                 )}
               </div>
-            </Reveal>
+            </Entrada>
           </div>
         </div>
       </div>

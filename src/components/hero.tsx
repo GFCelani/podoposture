@@ -234,13 +234,15 @@ export function Hero({
           antes mesmo de a foto entrar. Os dois numeros, cor e opacidade,
           foram escolhidos juntos: ver o preview em _previews/hero-foto.
 
-          A foto entra com priority porque e' o LCP da home. */}
+          A foto entra com fetchPriority alto porque e' o LCP da home no desktop
+          (`priority` foi descontinuado no Next 16 e nao marcava a prioridade). */}
       <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
         <Image
           src="/img/clinica-podoposture-5.webp"
           alt=""
           fill
-          priority
+          loading="eager"
+          fetchPriority="high"
           sizes="100vw"
           className="object-cover object-[34%_45%] opacity-[0.18]"
         />

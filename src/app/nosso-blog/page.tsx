@@ -131,8 +131,9 @@ export default async function IndiceDoBlog({
                       alt=""
                       width={1200}
                       height={750}
-                      priority
-                      sizes="(min-width: 1024px) 700px, 100vw"
+                      loading="eager"
+                      fetchPriority="high"
+                      sizes="(min-width: 1024px) 700px, calc(100vw - 3rem)"
                       className="aspect-[16/10] w-full rounded-md object-cover saturate-[0.9] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.03] group-hover:saturate-100"
                     />
                   </div>
@@ -184,7 +185,7 @@ export default async function IndiceDoBlog({
                             alt=""
                             width={640}
                             height={400}
-                            sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, 100vw"
+                            sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, calc(100vw - 3rem)"
                             className="aspect-[16/10] w-full rounded-md object-cover saturate-[0.9] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.03] group-hover:saturate-100"
                           />
                         </div>

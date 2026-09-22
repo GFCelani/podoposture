@@ -46,6 +46,17 @@ export const DESCRICAO_PADRAO = CONTEUDO_PADRAO.contato.descricaoParaBuscadores;
 export const GOOGLE_SITE_VERIFICATION = "PbHiCclqlcemqO2F6myJInsR0RquVe3S2IJ4ZRTxTBg";
 
 /**
+ * Quem responde juridicamente pelo site, para as paginas de privacidade e de
+ * termos. A clinica tem CNPJ, mas o numero ainda nao chegou: com `null` a frase
+ * sai so com o nome da responsavel, e nenhum marcador de "preencher" vaza para
+ * a pagina publica. Preencher aqui quando o dado vier.
+ */
+export const IDENTIDADE_LEGAL: { razaoSocial: string | null; cnpj: string | null } = {
+  razaoSocial: null,
+  cnpj: null,
+};
+
+/**
  * Coordenadas do JSON-LD. Fixas no codigo de proposito: o painel edita o
  * endereco em texto, e um geocodificador seria dependencia e chamada externa
  * para um dado que muda uma vez na vida. Se a clinica mudar, remedir aqui.
