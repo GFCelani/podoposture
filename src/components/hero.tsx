@@ -408,7 +408,7 @@ export function Hero({
             em banda escura, e nao a cor de acao, que e' do CTA e de mais nada.
           */}
           <p
-            className="rule-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-3.5 xl:text-[0.75rem] lg:[@media(max-height:860px)]:tracking-[0.11em] xl:[@media(max-height:860px)]:text-[0.6875rem]"
+            className="hero-dado rule-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-3.5 xl:text-[0.75rem] lg:[@media(max-height:860px)]:tracking-[0.11em] xl:[@media(max-height:860px)]:text-[0.6875rem]"
             style={{
               fontFamily: "var(--mono)",
               ["--in-delay" as string]: "520ms",
