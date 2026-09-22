@@ -30,7 +30,7 @@ const BASE =
 
 /* O hover nao troca o fundo: um circulo cresce do canto inferior esquerdo
    (.btn-fill em globals). --fill define a cor do preenchimento por nivel. */
-const VARIANTS: Record<Variant, string> = {
+export const VARIANTS: Record<Variant, string> = {
   primary: `${BASE} btn-fill [--fill:var(--color-action-deep)] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 py-3.5 font-medium text-ink-strong shadow-tag hover:-translate-y-0.5 hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
   secondary: `${BASE} btn-fill [--fill:var(--color-accent)] rounded-md border-[1.5px] border-accent/45 bg-paper px-7 py-3.5 text-accent shadow-tag hover:-translate-y-0.5 hover:border-accent hover:text-paper hover:shadow-lift active:translate-y-0 active:shadow-tag`,
   /* Sobre o petroleo: contorno claro, preenchimento que cresce em papel e
