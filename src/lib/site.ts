@@ -46,14 +46,14 @@ export const DESCRICAO_PADRAO = CONTEUDO_PADRAO.contato.descricaoParaBuscadores;
 export const GOOGLE_SITE_VERIFICATION = "PbHiCclqlcemqO2F6myJInsR0RquVe3S2IJ4ZRTxTBg";
 
 /**
- * Quem responde juridicamente pelo site, para as paginas de privacidade e de
- * termos. A clinica tem CNPJ, mas o numero ainda nao chegou: com `null` a frase
- * sai so com o nome da responsavel, e nenhum marcador de "preencher" vaza para
- * a pagina publica. Preencher aqui quando o dado vier.
+ * Quem responde juridicamente pelo site, para as paginas de privacidade, de
+ * cookies e de termos. Podoposture e' o nome fantasia; quem assina e' a
+ * Qualivita Saude Integrada. Os dois campos aceitam `null`: sem eles a frase
+ * sai so com o nome da responsavel, sem marcador de "preencher" na pagina.
  */
 export const IDENTIDADE_LEGAL: { razaoSocial: string | null; cnpj: string | null } = {
-  razaoSocial: null,
-  cnpj: null,
+  razaoSocial: "Qualivita Saúde Integrada",
+  cnpj: "30.622.754/0001-44",
 };
 
 /**
