@@ -115,7 +115,8 @@ function FotoEmMoldura({ foto }: { foto: Foto }) {
         alt={foto.alt}
         width={foto.largura}
         height={foto.altura}
-        priority
+        loading="eager"
+        fetchPriority="high"
         sizes="(min-width: 1024px) 380px, 360px"
         className="aspect-[4/5] w-full rounded-md object-cover saturate-[0.9]"
       />

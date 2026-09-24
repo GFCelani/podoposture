@@ -51,15 +51,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  // Nasceu com a medicao de visitas, fora das 88 do site antigo. Entra no
-  // sitemap porque quem busca como o site trata os dados precisa acha-la.
-  // Data fixa: e a da ultima mudanca do texto, e nao a do build.
-  const privacidade = {
-    url: urlAbsoluta("/privacidade"),
-    lastModified: new Date("2026-09-11"),
+  // As paginas legais, fora das 88 do site antigo. Entram no sitemap porque
+  // quem busca como o site trata os dados precisa acha-las. Data fixa: e a da
+  // ultima mudanca do texto, e nao a do build.
+  const legais = ["/privacidade", "/cookies", "/termos-de-uso"].map((caminho) => ({
+    url: urlAbsoluta(caminho),
+    lastModified: new Date("2026-09-22"),
     changeFrequency: "yearly" as const,
     priority: 0.2,
-  };
+  }));
 
-  return [home, indiceDoBlog, ...paginas, ...posts, privacidade];
+  return [home, indiceDoBlog, ...paginas, ...posts, ...legais];
 }

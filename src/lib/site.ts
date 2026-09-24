@@ -46,6 +46,17 @@ export const DESCRICAO_PADRAO = CONTEUDO_PADRAO.contato.descricaoParaBuscadores;
 export const GOOGLE_SITE_VERIFICATION = "PbHiCclqlcemqO2F6myJInsR0RquVe3S2IJ4ZRTxTBg";
 
 /**
+ * Quem responde juridicamente pelo site, para as paginas de privacidade, de
+ * cookies e de termos. Podoposture e' o nome fantasia; quem assina e' a
+ * Qualivita Saude Integrada. Os dois campos aceitam `null`: sem eles a frase
+ * sai so com o nome da responsavel, sem marcador de "preencher" na pagina.
+ */
+export const IDENTIDADE_LEGAL: { razaoSocial: string | null; cnpj: string | null } = {
+  razaoSocial: "Qualivita Saúde Integrada",
+  cnpj: "30.622.754/0001-44",
+};
+
+/**
  * Coordenadas do JSON-LD. Fixas no codigo de proposito: o painel edita o
  * endereco em texto, e um geocodificador seria dependencia e chamada externa
  * para um dado que muda uma vez na vida. Se a clinica mudar, remedir aqui.

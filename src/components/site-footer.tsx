@@ -18,6 +18,13 @@ const FOOTER_LINKS = [
   { label: "Contato", href: "/contato" },
 ];
 
+/** Ao lado do ano, no fim do rodape. */
+const PAGINAS_LEGAIS = [
+  { label: "Privacidade", href: "/privacidade" },
+  { label: "Cookies", href: "/cookies" },
+  { label: "Termos de uso", href: "/termos-de-uso" },
+];
+
 /**
  * Rotulo de metadado da coluna de contato. Mesma familia mono, mesma caixa e
  * mesmo tracking dos outros metadados do site.
@@ -151,7 +158,7 @@ export function SiteFooter({ contato }: { contato: ContatoDoSite }) {
           <SocialLinks redes={redes} tone="dark" className="shrink-0" />
         </div>
 
-        {/* A marca fecha o rodape, ao lado do ano e do link de privacidade.
+        {/* A marca fecha o rodape, ao lado do ano e dos links legais.
             Em banda escura as letras azuis do master nao passariam em
             contraste, entao vao em papel; o verde dos discos e das vertebras
             nao muda, e e' o que carrega a identidade. A propria cliente ja usa
@@ -168,15 +175,52 @@ export function SiteFooter({ contato }: { contato: ContatoDoSite }) {
                   AUDITORIA; ano fixo em rodape sinaliza site abandonado. */}
               © {new Date().getFullYear()} Podoposture
             </p>
-            {/* Discreto de proposito: e o endereco que a medicao de visitas
-                precisa ter publicado, nao um item de navegacao. */}
-            <Link
-              href="/privacidade"
-              className="sublinha inline-flex min-h-[44px] items-center rounded-sm transition-colors duration-[160ms] hover:text-paper"
-            >
-              Privacidade
-            </Link>
+            {/* Discretos de proposito: sao os enderecos que a LGPD pede que
+                estejam publicados e ao alcance, nao itens de navegacao. */}
+            {PAGINAS_LEGAIS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="sublinha inline-flex min-h-[44px] items-center rounded-sm transition-colors duration-[160ms] hover:text-paper"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
+
+          {/* Credito de quem fez o site, na ponta oposta da marca da clinica:
+              assinatura, nao concorrente dela. O nabla e' o da LP da Cardine,
+              com as cores de la (traco marfim, miolo ambar), que fecham bem
+              no petroleo do rodape. Parado, como na propria LP. */}
+          <a
+            href="https://www.cardine.dev"
+            target="_blank"
+            rel="noopener"
+            aria-label="Desenvolvido pela Cardine (abre em nova aba)"
+            className="group/cardine inline-flex min-h-[44px] items-center gap-3 rounded-sm lg:ml-auto"
+          >
+            <span
+              className="text-[0.6875rem] tracking-[0.16em] text-on-deep-muted uppercase transition-colors duration-[160ms] group-hover/cardine:text-paper"
+              style={{ fontFamily: "var(--mono)" }}
+            >
+              Desenvolvido pela
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <svg viewBox="2 3.6 20 18.2" fill="none" aria-hidden="true" className="h-[22px] w-[22px] shrink-0">
+                <path
+                  d="M3.6 5.2h16.8L12 20.2Z"
+                  stroke="#f4f1ec"
+                  strokeWidth="2.6"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+                <path d="M9.4 12.4h5.2L12 17Z" fill="#f0a94e" />
+              </svg>
+              <span className="sublinha text-[1rem] font-semibold tracking-[-0.022em] text-paper">
+                Cardine
+              </span>
+            </span>
+          </a>
         </div>
       </div>
     </footer>
