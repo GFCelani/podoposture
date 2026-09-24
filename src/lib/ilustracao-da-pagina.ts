@@ -75,17 +75,17 @@ const FOTOS: Record<string, Foto> = {
   },
   "palmilhas-personalizadas": {
     src: `${GALERIA}/corredor-de-marcha.webp`,
-    alt: "Corredor de marcha do consultório, usado para observar a pisada em movimento.",
+    alt: "Corredor de marcha do consultório: faixa no piso com as plataformas de pressão, diante do espelho de corpo inteiro.",
     legenda: "Corredor de marcha: a pisada é observada andando, não só parada.",
-    largura: 1200,
-    altura: 1500,
+    largura: 1086,
+    altura: 1357,
   },
   "método-posture+": {
     src: `${GALERIA}/consultorio.webp`,
-    alt: "Vista geral do consultório da Podoposture, com maca, bancada e equipamentos de avaliação.",
+    alt: "Consultório da Podoposture, com certificados na parede, painel quadriculado de avaliação postural e plataformas de pressão no piso.",
     legenda: "O consultório onde o método é aplicado, em Copacabana.",
-    largura: 819,
-    altura: 1024,
+    largura: 869,
+    altura: 1086,
   },
   "quem-somos": {
     src: `${GALERIA}/recepcao.webp`,
@@ -96,10 +96,10 @@ const FOTOS: Record<string, Foto> = {
   },
   "responsável-técnica": {
     src: `${GALERIA}/escritorio.webp`,
-    alt: "Escritório da clínica, com mesa de trabalho e certificados na parede.",
+    alt: "Escritório da clínica, com mesa de trabalho e o painel com o nome e as especialidades da Dra. Claudia.",
     legenda: "O escritório onde são feitas as anamneses e a leitura dos exames.",
-    largura: 960,
-    altura: 1200,
+    largura: 869,
+    altura: 1086,
   },
 
   /* As tres abaixo chegaram no acervo que a cliente mandou em 2026-09-20 e
@@ -250,10 +250,10 @@ const APOIO: Record<string, Foto[]> = {
   "tratamento-da-dor": [
     {
       src: `${GALERIA}/escritorio.webp`,
-      alt: "Escritório da clínica, com mesa de trabalho e certificados na parede.",
+      alt: "Escritório da clínica, com mesa de trabalho e o painel com o nome e as especialidades da Dra. Claudia.",
       legenda: "O escritório onde são feitas as anamneses e a leitura dos exames.",
-      largura: 960,
-      altura: 1200,
+      largura: 869,
+      altura: 1086,
     },
     FOTOS.posturologia,
     FOTOS.baropodometria,

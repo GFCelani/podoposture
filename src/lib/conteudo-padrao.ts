@@ -315,7 +315,10 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
 
   /* Seis fotografias reais da clinica. Recepcao e avaliacao postural moram
      nas secoes 02 e 03 e ficam fora daqui para nao repetir; a sacola de pano
-     saiu a pedido da cliente (2026-09-07) e entrou o consultorio. */
+     saiu a pedido da cliente (2026-09-07) e entrou o consultorio.
+     Escritorio, corredor de marcha e consultorio foram refotografados depois
+     da reforma da sala (2026-09-24); as tres sao a mesma sala, entao ficam
+     intercaladas para nenhuma encostar na outra em 3 nem em 2 colunas. */
   galeria: {
     titulo: "Galeria",
     fotos: [
@@ -327,21 +330,21 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       },
       {
         src: "/img/galeria/escritorio.webp",
-        largura: 960,
-        altura: 1200,
-        alt: "Mesa de atendimento com diplomas e modelos anatômicos ao fundo",
-      },
-      {
-        src: "/img/galeria/corredor-de-marcha.webp",
-        largura: 1200,
-        altura: 1500,
-        alt: "Corredor de avaliação de marcha com tapete e espelho de corpo inteiro",
+        largura: 869,
+        altura: 1086,
+        alt: "Mesa de atendimento com notebook e cadeiras brancas, ao lado do painel com o nome e as especialidades da Dra. Claudia",
       },
       {
         src: "/img/galeria/acupuntura.webp",
         largura: 1024,
         altura: 1280,
         alt: "Agulhas de acupuntura aplicadas ao longo das costas de um paciente",
+      },
+      {
+        src: "/img/galeria/corredor-de-marcha.webp",
+        largura: 1086,
+        altura: 1357,
+        alt: "Faixa de avaliação no piso com as plataformas de pressão, entre o espelho de corpo inteiro e a parede de certificados",
       },
       {
         src: "/img/galeria/plataforma-de-pressao.webp",
@@ -351,9 +354,9 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       },
       {
         src: "/img/galeria/consultorio.webp",
-        largura: 819,
-        altura: 1024,
-        alt: "Consultório com mesa de atendimento, espelho de corpo inteiro e bolas de exercício",
+        largura: 869,
+        altura: 1086,
+        alt: "Consultório com certificados na parede, painel quadriculado de avaliação postural e plataformas de pressão no piso",
       },
     ],
   },

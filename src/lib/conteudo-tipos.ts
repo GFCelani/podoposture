@@ -251,11 +251,11 @@ export const IMAGENS_DO_SITE: Readonly<Record<string, { largura: number; altura:
   "/img/card-dor-cronica.webp": { largura: 1024, altura: 1280 },
   "/img/card-zumbido.webp": { largura: 819, altura: 1024 },
   "/img/galeria/sala-de-exame.webp": { largura: 924, altura: 1155 },
-  "/img/galeria/escritorio.webp": { largura: 960, altura: 1200 },
-  "/img/galeria/corredor-de-marcha.webp": { largura: 1200, altura: 1500 },
+  "/img/galeria/escritorio.webp": { largura: 869, altura: 1086 },
+  "/img/galeria/corredor-de-marcha.webp": { largura: 1086, altura: 1357 },
   "/img/galeria/acupuntura.webp": { largura: 1024, altura: 1280 },
   "/img/galeria/plataforma-de-pressao.webp": { largura: 864, altura: 1080 },
-  "/img/galeria/consultorio.webp": { largura: 819, altura: 1024 },
+  "/img/galeria/consultorio.webp": { largura: 869, altura: 1086 },
 };
 
 /* ------------------------------------------------------------ descritores */
