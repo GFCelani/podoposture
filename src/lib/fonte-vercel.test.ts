@@ -197,6 +197,15 @@ describe("coletarVercel", () => {
     expect(resultado.ate).toBeNull();
   });
 
+  it("erro definitivo leva junto a explicacao que a Vercel deu", async () => {
+    const { buscar } = vercelFalsa(() =>
+      json({ error: { code: "bad_request", message: "Invalid value for projectId" } }, 400),
+    );
+    const resultado = await coletarVercel(CFG, TRES_DIAS, { buscar });
+    expect(resultado.erro).toContain("400");
+    expect(resultado.erro).toContain("Invalid value for projectId");
+  });
+
   it("429 que libera logo e esperado uma vez so", async () => {
     const agora = 1_000_000;
     const esperar = vi.fn(async () => {});
