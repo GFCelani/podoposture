@@ -6,6 +6,7 @@ import { ArtigoJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
 import { PostsRelacionados } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
+import { ogDaCapa } from "@/lib/capa";
 import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
 import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
 
@@ -51,6 +52,10 @@ export async function generateMetadata({
   if (!post) return {};
 
   const caminho = hrefDoPost(post.slug);
+  /* O cartao de compartilhamento ja vem em 1200x630 com a capa inteira (ver
+     lib/capa.ts). A capa crua era recortada pela rede social para 1.91:1, e
+     o recorte cortava o texto da arte. */
+  const og = ogDaCapa(post.capa || undefined);
 
   return {
     title: post.titulo,
@@ -64,13 +69,13 @@ export async function generateMetadata({
       description: post.resumo,
       url: caminho,
       publishedTime: post.dataISO,
-      images: [{ url: post.capa || "/og.png", alt: post.titulo }],
+      images: [{ url: og, width: 1200, height: 630, alt: post.titulo }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.titulo,
       description: post.resumo,
-      images: [post.capa || "/og.png"],
+      images: [og],
     },
   };
 }

@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { BLOG_INDEX, type Post, type Tema } from "@/lib/posts";
+import { CapaInteira } from "./capa-inteira";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
@@ -46,13 +46,10 @@ export function Journal({
                         aria-hidden="true"
                         className="shrink-0"
                       >
-                        <Image
+                        <CapaInteira
                           src={post.cover}
-                          alt=""
-                          width={1024}
-                          height={1024}
-                          sizes="160px"
-                          className="h-24 w-24 rounded-md border border-rule object-cover saturate-[0.88] transition-[filter,transform] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.04] group-hover:saturate-100 sm:h-32 sm:w-32"
+                          sizes="128px"
+                          className="h-24 w-24 rounded-md border border-rule sm:h-32 sm:w-32"
                         />
                       </Link>
 

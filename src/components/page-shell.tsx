@@ -1,10 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
+import { CapaInteira } from "./capa-inteira";
 import { FloatingWhatsApp } from "./floating-whatsapp";
 import { PageGrid, SeamRuler } from "./layers";
 import { Reveal } from "./reveal";
@@ -276,17 +276,15 @@ export async function PageShell({
                     costura entre o hero e o corpo. O espacador logo abaixo
                     do header devolve essa altura ao fluxo. */}
                 <figure className="relative z-10 mx-auto mt-12 -mb-20 max-w-[960px] rounded-lg border border-rule bg-paper p-2 shadow-plate lg:mt-14 lg:-mb-32">
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-surface">
-                    <Image
-                      src={capa.src}
-                      alt={capa.alt}
-                      fill
-                      loading="eager"
-                      fetchPriority="high"
-                      sizes="(min-width: 1024px) 960px, 100vw"
-                      className="object-cover saturate-[0.9]"
-                    />
-                  </div>
+                  {/* Inteira: a capa e' arte com texto (ver capa-inteira.tsx). */}
+                  <CapaInteira
+                    src={capa.src}
+                    alt={capa.alt}
+                    proporcao="16 / 10"
+                    prioridade
+                    sizes="(min-width: 1024px) 960px, 100vw"
+                    className="rounded-md"
+                  />
                 </figure>
               </Reveal>
             )}

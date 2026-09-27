@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
+import { CapaInteira } from "@/components/capa-inteira";
 import { TrilhaJsonLd } from "@/components/json-ld";
 import { PageGrid, SectionMark } from "@/components/layers";
 import { PageShell } from "@/components/page-shell";
@@ -122,23 +122,22 @@ export default async function IndiceDoBlog({
                 href={destaque.href}
                 className="lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-10"
               >
-                <div className="lg:col-span-7">
+                <div className="lg:col-span-5">
                   {/* A mesma moldura das fotos do resto do site: chapa em
-                      papel com sombra, imagem arredondada por dentro. */}
-                  <div className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift">
-                    <Image
+                      papel com sombra. Dentro, a capa inteira (ver
+                      capa-inteira.tsx): quadrada como a maioria delas, e a
+                      largura presa abaixo de lg para o quadrado nao tomar a
+                      tela do tablet. */}
+                  <div className="mx-auto max-w-[440px] overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift lg:max-w-none">
+                    <CapaInteira
                       src={destaque.cover}
-                      alt=""
-                      width={1200}
-                      height={750}
-                      loading="eager"
-                      fetchPriority="high"
-                      sizes="(min-width: 1024px) 700px, calc(100vw - 3rem)"
-                      className="aspect-[16/10] w-full rounded-md object-cover saturate-[0.9] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.03] group-hover:saturate-100"
+                      prioridade
+                      sizes="(min-width: 1024px) 480px, 440px"
+                      className="rounded-md"
                     />
                   </div>
                 </div>
-                <div className="mt-8 lg:col-span-5 lg:mt-0">
+                <div className="mt-8 lg:col-span-7 lg:mt-0">
                   <p className="flex items-center gap-4 font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">
                     <time dateTime={destaque.dateISO}>{destaque.date}</time>
                     {destaque.category && (
@@ -180,13 +179,10 @@ export default async function IndiceDoBlog({
                     <article className="group">
                       <Link href={post.href} className="block">
                         <div className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate">
-                          <Image
+                          <CapaInteira
                             src={post.cover}
-                            alt=""
-                            width={640}
-                            height={400}
                             sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, calc(100vw - 3rem)"
-                            className="aspect-[16/10] w-full rounded-md object-cover saturate-[0.9] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.03] group-hover:saturate-100"
+                            className="rounded-md"
                           />
                         </div>
                         <p className="mt-5 font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">

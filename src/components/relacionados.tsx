@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { CapaInteira } from "./capa-inteira";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 import { GLYPHS } from "./service-glyphs";
@@ -140,13 +140,10 @@ export function PostsRelacionados({ posts }: { posts: Post[] }) {
                 <article className="group">
                   <Link href={outro.href} className="block">
                     <div className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate">
-                      <Image
+                      <CapaInteira
                         src={outro.cover}
-                        alt=""
-                        width={640}
-                        height={400}
                         sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                        className="aspect-[16/10] w-full rounded-md object-cover saturate-[0.9] transition-[filter,transform] duration-[520ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:scale-[1.03] group-hover:saturate-100"
+                        className="rounded-md"
                       />
                     </div>
                     <time
