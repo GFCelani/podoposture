@@ -30,7 +30,7 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       bairro: "Copacabana",
       cidade: "Rio de Janeiro",
       uf: "RJ",
-      cep: "22020-002",
+      cep: "22060-002",
       referencia: "Estamos a 11 minutos da estação Cantagalo do metrô.",
     },
     /* LinkedIn e Pinterest chegaram do site antigo malformados (dominio

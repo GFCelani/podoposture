@@ -23,7 +23,7 @@ const ANTES = {
     bairro: "Copacabana",
     cidade: "Rio de Janeiro",
     estado: "RJ",
-    cep: "22020-002",
+    cep: "22060-002",
     pais: "BR",
     latitude: -22.9711,
     longitude: -43.1863,
