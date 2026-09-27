@@ -860,11 +860,11 @@ export function EditorDePost({
                   </p>
                 )}
                 {campos.capa && (
-                  <figure className="relative mx-auto mt-12 max-w-[960px] rounded-lg border border-rule bg-paper p-2 shadow-plate">
-                    <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-surface">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={campos.capa} alt="" className="h-full w-full object-cover saturate-[0.9]" />
-                    </div>
+                  /* No site a capa vai inteira, na proporcao dela, ao lado da
+                     abertura; aqui so interessa mostrar que nada e' cortado. */
+                  <figure className="mt-12 w-fit rounded-lg border border-rule bg-paper p-2 shadow-plate">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={campos.capa} alt="" className="max-h-[64svh] w-auto max-w-full rounded-md saturate-[0.9]" />
                   </figure>
                 )}
               </div>

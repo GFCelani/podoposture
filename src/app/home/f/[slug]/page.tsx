@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { CapaInteira } from "@/components/capa-inteira";
 import { ConviteConsulta } from "@/components/convite-consulta";
 import { ArtigoJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
 import { PostsRelacionados } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
-import { ogDaCapa } from "@/lib/capa";
+import { medidaDaCapa, ogDaCapa } from "@/lib/capa";
 import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
 import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
 
@@ -91,6 +92,10 @@ export default async function PostDoBlog({
 
   const caminho = hrefDoPost(post.slug);
   const relacionados = await relacionadosDoSite(post.slug, 3);
+  const medida = post.capa ? medidaDaCapa(post.capa) : undefined;
+  /* Sem medida (capa de fora das duas fontes conhecidas), a moldura fica em
+     4:5 e a capa entra inteira dentro dela, com o fundo desfocado. */
+  const razao = medida ? medida.largura / medida.altura : 4 / 5;
 
   return (
     <>
@@ -130,12 +135,36 @@ export default async function PostDoBlog({
             )}
           </p>
         }
-        /* A capa e' a imagem do post. O alt vazio e' deliberado: sao pecas
-           graficas com o titulo do post embutido, e o titulo ja esta no h1
-           logo acima; repeti-lo no alt leria duas vezes no leitor de tela. */
-        capa={post.capa ? { src: post.capa, alt: "" } : undefined}
       >
-        <SecoesDeConteudo html={post.html} tipo="post" />
+        {/* A capa e' a imagem do post, a direita da abertura e inteira. O
+            alt vazio e' deliberado: sao pecas graficas com o titulo do post
+            embutido, e o titulo ja esta no h1 logo acima; repeti-lo no alt
+            leria duas vezes no leitor de tela. */}
+        <SecoesDeConteudo
+          html={post.html}
+          tipo="post"
+          lado={
+            post.capa
+              ? {
+                  razao,
+                  figura: (
+                    <figure
+                      className="pi-lado-foto rounded-lg border border-rule bg-paper p-2 shadow-plate"
+                      style={{ ["--r" as string]: razao }}
+                    >
+                      <CapaInteira
+                        src={post.capa}
+                        proporcao={medida ? `${medida.largura} / ${medida.altura}` : "4 / 5"}
+                        prioridade
+                        sizes="(min-width: 1024px) 400px, 100vw"
+                        className="rounded-md"
+                      />
+                    </figure>
+                  ),
+                }
+              : undefined
+          }
+        />
         <PostsRelacionados posts={relacionados} />
         <ConviteConsulta />
       </PageShell>

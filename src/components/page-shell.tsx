@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
-import { CapaInteira } from "./capa-inteira";
 import { FloatingWhatsApp } from "./floating-whatsapp";
 import { PageGrid, SeamRuler } from "./layers";
 import { Reveal } from "./reveal";
@@ -45,11 +44,12 @@ import { SocialBand } from "./social-band";
  *                  protocolo. Fecho igual ao de tratamento.
  *
  *   post           os 68 artigos. Hero em coluna unica: trilha, data e tema
- *                  em mono, titulo, resumo; abaixo, a capa do post em moldura
- *                  larga que atravessa a costura do hero com o corpo. Corpo
- *                  corrido, centrado na medida de leitura, cada secao aberta
- *                  por um fio fino. Fecho: PostsRelacionados e
- *                  ConviteConsulta.
+ *                  em mono, titulo, resumo. Logo abaixo, a capa inteira na
+ *                  proporcao nativa a direita, subindo sobre a costura, e a
+ *                  abertura do texto a esquerda (SecoesDeConteudo com
+ *                  `lado`); depois o corpo corrido, na medida de leitura,
+ *                  cada secao aberta por um fio fino. Fecho:
+ *                  PostsRelacionados e ConviteConsulta.
  *
  * Ritmo vertical (o que se repete em toda pagina, nesta ordem):
  *   1. hero em bg-surface, fechado por fio;
@@ -77,16 +77,6 @@ import { SocialBand } from "./social-band";
  */
 export type TipoDePagina = "tratamento" | "institucional" | "post";
 
-/**
- * A capa nao traz medidas no JSON (o GoDaddy nao as expunha), entao a imagem
- * preenche uma caixa de razao fixa em vez de declarar width/height: a caixa
- * reserva o espaco antes do download e o CLS continua em zero.
- */
-export type Capa = {
-  src: string;
-  alt: string;
-};
-
 /*
  * Async, e le o conteudo do site por conta propria: cabecalho, rodape, faixa
  * social e disco flutuante mostram o contato editado no painel, e as paginas
@@ -104,7 +94,6 @@ export async function PageShell({
   glifo,
   midia,
   meta,
-  capa,
   children,
 }: {
   tipo: TipoDePagina;
@@ -125,8 +114,6 @@ export async function PageShell({
   midia?: ReactNode;
   /** Linha acima do titulo (data e tema do post). */
   meta?: ReactNode;
-  /** Capa larga sob o hero, que atravessa a costura com o corpo. Post. */
-  capa?: Capa;
   children: ReactNode;
 }) {
   const Emblema = glifo ? GLYPHS[glifo] : undefined;
@@ -141,8 +128,8 @@ export async function PageShell({
         {/* data-hero: o observador do flutuante procurava "main > section", que
             nesta casca cai na faixa social do rodape; o disco aparecia no topo
             de toda pagina interna, cobrindo texto, e sumia justamente no fim.
-            Sem overflow-hidden de proposito: a capa do post pende para fora
-            da banda, por cima da costura, e seria decepada. */}
+            Sem overflow-hidden de proposito: a capa do post sobe do corpo
+            para dentro da banda, por cima da costura, e seria decepada. */}
         <header
           data-hero
           className="relative border-b border-rule bg-surface"
@@ -270,28 +257,8 @@ export async function PageShell({
               )}
             </div>
 
-            {tipo === "post" && capa && (
-              <Reveal delay={260}>
-                {/* Pende 5rem/8rem para fora da banda: a foto atravessa a
-                    costura entre o hero e o corpo. O espacador logo abaixo
-                    do header devolve essa altura ao fluxo. */}
-                <figure className="relative z-10 mx-auto mt-12 -mb-20 max-w-[960px] rounded-lg border border-rule bg-paper p-2 shadow-plate lg:mt-14 lg:-mb-32">
-                  {/* Inteira: a capa e' arte com texto (ver capa-inteira.tsx). */}
-                  <CapaInteira
-                    src={capa.src}
-                    alt={capa.alt}
-                    proporcao="16 / 10"
-                    prioridade
-                    sizes="(min-width: 1024px) 960px, 100vw"
-                    className="rounded-md"
-                  />
-                </figure>
-              </Reveal>
-            )}
           </div>
         </header>
-
-        {tipo === "post" && capa && <div aria-hidden="true" className="h-20 lg:h-32" />}
 
         {children}
 
