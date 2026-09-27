@@ -43,12 +43,12 @@ import { SocialBand } from "./social-band";
  *                  de apresentacao, e numerar "Visao" e "Formacao" leria como
  *                  protocolo. Fecho igual ao de tratamento.
  *
- *   post           os 68 artigos. Hero em coluna unica: trilha, data e tema
- *                  em mono, titulo, resumo. Logo abaixo, a capa inteira na
- *                  proporcao nativa a direita, subindo sobre a costura, e a
- *                  abertura do texto a esquerda (SecoesDeConteudo com
- *                  `lado`); depois o corpo corrido, na medida de leitura,
- *                  cada secao aberta por um fio fino. Fecho:
+ *   post           os 68 artigos. Hero em duas colunas: trilha, data e tema
+ *                  em mono, titulo e resumo a esquerda; a capa a direita
+ *                  (midia), sem linhas de referencia nem sonar por cima da
+ *                  arte. No telefone a capa vem logo abaixo do resumo.
+ *                  Corpo corrido na largura do conteudo, alinhado com o
+ *                  titulo, cada secao aberta por um fio fino. Fecho:
  *                  PostsRelacionados e ConviteConsulta.
  *
  * Ritmo vertical (o que se repete em toda pagina, nesta ordem):
@@ -117,7 +117,8 @@ export async function PageShell({
   children: ReactNode;
 }) {
   const Emblema = glifo ? GLYPHS[glifo] : undefined;
-  const duasColunas = tipo !== "post" && Boolean(midia);
+  const duasColunas = Boolean(midia);
+  const post = tipo === "post";
   const conteudo = await lerConteudoDoSite();
   const contato = derivarContato(conteudo.contato);
 
@@ -128,8 +129,8 @@ export async function PageShell({
         {/* data-hero: o observador do flutuante procurava "main > section", que
             nesta casca cai na faixa social do rodape; o disco aparecia no topo
             de toda pagina interna, cobrindo texto, e sumia justamente no fim.
-            Sem overflow-hidden de proposito: a capa do post sobe do corpo
-            para dentro da banda, por cima da costura, e seria decepada. */}
+            Sem overflow-hidden: as linhas de referencia da midia vazam a
+            coluna de proposito. */}
         <header
           data-hero
           className="relative border-b border-rule bg-surface"
@@ -142,7 +143,7 @@ export async function PageShell({
             <div
               className={
                 duasColunas
-                  ? "lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-6"
+                  ? `lg:grid lg:grid-cols-12 lg:gap-x-6 ${post ? "lg:items-start" : "lg:items-end"}`
                   : ""
               }
             >
@@ -244,7 +245,13 @@ export async function PageShell({
                 )}
               </div>
 
-              {duasColunas && (
+              {duasColunas && post && (
+                <Reveal delay={180} className="mt-10 lg:col-span-5 lg:col-start-8 lg:mt-0">
+                  {midia}
+                </Reveal>
+              )}
+
+              {duasColunas && !post && (
                 <div className="relative mt-12 lg:col-span-4 lg:col-start-9 lg:mt-0">
                   <LinhasDeReferencia />
                   <Reveal delay={180}>

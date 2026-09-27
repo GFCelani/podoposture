@@ -777,8 +777,6 @@
 /* ---- corrido: post --------------------------------------------------------- */
 
 .pi-corrido {
-  max-width: 800px;
-  margin-inline: auto;
   padding-top: 1.6rem;
   border-top: 1px solid var(--color-rule);
 }
@@ -802,71 +800,19 @@
   font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.5rem);
 }
 
-/* ---- post: capa a direita, abertura a esquerda ------------------------------
-   Telefone: empilha na ordem do DOM (abertura, capa, secoes). A capa nunca
-   passa de 64% da altura da janela: uma arte 9:16 na largura toda do telefone
-   ocupava a tela inteira e escondia o texto que vem depois.
-   lg: duas colunas. A da esquerda comeca no mesmo x da .pi-corrido (800px
-   centrados), entao o texto desce pela mesma margem e so alarga quando a
-   capa acaba; a da direita vai ate a borda do conteudo. A capa se dimensiona
-   pela altura da janela, com a largura saindo da razao (--r), e fica presa
-   enquanto a coluna de texto rola. */
+/* ---- post: capa no hero --------------------------------------------------
+   A moldura se dimensiona pela altura da janela (--r e' a razao dela): no
+   telefone ate 64% da altura, abaixo do resumo; em lg ate a altura util menos
+   o cabecalho fixo e o respiro, encostada a direita da coluna. */
 
-.pi-lado {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  row-gap: 2.5rem;
-}
-
-.pi-lado .pi-corrido {
-  max-width: none;
-  margin-inline: 0;
-}
-
-.pi-lado-secoes > * + * {
-  margin-top: 3rem;
-}
-
-.pi-lado-foto {
-  width: min(100%, calc(64svh * var(--r) + 18px));
-  margin-inline: auto;
-}
-
-.pi-continuacao {
-  padding-top: 1.6rem;
+.pi-capa-post {
+  width: min(100%, calc(64svh * var(--r)));
 }
 
 @media (min-width: 1024px) {
-  .pi-lado {
-    grid-template-columns: minmax(0, 1fr) clamp(280px, 30vw, 400px);
-    grid-template-rows: auto 1fr;
-    column-gap: 64px;
-    row-gap: 3rem;
-    margin-left: max(0px, (100% - 800px) / 2);
-  }
-
-  .pi-lado-abertura {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .pi-lado-secoes {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .pi-lado-capa {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    margin-top: -4rem;
-  }
-
-  .pi-lado-foto {
-    position: sticky;
-    top: 7.5rem;
-    z-index: 10;
-    width: min(100%, calc((100svh - 12rem) * var(--r) + 18px));
-    margin-right: 0;
+  .pi-capa-post {
+    width: min(100%, calc((100svh - 13rem) * var(--r)));
+    margin-left: auto;
   }
 }
 

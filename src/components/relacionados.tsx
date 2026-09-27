@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CapaInteira } from "./capa-inteira";
+import { Capa } from "./capa";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 import { GLYPHS } from "./service-glyphs";
@@ -139,13 +139,11 @@ export function PostsRelacionados({ posts }: { posts: Post[] }) {
               <Reveal delay={90 + i * 90}>
                 <article className="group">
                   <Link href={outro.href} className="block">
-                    <div className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate">
-                      <CapaInteira
-                        src={outro.cover}
-                        sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-                        className="rounded-md"
-                      />
-                    </div>
+                    <Capa
+                      src={outro.cover}
+                      sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+                      className="rounded-lg shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate"
+                    />
                     <time
                       dateTime={outro.dateISO}
                       className="mt-5 block text-[0.6875rem] tracking-[0.16em] text-muted uppercase"

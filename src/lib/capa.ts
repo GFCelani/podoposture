@@ -5,10 +5,11 @@ import { lerNomeDoArquivo } from "./imagem-webp";
  * Medidas e imagem de compartilhamento das capas do blog.
  *
  * As capas sao artes de Instagram com texto escrito na imagem, de 9:16 a 3:2.
- * Regra do site: a capa aparece inteira, sempre; nenhum lugar recorta. Para
- * isso a pagina do post precisa da razao antes do download (CLS zero), e o
- * cartao de compartilhamento precisa vir pronto em 1.91:1, porque a rede
- * social recortaria qualquer outra razao.
+ * Regra do site: a capa preenche a moldura e so e' cortada por baixo (ver
+ * components/capa.tsx). A pagina do post precisa da razao antes do download,
+ * para a moldura seguir a capa sem CLS, e o cartao de compartilhamento
+ * precisa vir pronto em 1.91:1, porque a rede social recortaria qualquer
+ * outra razao.
  *
  * Capa do acervo: medida por scripts/gerar-capas.mjs em capas.json, com o og
  * gerado ao lado. Capa do painel: as medidas estao no proprio nome do arquivo

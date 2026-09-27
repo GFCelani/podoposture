@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BLOG_INDEX, type Post, type Tema } from "@/lib/posts";
-import { CapaInteira } from "./capa-inteira";
+import { Capa } from "./capa";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 
@@ -46,10 +46,10 @@ export function Journal({
                         aria-hidden="true"
                         className="shrink-0"
                       >
-                        <CapaInteira
+                        <Capa
                           src={post.cover}
-                          sizes="128px"
-                          className="h-24 w-24 rounded-md border border-rule sm:h-32 sm:w-32"
+                          sizes="192px"
+                          className="w-28 rounded-md sm:w-48"
                         />
                       </Link>
 

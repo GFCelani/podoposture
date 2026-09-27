@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CapaInteira } from "@/components/capa-inteira";
+import { Capa } from "@/components/capa";
 import { ConviteConsulta } from "@/components/convite-consulta";
 import { ArtigoJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell } from "@/components/page-shell";
@@ -53,9 +53,9 @@ export async function generateMetadata({
   if (!post) return {};
 
   const caminho = hrefDoPost(post.slug);
-  /* O cartao de compartilhamento ja vem em 1200x630 com a capa inteira (ver
-     lib/capa.ts). A capa crua era recortada pela rede social para 1.91:1, e
-     o recorte cortava o texto da arte. */
+  /* O cartao de compartilhamento ja vem em 1200x630 (ver lib/capa.ts). A
+     capa crua era recortada pela rede social para 1.91:1, e o recorte
+     cortava o texto da arte. */
   const og = ogDaCapa(post.capa || undefined);
 
   return {
@@ -93,9 +93,12 @@ export default async function PostDoBlog({
   const caminho = hrefDoPost(post.slug);
   const relacionados = await relacionadosDoSite(post.slug, 3);
   const medida = post.capa ? medidaDaCapa(post.capa) : undefined;
-  /* Sem medida (capa de fora das duas fontes conhecidas), a moldura fica em
-     4:5 e a capa entra inteira dentro dela, com o fundo desfocado. */
-  const razao = medida ? medida.largura / medida.altura : 4 / 5;
+  /* A moldura segue a razao da capa, com piso de 4:5: ate ali a capa entra
+     inteira; mais alta que isso (as 2:3 e 9:16), a moldura para em 4:5 e a
+     capa e' cortada so por baixo, onde a arte nao tem o titulo. Nunca mais
+     estreita que a capa, que o corte seria nas laterais. Sem medida (capa de
+     fora das duas fontes conhecidas), 3:2, a razao da capa mais larga. */
+  const razao = medida ? Math.max(medida.largura / medida.altura, 4 / 5) : 3 / 2;
 
   return (
     <>
@@ -121,6 +124,21 @@ export default async function PostDoBlog({
           { nome: "Nosso Blog", href: BLOG_INDEX },
           { nome: post.titulo },
         ]}
+        midia={
+          post.capa ? (
+            /* O alt vazio e' deliberado: sao pecas graficas com o titulo do
+               post embutido, e o titulo ja esta no h1 ao lado; repeti-lo no
+               alt leria duas vezes no leitor de tela. */
+            <Capa
+              src={post.capa}
+              proporcao={String(razao)}
+              prioridade
+              sizes="(min-width: 1024px) 480px, calc(100vw - 3rem)"
+              className="pi-capa-post rounded-lg shadow-plate"
+              style={{ ["--r" as string]: razao }}
+            />
+          ) : undefined
+        }
         meta={
           <p
             className="mb-6 flex items-center gap-4 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
@@ -136,35 +154,7 @@ export default async function PostDoBlog({
           </p>
         }
       >
-        {/* A capa e' a imagem do post, a direita da abertura e inteira. O
-            alt vazio e' deliberado: sao pecas graficas com o titulo do post
-            embutido, e o titulo ja esta no h1 logo acima; repeti-lo no alt
-            leria duas vezes no leitor de tela. */}
-        <SecoesDeConteudo
-          html={post.html}
-          tipo="post"
-          lado={
-            post.capa
-              ? {
-                  razao,
-                  figura: (
-                    <figure
-                      className="pi-lado-foto rounded-lg border border-rule bg-paper p-2 shadow-plate"
-                      style={{ ["--r" as string]: razao }}
-                    >
-                      <CapaInteira
-                        src={post.capa}
-                        proporcao={medida ? `${medida.largura} / ${medida.altura}` : "4 / 5"}
-                        prioridade
-                        sizes="(min-width: 1024px) 400px, 100vw"
-                        className="rounded-md"
-                      />
-                    </figure>
-                  ),
-                }
-              : undefined
-          }
-        />
+        <SecoesDeConteudo html={post.html} tipo="post" />
         <PostsRelacionados posts={relacionados} />
         <ConviteConsulta />
       </PageShell>

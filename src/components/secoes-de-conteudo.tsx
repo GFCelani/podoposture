@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { classificar, elementos, paresDeListas, type Bloco } from "@/lib/blocos";
 import type { Foto } from "@/lib/ilustracao-da-pagina";
-import { caracteresAoLado, repartirAoLado } from "@/lib/lado-a-lado";
 import { dividirEmSecoes, type Documento, type Secao } from "@/lib/secoes";
 import {
   Blocos,
@@ -36,7 +35,8 @@ import { Reveal } from "./reveal";
  *                  rotulos grande.
  *   institucional  a mesma grade, sem numerais: sao paginas de apresentacao,
  *                  e numerar "Visao" e "Formacao" leria como protocolo.
- *   post           coluna de leitura centrada; os mesmos blocos, empilhados.
+ *   post           corpo corrido na largura do conteudo; os mesmos blocos,
+ *                  empilhados.
  *
  * Abertura em duas medidas (primeiro paragrafo grande a esquerda, o resto
  * numa coluna estreita a direita) quando o texto antes do primeiro titulo e'
@@ -152,14 +152,11 @@ export function SecoesDeConteudo({
   html,
   tipo = "post",
   apoio,
-  lado,
 }: {
   html: string;
   tipo?: TipoDeCorpo;
   /** Fotografias de apoio, distribuidas no corpo (so grade). */
   apoio?: Foto[];
-  /** Post: a capa, que corre a direita da abertura. `razao` e' largura/altura. */
-  lado?: { figura: ReactNode; razao: number };
 }) {
   const doc = dividirEmSecoes(html);
   const grade = tipo !== "post";
@@ -187,22 +184,6 @@ export function SecoesDeConteudo({
       }
       return <Faixas key={item.cabeca.s.secao.id ?? k} cabeca={item.cabeca} grupos={item.grupos} />;
     });
-  } else if (lado) {
-    const r = repartirAoLado(doc, caracteresAoLado(lado.razao));
-    return (
-      <>
-        <AoLado
-          figura={lado.figura}
-          abertura={r.aberturaAoLado}
-          secoes={lidas.slice(0, r.secoesAoLado)}
-          nivel={doc.nivel}
-        />
-        {r.aberturaAbaixo && <ContinuacaoDaAbertura html={r.aberturaAbaixo} />}
-        {lidas.slice(r.secoesAoLado).map((s) => (
-          <SecaoCorrida key={s.secao.id} s={s} nivel={doc.nivel} />
-        ))}
-      </>
-    );
   } else {
     corpo = lidas.map((s) => <SecaoCorrida key={s.secao.id} s={s} nivel={doc.nivel} />);
   }
@@ -348,83 +329,6 @@ function SecaoCorrida({ s, nivel }: { s: SecaoLida; nivel: Documento["nivel"] })
   );
 }
 
-/* ---------------------------------------------------------------- ao lado */
-
-/**
- * Post com capa: a abertura (e as secoes que couberem, ver lado-a-lado.ts) a
- * esquerda, a capa a direita. A esquerda comeca no mesmo x da coluna de
- * leitura do resto do post, entao o texto desce pela mesma margem e so
- * alarga quando a capa acaba.
- *
- * No telefone empilha na ordem do DOM: abertura, capa, secoes. O texto vem
- * antes porque a capa repete, em arte, o titulo que o leitor acabou de ler;
- * pondo-a entre o titulo e o texto, a leitura comecaria uma tela abaixo.
- *
- * Sem overflow-hidden: a capa sobe para dentro da banda do titulo.
- */
-function AoLado({
-  figura,
-  abertura,
-  secoes,
-  nivel,
-}: {
-  figura: ReactNode;
-  abertura: string;
-  secoes: SecaoLida[];
-  nivel: Documento["nivel"];
-}) {
-  const els = elementos(abertura);
-  const [primeiro, ...resto] = els;
-  const abreComP = primeiro?.tag === "p";
-  const restoHtml = abreComP ? resto.map((e) => e.html).join("") : abertura;
-  return (
-    <section className="relative">
-      <PageGrid />
-      <div className="relative mx-auto max-w-[1240px] px-6 pt-12 pb-6 md:px-8 md:pt-14 lg:px-10 lg:pt-16 lg:pb-8">
-        <div className="pi-lado">
-          {abertura && (
-            <div className="pi-lado-abertura pi-corrido pi-corrido-abertura">
-              {abreComP && (
-                <Reveal>
-                  <Html className="pi-lead" html={primeiro.html} />
-                </Reveal>
-              )}
-              <Blocos blocos={classificar(restoHtml)} modo="corrido" atraso={abreComP ? 120 : 0} />
-            </div>
-          )}
-          <div className="pi-lado-capa">{figura}</div>
-          {secoes.length > 0 && (
-            <div className="pi-lado-secoes">
-              {secoes.map((s) => (
-                <div key={s.secao.id} className="pi-corrido">
-                  <Reveal>
-                    <Titulo s={s} nivel={nivel} className="pi-h2 pi-h2-corrido" />
-                  </Reveal>
-                  <Blocos blocos={s.blocos} modo="corrido" atraso={80} />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** O resto da abertura, depois da capa, na coluna de leitura e sem fio. */
-function ContinuacaoDaAbertura({ html }: { html: string }) {
-  return (
-    <section className="relative overflow-hidden">
-      <PageGrid />
-      <div className="relative mx-auto max-w-[1240px] px-6 pb-6 md:px-8 md:pb-7 lg:px-10 lg:pb-8">
-        <div className="pi-corrido pi-corrido-abertura pi-continuacao">
-          <Blocos blocos={classificar(html)} modo="corrido" />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* --------------------------------------------------------------- abertura */
 
 function Abertura({ html, grade }: { html: string; grade: boolean }) {
@@ -472,7 +376,7 @@ function Abertura({ html, grade }: { html: string; grade: boolean }) {
       </>
     );
   } else {
-    // post: a coluna de leitura, com o primeiro paragrafo grande e os blocos
+    // post: o corpo corrido, com o primeiro paragrafo grande e os blocos
     // classificados em seguida. E' o unico corpo dos 23 posts sem subtitulo.
     miolo = (
       <div className="pi-col-toda pi-corrido pi-corrido-abertura">
