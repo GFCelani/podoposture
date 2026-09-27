@@ -227,7 +227,12 @@ async function consultar(
     // 401, 403 e 404 dizem respeito a chave ou ao projeto, e se repetiriam em
     // todas as outras chamadas da noite.
     const definitiva = [400, 401, 402, 403, 404, 410].includes(resposta.status);
-    throw new FalhaDaVercel(`a Vercel respondeu ${resposta.status} em ${by}`, definitiva);
+    // O motivo vem no corpo (`error.message`). Sem ele, um 400 vira adivinhacao
+    // de qual parametro a API recusou, e foi isso que custou caro ao ligar a
+    // fonte pela primeira vez.
+    const corpo = (await resposta.json().catch(() => null)) as { error?: { message?: unknown } } | null;
+    const motivo = typeof corpo?.error?.message === "string" ? `: ${corpo.error.message.slice(0, 160)}` : "";
+    throw new FalhaDaVercel(`a Vercel respondeu ${resposta.status} em ${by}${motivo}`, definitiva);
   }
 
   const itens = lerAgregado(await resposta.json().catch(() => null), by);

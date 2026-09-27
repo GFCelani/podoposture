@@ -150,6 +150,7 @@ export async function GET(req: Request) {
       fontes: resumos,
       historico: janela.historico,
       ajustadoAoTeto: janela.ajustadoAoTeto,
+      alemDaMemoriaDaVercel: janela.alemDaMemoriaDaVercel,
       // Lote que nao conseguiu gravar repete o proprio inicio: seguir com o
       // proximo deixaria esses dias de fora sem registro nenhum.
       proximoDesde: janela.historico && gravacaoFalhou ? (janela.vercel?.inicio ?? null) : janela.proximoDesde,

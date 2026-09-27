@@ -82,15 +82,17 @@ describe("janelaDaColeta", () => {
       proximoDesde: null,
       historico: false,
       ajustadoAoTeto: false,
+      alemDaMemoriaDaVercel: false,
     });
   });
 
   it("o historico vem em lotes de 14 dias e diz onde o proximo comeca", () => {
-    const janela = janelaDaColeta(AGORA, "2026-01-01");
+    // Dentro dos 31 dias da Vercel, para o lote valer para as duas fontes.
+    const janela = janelaDaColeta(AGORA, "2026-08-16");
     expect(janela).toMatchObject({
-      vercel: { inicio: "2026-01-01", fim: "2026-01-14" },
-      busca: { inicio: "2026-01-01", fim: "2026-01-14" },
-      proximoDesde: "2026-01-15",
+      vercel: { inicio: "2026-08-16", fim: "2026-08-29" },
+      busca: { inicio: "2026-08-16", fim: "2026-08-29" },
+      proximoDesde: "2026-08-30",
       historico: true,
     });
   });
@@ -105,10 +107,30 @@ describe("janelaDaColeta", () => {
     expect(janelaDaColeta(AGORA, "2026-09-10")).toMatchObject({ busca: null, proximoDesde: null });
   });
 
-  it("pedido alem de 16 meses e trazido para o teto", () => {
+  it("pedido alem de 16 meses e trazido para o teto do Google", () => {
     expect(janelaDaColeta(AGORA, "2020-01-01")).toMatchObject({
-      vercel: { inicio: "2025-05-11" },
+      busca: { inicio: "2025-05-11" },
+      // A Vercel nao alcanca esse lote; quem responde por ele e' o arquivo.
+      vercel: null,
       ajustadoAoTeto: true,
+    });
+  });
+
+  it("a Vercel entra so a partir dos 31 dias que o plano abre", () => {
+    // 2026-08-12 e' o 31o dia contado de hoje para tras.
+    expect(janelaDaColeta(AGORA, "2026-08-05")).toMatchObject({
+      vercel: { inicio: "2026-08-12", fim: "2026-08-18" },
+      busca: { inicio: "2026-08-05", fim: "2026-08-18" },
+      alemDaMemoriaDaVercel: true,
+    });
+  });
+
+  it("lote inteiro anterior a essa janela vai sem a Vercel, e nao com erro", () => {
+    expect(janelaDaColeta(AGORA, "2026-06-01")).toMatchObject({
+      vercel: null,
+      busca: { inicio: "2026-06-01", fim: "2026-06-14" },
+      proximoDesde: "2026-06-15",
+      alemDaMemoriaDaVercel: true,
     });
   });
 

@@ -139,6 +139,18 @@ export const LOTE_DO_HISTORICO = 14;
 /** O Google guarda 16 meses; pedir antes disso so gasta cota. */
 export const TETO_DO_HISTORICO_MESES = 16;
 
+/**
+ * A Vercel so abre os ultimos 31 dias no plano Hobby: pedir um dia anterior
+ * volta 400 ("the hobby plan only grants access to the latest 31 days") e
+ * derruba o lote inteiro, inclusive a parte que o Google teria respondido.
+ *
+ * A memoria longa e' daqui, nao de la: o que a coleta grava em `numeros_dia`
+ * fica 3 anos (`numeros-db.ts`). Por isso a janela da Vercel e' recortada
+ * antes da chamada, e um lote inteiramente anterior a ela sai sem a fonte, em
+ * vez de sair com erro.
+ */
+export const TETO_DA_VERCEL_DIAS = 31;
+
 export type JanelaDaColeta = {
   vercel: Intervalo | null;
   busca: Intervalo | null;
@@ -147,6 +159,8 @@ export type JanelaDaColeta = {
   historico: boolean;
   /** `desde` pedia mais do que o teto e foi trazido para ele. */
   ajustadoAoTeto: boolean;
+  /** O pedido alcanca dias que a Vercel ja nao guarda; o arquivo e' que responde por eles. */
+  alemDaMemoriaDaVercel: boolean;
 };
 
 /**
@@ -161,14 +175,19 @@ export function janelaDaColeta(agora: Date, desde: string | null): JanelaDaColet
   const ontem = somarDias(hoje, -1);
   const ultimoDaBusca = somarDias(hoje, -2);
   const primeiroDaNoite = somarDias(hoje, -DIAS_REPROCESSADOS);
+  const primeiroDaVercel = somarDias(hoje, -(TETO_DA_VERCEL_DIAS - 1));
 
   if (desde === null) {
+    // O recorte nao muda a noite (5 dias cabem em 31), mas a janela da Vercel
+    // passa a valer num lugar so, inclusive se DIAS_REPROCESSADOS crescer.
+    const inicioDaNoite = primeiroDaNoite < primeiroDaVercel ? primeiroDaVercel : primeiroDaNoite;
     return {
-      vercel: { inicio: primeiroDaNoite, fim: ontem },
+      vercel: { inicio: inicioDaNoite, fim: ontem },
       busca: { inicio: primeiroDaNoite, fim: ultimoDaBusca },
       proximoDesde: null,
       historico: false,
       ajustadoAoTeto: false,
+      alemDaMemoriaDaVercel: false,
     };
   }
 
@@ -180,13 +199,15 @@ export function janelaDaColeta(agora: Date, desde: string | null): JanelaDaColet
   const fimDoLote = somarDias(inicio, LOTE_DO_HISTORICO - 1);
   const fim = fimDoLote < ontem ? fimDoLote : ontem;
   const fimDaBusca = fim < ultimoDaBusca ? fim : ultimoDaBusca;
+  const inicioDaVercel = inicio < primeiroDaVercel ? primeiroDaVercel : inicio;
 
   return {
-    vercel: { inicio, fim },
+    vercel: inicioDaVercel <= fim ? { inicio: inicioDaVercel, fim } : null,
     busca: inicio <= fimDaBusca ? { inicio, fim: fimDaBusca } : null,
     proximoDesde: fim < ontem ? somarDias(fim, 1) : null,
     historico: true,
     ajustadoAoTeto: desde < teto,
+    alemDaMemoriaDaVercel: inicio < primeiroDaVercel,
   };
 }
 

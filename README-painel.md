@@ -107,7 +107,14 @@ A coleta roda todo dia às 6h de Brasília e refaz os últimos 5 dias, para cobr
 noite perdida ou chamada duplicada. Para trazer o histórico uma vez, chame
 `/api/cron/numeros?desde=AAAA-MM-DD` com o cabeçalho
 `Authorization: Bearer <CRON_SECRET>` e repita com o `proximoDesde` da resposta
-até ele vir vazio. Cada chamada traz um lote de 14 dias, até 16 meses para trás.
+até ele vir vazio. Cada chamada traz um lote de 14 dias.
+
+Até onde cada fonte alcança: o Google devolve 16 meses, e a Vercel, no plano
+Hobby, só os últimos 31 dias. Lote anterior a esses 31 dias sai sem a fonte da
+Vercel (a resposta marca `alemDaMemoriaDaVercel`), e não com erro. A série longa
+é a daqui: o que a coleta grava fica 3 anos no banco, muito depois de a Vercel
+esquecer. Por isso a coleta noturna não pode ficar parada mais de um mês — o que
+se perder nesse intervalo não volta.
 Se o lote não conseguir gravar no banco, a resposta vem com status 502 e o
 `proximoDesde` repete a data do próprio lote: é só chamar de novo com ele, sem
 pular para a frente. Com o banco fora do ar, a lista `fontes` pode vir vazia
