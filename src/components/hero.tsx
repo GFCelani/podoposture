@@ -602,6 +602,16 @@ export function Hero({
                 <MapaDeDor vista="perfil" />
               </div>
             </div>
+            {/* Convite do mapa, como legenda sob o par: o ponto parado e' a
+                chave (a mesma forma dos pontos clicaveis) e o texto vem do
+                painel. Posicao e medida em globals.css (.hero-convite). */}
+            <p
+              className="hero-convite rule-in font-mono text-[11px] leading-[1.5] tracking-[0.14em] text-paper uppercase"
+              style={{ ["--in-delay" as string]: "900ms" }}
+            >
+              <span aria-hidden="true" className="hero-convite-ponto" />
+              {conteudo.convite}
+            </p>
           </div>
         </div>
       </div>

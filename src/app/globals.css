@@ -634,6 +634,60 @@ body {
   }
 }
 
+/* Convite do mapa de dor: legenda sob o par de figuras, centrada nele.
+   Absoluto dentro do quadro, entao nao mexe na altura das figuras nem na
+   conta que centra o par. Abaixo de lg o quadro tem a largura do par, e o
+   convite se centra por translate (a entrada .rule-in so anima opacidade).
+   Em lg o vao sob os pes e' (janela - 90 - figura) / 2: 49px no pior caso
+   (1280 x 586), e o convite ocupa 18 + 17. O ponto e' o anel dos pontos
+   clicaveis, parado: chave da legenda, nao alvo. */
+.hero-convite {
+  position: absolute;
+  top: calc(100% + 20px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100vw - 48px);
+  margin: 0;
+}
+
+.hero-convite-ponto {
+  position: relative;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.4px solid color-mix(in srgb, var(--color-action) 88%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent-deep) 74%, transparent);
+}
+
+.hero-convite-ponto::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--color-action);
+}
+
+@media (max-width: 1023.98px) {
+  .hero-campo {
+    padding-bottom: 44px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-convite {
+    top: calc(100% + 18px);
+    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2 + var(--hero-par-w) / 2);
+  }
+}
+
 /* Recuo do bloco de texto na janela baixa: numeral, titulo, subtitulo,
    botoes e curva andam 56px para a direita. E' a composicao aprovada para
    laptop, e os dois --hero-texto-dir da janela baixa contam este recuo. */

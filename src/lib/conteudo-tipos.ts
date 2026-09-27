@@ -65,6 +65,8 @@ export type ConteudoHero = {
   subtituloLinhas: string[];
   destaquesDoSubtitulo: string[];
   botoes: Botao[];
+  /** Legenda sob as figuras do mapa de dor, chamando para os pontos. */
+  convite: string;
 };
 
 export type ConteudoBemVindo = { titulo: string; paragrafo: string; local: string; imagem: Imagem };
@@ -557,6 +559,15 @@ export const DESCRITORES: Descritores = {
         max: 2,
         item: campoBotao(24, ["whatsapp", "pagina"]),
         ajuda: "O primeiro é o botão verde; o segundo, o de contorno.",
+      },
+      /* 40 e' o que cabe numa linha sob o par de figuras no telefone de 390
+         (mono 11px com espacejamento, mais o ponto de legenda). */
+      convite: {
+        tipo: "texto",
+        rotulo: "Convite do mapa de dor",
+        max: 40,
+        ajuda:
+          "A frase sob as figuras, chamando para os pontos verdes. No celular o primeiro toque mostra o nome da região e o segundo abre a página, então não prometa que um toque leva direto.",
       },
     },
     regras: [
