@@ -86,13 +86,7 @@ export function Approach({ conteudo, whatsapp }: { conteudo: ConteudoAbordagem; 
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <Reveal delay={140 + i * 90}>
-                    <p
-                      className={`leading-[1.65] ${
-                        i === 0 || i === passos.length - 1
-                          ? "font-display text-[1.25rem] font-medium text-ink-strong"
-                          : "text-[1.0625rem] text-ink"
-                      }`}
-                    >
+                    <p className="text-[1.0625rem] leading-[1.65] text-ink">
                       {texto}
                     </p>
                   </Reveal>
