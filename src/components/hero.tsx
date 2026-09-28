@@ -16,25 +16,6 @@ import { SectionMark } from "./layers";
 import { TramaHero } from "./trama-hero";
 
 /**
- * O bloco do hero escala como conjunto a partir de lg: numeral, corpo do
- * titulo, entrelinha, botoes e os espacos entre eles crescem pelo mesmo
- * fator (~1,15). Isto e' a parte dos botoes; o resto esta nas classes lg:
- * de cada peca. Degraus fixos por faixa, como o titulo: nada de clamp por
- * vw.
- * Na janela baixa (laptop, ate 860px de altura) os botoes descem junto com
- * o titulo: caixa e corpo menores que o proprio degrau de base, para nao
- * ficarem grandes ao lado de um titulo de 44/52px. A regra e' essa, e vale
- * para qualquer degrau futuro: se o texto desce, o botao desce com ele.
- * O simbolo e' medido em em no proprio ButtonLink, entao ele nao precisa de
- * degrau proprio e nunca sobra na caixa menor.
- * Os dois botoes desceram um degrau em 2026-09-05 (a pedido): corpo de 17
- * para 16px e caixa de 32x16 para 28x13 na janela alta, caixa de 24x11 para
- * 22x10 na janela baixa. Corpo e caixa descem juntos de proposito; reduzir so
- * a caixa aperta o rotulo e reduzir so o corpo deixa a caixa folgada. A forma
- * e o raio ficaram como estavam. Referencia da proporcao no desktop: rotulo
- * de 16px sob titulo de 56/64.
- */
-/**
  * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
  * de trilho para o ponto: a linha e' desenhada por stroke-dash e o ponto anda
  * por offset-path sobre este d. Era esta a origem do desalinhamento: o ponto
@@ -66,11 +47,6 @@ const LINHAS_DE_REFERENCIA = [
   { y: 309.5, abordagem: "Osteopatia", marca: "coluna" },
   { y: 408, abordagem: "Acupuntura", marca: "pontos" },
 ] as const;
-
-const ESCALA_BOTAO =
-  "lg:gap-3.5 lg:px-7 lg:py-[13px] lg:text-[1rem] " +
-  "lg:[@media(max-height:860px)]:gap-2.5 lg:[@media(max-height:860px)]:px-[22px] " +
-  "lg:[@media(max-height:860px)]:py-[10px] lg:[@media(max-height:860px)]:text-[0.9375rem]";
 
 /**
  * A forma de cada botao e da POSICAO, e fica no codigo: o primeiro e o convite
@@ -219,7 +195,7 @@ export function Hero({
   return (
     <section
       data-tone="deep"
-      className="relative overflow-hidden bg-accent-deep text-paper"
+      className="hero-secao relative overflow-hidden bg-accent-deep text-paper"
     >
       {/* Camada 0: o fundo. Cor chapada, sem degrade e sem movimento, com a
           fotografia da sala de atendimento por cima em opacidade baixa.
@@ -251,19 +227,13 @@ export function Hero({
         <TramaHero />
       </div>
 
-      {/* O hero e' a unica banda com contentor mais largo que os 1240px do
-          resto da pagina: 1340 em lg. E' o que traz o bloco de texto para a
-          esquerda (50px em 1440 e 1600, 20px em 1280, nada em 1024, onde o
-          texto ja esta na goteira de 40px da grade). O preco e' que a
-          margem esquerda do hero nao bate mais com a do cabecalho e a das
-          secoes abaixo nessas larguras. Foi pedido. */}
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-0 px-6 pt-32 pb-16 lg:min-h-svh lg:max-w-[1340px] lg:grid-cols-12 lg:gap-6 lg:px-10 lg:pt-[122px] lg:pb-16 lg:[@media(max-height:860px)]:pt-[var(--hv-topo)] lg:[@media(max-height:860px)]:pb-7">
-        {/* .hero-texto (globals.css): na janela baixa o bloco inteiro anda
-            56px para a direita, a composicao aprovada para laptop. Vale para
-            qualquer altura ate 860px, sem faixa por maquina (ver o bloco
-            "Recuo do bloco de texto" no globals.css). */}
-        <div className="hero-texto relative z-10 lg:col-span-9">
-          <div className="rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
+      {/* Composicao fluida (globals.css, "HERO - palco"): no telefone e no
+          tablet, texto e figuras empilhados, com as classes abaixo; a partir
+          de 1200px, a composicao aprovada em 1536 x 695 escalada inteira por
+          uma unidade so, sem degrau por faixa nem regra de janela baixa. */}
+      <div className="hero-palco mx-auto grid max-w-[1240px] grid-cols-1 items-center px-6 pt-32 pb-16">
+        <div className="hero-texto relative z-10">
+          <div className="hero-numeral rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque sobreFoto />
           </div>
 
@@ -273,20 +243,13 @@ export function Hero({
             e nao ha clamp por vw. Era esse par que fazia o mesmo titulo cair
             diferente em desktop e em laptop, porque redistribuia as palavras
             em cada largura.
-            Corpo em degraus fixos por faixa; na janela baixa (laptop, ate
-            860px de altura) cada degrau desce um patamar: 44px em lg, 52px em
-            xl, contra 56 e 64 na janela alta. Foi pedido. Como a quebra e'
-            escrita, trocar o corpo por altura aqui nao mexe em onde as linhas
-            caem: muda a escala, nao a composicao.
-            Os degraus desceram um patamar em 2026-09-05 (eram 34/40/64/68/83
-            e 50/61), para o titulo parar de ler como cartaz e abrir espaco
-            para o subtitulo. So o corpo mudou: entrelinha, tracking, peso e a
-            quebra escrita sao os mesmos, entao a composicao e' a de antes em
-            outra escala.
-            Dentro de cada faixa a linha mais larga cabe com folga sobre a
-            fonte de fallback, entao a quebra tambem nao muda no swap da
-            Newsreader e a altura do bloco e' a mesma antes e depois: linhas x
-            corpo x entrelinha, sem CLS.
+            Corpo: no telefone e no tablet, degraus por largura (classes
+            abaixo); a partir de 1200px, 52px vezes a unidade do palco, a do
+            titulo aprovado em 1536 x 695 (globals.css, "HERO - palco"). Como
+            a quebra e' escrita, mudar o corpo nao mexe em onde as linhas caem:
+            muda a escala, nao a composicao. Nenhuma linha passa da largura da
+            coluna sobre a fonte de fallback, entao a quebra tambem nao muda no
+            swap da Newsreader e a altura do bloco e' a mesma antes e depois.
 
             A virgula depois de "efetiva" virou "e" em 2026-09-07. A quebra
             NAO precisou mudar: enumerando as 84 particoes das dez palavras em
@@ -295,8 +258,7 @@ export function Hero({
             sozinha, porque engorda justamente a segunda linha: em 64px ela
             passa de 465,1 para 493,7px, e a primeira linha, que e' a mais
             longa, deixa de sair 119,5px alem dela para sair 90,9.
-            A linha mais larga continua sendo "Integracao terapeutica" com os
-            mesmos 584,6px, entao --hero-texto-dir nao precisou ser remedido.
+            A linha mais larga continua sendo "Integracao terapeutica".
 
             Os numeros acima sao do corte de TEXTO da Newsreader, que era o
             que o navegador recebia ate 2026-09-08, quando o eixo optico
@@ -305,9 +267,9 @@ export function Hero({
             615,3 / 517,7 / 413,3 / 478,7. A quebra escrita de novo NAO
             precisou mudar: reenumeradas as 84 particoes com as metricas
             novas, esta segue em primeiro lugar, com 17,7% contra 19,9% da
-            segunda colocada. Quem precisou de remedicao foi o
-            --hero-texto-dir, e so nas duas faixas xl; o porque esta no
-            comentario do bloco HERO em globals.css.
+            segunda colocada. No palco o eixo fica preso em 52, o da
+            referencia, para o titulo nao alargar mais que a escala nos corpos
+            grandes.
 
             O [overflow-wrap:break-word] fica, e nao por causa do titulo largo:
             desde 2026-09-14 a linha que nao cabe e recusada no servidor
@@ -317,7 +279,7 @@ export function Hero({
             rolaria para o lado no telefone.
           */}
           <h1
-            className="rule-in mt-9 font-display lg:mt-11 [@media(max-height:860px)]:mt-6 lg:[@media(max-height:860px)]:mt-[var(--hv-titulo)] text-[32px] min-[390px]:text-[36px] sm:text-[54px] lg:text-[56px] xl:text-[64px] lg:[@media(max-height:860px)]:text-[44px] xl:[@media(max-height:860px)]:text-[52px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word]"
+            className="hero-titulo rule-in mt-6 font-display text-[32px] leading-[1.03] font-medium tracking-[-0.025em] text-paper [overflow-wrap:break-word] min-[390px]:text-[36px] sm:mt-9 sm:text-[54px]"
             style={{ ["--in-delay" as string]: "220ms" }}
           >
             <TituloEmLinhas linhas={conteudo.tituloLinhas} destaque={conteudo.destaque} />
@@ -352,22 +314,16 @@ export function Hero({
             DUAS LINHAS (2026-09-21): credencial e lugar. A de cima pode
             quebrar dentro de si so em tela estreita, e so depois de um bullet.
 
-            A MEDIDA E' A DO TITULO. A primeira linha tem 81 caracteres e o
-            campo das figuras comeca logo depois da linha mais larga do titulo
-            (--hero-texto-dir), com fios de referencia atravessando a altura do
-            subtitulo: passar dali seria cruzar os fios. Por isso o corpo nao e'
-            um numero solto, e' um quarto do titulo em cada faixa, e a linha
-            de cima cai com 95 a 98% da largura dele:
-              janela alta   lg 56 -> 14px   xl 64 -> 16px   (601 contra 615)
-              janela baixa  lg 44 -> 13px   xl 52 -> 13px   (488 contra 500)
-            O salto de 4 para 1 e' deliberado: o titulo manda, a credencial
-            assina. Em lg na janela baixa o titulo tem 423px e a linha nao cabe
-            em corpo legivel; ali ela quebra uma vez, depois de um bullet.
-            O max-w de cada faixa e' a propria medida do titulo: se a cliente
-            escrever no painel uma linha mais longa, ela quebra depois de um
-            bullet em vez de invadir as figuras. A regra de largura do painel e'
-            por caractere (maxPorLinha) porque a tabela de larguras de
-            largura-do-titulo.ts e' da Newsreader; esta guarda e' a de pixel.
+            A MEDIDA E' A DO TITULO. A primeira linha tem 81 caracteres e, na
+            referencia (1536 x 695), 13px contra 52 do titulo: cai com 488
+            contra 500px dele. O salto de 4 para 1 e' deliberado: o titulo
+            manda, a credencial assina. No palco as duas escalam juntas; so
+            abaixo de u = 0,92 (1366 x 657, 1280 x 586) o piso de 12px deixa a
+            linha um pouco mais larga que o titulo. Ela nao quebra no palco: a
+            coluna de texto tem largura fixa pela unidade (a maior linha da
+            referencia, ou a credencial no piso), e o que passar disso transborda
+            para a folga antes do campo. No telefone ela quebra, e so depois de
+            um bullet.
 
             DOIS REGISTROS, NAO TRES CAMADAS. A segunda linha escrita (o lugar)
             nao fica sozinha embaixo da credencial: ela vai para a linha de dado
@@ -377,11 +333,11 @@ export function Hero({
             texto e' o da cliente, letra por letra; a caixa alta e' so CSS,
             como em todo metadado mono do site.
             Medido: em 11px a linha de dado da 208 + 16 de fio + 233 = 481px,
-            dentro dos 500 do titulo no laptop.
+            dentro dos 500 do titulo na referencia.
 
             Hierarquia na credencial: o nome em papel e peso 600; as
-            especialidades no tom do hero, em 450 na janela baixa (13px em
-            peso 400 fica fino demais sobre o azul); o bullet mais apagado,
+            especialidades no tom do hero, em 450 no palco (13px em peso 400
+            fica fino demais sobre o azul); o bullet mais apagado,
             para separar sem pontilhar.
 
             CADA "ITEM •" E' INDIVISIVEL (unirItens, acima): numa linha com
@@ -389,7 +345,7 @@ export function Hero({
             inseparavel. Linha sem bullet quebra normalmente.
           */}
           <p
-            className="rule-in mt-[22px] text-[1rem] leading-[1.6] text-on-hero lg:mt-[26px] lg:max-w-[540px] lg:text-[14px] xl:max-w-[615px] xl:text-[16px] lg:[@media(max-height:860px)]:mt-[var(--hv-subtitulo)] lg:[@media(max-height:860px)]:max-w-[425px] lg:[@media(max-height:860px)]:text-[13px] lg:[@media(max-height:860px)]:font-[450] lg:[@media(max-height:860px)]:tracking-[-0.006em] xl:[@media(max-height:860px)]:max-w-[500px]"
+            className="hero-credencial rule-in mt-[22px] text-[1rem] leading-[1.6] text-on-hero"
             style={{ ["--in-delay" as string]: "420ms" }}
           >
             <Pedacos pedacos={credencial} />
@@ -410,7 +366,7 @@ export function Hero({
             em banda escura, e nao a cor de acao, que e' do CTA e de mais nada.
           */}
           <p
-            className="hero-dado rule-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase lg:mt-3.5 xl:text-[0.75rem] lg:[@media(max-height:860px)]:tracking-[0.11em] xl:[@media(max-height:860px)]:text-[0.6875rem]"
+            className="hero-dado rule-in mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-on-hero uppercase"
             style={{
               fontFamily: "var(--mono)",
               ["--in-delay" as string]: "520ms",
@@ -438,9 +394,9 @@ export function Hero({
             {/* Acao do hero. No padrao, o primario e' o par completo da
               secao 09, rotulo e destino; o secundario e' o CTA da Avaliacao
               Clinica da Dor Persistente, a porta de entrada clinica. O teto de
-              24 caracteres do rotulo e' o que a borda medida em lg aguenta. */}
+              24 caracteres do rotulo e' o que a fila aguenta sem passar do titulo. */}
             <div
-              className="rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:mt-12 lg:gap-5 lg:[@media(max-height:860px)]:mt-[var(--hv-botoes)]"
+              className="hero-acoes rule-in mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
               style={{ ["--in-delay" as string]: "620ms" }}
             >
               {conteudo.botoes.map((botao, i) => {
@@ -451,7 +407,6 @@ export function Hero({
                     href={hrefDoDestino(botao.destino, whatsapp)}
                     variant={forma.variant}
                     icone={forma.icone}
-                    className={ESCALA_BOTAO}
                   >
                     {botao.rotulo}
                   </ButtonLink>
@@ -479,7 +434,7 @@ export function Hero({
             <svg
               aria-hidden="true"
               viewBox="0 0 420 46"
-              className="rule-in mt-8 h-auto w-full max-w-[440px] sm:max-w-none lg:mt-10 [@media(max-height:860px)]:mt-4 lg:[@media(max-height:860px)]:mt-[var(--hv-curva)]"
+              className="hero-curva rule-in mt-4 h-auto w-full max-w-[440px] sm:mt-8 sm:max-w-none"
               style={{ ["--in-delay" as string]: "760ms" }}
             >
               <path
@@ -516,29 +471,15 @@ export function Hero({
           O campo das duas figuras: contrapeso do bloco de titulo. Frontal a
           esquerda, perfil a direita com as costas voltadas para ela (a
           curvatura da coluna fica no meio do par). Layout em globals.css
-          (.hero-campo e filhos), porque e' um sistema de variaveis por
-          faixa, nao uma pilha de classes:
+          (.hero-campo e filhos, bloco "HERO - palco"):
 
-          - O campo comeca na borda VISUAL do bloco de texto mais 24px, e vai
-            ate o respiro da borda da janela. A borda e' constante por faixa
-            (569 / 571 / 625 / 571px em lg alta, lg baixa, xl alta, xl baixa;
-            em xl soma o recuo do contentor). Medida por Range nos nos de
-            texto, nao pela caixa da coluna: as linhas do titulo sao blocos da
-            largura da coluna inteira. Se o corpo do titulo, a medida do
-            paragrafo ou o recuo do bloco mudarem, remedir.
-            Qual peca e' a mais larga MUDA por faixa, e por isso as quatro sao
-            medidas separadas: com a credencial em quatro linhas ela deixou de
-            ser a peca mais larga em toda faixa. Hoje quem manda e' o titulo
-            em xl e a fila de botoes em lg.
-          - As duas figuras tem UMA expressao de altura, entao sao sempre
-            exatamente iguais: o menor entre a altura util da janela, 820px e
-            o que cabe na largura do campo com as duas lado a lado (221 + 118
-            de viewBox por 560), descontados o vao e a faixa dos rotulos;
-            tudo vezes 0,92 (pedido: "um pouco menores"). 686px em 1440 x
-            900, 500px em 1024 x 768.
-          - O par e' centrado no campo como conjunto, descontada a faixa de
-            150px reservada aos rotulos a direita (so em xl).
-          - Abaixo de lg o par entra no fluxo depois da curva de marcha,
+          - A partir de 1200px o campo e' o resto da linha depois da coluna
+            de texto, 24u adiante dela; a coluna tem largura pela unidade, nao
+            pela tinta, para a troca de fonte nao mover as figuras. O par
+            se centra no campo descontados 40u de respiro da borda e 150u da
+            faixa dos rotulos, e as duas figuras tem 498u de altura, a altura
+            delas na referencia. u e' a unidade do palco (globals.css).
+          - Abaixo de 1200px o par entra no fluxo depois da curva de marcha,
             centrado, altura pela largura que sobra, teto de 405px.
         */}
         <div className="hero-campo pointer-events-none">
@@ -546,13 +487,12 @@ export function Hero({
             {/* Linhas de referencia: 1px em papel a 0,3, com o traco curto de
                 14px x 1,4px na ponta direita, mais claro; recolhem e voltam a
                 partir da esquerda (so scaleX). Atravessam as duas figuras e
-                seguem ate 36px da borda da janela. Nunca entram no titulo
+                seguem ate 36u da borda do palco. Nunca entram no titulo
                 porque o campo comeca depois dele. Atras das figuras.
 
                 O rotulo e' empilhado (abordagem sobre o fio, o que ela marca
-                sob ele) e so existe a partir de xl, na faixa reservada: em lg
-                as duas figuras ocupam o campo inteiro e nao sobra vao para
-                nome sem cruzar corpo. Abaixo de lg nao ha linhas.
+                sob ele), na faixa reservada a direita. Empilhado (abaixo de
+                1200px) nao ha linhas nem rotulos.
 
                 Papel, nao on-deep-muted: os rotulos moram na metade direita
                 da janela, sobre o azul principal, onde o on-deep-muted

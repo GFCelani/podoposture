@@ -426,12 +426,12 @@ body {
    os dois pocos coexistirem.
 
    As elipses sao em porcentagem da caixa do hero, entao acompanham a faixa
-   sozinhas; so o arranjo muda em lg, quando o texto deixa de ocupar a largura
-   toda e as figuras saem de baixo dele para o lado direito.
+   sozinhas; so o arranjo muda em 1200px, quando o texto deixa de ocupar a
+   largura toda e as figuras saem de baixo dele para o lado direito.
    =============================================================== */
 
 .hero-trama {
-  /* Abaixo de lg a coluna e' unica e o conteudo ocupa quase toda a caixa:
+  /* Empilhado a coluna e' unica e o conteudo ocupa quase toda a caixa:
      sobra pouco fundo livre, entao a camada inteira entra mais fraca e o poco
      e' um platou largo em vez de uma elipse. */
   --trama-forca: 0.11;
@@ -463,7 +463,7 @@ body {
   vector-effect: non-scaling-stroke;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
   /* Coluna de texto. A elipse cobre do numeral (17% da altura) a' curva de
      marcha (90%), e nao so a mancha do titulo: o degrau de alfa comeca em 55%
      do raio justamente para o subtitulo e os botoes, que ficam na metade de
@@ -498,46 +498,47 @@ body {
 }
 
 /* ===============================================================
-   HERO — campo das duas figuras (frontal + perfil). Ver hero.tsx.
-   Variaveis por faixa; a altura das duas figuras sai de UMA expressao.
-   ===============================================================
+   HERO — palco. Ver hero.tsx.
 
-   --hero-texto-dir e' MEDIDO, nao escolhido: e' a goteira esquerda mais a
-   maior largura de conteudo da coluna de texto naquela faixa. Quem manda
-   muda por faixa; em xl e' a primeira linha do titulo, em lg e' a curva de
-   marcha, e em xl baixo os dois empatam. Se o corpo do titulo, a quebra
-   escrita ou as metricas da Newsreader mudarem, remedir os quatro valores
-   antes de confiar neles.
+   Uma composicao so, a aprovada em 1536 x 695, escalada inteira por uma
+   unidade: --u e' quanto 1px daquela tela vale nesta. E' o menor entre a
+   largura do hero sobre 1536 e a altura util da janela (menos os 97px do
+   cabecalho fixo, que nao escala) sobre 598. Toda medida do palco e'
+   "medida em 1536 x 695" vezes --u: corpo do titulo, espacos, recuo do
+   texto, altura das figuras, vao entre elas, faixa dos rotulos. Por isso
+   texto, vao e figuras guardam a mesma proporcao entre si em qualquer tela,
+   e as figuras dimensionam pelo menor entre largura e altura: numa janela
+   baixa tudo desce junto, em vez de a figura encolher sozinha e abrir vao.
 
-   Remedido em 2026-09-08, quando o eixo optico entrou no next/font (ver
-   layout.tsx). A largura da Newsreader nao anda em linha reta com o eixo:
-   medida por 100px de corpo, ela e' minima em opsz 20, sobe pouco ate ~40
-   (onde empata com o corte de texto que vinha sendo servido) e passa a
-   crescer dali para cima. Nos corpos do titulo isso da +0,6% em 44px,
-   +2,5% em 52, +3,4% em 56 e +5,2% em 64. Os dois valores de xl subiram,
-   porque neles quem manda e' o titulo: 625 -> 656 e 571 -> 583. Os dois de
-   lg ficaram, porque neles quem manda e' a curva de marcha, que nao depende
-   da fonte; em lg alto o titulo passou a encostar na borda (569,0 contra
-   569,7 da curva) em vez de sobrar 17px.
-   O preco esta em 1280 de largura, a unica faixa onde a altura das figuras
-   sai da largura do campo e nao da janela: elas descem de 609 para 562px.
-   Mais estreito seria o titulo entrar no campo das figuras.
+   A sobra do eixo que nao limita vira margem igual dos dois lados: numa
+   janela mais alta que a referencia a composicao fica centrada na altura;
+   numa mais larga, centrada na largura (--lado).
+
+   Duas excecoes, e so duas. Pisos de legibilidade (max()) nos corpos
+   pequenos: subtitulo, linha em mono, botoes, rotulos e convite nao descem
+   abaixo do legivel quando --u < 1; o texto fica um pouco mais largo que a
+   proporcao e o campo das figuras, que e' o resto da linha, absorve. E uma
+   troca de layout por largura: abaixo de 1200px o texto empilha sobre as
+   figuras, porque a composicao lado a lado ali poria o subtitulo abaixo de
+   10px.
+
+   O inicio do campo nao e' medido por faixa: texto e campo sao dois itens
+   flex, e o campo comeca 24u depois da coluna de texto, que tem a largura
+   da maior linha na referencia vezes u (com o piso da credencial).
+   100cqw (a secao e' o contentor) e nao 100vw, que conta a barra de rolagem.
    =============================================================== */
 
 .hero-campo {
-  --hero-folga: 24px; /* entre o texto e o campo */
-  --hero-respiro: 24px; /* entre o campo e a borda da janela */
-  --hero-vao: 32px; /* entre as duas figuras */
-  --hero-reserva: 0px; /* faixa a direita reservada aos rotulos (xl) */
-  --hero-texto-dir: 0px; /* borda visual do bloco de texto, por faixa */
+  --hero-vao: 40px; /* entre as duas figuras */
   --hero-reducao: 0.92; /* "um pouco menores" (2026-09-06) */
-  /* abaixo de lg: duas figuras lado a lado no que sobra de largura
+  /* empilhado: duas figuras lado a lado no que sobra de largura
      (221 + 118 de viewBox por 560, mais 40 de vao), teto de 405px */
   --hero-fig-h: calc(min(calc((100vw - 88px) * 560 / 339), 440px) * var(--hero-reducao));
   position: relative;
   display: flex;
   justify-content: center;
   margin-top: 3rem;
+  padding-bottom: 44px; /* o convite, que e' absoluto sob o quadro */
 }
 
 .hero-quadro {
@@ -548,7 +549,7 @@ body {
 .hero-par {
   display: flex;
   align-items: flex-start;
-  gap: 40px;
+  gap: var(--hero-vao);
   height: var(--hero-fig-h);
 }
 
@@ -563,75 +564,8 @@ body {
   display: none;
 }
 
-@media (min-width: 1024px) {
-  .hero-campo {
-    --hero-texto-dir: 569px;
-    --hero-campo-w: calc(100vw - var(--hero-texto-dir) - var(--hero-folga) - var(--hero-respiro));
-    --hero-fig-h: calc(
-      min(
-          calc(100svh - 90px - 64px),
-          820px,
-          calc((var(--hero-campo-w) - var(--hero-vao) - var(--hero-reserva)) * 560 / 339)
-        ) *
-        var(--hero-reducao)
-    );
-    --hero-par-w: calc(var(--hero-fig-h) * 339 / 560 + var(--hero-vao));
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: calc(var(--hero-texto-dir) + var(--hero-folga));
-    margin: 0;
-    padding-top: 90px;
-    display: flex;
-    align-items: center;
-  }
-
-  @media (max-height: 860px) {
-    .hero-campo {
-      /* conta o recuo de 56px de .hero-texto na janela baixa */
-      --hero-texto-dir: 571px;
-    }
-  }
-
-  .hero-quadro {
-    width: 100%;
-  }
-
-  /* o par centrado no campo (descontada a faixa dos rotulos), como conjunto */
-  .hero-par {
-    position: absolute;
-    top: 0;
-    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2);
-    gap: var(--hero-vao);
-  }
-
-  .hero-linha {
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 36px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .hero-campo {
-    --hero-respiro: 40px;
-    --hero-vao: 40px;
-    --hero-reserva: 150px;
-    --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 656px);
-  }
-
-  @media (max-height: 860px) {
-    .hero-campo {
-      /* conta o recuo de 56px de .hero-texto na janela baixa */
-      --hero-texto-dir: calc(max(0px, (100vw - 1340px) / 2) + 583px);
-    }
-  }
-
-  .hero-rotulo {
-    display: flex;
-  }
+.hero-secao {
+  container-type: inline-size;
 }
 
 /* Convite do mapa de dor: legenda sob o par de figuras, centrada nele.
@@ -679,42 +613,131 @@ body {
   background: var(--color-action);
 }
 
-@media (max-width: 1023.98px) {
-  .hero-campo {
-    padding-bottom: 44px;
+@media (min-width: 1200px) {
+  .hero-palco {
+    --u: min(calc(100cqw / 1536), calc((100svh - 97px) / 598));
+    --lado: max(0px, calc((100cqw - 1536 * var(--u)) / 2));
+    display: flex;
+    align-items: center;
+    max-width: none;
+    min-height: max(100svh, calc(97px + 598 * var(--u)));
+    padding: 97px var(--lado) 0 calc(var(--lado) + 194 * var(--u));
   }
-}
 
-@media (min-width: 1024px) {
-  .hero-convite {
-    left: calc((var(--hero-campo-w) - var(--hero-reserva) - var(--hero-par-w)) / 2 + var(--hero-par-w) / 2);
-  }
-}
-
-/* Recuo do bloco de texto na janela baixa: numeral, titulo, subtitulo,
-   botoes e curva andam 56px para a direita. E' a composicao aprovada para
-   laptop, e os dois --hero-texto-dir da janela baixa contam este recuo. */
-@media (min-width: 1024px) and (max-height: 860px) {
+  /* Largura da coluna pela unidade, e nao pela tinta: com a fonte de
+     fallback o texto sai ~20% mais largo, e um campo que comecasse depois da
+     tinta faria as figuras pularem na troca de fonte. 488u e' a maior linha
+     na referencia; 464px e' a credencial no piso de 12px, que manda quando
+     u < 0,95. Tinta maior que isso (fallback, texto mais longo no painel)
+     transborda para a folga, sem mover o campo. */
   .hero-texto {
-    padding-left: 56px;
+    flex: none;
+    width: max(calc(488 * var(--u)), 464px);
   }
 
-  /* RESPIRO VERTICAL DA JANELA BAIXA (2026-09-21). Uma composicao so para
-     qualquer altura ate 860px, sem faixa por maquina: os espacos entre as
-     pecas do bloco de texto seguem a altura da janela, em linha reta.
-     A ancora e' 695px, a janela aprovada (1536x695): ali cada espaco da
-     exatamente o valor fixo que tinha antes (114 / 24 / 20 / 24 / 16).
-     Com mais altura o bloco respira um pouco mais, com teto; com menos, ele
-     aperta ate o piso, que e' o que faz 1280x586 caber na dobra com a curva
-     de marcha inteira (sem isto o hero passava 26px da janela). Cada k e'
-     (valor em 695 - piso) / 109, os 109px entre 695 e 586.
-     O topo tem piso de 106: abaixo disso o numeral encosta no cabecalho. */
-  :root {
-    --hv-topo: clamp(106px, calc(114px + (100svh - 695px) * 0.073), 124px);
-    --hv-titulo: clamp(12px, calc(24px + (100svh - 695px) * 0.11), 30px);
-    --hv-subtitulo: clamp(14px, calc(20px + (100svh - 695px) * 0.055), 24px);
-    --hv-botoes: clamp(12px, calc(24px + (100svh - 695px) * 0.11), 30px);
-    --hv-curva: clamp(10px, calc(16px + (100svh - 695px) * 0.055), 20px);
+  .hero-numeral > div {
+    gap: calc(20 * var(--u));
+  }
+
+  .hero-numeral span:first-child {
+    font-size: max(11px, calc(13 * var(--u)));
+  }
+
+  .hero-numeral span:last-child {
+    width: calc(64 * var(--u));
+  }
+
+  /* Eixo optico preso no da referencia (52): no automatico ele acompanha o
+     corpo, e a Newsreader alarga nos cortes grandes, entao o titulo crescia
+     mais que a escala (626 em vez de 610px em 1920) e comia o vao. */
+  .hero-titulo {
+    margin-top: calc(24 * var(--u));
+    font-size: calc(52 * var(--u));
+    font-variation-settings: "opsz" 52;
+  }
+
+  /* Uma linha, sempre: a quebra so existe depois de um bullet (unirItens),
+     e no palco a coluna de texto tem a largura da maior linha. */
+  .hero-credencial {
+    margin-top: calc(20 * var(--u));
+    font-size: max(12px, calc(13 * var(--u)));
+    font-weight: 450;
+    letter-spacing: -0.006em;
+    white-space: nowrap;
+  }
+
+  .hero-dado {
+    flex-wrap: nowrap;
+    margin-top: calc(14 * var(--u));
+    column-gap: calc(12 * var(--u));
+    font-size: max(10.5px, calc(11 * var(--u)));
+    letter-spacing: 0.11em;
+    white-space: nowrap;
+  }
+
+  .hero-acoes {
+    margin-top: calc(24 * var(--u));
+    gap: calc(20 * var(--u));
+  }
+
+  .hero-acoes > a {
+    gap: calc(10 * var(--u));
+    padding: calc(10 * var(--u)) calc(22 * var(--u));
+    font-size: max(14px, calc(15 * var(--u)));
+  }
+
+  .hero-curva {
+    margin-top: calc(16 * var(--u));
+  }
+
+  /* O campo: o resto da linha depois do texto. As linhas de referencia vao
+     do inicio dele ate 36u da borda do palco; o par se centra no campo
+     descontados o respiro da borda e a faixa dos rotulos. */
+  .hero-campo {
+    --hero-fig-h: calc(498 * var(--u));
+    --hero-vao: calc(40 * var(--u));
+    --hero-respiro: calc(40 * var(--u));
+    --hero-reserva: calc(150 * var(--u));
+    --hero-par-w: calc(var(--hero-fig-h) * 339 / 560 + var(--hero-vao));
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0 0 0 calc(24 * var(--u));
+    padding: 0;
+  }
+
+  .hero-quadro {
+    width: 100%;
+  }
+
+  .hero-par {
+    position: absolute;
+    top: 0;
+    left: calc((100% - var(--hero-respiro) - var(--hero-reserva) - var(--hero-par-w)) / 2);
+  }
+
+  .hero-linha {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: calc(36 * var(--u));
+  }
+
+  .hero-rotulo {
+    display: flex;
+    top: calc(-1 * max(22px, 24 * var(--u)));
+    font-size: max(10.5px, calc(11 * var(--u)));
+  }
+
+  .hero-convite {
+    top: calc(100% + 16 * var(--u));
+    left: calc((100% - var(--hero-respiro) - var(--hero-reserva)) / 2);
+    gap: calc(8 * var(--u));
+    font-size: max(13px, calc(15 * var(--u)));
+  }
+
+  .hero-convite-ponto {
+    width: max(6px, calc(7 * var(--u)));
+    height: max(6px, calc(7 * var(--u)));
   }
 }
 
@@ -731,13 +754,11 @@ body {
                 acao, so eles tem massa redonda, so eles reagem.
    =============================================================== */
 
-/* O campo das figuras precisa ficar ACIMA da coluna de texto. A coluna de
-   texto leva z-10 (para ficar acima da foto de fundo) e a caixa dela e'
-   lg:col-span-9 de 12, bem mais larga que a tinta do titulo: sem isto ela
-   passava por cima da figura frontal e as linhas do <h1> (blocos da largura
-   da coluna) comiam o clique dos sete pontos da frontal, de lg para cima.
-   Nao muda tinta: --hero-texto-dir ja poe a caixa do campo depois da borda
-   visual do texto, e o campo continua pointer-events: none, entao so os
+/* O campo das figuras fica ACIMA da coluna de texto, que leva z-10 (para
+   ficar acima da foto de fundo). Quando a coluna era uma faixa da grade,
+   mais larga que a tinta do titulo, as linhas do <h1> comiam o clique dos
+   sete pontos da frontal; no palco as caixas ja nao se cruzam, e a ordem
+   fica como garantia. O campo continua pointer-events: none, entao so os
    pontos recebem ponteiro e os botoes do hero seguem clicaveis. */
 .hero-campo {
   z-index: 20;
@@ -1873,28 +1894,3 @@ a:focus-visible .marca-vertebra {
   }
 }
 
-/* ===============================================================
-   HERO — linha de dado no desktop (2026-09-21)
-
-   Desktop = janela de 1920x945 (monitor 1920x1080 a 100%, Chrome
-   maximizado). Ali o titulo e a credencial estao no mesmo degrau de 1440
-   (64px e 16px) e a linha de dado, em 12px, terminava 60px antes da
-   credencial. Aqui ela cresce ate as duas terminarem na mesma borda.
-
-   Conta: Plex Mono avanca 0.6em por caractere; sao 57 caracteres e 40px de
-   intervalos (dois gap-x-3 e o fio de 16px). Em 13.5px, 0.138em de tracking
-   poe o fim da ultima letra na borda da credencial; e' o 0.14em de antes,
-   so maior. O tracking vai tambem depois da ultima letra, e a borda medida
-   e' a da letra.
-
-   ESCOPO. So 1600px ou mais de largura E mais de 860 de altura. Assim nao
-   pega 1440x900 (largura), nem os laptops 1536x695, 1536x730 e 1280x586
-   (altura), nem tablet e telefone. CSS sem camada, depois dos utilitarios:
-   vence o xl:text-[0.75rem] sem depender de ordem de variante.
-   =============================================================== */
-@media (min-width: 1600px) and (min-height: 861px) {
-  .hero-dado {
-    font-size: 13.5px;
-    letter-spacing: 0.138em;
-  }
-}
