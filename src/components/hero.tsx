@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 
 import {
   dividirPeloDestaque,
@@ -12,6 +12,7 @@ import {
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
+import { MAPA_DE_DOR_PONTOS } from "./mapa-de-dor-pontos";
 import { SectionMark } from "./layers";
 import { TramaHero } from "./trama-hero";
 
@@ -173,6 +174,37 @@ function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
         <ComBullets texto={pedaco.texto} />
       </span>
     ),
+  );
+}
+
+/**
+ * Anotacao de diagrama sobre a figura de perfil: anel em volta do ponto, fio
+ * fino e o texto. A posicao sai do mesmo arquivo gerado dos pontos, em
+ * porcentagem da caixa da figura, entao acompanha o ponto em qualquer escala.
+ */
+function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "fascite"; linhas: string[] }) {
+  const { largura, pontos } = MAPA_DE_DOR_PONTOS.perfil;
+  const alvo = pontos.find((p) => p.chave === ponto);
+  if (!alvo) return null;
+  return (
+    <div
+      className={`pd-anot pd-anot--${ponto} rule-in`}
+      style={
+        {
+          left: `${((alvo.x / largura) * 100).toFixed(3)}%`,
+          top: `${((alvo.y / 560) * 100).toFixed(3)}%`,
+          ["--in-delay" as string]: "900ms",
+        } as CSSProperties
+      }
+    >
+      <span aria-hidden="true" className="pd-anot-anel" />
+      <span aria-hidden="true" className="pd-anot-fio" />
+      <p className="pd-anot-texto">
+        {linhas.map((linha, i) => (
+          <span key={i}>{linha}</span>
+        ))}
+      </p>
+    </div>
   );
 }
 
@@ -540,18 +572,17 @@ export function Hero({
               <div className="pd-fig pd-fig--perfil">
                 <FiguraCorpo vista="perfil" mapa fase={2.3} className="rule-in hero-figura" />
                 <MapaDeDor vista="perfil" />
+                {/* Convite do mapa: anotacao de diagrama apontando um ponto.
+                    Em tela larga, a dor ciatica, pela direita, entre as linhas
+                    de Osteopatia e Acupuntura, onde nenhum rotulo abre (os do
+                    perfil abrem para a esquerda). No telefone estreito nao ha
+                    lado livre: aponta o calcanhar (fascite) por baixo, com o
+                    texto sob os pes. So um dos dois aparece (globals.css,
+                    "HERO - anotacao"). */}
+                <Anotacao ponto="ciatica" linhas={conteudo.convite} />
+                <Anotacao ponto="fascite" linhas={conteudo.convite} />
               </div>
             </div>
-            {/* Convite do mapa, quase uma nota de rodape da figura: a sans do
-                texto corrido, pequena e recuada, com o anel dos pontos em
-                miniatura como chave. Texto do painel; medida em globals.css. */}
-            <p
-              className="hero-convite rule-in"
-              style={{ ["--in-delay" as string]: "900ms" }}
-            >
-              <span aria-hidden="true" className="hero-convite-ponto" />
-              {conteudo.convite}
-            </p>
           </div>
         </div>
       </div>

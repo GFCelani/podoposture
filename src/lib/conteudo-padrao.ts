@@ -75,8 +75,9 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       { rotulo: "Quero mais informações", destino: { tipo: "pagina", slug: "tratamento-da-dor" } },
     ],
     /* So "clique", a pedido; nao promete abrir a pagina (no toque o
-       primeiro toque mostra o nome da regiao, ver mapa-de-dor.tsx). */
-    convite: "Clique no ponto da sua dor",
+       primeiro toque mostra o nome da regiao, ver mapa-de-dor.tsx). Tres
+       linhas escritas: e' a anotacao que aponta a dor ciatica do perfil. */
+    convite: ["Clique no", "ponto da", "sua dor"],
   },
 
   "bem-vindo": {

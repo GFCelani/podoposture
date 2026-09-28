@@ -658,7 +658,7 @@ body {
   display: flex;
   justify-content: center;
   margin-top: 3rem;
-  padding-bottom: 44px; /* o convite, que e' absoluto sob o quadro */
+  padding-bottom: 64px; /* a anotacao do calcanhar, sob os pes */
 }
 
 .hero-quadro {
@@ -688,49 +688,110 @@ body {
   container-type: inline-size;
 }
 
-/* Convite do mapa de dor: legenda sob o par de figuras, centrada nele.
-   Pedido: bem menos perceptivel, mesmo abaixo do AA. A sans do texto
-   corrido em caixa normal, 12px, papel a 55%: contraste de 3,0 a 3,7 no pior
-   pixel da foto, abaixo dos 4,5 por decisao da dona do site (2026-09-27).
-   O anel tambem recua. O anel e' o dos pontos clicaveis em miniatura,
-   parado: chave da legenda, nao alvo. Absoluto dentro do quadro, entao nao
-   mexe na altura das figuras nem na conta que centra o par; a entrada
-   .rule-in so anima opacidade, e o translate que centra fica livre. */
-.hero-convite {
+/* ===============================================================
+   HERO — anotacao do mapa de dor. Ver Anotacao em hero.tsx.
+
+   Anotacao de diagrama: anel fino em volta de um ponto, fio e o texto em
+   tres linhas escritas, na linguagem das legendas de abordagem (mono, caixa
+   normal, papel). Tudo em --a, que e' 1px da figura de 498px da referencia:
+   no palco --a e' igual a u, e no empilhado segue a figura. O no' da
+   anotacao fica no ponto (left/top em % da caixa da figura), entao aponta o
+   mesmo ponto em qualquer escala.
+
+   Tela larga (640px ou mais): a dor ciatica do perfil, pela direita. Os
+   rotulos do perfil abrem para a esquerda, e ali, entre as linhas de
+   Osteopatia e Acupuntura, nao ha nada: o texto fica a ~19u de cada uma.
+   O fio so entra na silhueta nos ultimos ~20u, que e' onde o ponto esta.
+   Telefone estreito: a direita do perfil tem menos de 30px, entao a
+   anotacao aponta o calcanhar (fascite) por baixo, com o texto sob os pes.
+   Nada se move: o unico movimento e' o pulso que o ponto ja tem.
+   =============================================================== */
+.pd-fig--perfil {
+  --a: calc(var(--hero-fig-h) / 498);
+}
+
+.pd-anot {
   position: absolute;
-  top: calc(100% + 16px);
-  left: 50%;
-  translate: -50% 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pd-anot-anel {
+  position: absolute;
+  left: calc(-11 * var(--a));
+  top: calc(-11 * var(--a));
+  width: calc(22 * var(--a));
+  height: calc(22 * var(--a));
+  border: 1px solid color-mix(in srgb, var(--color-paper) 55%, transparent);
+  border-radius: 50%;
+}
+
+.pd-anot-fio {
+  position: absolute;
+  background: color-mix(in srgb, var(--color-paper) 55%, transparent);
+}
+
+.pd-anot-texto {
+  position: absolute;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  width: max-content;
-  max-width: calc(100vw - 48px);
+  flex-direction: column;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.3;
-  color: color-mix(in srgb, var(--color-paper) 55%, transparent);
+  font-family: var(--mono);
+  font-size: max(11px, calc(12 * var(--a)));
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-paper) 92%, transparent);
 }
 
-.hero-convite-ponto {
-  position: relative;
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border: 1px solid color-mix(in srgb, var(--color-action) 80%, transparent);
-  border-radius: 50%;
-  opacity: 0.5;
+/* ciatica: fio horizontal para a direita, primeira linha do texto na altura
+   do fio */
+.pd-anot--ciatica .pd-anot-fio {
+  left: calc(11 * var(--a));
+  top: -0.5px;
+  width: calc(52 * var(--a));
+  height: 1px;
 }
 
-.hero-convite-ponto::after {
-  content: "";
-  position: absolute;
-  inset: 50%;
-  width: 3px;
-  height: 3px;
-  margin: -1.5px 0 0 -1.5px;
-  border-radius: 50%;
-  background: var(--color-action);
+.pd-anot--ciatica .pd-anot-texto {
+  left: calc(70 * var(--a));
+  top: 0;
+  translate: 0 -0.7em;
+}
+
+/* fascite: fio vertical para baixo, texto centrado sob os pes */
+.pd-anot--fascite .pd-anot-fio {
+  left: -0.5px;
+  top: calc(11 * var(--a));
+  width: 1px;
+  height: calc(23 * var(--a));
+}
+
+.pd-anot--fascite .pd-anot-texto {
+  left: 0;
+  top: calc(40 * var(--a));
+  translate: -50% 0;
+  align-items: center;
+}
+
+.pd-anot--ciatica {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .pd-anot--ciatica {
+    display: block;
+  }
+
+  .pd-anot--fascite {
+    display: none;
+  }
+
+  /* a anotacao da ciatica mora dentro da altura da figura */
+  .hero-campo {
+    padding-bottom: 16px;
+  }
 }
 
 @media (min-width: 1200px) {
@@ -848,17 +909,6 @@ body {
     font-size: max(10.5px, calc(11 * var(--u)));
   }
 
-  .hero-convite {
-    top: calc(100% + 16 * var(--u));
-    left: calc((100% - var(--hero-respiro) - var(--hero-reserva)) / 2);
-    gap: calc(8 * var(--u));
-    font-size: max(11px, calc(12 * var(--u)));
-  }
-
-  .hero-convite-ponto {
-    width: max(6px, calc(7 * var(--u)));
-    height: max(6px, calc(7 * var(--u)));
-  }
 }
 
 /* ===============================================================
