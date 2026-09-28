@@ -66,8 +66,8 @@ export type ConteudoHero = {
   subtituloLinhas: string[];
   destaquesDoSubtitulo: string[];
   botoes: Botao[];
-  /** Legenda sob as figuras do mapa de dor, chamando para os pontos. */
-  convite: string;
+  /** Anotacao que aponta um ponto do mapa de dor, em tres linhas escritas. */
+  convite: string[];
   /** A fotografia apagada atras do titulo. Vazia = so o azul e a trama. */
   fundo: Imagem[];
 };
@@ -999,14 +999,17 @@ export const DESCRITORES: Descritores = {
         item: campoBotao(24, ["whatsapp", "pagina"]),
         ajuda: "O primeiro é o botão verde; o segundo, o de contorno.",
       },
-      /* 40 e' o que cabe numa linha sob o par de figuras no telefone de 390
-         (mono 11px com espacejamento, mais o ponto de legenda). */
+      /* Tres linhas curtas: a anotacao mora entre duas linhas de referencia
+         e, no telefone, sob o calcanhar do perfil. 12 letras por linha e' o
+         que cabe nos dois lugares. Valor antigo de uma linha so, salvo no
+         banco, nao valida e cai no padrao. */
       convite: {
-        tipo: "texto",
+        tipo: "linhas",
         rotulo: "Convite do mapa de dor",
-        max: 40,
+        quantidade: 3,
+        maxPorLinha: 12,
         ajuda:
-          "A frase sob as figuras, chamando para os pontos verdes. No celular o primeiro toque mostra o nome da região e o segundo abre a página, então não prometa que um toque leva direto.",
+          "A anotação que aponta um dos pontos verdes, em três linhas curtas. No celular o primeiro toque mostra o nome da região e o segundo abre a página, então não prometa que um toque leva direto.",
       },
       fundo: {
         tipo: "lista",
