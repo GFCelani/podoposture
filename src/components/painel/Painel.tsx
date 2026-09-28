@@ -267,7 +267,10 @@ export function Painel() {
       <div
         role="tablist"
         aria-label="Partes do painel"
-        className="mt-6 flex overflow-x-auto border-b border-rule"
+        // overflow-y-hidden: a aba aberta desce 1 px (-mb-px) sobre o fio, e com
+        // overflow-x-auto o eixo y vira auto. No Windows aparecia uma barra de
+        // rolagem vertical com setinhas ao lado das abas.
+        className="mt-6 flex overflow-x-auto overflow-y-hidden border-b border-rule"
       >
         {ABAS.map(({ id, rotulo }) => {
           const selecionada = id === aba;
