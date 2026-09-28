@@ -74,9 +74,9 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       { rotulo: "Envie uma mensagem", destino: { tipo: "whatsapp" } },
       { rotulo: "Quero mais informações", destino: { tipo: "pagina", slug: "tratamento-da-dor" } },
     ],
-    /* Vale para mouse e toque, e nao promete abrir a pagina: no toque, o
-       primeiro mostra o nome da regiao e o segundo abre (mapa-de-dor.tsx). */
-    convite: "Clique ou toque no ponto da sua dor",
+    /* So "clique", a pedido; nao promete abrir a pagina (no toque o
+       primeiro toque mostra o nome da regiao, ver mapa-de-dor.tsx). */
+    convite: "Clique no ponto da sua dor",
   },
 
   "bem-vindo": {
