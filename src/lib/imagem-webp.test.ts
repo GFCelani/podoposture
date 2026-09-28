@@ -151,7 +151,7 @@ describe("nome publico do arquivo", () => {
   it.each([
     "arquivo.webp",
     `${resumo}.webp`,
-    `${resumo}-1200x800.png`,
+    `${resumo}-1200x800.gif`,
     `${resumo}-1200x800.jpeg`,
     `${resumo}-1200x800.JPG`,
     `${resumo}-1200x800.jpg.webp`,

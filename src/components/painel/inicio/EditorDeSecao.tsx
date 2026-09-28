@@ -33,11 +33,12 @@ import {
   formularioDepoisDoConflito,
   gravarCaminho,
   guardarCopiaLocal,
+  comoEnviarDoCampo,
   idDoCampo,
-  larguraDoEnvio,
   lerCaminho,
   lerCopiaLocal,
   mensagemDeFalha,
+  palavrasDoOriginal,
   paraEdicao,
   publicadoDiferenteDoPadrao,
   semErrosEm,
@@ -72,7 +73,14 @@ import {
 
 /** Nome fixo: clicar de novo recarrega a mesma aba em vez de empilhar abas. */
 const NOME_DA_ABA_DA_PREVIA = "podoposture-previa";
-const ID_DO_AVISO = "inicio-aviso";
+/**
+ * Os ids fixos do editor levam a chave da secao: as abas "Pagina inicial" e
+ * "Paginas" ficam montadas juntas, cada uma com o proprio editor aberto, e um
+ * id repetido mandava o foco e o aria-describedby para a aba escondida.
+ */
+export function idDoEditor(parte: "titulo" | "aviso" | "confirmacao" | "dica", chave: ChaveDeSecao): string {
+  return `inicio-${parte}-${chave}`;
+}
 
 const PREENCHIDO =
   "min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
@@ -109,6 +117,7 @@ export function EditorDeSecao({
 }) {
   const descritor = DESCRITORES[chave];
   const campos = camposDaSecao(chave);
+  const palavras = palavrasDoOriginal(chave);
 
   // Lido na inicializacao, e nao num efeito: o editor so monta depois do clique
   // numa secao ja carregada, entao nunca renderiza no servidor, e ler aqui evita
@@ -254,7 +263,7 @@ export function EditorDeSecao({
   function focarPrimeiroErro() {
     requestAnimationFrame(() => {
       const alvo =
-        raiz.current?.querySelector<HTMLElement>("[data-com-erro]") ?? document.getElementById(ID_DO_AVISO);
+        raiz.current?.querySelector<HTMLElement>("[data-com-erro]") ?? document.getElementById(idDoEditor("aviso", chave));
       alvo?.focus();
     });
   }
@@ -300,7 +309,7 @@ export function EditorDeSecao({
     try {
       // Reduzir, converter (JPEG onde o navegador nao gera WebP) e enviar mora em
       // src/lib/preparar-imagem.ts, o mesmo do editor de post.
-      const enviada = await enviarImagem(arquivo, larguraDoEnvio(chave));
+      const enviada = await enviarImagem(arquivo, comoEnviarDoCampo(chave, campo));
       // A regra da largura minima e a do contrato, conferida ja no envio: sem
       // isto a foto estreita so seria recusada no fim, ao publicar.
       const erroDaFoto = conferirCampo(campo, { src: enviada.url, alt: "foto" }, caminho).erros[caminhoDoArquivo];
@@ -418,7 +427,7 @@ export function EditorDeSecao({
       }
       setPreviaDe(null);
       setLinkDaPrevia(null);
-      setAviso(respostaAoConflito(alvo, secaoDaResposta, comAlteracao).aviso);
+      setAviso(respostaAoConflito(alvo, secaoDaResposta, comAlteracao, palavras).aviso);
       return null;
     }
 
@@ -579,8 +588,8 @@ export function EditorDeSecao({
       if (!manterFormulario) setDados((atuais) => (atuais === enviado ? novo : atuais));
       setSucesso(
         secao.rascunho !== null
-          ? "O texto original voltou ao site. O rascunho continua guardado aqui, sem ir para o site."
-          : "O texto original voltou ao site.",
+          ? `${palavras.voltou} O rascunho continua guardado aqui, sem ir para o site.`
+          : palavras.voltou,
       );
     });
   }
@@ -627,7 +636,7 @@ export function EditorDeSecao({
         </button>
 
         <h1
-          id="inicio-editor-titulo"
+          id={idDoEditor("titulo", chave)}
           tabIndex={-1}
           className="mt-6 font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
         >
@@ -645,10 +654,10 @@ export function EditorDeSecao({
               título quebra exatamente onde você quebrar. Antes de publicar, confira como vai ficar numa tela de
               notebook ou computador, não só no celular.
             </p>
-            {/* Aviso honesto: public/og.png e uma captura fixa do topo, e o painel nao a refaz. */}
+            {/* Aviso honesto: o cartao de compartilhamento e uma imagem a parte, que o painel nao refaz sozinho. */}
             <p className={NOTA}>
-              A imagem que aparece quando alguém compartilha o site no WhatsApp ou nas redes continua a de
-              antes: ela não muda com o que você publicar aqui.
+              A imagem que aparece quando alguém compartilha o site no WhatsApp ou nas redes não muda com o
+              que você publicar aqui: ela se troca em “Imagem de compartilhamento”.
             </p>
           </>
         )}
@@ -691,7 +700,7 @@ export function EditorDeSecao({
                   type="button"
                   onClick={verPrevia}
                   disabled={ocupado}
-                  aria-describedby={podePublicar ? undefined : "inicio-dica-da-previa"}
+                  aria-describedby={podePublicar ? undefined : idDoEditor("dica", chave)}
                   className={podePublicar ? CONTORNO : PREENCHIDO}
                 >
                   {andamento === "previa" ? "Salvando o rascunho…" : "Ver como vai ficar"}
@@ -703,7 +712,7 @@ export function EditorDeSecao({
                     onClick={publicar}
                     onBlur={() => setConfirmando((c) => (c === "publicar" ? null : c))}
                     disabled={ocupado}
-                    aria-describedby={confirmando === "publicar" ? "inicio-confirmacao" : undefined}
+                    aria-describedby={confirmando === "publicar" ? idDoEditor("confirmacao", chave) : undefined}
                     className={PREENCHIDO}
                   >
                     {andamento === "publicar"
@@ -720,7 +729,7 @@ export function EditorDeSecao({
                     onClick={descartar}
                     onBlur={() => setConfirmando((c) => (c === "descartar" ? null : c))}
                     disabled={ocupado}
-                    aria-describedby={confirmando === "descartar" ? "inicio-confirmacao" : undefined}
+                    aria-describedby={confirmando === "descartar" ? idDoEditor("confirmacao", chave) : undefined}
                     className={confirmando === "descartar" ? CONFIRMANDO : DISCRETO}
                   >
                     {andamento === "descartar"
@@ -737,20 +746,20 @@ export function EditorDeSecao({
                     onClick={voltarAoOriginal}
                     onBlur={() => setConfirmando((c) => (c === "original" ? null : c))}
                     disabled={ocupado}
-                    aria-describedby={confirmando === "original" ? "inicio-confirmacao" : undefined}
+                    aria-describedby={confirmando === "original" ? idDoEditor("confirmacao", chave) : undefined}
                     className={confirmando === "original" ? CONFIRMANDO : DISCRETO}
                   >
                     {andamento === "original"
                       ? "Voltando ao original…"
                       : confirmando === "original"
                         ? "Confirmar e voltar ao original"
-                        : "Voltar o site ao texto original"}
+                        : palavras.botao}
                   </button>
                 )}
               </div>
 
               {!podePublicar && (
-                <p id="inicio-dica-da-previa" className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
+                <p id={idDoEditor("dica", chave)} className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
                   {previaDe !== null
                     ? "Você mudou algo depois de ver como ia ficar. Veja de novo para poder publicar."
                     : "O botão de publicar aparece depois que você vê como vai ficar."}
@@ -761,7 +770,7 @@ export function EditorDeSecao({
                   baixo faz o segundo clique cair em outro lugar. */}
               {explicacaoDaConfirmacao && (
                 <p
-                  id="inicio-confirmacao"
+                  id={idDoEditor("confirmacao", chave)}
                   role="alert"
                   className="mt-4 rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f]"
                 >
@@ -775,7 +784,7 @@ export function EditorDeSecao({
               onde ela esta quando clica */}
           {aviso && (
             <p
-              id={ID_DO_AVISO}
+              id={idDoEditor("aviso", chave)}
               role="alert"
               tabIndex={-1}
               className="mt-4 rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f] outline-none"

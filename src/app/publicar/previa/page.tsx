@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { PaginaInterna } from "@/components/pagina-interna";
 import { lerBlogDaPaginaInicial, PaginaInicial } from "@/components/pagina-inicial";
 import { explicacaoDePublicar } from "@/components/painel/inicio/edicao";
 import { PublicarDaPrevia } from "@/components/painel/inicio/PublicarDaPrevia";
 import { VoltarAoPainel } from "@/components/painel/inicio/VoltarAoPainel";
 import { lerConteudoComRascunho } from "@/lib/conteudo-do-site";
-import { DESCRITORES, ehChaveDeSecao, type ChaveDeSecao } from "@/lib/conteudo-tipos";
+import { DESCRITORES, ehChaveDeSecao, type ChaveDeSecao, type ConteudoDoSite } from "@/lib/conteudo-tipos";
 import { sessaoAtual } from "@/lib/guarda";
+import { buscarPagina } from "@/lib/pages";
 
 /**
- * Como vai ficar a pagina inicial: padrao, publicado e o rascunho da secao
- * aberta no editor (`?secao=`), nessa ordem.
+ * Como vai ficar: padrao, publicado e o rascunho da secao aberta no editor
+ * (`?secao=`), nessa ordem. Secao de pagina interna (as fotos dela) abre a
+ * propria pagina; o resto abre a pagina inicial, onde cabecalho e rodape
+ * tambem mostram o logo. O que nao aparece em pagina nenhuma — o icone da aba
+ * e o cartao de compartilhamento — a faixa mostra do jeito que aparece.
  *
  * Dinamica porque cada visita precisa do rascunho de agora, e fora de busca
  * porque o rascunho nao e publico. A sessao e conferida antes de qualquer
@@ -21,7 +26,7 @@ import { sessaoAtual } from "@/lib/guarda";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Como vai ficar — página inicial",
+  title: "Como vai ficar",
   robots: { index: false, follow: false, nocache: true },
 };
 
@@ -36,13 +41,23 @@ export default async function PreviaDaPaginaInicial({
   const { secao } = await searchParams;
   const chave = typeof secao === "string" && ehChaveDeSecao(secao) ? secao : null;
 
-  const [previa, blog] = await Promise.all([lerConteudoComRascunho(chave), lerBlogDaPaginaInicial()]);
+  const slug = chave ? DESCRITORES[chave].pagina : undefined;
+  const pagina = slug ? buscarPagina(slug) : undefined;
+  const [previa, blog] = await Promise.all([
+    lerConteudoComRascunho(chave),
+    pagina ? null : lerBlogDaPaginaInicial(),
+  ]);
 
   return (
     <>
-      <PaginaInicial conteudo={previa.conteudo} blog={blog} />
+      {pagina ? (
+        <PaginaInterna pagina={pagina} conteudo={previa.conteudo} />
+      ) : (
+        blog && <PaginaInicial conteudo={previa.conteudo} blog={blog} />
+      )}
       <FaixaDaPrevia
         chave={chave}
+        conteudo={previa.conteudo}
         aviso={previa.aviso}
         outros={previa.outrosRascunhos}
         rascunho={previa.rascunhoDaSecao}
@@ -66,11 +81,13 @@ function listaDeNomes(chaves: ChaveDeSecao[]): string {
  */
 function FaixaDaPrevia({
   chave,
+  conteudo,
   aviso,
   outros,
   rascunho,
 }: {
   chave: ChaveDeSecao | null;
+  conteudo: ConteudoDoSite;
   aviso: string | null;
   outros: ChaveDeSecao[];
   rascunho: { dados: unknown; versao: string | null } | null;
@@ -89,6 +106,8 @@ function FaixaDaPrevia({
       <p className="mt-1 text-[0.875rem] leading-[1.5] text-paper">
         Os links desta página levam ao site como ele está hoje.
       </p>
+      {chave === "marca" && <IconeNaAba conteudo={conteudo} />}
+      {chave === "compartilhamento" && <CartaoCompartilhado conteudo={conteudo} />}
       {aviso && (
         <p role="alert" className="mt-1 text-[0.875rem] leading-[1.5] text-paper">
           {aviso}
@@ -104,6 +123,47 @@ function FaixaDaPrevia({
         />
       )}
       <VoltarAoPainel />
+    </div>
+  );
+}
+
+/** O icone como a aba do navegador mostra: pequeno, ao lado do nome do site. */
+function IconeNaAba({ conteudo }: { conteudo: ConteudoDoSite }) {
+  const icone = conteudo.marca.icone[0];
+  return (
+    <div className="mt-3">
+      <p className="text-[0.875rem] leading-[1.5] text-paper">
+        {icone ? "O ícone, como aparece na aba do navegador:" : "Sem ícone enviado, a aba mostra o original:"}
+      </p>
+      <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-t-md bg-paper px-3 py-2 text-[0.8125rem] text-ink">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={icone?.src ?? "/icon.svg"} alt="" width={16} height={16} className="h-4 w-4 shrink-0" />
+        <span className="truncate">Podoposture | Coluna Vertebral, Dor Crônica</span>
+      </div>
+    </div>
+  );
+}
+
+/** O cartao como o WhatsApp e as redes mostram um link do site. */
+function CartaoCompartilhado({ conteudo }: { conteudo: ConteudoDoSite }) {
+  const cartao = conteudo.compartilhamento.imagem;
+  return (
+    <div className="mt-3">
+      <p className="text-[0.875rem] leading-[1.5] text-paper">Assim aparece um link do site numa conversa:</p>
+      <div className="mt-2 max-w-[20rem] overflow-hidden rounded-md bg-paper text-ink">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={cartao.src}
+          alt=""
+          width={cartao.largura}
+          height={cartao.altura}
+          className="aspect-[1200/630] w-full object-cover"
+        />
+        <div className="px-3 py-2">
+          <p className="text-[0.8125rem] font-medium">Podoposture | Coluna Vertebral, Dor Crônica</p>
+          <p className="mt-0.5 line-clamp-2 text-[0.75rem] text-muted">{conteudo.contato.descricaoParaBuscadores}</p>
+        </div>
+      </div>
     </div>
   );
 }

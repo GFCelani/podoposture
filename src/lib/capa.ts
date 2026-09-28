@@ -31,10 +31,13 @@ export function medidaDaCapa(src: string): Medida | undefined {
   return undefined;
 }
 
-/** O cartao 1200x630 da capa, ou o geral do site quando ela nao tem um. */
-export function ogDaCapa(src: string | undefined): string {
+/**
+ * O cartao 1200x630 da capa, ou o geral do site quando ela nao tem um.
+ * `reserva` e o cartao do painel ("Imagem de compartilhamento"), sempre 1200x630.
+ */
+export function ogDaCapa(src: string | undefined, reserva = "/og.png"): string {
   if (src && DO_ACERVO[src]) {
     return src.replace(/^\/img\/blog\//, "/img/og/").replace(/\.webp$/, ".jpg");
   }
-  return "/og.png";
+  return reserva;
 }

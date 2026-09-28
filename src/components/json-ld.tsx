@@ -45,7 +45,8 @@ const ID_CLINICA = `${SITE_URL}/#clinica`;
  * Nome da responsavel, descricao, endereco e redes vem do painel: sao
  * exatamente os campos que passam pelo escape de `JsonLd` acima.
  */
-export function NegocioLocalJsonLd({ contato }: { contato: ContatoDoSite }) {
+/** `imagem`: o cartao de compartilhamento do painel (o original e /og.png). */
+export function NegocioLocalJsonLd({ contato, imagem }: { contato: ContatoDoSite; imagem: string }) {
   const { clinica } = contato;
   return (
     <JsonLd
@@ -72,7 +73,7 @@ export function NegocioLocalJsonLd({ contato }: { contato: ContatoDoSite }) {
               latitude: clinica.latitude,
               longitude: clinica.longitude,
             },
-            image: urlAbsoluta("/og.png"),
+            image: urlAbsoluta(imagem),
             sameAs: contato.sameAs,
             medicalSpecialty: ["Osteopathic", "PhysicalTherapy"],
             availableService: [
@@ -169,12 +170,15 @@ export function ArtigoJsonLd({
   caminho,
   dataISO,
   imagem,
+  reserva,
 }: {
   titulo: string;
   descricao: string;
   caminho: string;
   dataISO: string;
   imagem?: string;
+  /** O cartao de compartilhamento do site, para o post sem capa. */
+  reserva: string;
 }) {
   return (
     <JsonLd
@@ -188,7 +192,7 @@ export function ArtigoJsonLd({
         datePublished: dataISO,
         dateModified: dataISO,
         inLanguage: "pt-BR",
-        image: imagem ? urlAbsoluta(imagem) : urlAbsoluta("/og.png"),
+        image: urlAbsoluta(imagem || reserva),
         author: { "@id": `${SITE_URL}/#responsavel` },
         publisher: { "@id": ID_CLINICA },
       }}

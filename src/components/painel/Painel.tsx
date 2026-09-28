@@ -37,11 +37,12 @@ import { Numeros } from "./Numeros";
  *    contar com isso.
  */
 
-type Aba = "textos" | "inicio" | "numeros";
+type Aba = "textos" | "inicio" | "paginas" | "numeros";
 
 const ABAS: readonly { id: Aba; rotulo: string }[] = [
   { id: "textos", rotulo: "Meu blog" },
   { id: "inicio", rotulo: "Página inicial" },
+  { id: "paginas", rotulo: "Páginas" },
   { id: "numeros", rotulo: "Números" },
 ];
 
@@ -156,6 +157,7 @@ export function Painel() {
 
   const perderSessaoEmTextos = useCallback(() => perderSessao("textos", SESSAO_TERMINOU), [perderSessao]);
   const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
+  const perderSessaoEmPaginas = useCallback(() => perderSessao("paginas", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
   const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
   const abrirEditor = useCallback((post: PostDoPainel | null, semBanco: boolean) => {
     setTela({ nome: "editor", post, semBanco, abaDeOrigem: "textos" });
@@ -311,6 +313,9 @@ export function Painel() {
           )}
           {visitadas.includes(id) && id === "inicio" && (
             <AbaInicio aoPerderSessao={perderSessaoEmInicio} />
+          )}
+          {visitadas.includes(id) && id === "paginas" && (
+            <AbaInicio aba="paginas" aoPerderSessao={perderSessaoEmPaginas} />
           )}
           {visitadas.includes(id) && id === "numeros" && (
             <Numeros aoPerderSessao={perderSessaoEmNumeros} />

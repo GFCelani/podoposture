@@ -12,13 +12,15 @@ import {
 } from "@/lib/conteudo-tipos";
 import { armazemDaAba } from "@/lib/recado-do-editor";
 
-import { EditorDeSecao } from "./EditorDeSecao";
+import { EditorDeSecao, idDoEditor } from "./EditorDeSecao";
 import {
   CANAL_DA_PAGINA_INICIAL,
   armazemDoNavegador,
   deixarSecaoParaReabrir,
   ehObjeto,
   estadoEmPalavras,
+  fotosDoValor,
+  palavrasDoOriginal,
   lerCopiaLocal,
   resumoDaSecao,
   tomarSecaoParaReabrir,
@@ -26,11 +28,16 @@ import {
 } from "./edicao";
 
 /**
- * Aba "Pagina inicial": a lista das secoes e o editor de cada uma.
+ * Abas "Pagina inicial" e "Paginas": a lista das secoes e o editor de cada uma.
+ * As duas sao o mesmo editor sobre o mesmo contrato (conteudo-tipos.ts); muda
+ * so quais secoes cada uma lista. Secao com `pagina` no descritor (as fotos de
+ * uma pagina interna) mora em "Paginas"; o resto, em "Pagina inicial".
  *
  * Segue o contrato de aba de Painel.tsx. A lista mostra o comeco do texto que
  * esta no ar, e nao so o nome da secao: ela procura "onde esta aquela frase"
- * (design-system/JOURNEY.md, "Nao achar o texto").
+ * (design-system/JOURNEY.md, "Nao achar o texto"). Onde a secao tem foto, a
+ * lista mostra a foto que esta no ar: numa pagina so de fotos, e ela que se
+ * reconhece.
  *
  * Sessao que cai com uma secao aberta deixa um recado no `sessionStorage`;
  * depois da senha o painel remonta esta aba, e ela reabre a mesma secao, onde o
@@ -40,7 +47,33 @@ import {
 type Aviso = { tipo: "erro" | "feito"; texto: string };
 
 const SEM_CONEXAO = "Sem conexão com o servidor. Verifique a internet e tente de novo.";
-const FALHA_AO_CARREGAR = "Não foi possível carregar os textos da página inicial. Tente de novo em alguns minutos.";
+
+export type AbaDeSecoes = "inicio" | "paginas";
+
+const TEXTOS: Record<AbaDeSecoes, { titulo: string; intro: string; carregando: string; falha: string }> = {
+  inicio: {
+    titulo: "Página inicial",
+    intro:
+      "Escolha o que quer mudar. O que você escreve só vai para o site depois de você ver como fica e publicar. Se precisar, cada seção pode voltar ao texto original de uma vez, direto no site.",
+    carregando: "Carregando os textos da página inicial…",
+    falha: "Não foi possível carregar os textos da página inicial. Tente de novo em alguns minutos.",
+  },
+  paginas: {
+    titulo: "Páginas",
+    intro:
+      "As fotos das páginas do site: a do lado do título e as do meio do texto. Dá para trocar, tirar e pôr fotos. Nada vai para o site antes de você ver como a página fica e publicar, e cada página pode voltar às fotos originais de uma vez.",
+    carregando: "Carregando as fotos das páginas…",
+    falha: "Não foi possível carregar as fotos das páginas. Tente de novo em alguns minutos.",
+  },
+};
+
+/** A aba de cada secao: as fotos de pagina interna ficam em "Paginas". */
+export function abaDaSecao(chave: ChaveDeSecao): AbaDeSecoes {
+  return DESCRITORES[chave].pagina ? "paginas" : "inicio";
+}
+
+/** Valem para o site inteiro e nao sao texto: ficam juntas, logo abaixo do contato. */
+const DO_SITE_INTEIRO: readonly ChaveDeSecao[] = ["marca", "compartilhamento"];
 
 const TOM_DA_MARCA: Record<MarcaDeEstado["tom"], string> = {
   original: "border-rule text-muted",
@@ -54,7 +87,9 @@ function respostaValida(corpo: unknown): corpo is RespostaDoInicio {
   return CHAVES_DE_SECAO.every((chave) => ehObjeto(secoes[chave]));
 }
 
-export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
+export function AbaInicio({ aba = "inicio", aoPerderSessao }: { aba?: AbaDeSecoes; aoPerderSessao: () => void }) {
+  const textos = TEXTOS[aba];
+  const chavesDaAba = CHAVES_DE_SECAO.filter((chave) => abaDaSecao(chave) === aba);
   const [resposta, setResposta] = useState<RespostaDoInicio | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erroDaCarga, setErroDaCarga] = useState<string | null>(null);
@@ -66,6 +101,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
     const armazem = armazemDoNavegador();
     setComCopia(new Set(CHAVES_DE_SECAO.filter((chave) => lerCopiaLocal(armazem, chave) !== null)));
   }, []);
+  const falhaAoCarregar = textos.falha;
 
   const carregar = useCallback(
     async (reabrir: ChaveDeSecao | null): Promise<void> => {
@@ -81,7 +117,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
         const corpo: unknown = await r.json().catch(() => null);
         if (!r.ok || !respostaValida(corpo)) {
           const doServidor = ehObjeto(corpo) && typeof corpo.erro === "string" ? corpo.erro : null;
-          setErroDaCarga(doServidor ?? FALHA_AO_CARREGAR);
+          setErroDaCarga(doServidor ?? falhaAoCarregar);
           return;
         }
         setResposta(corpo);
@@ -93,7 +129,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
         setCarregando(false);
       }
     },
-    [aoPerderSessao],
+    [aoPerderSessao, falhaAoCarregar],
   );
 
   useEffect(() => {
@@ -101,9 +137,9 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
     // efeito. O recado de reabrir e lido uma vez so: quem le apaga.
     queueMicrotask(() => {
       conferirCopias();
-      void carregar(tomarSecaoParaReabrir(armazemDaAba()));
+      void carregar(tomarSecaoParaReabrir(armazemDaAba(), (chave) => abaDaSecao(chave) === aba));
     });
-  }, [carregar, conferirCopias]);
+  }, [aba, carregar, conferirCopias]);
 
   const atualizarSecao = useCallback((chave: ChaveDeSecao, secao: EstadoDaSecao<unknown>) => {
     setResposta((atual) =>
@@ -140,7 +176,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
   function abrir(chave: ChaveDeSecao) {
     setAviso(null);
     setAberta(chave);
-    requestAnimationFrame(() => document.getElementById("inicio-editor-titulo")?.focus());
+    requestAnimationFrame(() => document.getElementById(idDoEditor("titulo", chave))?.focus());
   }
 
   function fechar(chave: ChaveDeSecao, avisoAoFechar: Aviso | null) {
@@ -190,7 +226,7 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
     );
   }
 
-  const outras = CHAVES_DE_SECAO.filter((chave) => chave !== "contato");
+  const daPaginaInicial = chavesDaAba.filter((chave) => chave !== "contato" && !DO_SITE_INTEIRO.includes(chave));
 
   return (
     <>
@@ -222,19 +258,21 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
         </p>
       )}
 
-      <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">Página inicial</h1>
-      <p className="mt-3 max-w-[40rem] text-[1.0625rem] leading-[1.7] text-ink">
-        Escolha o que quer mudar. O que você escreve só vai para o site depois de você ver como fica e
-        publicar. Se precisar, cada seção pode voltar ao texto original de uma vez, direto no site.
-      </p>
+      <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">{textos.titulo}</h1>
+      <p className="mt-3 max-w-[40rem] text-[1.0625rem] leading-[1.7] text-ink">{textos.intro}</p>
 
       {!resposta ? (
         carregando && (
           // ui-ux-pro-max ux: Animation/Loading States
           <p role="status" className="mt-10 text-[1.0625rem] text-muted">
-            Carregando os textos da página inicial…
+            {textos.carregando}
           </p>
         )
+      ) : aba === "paginas" ? (
+        <>
+          <p className="mt-10 text-[0.875rem] text-muted">Na ordem do menu do site.</p>
+          <ListaDeSecoes chaves={chavesDaAba} resposta={resposta} comCopia={comCopia} aoAbrir={abrir} />
+        </>
       ) : (
         <>
           <LinhaDeSecao
@@ -246,26 +284,55 @@ export function AbaInicio({ aoPerderSessao }: { aoPerderSessao: () => void }) {
           />
 
           <h2 className="mt-12 font-display text-[1.25rem] leading-[1.3] font-semibold text-ink-strong">
+            Logo, ícone e compartilhamento
+          </h2>
+          <p className="mt-1 text-[0.875rem] text-muted">Valem para o site inteiro.</p>
+          <ListaDeSecoes chaves={DO_SITE_INTEIRO} resposta={resposta} comCopia={comCopia} aoAbrir={abrir} />
+
+          <h2 className="mt-12 font-display text-[1.25rem] leading-[1.3] font-semibold text-ink-strong">
             Seções da página inicial
           </h2>
           <p className="mt-1 text-[0.875rem] text-muted">Na ordem em que aparecem no site.</p>
-          <ul className="mt-4 divide-y divide-rule border-y border-rule">
-            {outras.map((chave) => (
-              <li key={chave}>
-                <LinhaDeSecao
-                  chave={chave}
-                  estado={resposta.secoes[chave]}
-                  temCopia={comCopia.has(chave)}
-                  destaque={false}
-                  aoAbrir={() => abrir(chave)}
-                />
-              </li>
-            ))}
-          </ul>
+          <ListaDeSecoes chaves={daPaginaInicial} resposta={resposta} comCopia={comCopia} aoAbrir={abrir} />
         </>
       )}
     </>
   );
+}
+
+function ListaDeSecoes({
+  chaves,
+  resposta,
+  comCopia,
+  aoAbrir,
+}: {
+  chaves: readonly ChaveDeSecao[];
+  resposta: RespostaDoInicio;
+  comCopia: ReadonlySet<ChaveDeSecao>;
+  aoAbrir: (chave: ChaveDeSecao) => void;
+}) {
+  return (
+    <ul className="mt-4 divide-y divide-rule border-y border-rule">
+      {chaves.map((chave) => (
+        <li key={chave}>
+          <LinhaDeSecao
+            chave={chave}
+            estado={resposta.secoes[chave]}
+            temCopia={comCopia.has(chave)}
+            destaque={false}
+            aoAbrir={() => aoAbrir(chave)}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** As fotos que estao no ar na secao, para a lista. */
+function fotosNoAr(chave: ChaveDeSecao, estado: EstadoDaSecao<unknown>): string[] {
+  const dados = estado.publicado ?? estado.padrao;
+  const origem = ehObjeto(dados) ? dados : {};
+  return Object.entries(DESCRITORES[chave].campos).flatMap(([nome, campo]) => fotosDoValor(campo, origem[nome]));
 }
 
 function LinhaDeSecao({
@@ -282,7 +349,10 @@ function LinhaDeSecao({
   aoAbrir: () => void;
 }) {
   const descritor = DESCRITORES[chave];
-  const marcas = estadoEmPalavras(estado, temCopia);
+  const marcas = estadoEmPalavras(estado, temCopia, palavrasDoOriginal(chave));
+  // Ate 4: a galeria tem 12, e a linha e para reconhecer, nao para ver todas.
+  const fotos = fotosNoAr(chave, estado).slice(0, 4);
+  const resumo = resumoDaSecao(chave, estado.publicado ?? estado.padrao);
 
   return (
     // ui-ux-pro-max ux: Accessibility/Keyboard Navigation — cada secao e um
@@ -310,10 +380,22 @@ function LinhaDeSecao({
           Vale para o site inteiro · {descritor.aparece}
         </span>
       )}
+      {fotos.length > 0 && (
+        <span className="mt-3 flex flex-wrap gap-2">
+          {fotos.map((foto, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`${foto}-${i}`}
+              src={foto}
+              alt=""
+              loading="lazy"
+              className="h-14 w-auto max-w-[7rem] rounded border border-rule bg-paper object-cover"
+            />
+          ))}
+        </span>
+      )}
       {/* ui-ux-pro-max ux: Content/Truncation — resumo cortado em frase, nunca estoura a linha */}
-      <span className="mt-2 block break-words text-[0.9375rem] leading-[1.6] text-ink">
-        {resumoDaSecao(chave, estado.publicado ?? estado.padrao)}
-      </span>
+      {resumo && <span className="mt-2 block break-words text-[0.9375rem] leading-[1.6] text-ink">{resumo}</span>}
       <span className="mt-3 flex flex-wrap gap-2">
         {marcas.map((marca) => (
           <span

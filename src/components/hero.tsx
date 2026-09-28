@@ -191,6 +191,7 @@ export function Hero({
   // de dado em mono junto com os anos de pratica (ver o comentario la).
   const [credencial = [], ...demais] = porLinha(unirItens(segmentos, conteudo.subtituloLinhas));
   const lugar = demais.flat();
+  const fundo = conteudo.fundo[0];
 
   return (
     <section
@@ -213,15 +214,19 @@ export function Hero({
           A foto entra com fetchPriority alto porque e' o LCP da home no desktop
           (`priority` foi descontinuado no Next 16 e nao marcava a prioridade). */}
       <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
-        <Image
-          src="/img/clinica-podoposture-5.webp"
-          alt=""
-          fill
-          loading="eager"
-          fetchPriority="high"
-          sizes="100vw"
-          className="object-cover object-[34%_45%] opacity-[0.18]"
-        />
+        {/* A foto vem do painel (Abertura > Foto de fundo); sem ela, fica o
+            azul com a trama. O enquadramento e a opacidade sao do layout. */}
+        {fundo && (
+          <Image
+            src={fundo.src}
+            alt=""
+            fill
+            loading="eager"
+            fetchPriority="high"
+            sizes="100vw"
+            className="object-cover object-[34%_45%] opacity-[0.18]"
+          />
+        )}
         {/* Camada 0b: a trama de curvas de nivel, dentro da caixa do fundo e
             depois da foto. Ver trama-hero.tsx. */}
         <TramaHero />

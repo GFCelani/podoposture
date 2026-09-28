@@ -6,6 +6,7 @@ import type {
   Campo,
   CampoDestino,
   CampoEmail,
+  CampoEscolha,
   CampoGrupo,
   CampoImagem,
   CampoLinhas,
@@ -26,9 +27,12 @@ import {
   codificarDestino,
   decodificarDestino,
   ehObjeto,
+  fotosDoValor,
   idDoCampo,
   mesmoValor,
   moverItem,
+  posicaoNaLista,
+  proporcaoDaPrevia,
   removerItem,
   situacaoDoTamanho,
   textoDoValor,
@@ -136,6 +140,8 @@ export function CampoDoEditor({
       return <CampoDeGrupo campo={campo} nivel={nivel} {...props} />;
     case "imagem":
       return <CampoDeImagem campo={campo} {...props} />;
+    case "escolha":
+      return <CampoDeEscolha campo={campo} {...props} />;
     case "destino":
       return <CampoDeDestino campo={campo} {...props} />;
   }
@@ -213,27 +219,39 @@ function Original({ campo, caminho, valor, original }: Omit<PropsDoCampo, "rotul
   const editor = useEditor();
   if (original === undefined || mesmoValor(campo, valor, original)) return null;
 
-  const foto = campo.tipo === "imagem" && ehObjeto(original) && typeof original.src === "string" ? original.src : null;
+  // As fotos do original, inclusive dentro de lista e de grupo: "Lista
+  // original: 1. Imagem ilustrativa..." sem a foto nao dizia qual era.
+  const fotos = fotosDoValor(campo, original);
   const nome =
     campo.tipo === "imagem"
       ? "Foto original"
       : campo.tipo === "destino"
         ? "Destino original"
-        : campo.tipo === "lista"
-          ? "Lista original"
-          : "Texto original";
+        : campo.tipo === "escolha"
+          ? "Escolha original"
+          : campo.tipo === "lista"
+            ? "Original"
+            : "Texto original";
+  // Imagem decorativa nao tem descricao: o "(em branco)" pareceria defeito.
+  const semTexto = campo.tipo === "imagem" && campo.decorativa;
   const texto = textoDoValor(campo, original);
 
   return (
     <div className="mt-3 rounded-md border border-dashed border-rule px-4 pt-3">
       <p className="text-[0.8125rem] text-muted">{nome}:</p>
-      {foto && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={foto} alt="" className="mt-2 h-20 w-auto rounded border border-rule" />
+      {fotos.length > 0 && (
+        <span className="mt-2 flex flex-wrap gap-2">
+          {fotos.map((foto, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={`${foto}-${i}`} src={foto} alt="" className="h-20 w-auto rounded border border-rule" />
+          ))}
+        </span>
       )}
-      <p className="mt-1 break-words whitespace-pre-line text-[0.9375rem] leading-[1.6] text-ink">
-        {texto || "(em branco)"}
-      </p>
+      {!semTexto && (
+        <p className="mt-1 break-words whitespace-pre-line text-[0.9375rem] leading-[1.6] text-ink">
+          {texto || "(em branco)"}
+        </p>
+      )}
       <button
         type="button"
         onClick={() => editor.restaurar(caminho, campoParaEdicao(campo, original))}
@@ -476,11 +494,13 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
       )}
 
       {itens.length === 0 ? (
-        <p className="mt-3 text-[0.9375rem] text-muted">Nenhum {nomeDoItem} por enquanto.</p>
+        <p className="mt-3 text-[0.9375rem] text-muted">{campo.vazio ?? `Nenhum ${nomeDoItem} por enquanto.`}</p>
       ) : (
         <ol className="mt-3 space-y-4">
           {itens.map((item, i) => {
-            const numero = `${campo.rotuloDoItem} ${i + 1}`;
+            // Lista de um item so (logo, icone, foto do topo): sem numero e sem
+            // subir/descer, que la nao querem dizer nada.
+            const numero = campo.max === 1 ? campo.rotuloDoItem : `${campo.rotuloDoItem} ${i + 1}`;
             return (
               // Chave pela posicao: dois itens podem ter o mesmo texto.
               <li key={i} id={`${id}-${i}-item`} className="rounded-md border border-rule bg-paper p-4 sm:p-5">
@@ -493,6 +513,8 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
                   nivel={1}
                 />
                 <div className="mt-4 flex flex-wrap gap-2">
+                  {campo.max > 1 && (
+                  <>
                   <button
                     type="button"
                     id={`${id}-${i}-subir`}
@@ -513,6 +535,8 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
                   >
                     Descer
                   </button>
+                  </>
+                  )}
                   {itens.length > campo.min && (
                     <button
                       type="button"
@@ -552,7 +576,7 @@ function CampoDeLista({ campo, caminho, valor, original, rotulo }: PropsDoCampo<
           Adicionar {nomeDoItem}
         </button>
       ) : (
-        campo.max > campo.min && (
+        campo.max > 1 && campo.max > campo.min && (
           <p className="mt-4 text-[0.875rem] text-muted">
             Máximo de {campo.max}. Para pôr outro, remova um antes.
           </p>
@@ -627,11 +651,17 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
   const erroDoAlt = editor.erros[caminhoDoAlt];
   const enviando = editor.enviandoEm === caminho;
 
-  const proporcao = campo.recorte
-    ? String(campo.recorte.proporcao)
-    : largura > 0 && altura > 0
-      ? `${largura} / ${altura}`
-      : "4 / 3";
+  const proporcao = proporcaoDaPrevia(campo, caminho, largura, altura);
+  // Logo e icone: inteiros, sobre o fundo onde vao aparecer, com folga em volta.
+  const inteira = campo.previa?.inteira === true;
+  const fundoDaPrevia = campo.previa?.fundo === "escuro" ? "bg-accent-deep" : inteira ? "bg-paper" : "bg-surface";
+  const posicao = posicaoNaLista(caminho);
+  const recorteDaPosicao =
+    campo.recorte?.proporcaoDepoisDoPrimeiro !== undefined && posicao !== null && posicao > 0
+      ? "Ao lado, esta já aparece no recorte das seguintes."
+      : campo.recorte?.proporcaoNoComputador
+        ? "Ao lado, o recorte do celular."
+        : "Ao lado, ela já aparece assim.";
 
   return (
     <fieldset id={id} tabIndex={-1}>
@@ -639,15 +669,19 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
 
       <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-start">
         <div
-          className="w-full max-w-[16rem] shrink-0 overflow-hidden rounded-md border border-rule bg-surface"
-          style={{ aspectRatio: proporcao }}
+          className={`w-full max-w-[16rem] shrink-0 overflow-hidden rounded-md border border-rule ${fundoDaPrevia} ${inteira ? "p-3" : ""}`}
+          style={{ aspectRatio: inteira ? undefined : proporcao, minHeight: inteira ? "5rem" : undefined }}
         >
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={src} alt="" className="h-full w-full object-cover" />
+            <img src={src} alt="" className={inteira ? "mx-auto max-h-32 w-auto max-w-full object-contain" : "h-full w-full object-cover"} />
           ) : (
-            <span className="flex h-full items-center justify-center p-4 text-center text-[0.875rem] text-muted">
-              Nenhuma foto escolhida
+            <span
+              className={`flex h-full items-center justify-center p-4 text-center text-[0.875rem] ${
+                campo.previa?.fundo === "escuro" ? "text-paper" : "text-muted"
+              }`}
+            >
+              Nenhum arquivo escolhido
             </span>
           )}
         </div>
@@ -655,18 +689,20 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
         <div className="min-w-0 flex-1">
           <p id={`${id}-recorte`} className={AJUDA}>
             {campo.recorte
-              ? `${campo.recorte.descricao} ${
-                  campo.recorte.proporcaoNoComputador ? "Ao lado, o recorte do celular." : "Ao lado, ela já aparece assim."
-                }`
-              : "A foto aparece inteira, sem recorte."}{" "}
-            Vale foto do celular ou do computador.
+              ? `${campo.recorte.descricao} ${recorteDaPosicao}`
+              : campo.envio?.corte
+                ? "Ao enviar, a imagem é recortada em quadrado, pelo centro. Ao lado, ela já aparece assim."
+                : "A imagem aparece inteira, sem recorte."}{" "}
+            {campo.envio?.formato === "transparente"
+              ? "Vale PNG com fundo transparente, ou foto do celular ou do computador."
+              : "Vale foto do celular ou do computador."}
           </p>
           <label
             className={`mt-3 inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent focus-within:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent hover:border-accent ${
               editor.bloqueado ? "cursor-default opacity-50" : "cursor-pointer"
             }`}
           >
-            {enviando ? "Enviando…" : src ? "Trocar foto" : "Escolher foto"}
+            {enviando ? "Enviando…" : src ? `Trocar ${campo.decorativa && inteira ? "arquivo" : "foto"}` : `Escolher ${campo.decorativa && inteira ? "arquivo" : "foto"}`}
             <input
               id={idDoArquivo}
               type="file"
@@ -692,6 +728,7 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
         </div>
       </div>
 
+      {!campo.decorativa && (
       <div className="mt-5">
         <label htmlFor={idDoAlt} className={ROTULO}>
           Descrição da foto
@@ -713,9 +750,58 @@ function CampoDeImagem({ campo, caminho, valor, original, rotulo }: PropsDoCampo
         <Contador id={`${idDoAlt}-contador`} texto={alt} max={campo.maxAlt} />
         <MensagemDeErro id={`${idDoAlt}-erro`} erro={erroDoAlt} />
       </div>
+      )}
 
       <Original campo={campo} caminho={caminho} valor={valor} original={original} />
     </fieldset>
+  );
+}
+
+/* ----------------------------------------------------------------- escolha */
+
+/** Valor do seletor quando o salvo nao esta entre as opcoes: nenhuma opcao real e "?". */
+const SEM_ESCOLHA = "?";
+
+function CampoDeEscolha({ campo, caminho, valor, original, rotulo }: PropsDoCampo<CampoEscolha>) {
+  const editor = useEditor();
+  const id = idDoCampo(editor.chave, caminho);
+  const erro = editor.erros[caminho];
+  const atual = typeof valor === "string" && campo.opcoes.some((o) => o.valor === valor) ? valor : null;
+
+  return (
+    <div>
+      <label htmlFor={id} className={ROTULO}>
+        {rotulo}
+      </label>
+      {campo.ajuda && (
+        <p id={`${id}-ajuda`} className={AJUDA}>
+          {campo.ajuda}
+        </p>
+      )}
+      <select
+        id={id}
+        value={atual ?? SEM_ESCOLHA}
+        onChange={(e) => editor.mudar(caminho, e.target.value)}
+        onBlur={() => editor.sair(caminho)}
+        aria-invalid={erro ? true : undefined}
+        aria-describedby={ids(campo.ajuda && `${id}-ajuda`, erro && `${id}-erro`)}
+        data-com-erro={erro ? "" : undefined}
+        className={ENTRADA}
+      >
+        {atual === null && (
+          <option value={SEM_ESCOLHA} disabled>
+            Escolha uma opção
+          </option>
+        )}
+        {campo.opcoes.map((o) => (
+          <option key={o.valor} value={o.valor}>
+            {o.rotulo}
+          </option>
+        ))}
+      </select>
+      <MensagemDeErro id={`${id}-erro`} erro={erro} />
+      <Original campo={campo} caminho={caminho} valor={valor} original={original} />
+    </div>
   );
 }
 

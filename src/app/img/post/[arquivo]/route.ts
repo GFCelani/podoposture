@@ -25,10 +25,10 @@ function naoEncontrado() {
 }
 
 /**
- * Serve uma imagem enviada pelo painel, em WebP ou JPEG.
+ * Serve uma imagem enviada pelo painel, em WebP, JPEG ou PNG.
  *
- * Publica de proposito: e uma foto dentro de um artigo do blog ou da pagina
- * inicial, tem de abrir para qualquer visitante.
+ * Publica de proposito: e uma foto dentro de um artigo do blog ou de uma
+ * pagina, o logo ou o icone, e tem de abrir para qualquer visitante.
  */
 export async function GET(
   _req: Request,

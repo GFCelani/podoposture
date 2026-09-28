@@ -57,7 +57,7 @@ export function PaginaInicial({
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} />
       <main id="conteudo">
         <Hero
           conteudo={conteudo.hero}
@@ -87,7 +87,7 @@ export function PaginaInicial({
         <SeamRuler />
         <SocialBand n="12" titulo={conteudo["redes-secao"].titulo} redes={contato.redes} />
       </main>
-      <SiteFooter contato={contato} />
+      <SiteFooter contato={contato} logos={conteudo.marca} />
       <FloatingWhatsApp whatsapp={whatsapp} />
     </>
   );

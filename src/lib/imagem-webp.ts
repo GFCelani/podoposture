@@ -21,8 +21,11 @@
 
 export type Dimensoes = { largura: number; altura: number };
 
-/** Os dois formatos que o painel envia e o site serve. */
-export type TipoDeImagem = "image/webp" | "image/jpeg";
+/**
+ * Os formatos que o painel envia e o site serve. PNG so chega dos campos que
+ * precisam de transparencia (logo e icone), vindo do Safari: ver imagem-png.ts.
+ */
+export type TipoDeImagem = "image/webp" | "image/jpeg" | "image/png";
 
 /** Uma imagem maior que isto e erro de quem enviou, nao foto de blog. */
 export const LADO_MAXIMO = 8192;
@@ -101,10 +104,11 @@ export function dimensoesDoWebp(bytes: Uint8Array): Dimensoes | null {
 const EXTENSAO: Record<TipoDeImagem, string> = {
   "image/webp": "webp",
   "image/jpeg": "jpg",
+  "image/png": "png",
 };
 
 /**
- * Nome publico do arquivo: `<resumo>-<largura>x<altura>.webp` (ou `.jpg`).
+ * Nome publico do arquivo: `<resumo>-<largura>x<altura>.webp` (ou `.jpg`, `.png`).
  *
  * As medidas viajam no nome de proposito. Quem renderiza o Markdown le o
  * sufixo e escreve `width`/`height` no `<img>` sem consultar o banco — e o que
@@ -120,7 +124,22 @@ export function nomeDoArquivo(resumo: string, d: Dimensoes, tipo: TipoDeImagem):
   return `${resumo}-${d.largura}x${d.altura}.${EXTENSAO[tipo]}`;
 }
 
-const NOME = /^([0-9a-f]{64})-(\d{1,4})x(\d{1,4})\.(webp|jpg)$/;
+const NOME = /^([0-9a-f]{64})-(\d{1,4})x(\d{1,4})\.(webp|jpg|png)$/;
+
+const TIPO_DA_EXTENSAO: Record<string, TipoDeImagem> = {
+  webp: "image/webp",
+  jpg: "image/jpeg",
+  png: "image/png",
+};
+
+/** O tipo pelo final do endereco: `.png`, `.jpg`/`.jpeg`, `.svg` ou WebP. */
+export function tipoDaImagem(src: string): string {
+  const caminho = src.split("?")[0].toLowerCase();
+  if (caminho.endsWith(".png")) return "image/png";
+  if (caminho.endsWith(".jpg") || caminho.endsWith(".jpeg")) return "image/jpeg";
+  if (caminho.endsWith(".svg")) return "image/svg+xml";
+  return "image/webp";
+}
 
 /** Desmonta o nome publico. `null` se nao for um nome que nos emitimos. */
 export function lerNomeDoArquivo(
@@ -131,5 +150,5 @@ export function lerNomeDoArquivo(
   const largura = Number(m[2]);
   const altura = Number(m[3]);
   if (largura < 1 || altura < 1 || largura > LADO_MAXIMO || altura > LADO_MAXIMO) return null;
-  return { resumo: m[1], largura, altura, tipo: m[4] === "jpg" ? "image/jpeg" : "image/webp" };
+  return { resumo: m[1], largura, altura, tipo: TIPO_DA_EXTENSAO[m[4]] };
 }

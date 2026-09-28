@@ -148,6 +148,25 @@ function planejar(
   return itens;
 }
 
+/**
+ * Os titulos ao lado dos quais as fotos de apoio de fato entram, na ordem do
+ * texto: secao com corpo e fora de um par de listas. E a lista que o painel
+ * oferece como ancora (PAGINAS_COM_FOTOS em conteudo-tipos.ts); o teste
+ * confere as duas, pela mesma conta que a pagina faz em `planejar`.
+ */
+export function trechosQueRecebemFotos(html: string): { id: string; titulo: string }[] {
+  const doc = dividirEmSecoes(html);
+  const lidas = doc.secoes.map(ler);
+  return lidas
+    .filter(({ secao }) => {
+      const teste: Foto = { src: "", alt: "", legenda: "", largura: 1, altura: 1, secao: secao.id };
+      return planejar(lidas, doc.nivel, false, [teste]).some(
+        (item) => item.kind === "secao" && item.cabeca.s.secao.id === secao.id && item.grupos.some((g) => g.fotos),
+      );
+    })
+    .map(({ secao }) => ({ id: secao.id, titulo: secao.titulo }));
+}
+
 export function SecoesDeConteudo({
   html,
   tipo = "post",
