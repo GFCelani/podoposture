@@ -498,6 +498,32 @@ body {
 }
 
 /* ===============================================================
+   CABECALHO — largura da chapa.
+
+   A chapa comeca sempre antes do texto do hero. Ela usa a mesma unidade do
+   palco (ver "HERO - palco"), calculada aqui pela largura da janela, porque
+   o cabecalho e' fixo e nao pode ser contentor (viraria bloco contentor do
+   drawer, que e' fixed). Na referencia, 1536 x 695, a chapa tem 1358px e
+   comeca 105px antes do texto; rolada, 1200px, e comeca 26px antes. As duas
+   larguras escalam com u e tem piso (1359 e 1200px): abaixo de u = 1 so o
+   piso vale, e acima a chapa cresce junto com o texto. O piso da rolada e'
+   1200, e nao os 1160 de antes, porque 1160 e' exatamente a coluna de texto
+   das paginas internas (1240 menos 40 de cada lado): a chapa empatava com o
+   texto em vez de comecar antes dele.
+   (100% + 48px) e' a largura da janela: 100% e' a caixa do <header>, que
+   tem 24px de respiro de cada lado em lg.
+   =============================================================== */
+@media (min-width: 1024px) {
+  .chapa-topo {
+    max-width: max(1359px, calc(min((100% + 48px) / 1536, (100svh - 97px) / 598) * 1358));
+  }
+
+  .chapa-rolou {
+    max-width: max(1200px, calc(min((100% + 48px) / 1536, (100svh - 97px) / 598) * 1200));
+  }
+}
+
+/* ===============================================================
    HERO — palco. Ver hero.tsx.
 
    Uma composicao so, a aprovada em 1536 x 695, escalada inteira por uma

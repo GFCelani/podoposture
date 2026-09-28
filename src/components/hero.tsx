@@ -231,7 +231,7 @@ export function Hero({
           tablet, texto e figuras empilhados, com as classes abaixo; a partir
           de 1200px, a composicao aprovada em 1536 x 695 escalada inteira por
           uma unidade so, sem degrau por faixa nem regra de janela baixa. */}
-      <div className="hero-palco mx-auto grid max-w-[1240px] grid-cols-1 items-center px-6 pt-32 pb-16">
+      <div className="hero-palco mx-auto grid max-w-[1240px] grid-cols-1 items-center px-6 pt-32 pb-16 lg:px-10">
         <div className="hero-texto relative z-10">
           <div className="hero-numeral rule-in" style={{ ["--in-delay" as string]: "80ms" }}>
             <SectionMark n="01" tone="deep" destaque sobreFoto />

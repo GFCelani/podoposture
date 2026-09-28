@@ -202,8 +202,8 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
       <div
         className={`relative mx-auto flex h-16 max-w-none items-center justify-between rounded-[14px] border bg-paper px-5 transition-[max-width,border-color,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-7 lg:grid lg:h-[74px] lg:grid-cols-[1fr_auto_1fr] lg:px-7 ${
           rolou
-            ? "border-rule shadow-lift lg:max-w-[1160px]"
-            : "border-rule/60 shadow-plate lg:max-w-[1359px]"
+            ? "chapa-rolou border-rule shadow-lift"
+            : "chapa-topo border-rule/60 shadow-plate"
         }`}
       >
         <Link
