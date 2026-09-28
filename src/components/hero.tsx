@@ -542,11 +542,11 @@ export function Hero({
                 <MapaDeDor vista="perfil" />
               </div>
             </div>
-            {/* Convite do mapa, como legenda da figura: italico da serifa, em
-                caixa normal, com o anel dos pontos em miniatura como chave.
-                Texto do painel; posicao e medida em globals.css. */}
+            {/* Convite do mapa, quase uma nota de rodape da figura: a sans do
+                texto corrido, pequena e recuada, com o anel dos pontos em
+                miniatura como chave. Texto do painel; medida em globals.css. */}
             <p
-              className="hero-convite rule-in font-display italic"
+              className="hero-convite rule-in"
               style={{ ["--in-delay" as string]: "900ms" }}
             >
               <span aria-hidden="true" className="hero-convite-ponto" />
