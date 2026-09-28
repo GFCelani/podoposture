@@ -504,12 +504,19 @@ body {
    cabecalho fica como sempre foi, com as classes do componente e os tetos
    de largura abaixo.
 
-   A partir de 1200px ele entra na mesma logica do hero: altura do cartao,
-   marca, navegacao, botao e respiros sao medida-da-referencia (1536 x 695)
-   vezes uma unidade --uc, e a borda esquerda do cartao fica 46uc antes do
-   titulo da pagina, a relacao que a referencia tinha (cartao em 148, titulo
-   em 194). A direita e' simetrica, entao o cartao continua centrado no
-   conteudo. Rolado, ele encolhe 20uc de cada lado (26uc antes do titulo).
+   A partir de 1200px a LARGURA do cartao entra na logica do hero: a borda
+   esquerda fica 46uc antes do titulo da pagina, a relacao que a referencia
+   tinha (cartao em 148, titulo em 194), e a direita e' simetrica. Rolado,
+   ele encolhe 20uc de cada lado (26uc antes do titulo).
+
+   O CONTEUDO (altura do cartao, marca, navegacao, numeros, setas, botao e
+   respiros) usa --ucc = min(1px, --uc): encolhe com a tela abaixo da
+   referencia e para no tamanho dela acima. Crescer com o hero deixava o
+   cabecalho grande demais em 1920 e 2560, e de tamanho diferente entre a
+   home e as paginas internas. A largura extra vai para os dois vaos, entre a
+   marca e o menu e entre o menu e o botao, porque o cartao e' uma grade
+   1fr auto 1fr com o menu centrado: o espacamento entre os itens do menu e'
+   o da referencia.
 
    A unidade e' a do conteudo que o cabecalho acompanha:
    - home (.cab-hero): a do palco do hero, min(largura/1536, altura/695);
@@ -560,14 +567,15 @@ body {
      cartao alarga em vez de o menu passar por cima do botao. Na referencia
      sobra espaco, e nada se move. */
   .cab-cartao {
+    --ucc: min(1px, var(--uc));
     width: calc(100cqw - 2 * var(--recuo));
     min-width: max-content;
     max-width: none;
-    column-gap: calc(20 * var(--uc));
-    height: calc(74 * var(--uc));
-    margin-top: calc(24 * var(--uc));
-    padding-inline: calc(28 * var(--uc));
-    border-radius: calc(14 * var(--uc));
+    column-gap: calc(20 * var(--ucc));
+    height: calc(74 * var(--ucc));
+    margin-top: calc(24 * var(--ucc));
+    padding-inline: calc(28 * var(--ucc));
+    border-radius: calc(14 * var(--ucc));
   }
 
   .cab-cartao.chapa-rolou {
@@ -575,35 +583,35 @@ body {
   }
 
   .cab-marca {
-    height: max(40px, calc(54 * var(--uc)));
+    height: max(40px, calc(54 * var(--ucc)));
   }
 
   .cab-lista {
-    gap: calc(4 * var(--uc));
+    gap: calc(4 * var(--ucc));
   }
 
   .cab-item {
-    padding: calc(8 * var(--uc)) calc(12 * var(--uc));
-    font-size: max(13px, calc(16 * var(--uc)));
+    padding: calc(8 * var(--ucc)) calc(12 * var(--ucc));
+    font-size: max(13px, calc(16 * var(--ucc)));
   }
 
   button.cab-item {
-    gap: calc(6 * var(--uc));
+    gap: calc(6 * var(--ucc));
   }
 
   .cab-num {
-    font-size: max(9px, calc(10 * var(--uc)));
+    font-size: max(9px, calc(10 * var(--ucc)));
   }
 
   .cab-seta {
-    width: max(8px, calc(9 * var(--uc)));
-    height: max(5px, calc(6 * var(--uc)));
+    width: max(8px, calc(9 * var(--ucc)));
+    height: max(5px, calc(6 * var(--ucc)));
   }
 
   .cab-cta {
-    gap: calc(8 * var(--uc));
-    padding: calc(10 * var(--uc)) calc(14 * var(--uc));
-    font-size: max(12px, calc(14 * var(--uc)));
+    gap: calc(8 * var(--ucc));
+    padding: calc(10 * var(--ucc)) calc(14 * var(--ucc));
+    font-size: max(12px, calc(14 * var(--ucc)));
   }
 }
 
@@ -612,9 +620,10 @@ body {
 
    Uma composicao so, a aprovada em 1536 x 695, escalada inteira por uma
    unidade: --u e' quanto 1px daquela tela vale nesta. E' o menor entre a
-   largura do hero sobre 1536 e a altura da janela sobre 695. O cabecalho
-   escala pela mesma unidade (ver "CABECALHO - escala"), entao o espaco
-   reservado para ele no topo tambem e' 97u. Toda medida do palco e'
+   largura do hero sobre 1536 e a altura da janela sobre 695. O espaco
+   reservado para o cabecalho no topo tambem e' 97u: abaixo da referencia o
+   cabecalho encolhe junto; acima ele para no tamanho dela (ver "CABECALHO -
+   escala") e a diferenca vira respiro. Toda medida do palco e'
    "medida em 1536 x 695" vezes --u: corpo do titulo, espacos, recuo do
    texto, altura das figuras, vao entre elas, faixa dos rotulos. Por isso
    texto, vao e figuras guardam a mesma proporcao entre si em qualquer tela,
