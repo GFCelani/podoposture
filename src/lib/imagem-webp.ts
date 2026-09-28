@@ -134,11 +134,9 @@ const TIPO_DA_EXTENSAO: Record<string, TipoDeImagem> = {
 
 /** O tipo pelo final do endereco: `.png`, `.jpg`/`.jpeg`, `.svg` ou WebP. */
 export function tipoDaImagem(src: string): string {
-  const caminho = src.split("?")[0].toLowerCase();
-  if (caminho.endsWith(".png")) return "image/png";
-  if (caminho.endsWith(".jpg") || caminho.endsWith(".jpeg")) return "image/jpeg";
-  if (caminho.endsWith(".svg")) return "image/svg+xml";
-  return "image/webp";
+  const extensao = src.split("?")[0].split(".").pop()?.toLowerCase() ?? "";
+  if (extensao === "svg") return "image/svg+xml";
+  return TIPO_DA_EXTENSAO[extensao === "jpeg" ? "jpg" : extensao] ?? "image/webp";
 }
 
 /** Desmonta o nome publico. `null` se nao for um nome que nos emitimos. */

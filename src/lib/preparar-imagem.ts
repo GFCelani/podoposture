@@ -19,6 +19,8 @@
  *   Safari pintaria de branco o fundo transparente.
  * - "jpeg": sempre JPEG. O cartao de compartilhamento: e o formato que toda
  *   rede social le, e WebP ali ainda falha em alguns aplicativos.
+ * - "png": sempre PNG. O icone da aba: favicon em WebP ainda falha em parte
+ *   dos navegadores e buscadores.
  * Com `corte`, a imagem e recortada pelo centro na proporcao pedida antes de
  * reduzir: o cartao sai em 1200 x 630 e o icone quadrado, sem depender de ela
  * saber recortar.
@@ -52,7 +54,7 @@ export class ErroAoEnviarImagem extends Error {
 
 export type ImagemEnviada = { url: string; largura: number; altura: number };
 
-export type FormatoDoEnvio = "foto" | "transparente" | "jpeg";
+export type FormatoDoEnvio = "foto" | "transparente" | "jpeg" | "png";
 
 /**
  * Recorte exato pelo centro. A saida tem `largura` x `altura`; com
@@ -161,10 +163,10 @@ export async function prepararImagem(arquivo: File, como: ComoEnviar | number): 
       if (!ctx) throw new Error("sem contexto de desenho");
       ctx.drawImage(bitmap, origem.x, origem.y, origem.l, origem.a, 0, 0, largura, altura);
 
-      const webp = formato === "jpeg" ? null : await paraBlob(tela, "image/webp", 0.82);
+      const webp = formato === "jpeg" || formato === "png" ? null : await paraBlob(tela, "image/webp", 0.82);
       if (webp && webp.type === "image/webp") {
         pronta = webp;
-      } else if (formato === "transparente") {
+      } else if (formato === "transparente" || formato === "png") {
         // PNG guarda a transparencia do logo; o JPEG a pintaria de branco.
         pronta = await paraBlob(tela, "image/png", 1);
       } else {
@@ -176,6 +178,11 @@ export async function prepararImagem(arquivo: File, como: ComoEnviar | number): 
         pronta = await paraBlob(tela, "image/jpeg", 0.85);
       }
       if (pronta.size <= TAMANHO_MAXIMO_DO_ENVIO) return pronta;
+      // Com recorte, a medida e contrato (cartao 1200 x 630): encolher daria um
+      // erro de "largura minima" para uma foto grande. Nao acontece com foto
+      // de verdade (1200 x 630 em JPEG fica longe de 3 MB); se acontecer, o
+      // motivo certo e o tamanho.
+      if (plano) throw new ErroAoEnviarImagem("Imagem pesada demais para este campo. Tente outra, em JPG ou PNG.");
       escala *= 0.8;
     }
     return pronta!;

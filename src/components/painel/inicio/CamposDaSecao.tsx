@@ -30,6 +30,7 @@ import {
   fotosDoValor,
   idDoCampo,
   mesmoValor,
+  miniatura,
   moverItem,
   posicaoNaLista,
   proporcaoDaPrevia,
@@ -232,9 +233,10 @@ function Original({ campo, caminho, valor, original }: Omit<PropsDoCampo, "rotul
           : campo.tipo === "lista"
             ? "Original"
             : "Texto original";
-  // Imagem decorativa nao tem descricao: o "(em branco)" pareceria defeito.
-  const semTexto = campo.tipo === "imagem" && campo.decorativa;
   const texto = textoDoValor(campo, original);
+  // Imagem sem descricao (decorativa, ou lista delas): a foto ja diz o que
+  // volta, e um "(em branco)" embaixo pareceria defeito.
+  const semTexto = (campo.tipo === "imagem" && campo.decorativa) || (fotos.length > 0 && !texto.trim());
 
   return (
     <div className="mt-3 rounded-md border border-dashed border-rule px-4 pt-3">
@@ -243,7 +245,7 @@ function Original({ campo, caminho, valor, original }: Omit<PropsDoCampo, "rotul
         <span className="mt-2 flex flex-wrap gap-2">
           {fotos.map((foto, i) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={`${foto}-${i}`} src={foto} alt="" className="h-20 w-auto rounded border border-rule" />
+            <img key={`${foto}-${i}`} src={miniatura(foto, 256)} alt="" className="h-20 w-auto rounded border border-rule" />
           ))}
         </span>
       )}

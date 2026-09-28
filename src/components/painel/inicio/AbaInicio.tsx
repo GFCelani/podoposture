@@ -20,6 +20,7 @@ import {
   ehObjeto,
   estadoEmPalavras,
   fotosDoValor,
+  miniatura,
   palavrasDoOriginal,
   lerCopiaLocal,
   resumoDaSecao,
@@ -72,8 +73,10 @@ export function abaDaSecao(chave: ChaveDeSecao): AbaDeSecoes {
   return DESCRITORES[chave].pagina ? "paginas" : "inicio";
 }
 
-/** Valem para o site inteiro e nao sao texto: ficam juntas, logo abaixo do contato. */
-const DO_SITE_INTEIRO: readonly ChaveDeSecao[] = ["marca", "compartilhamento"];
+/** Valem para o site inteiro e nao sao texto (logo e icone, cartao): ficam juntas, logo abaixo do contato. */
+const DO_SITE_INTEIRO: readonly ChaveDeSecao[] = CHAVES_DE_SECAO.filter(
+  (chave) => DESCRITORES[chave].soImagem && !DESCRITORES[chave].pagina,
+);
 
 const TOM_DA_MARCA: Record<MarcaDeEstado["tom"], string> = {
   original: "border-rule text-muted",
@@ -386,7 +389,7 @@ function LinhaDeSecao({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={`${foto}-${i}`}
-              src={foto}
+              src={miniatura(foto)}
               alt=""
               loading="lazy"
               className="h-14 w-auto max-w-[7rem] rounded border border-rule bg-paper object-cover"

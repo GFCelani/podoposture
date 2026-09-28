@@ -621,6 +621,13 @@ export type DescritorDeSecao<T> = {
   aparece: string;
   /** Slug da pagina interna que a secao muda: a previa abre essa pagina, e a aba e a "Paginas". */
   pagina?: string;
+  /**
+   * Secao so de imagem (fotos de pagina, logo e icone, cartao): a tela fala em
+   * "original", e nao em "texto original", e a lista mostra a foto no lugar do
+   * comeco do texto. Na aba "Pagina inicial", as globais so de imagem ficam
+   * juntas, logo abaixo do contato.
+   */
+  soImagem?: true;
   campos: { [K in keyof T]: Campo };
   regras: readonly RegraDaSecao<T>[];
 };
@@ -731,6 +738,7 @@ function descritorDaPagina(chave: ChaveDePagina): DescritorDeSecao<ConteudoDaPag
     global: false,
     aparece: `Na página “${rotulo}”`,
     pagina: slug,
+    soImagem: true,
     campos: {
       foto: {
         tipo: "lista",
@@ -876,6 +884,7 @@ export const DESCRITORES: Descritores = {
       "O logotipo do cabeçalho e do rodapé e o ícone da aba do navegador. Enquanto nenhum arquivo for enviado, o site usa a marca original, desenhada.",
     global: true,
     aparece: "Em todas as páginas",
+    soImagem: true,
     campos: {
       logo: {
         tipo: "lista",
@@ -911,7 +920,9 @@ export const DESCRITORES: Descritores = {
           ...campoDeLogo("Ícone", "claro"),
           larguraMinima: 192,
           proporcaoExata: { valor: 1, mensagem: "O ícone precisa ser quadrado. Envie a imagem de novo." },
-          envio: { formato: "transparente", larguraMaxima: 512, corte: { largura: 512, altura: 512, ladoMinimo: 192 } },
+          // Sempre PNG: e o formato de icone que todo navegador, celular e
+          // buscador le. WebP de favicon ainda falha em parte deles.
+          envio: { formato: "png", larguraMaxima: 512, corte: { largura: 512, altura: 512, ladoMinimo: 192 } },
         },
       },
     },
@@ -921,9 +932,10 @@ export const DESCRITORES: Descritores = {
   compartilhamento: {
     rotulo: "Imagem de compartilhamento",
     ajuda:
-      "A imagem que aparece quando alguém manda o link do site no WhatsApp, no Facebook ou no LinkedIn. Os textos do blog com capa própria continuam usando a capa.",
+      "A imagem que aparece quando alguém manda o link do site no WhatsApp, no Facebook ou no LinkedIn. Vale para o site inteiro, menos os textos do blog que vieram do site antigo, que continuam com a arte da própria capa.",
     global: true,
     aparece: "Ao compartilhar um link do site",
+    soImagem: true,
     campos: {
       imagem: {
         ...campoImagem("Imagem", {
@@ -1537,7 +1549,9 @@ function validarImagem(
   if (!medida) {
     // Sem "escolha uma foto do site": o editor so oferece enviar arquivo. Para
     // trazer de volta uma foto original, ha o "Usar o original" do proprio item.
-    erros[juntar(caminho, "src")] = "Envie uma foto pelo botão “Escolher foto”.";
+    erros[juntar(caminho, "src")] = campo.previa?.inteira
+      ? "Envie o arquivo pelo botão “Escolher arquivo”."
+      : "Envie uma foto pelo botão “Escolher foto”.";
   } else if (medida.largura < campo.larguraMinima) {
     erros[juntar(caminho, "src")] =
       `A foto precisa ter pelo menos ${campo.larguraMinima} pixels de largura (esta tem ${medida.largura}).`;

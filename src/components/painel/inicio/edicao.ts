@@ -306,6 +306,15 @@ export function proporcaoDaPrevia(campo: CampoImagem, caminho: string, largura: 
   return largura > 0 && altura > 0 ? `${largura} / ${altura}` : "4 / 3";
 }
 
+/**
+ * Endereco da miniatura: a foto reduzida pelo otimizador do Next, e nao o
+ * arquivo inteiro. A lista de paginas mostra ~20 fotos de 1200 px em 56 px de
+ * altura, e no celular dela isso eram varios MB.
+ */
+export function miniatura(src: string, largura: 128 | 256 = 128): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${largura}&q=75`;
+}
+
 /** As fotos dentro de um valor (lista de fotos, grupo com foto), para mostrar o original. */
 export function fotosDoValor(campo: Campo, valor: unknown): string[] {
   if (campo.tipo === "imagem") return ehObjeto(valor) && typeof valor.src === "string" && valor.src ? [valor.src] : [];
@@ -355,11 +364,19 @@ export function textoDoValor(campo: Campo, valor: unknown): string {
         .filter(Boolean)
         .join(" · ");
     }
-    case "lista":
-      if (Array.isArray(valor) && valor.length === 0 && campo.vazio) return campo.vazio;
-      return Array.isArray(valor)
-        ? valor.map((item, i) => `${i + 1}. ${linhaUnica(textoDoValor(campo.item, item))}`).join("\n")
-        : "";
+    case "lista": {
+      if (!Array.isArray(valor)) return "";
+      if (valor.length === 0 && campo.vazio) return campo.vazio;
+      // Item sem texto (logo, fundo do topo: imagem sem descricao) nao vira um
+      // "1. " solto: a foto dele ja aparece ao lado.
+      return valor
+        .map((item, i) => {
+          const texto = linhaUnica(textoDoValor(campo.item, item));
+          return texto ? `${i + 1}. ${texto}` : "";
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
   }
 }
 
@@ -435,7 +452,7 @@ export function palavrasDoOriginal(chave: ChaveDeSecao): PalavrasDoOriginal {
       jaEsta: "o site já está com as fotos originais",
     };
   }
-  if (chave === "marca" || chave === "compartilhamento") {
+  if (DESCRITORES[chave].soImagem) {
     return {
       marca: "Original",
       botao: "Voltar o site ao original",

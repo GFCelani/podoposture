@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
 import { trechosQueRecebemFotos } from "@/components/secoes-de-conteudo";
-import { tomarSecaoParaReabrir } from "@/components/painel/inicio/edicao";
+import { miniatura, palavrasDoOriginal, textoDoValor, tomarSecaoParaReabrir } from "@/components/painel/inicio/edicao";
 
 import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import {
@@ -258,6 +258,51 @@ describe("logo, icone, cartao e fundo do topo", () => {
     void _fora;
     expect(mesclarSecao("hero", CONTEUDO_PADRAO.hero, antigo).fundo).toEqual(CONTEUDO_PADRAO.hero.fundo);
     expect(validarSecao("hero", { ...CONTEUDO_PADRAO.hero, fundo: [enviada(900, 500, "webp")] }).erros["fundo.0.src"]).toBeDefined();
+  });
+});
+
+describe("ajustes da revisao", () => {
+  it("icone sobe sempre em PNG; logo em WebP/PNG; cartao em JPEG", () => {
+    const campos = DESCRITORES.marca.campos;
+    const item = (c: (typeof campos)[keyof typeof campos]) => (c.tipo === "lista" && c.item.tipo === "imagem" ? c.item : null);
+    expect(item(campos.icone)?.envio?.formato).toBe("png");
+    expect(item(campos.logo)?.envio?.formato).toBe("transparente");
+    const cartao = DESCRITORES.compartilhamento.campos.imagem;
+    expect(cartao.tipo === "imagem" && cartao.envio?.formato).toBe("jpeg");
+  });
+
+  it("tipo pela extensao sai da mesma tabela do nome publico", () => {
+    expect(tipoDaImagem("/x/foto.JPEG")).toBe("image/jpeg");
+    expect(tipoDaImagem("/x/foto.jpg?v=2")).toBe("image/jpeg");
+    expect(tipoDaImagem("/x/foto.webp")).toBe("image/webp");
+  });
+
+  it("logo sem arquivo pede o botao que existe na tela", () => {
+    const r = validarSecao("marca", { ...CONTEUDO_PADRAO.marca, logo: [{ src: "", largura: 0, altura: 0, alt: "" }] });
+    expect(r.erros["logo.0.src"]).toMatch(/Escolher arquivo/);
+    const foto = validarSecao("bem-vindo", { ...CONTEUDO_PADRAO["bem-vindo"], imagem: { src: "", largura: 0, altura: 0, alt: "x" } });
+    expect(foto.erros["imagem.src"]).toMatch(/Escolher foto/);
+  });
+
+  it("secoes so de imagem vem marcadas no descritor, e so elas", () => {
+    const soImagem = CHAVES_DE_PAGINA.every((c) => DESCRITORES[c].soImagem);
+    expect(soImagem).toBe(true);
+    expect(DESCRITORES.marca.soImagem && DESCRITORES.compartilhamento.soImagem).toBe(true);
+    expect(DESCRITORES.hero.soImagem).toBeUndefined();
+    expect(DESCRITORES.galeria.soImagem).toBeUndefined();
+  });
+
+  it("original de lista de imagens sem descricao nao vira '1. ' solto", () => {
+    const fundo = DESCRITORES.hero.campos.fundo;
+    expect(textoDoValor(fundo, CONTEUDO_PADRAO.hero.fundo)).toBe("");
+    expect(textoDoValor(DESCRITORES.marca.campos.logo, [])).toMatch(/marca original/);
+    expect(palavrasDoOriginal("pagina-rpg").botao).toBe("Voltar o site às fotos originais");
+    expect(palavrasDoOriginal("marca").botao).toBe("Voltar o site ao original");
+    expect(palavrasDoOriginal("hero").botao).toBe("Voltar o site ao texto original");
+  });
+
+  it("miniatura usa a versao reduzida do otimizador", () => {
+    expect(miniatura("/img/post/a-1x1.webp")).toBe("/_next/image?url=%2Fimg%2Fpost%2Fa-1x1.webp&w=128&q=75");
   });
 });
 

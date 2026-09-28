@@ -34,7 +34,7 @@ descartaria, comendo a borda das letras.
 
 SISTEMA DE COORDENADAS. O TSX continua no mesmo espaco de antes (o master
 antigo, 2036x716), e nao nos pixels do master novo. Isso mantem validos, sem
-tocar em nada, o src/app/icon.svg (que e' um recorte do verde, com estas
+tocar em nada, o public/icon.svg (que e' um recorte do verde, com estas
 coordenadas) e a animacao .marca-vertebra do globals.css. A transformacao
 master->TSX e' um ajuste de minimos quadrados sobre as onze pecas verdes,
 que estao nos dois lados; x e y saem com escalas proprias porque o master nao
@@ -48,7 +48,10 @@ from PIL import Image
 
 MASTER = "assets/marca/podoposture.png"
 SAIDA = "src/components/brand-mark.tsx"
-SAIDA_ICONE = "src/app/icon.svg"
+# Em public/, e nao em src/app/: icone por arquivo em app/ vence o dos metadados,
+# e o painel ("Logo e icone") nao conseguiria mais troca-lo. O layout aponta
+# para /icon.svg quando nenhum icone foi enviado.
+SAIDA_ICONE = "public/icon.svg"
 AZUL, VERDE = "#0E71B4", "#96BF0D"
 
 # Expoente da superelipse dos dois discos, ajustado no perfil do master:
@@ -189,7 +192,7 @@ linhas = [
     " *",
     " * Cor chapada, sem gradiente e sem contorno, porque o master tem duas cores",
     " * e so. As coordenadas seguem no espaco antigo (2036x716), que e' o que",
-    " * src/app/icon.svg recorta; os dois arquivos saem deste mesmo gerador.",
+    " * public/icon.svg recorta; os dois arquivos saem deste mesmo gerador.",
     " *",
     " * Gerado por scripts/gerar-marca.py. Nao editar a mao.",
     " */",
