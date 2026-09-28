@@ -190,8 +190,11 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
   return (
     // Sem backdrop-filter: ele tornaria o header bloco contentor dos
     // descendentes fixed e o drawer mobile nasceria com altura zero.
+    // A partir de 1200px o cabecalho escala pela unidade do conteudo: na
+    // home a do palco do hero, nas internas a da coluna da pagina (ver
+    // "CABECALHO - escala" no globals.css).
     <header
-      className="fixed inset-x-0 top-0 z-50 px-3 pt-4 lg:px-6 lg:pt-6"
+      className={`cab ${pathname === "/" ? "cab-hero" : "cab-pagina"} fixed inset-x-0 top-0 z-50 px-3 pt-4 lg:px-6 lg:pt-6`}
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
@@ -199,8 +202,12 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
           e' chapa opaca por cima dela, nao superficie que ela atravessa. Com a
           camada dentro do header os fios passavam sobre o logo e o menu, ja
           que logo e nav sao estaticos e camada absoluta pinta depois. */}
+      {/* O trilho e' o contentor que mede a janela para o cartao (cqw). E'
+          ele, e nao o <header>, porque contentor vira bloco contentor de
+          descendente fixed, e o drawer (fixed) mora fora dele. */}
+      <div className="cab-trilho">
       <div
-        className={`relative mx-auto flex h-16 max-w-none items-center justify-between rounded-[14px] border bg-paper px-5 transition-[max-width,border-color,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-7 lg:grid lg:h-[74px] lg:grid-cols-[1fr_auto_1fr] lg:px-7 ${
+        className={`cab-cartao relative mx-auto flex h-16 max-w-none items-center justify-between rounded-[14px] border bg-paper px-5 transition-[width,max-width,border-color,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] md:px-7 lg:grid lg:h-[74px] lg:grid-cols-[1fr_auto_1fr] lg:px-7 ${
           rolou
             ? "chapa-rolou border-rule shadow-lift"
             : "chapa-topo border-rule/60 shadow-plate"
@@ -220,7 +227,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
               com 54 e' de 92px. Se o menu ganhar item ou o CTA mudar de
               rotulo, e' o numero de 1024 que tem de ser remedido antes de
               crescer mais. */}
-          <BrandMark className="h-11 w-auto lg:h-12 xl:h-[54px]" />
+          <BrandMark className="cab-marca h-11 w-auto lg:h-12 xl:h-[54px]" />
         </Link>
 
         {/* Desktop */}
@@ -228,11 +235,11 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
           aria-label="Principal"
           className="hidden lg:block lg:justify-self-center"
         >
-          <ul className="flex items-center gap-0 xl:gap-1">
+          <ul className="cab-lista flex items-center gap-0 xl:gap-1">
             <li>
               <Link
                 href={NAV_HOME.href}
-                className="sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
+                className="cab-item sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
                 onMouseEnter={() => setOpen(null)}
               >
                 {NAV_HOME.label}
@@ -253,13 +260,13 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
                     }}
                     onFocus={() => setOpen(group.label)}
                     onClick={() => setOpen(isOpen ? null : group.label)}
-                    className={`sublinha flex items-center gap-1.5 rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] transition-colors duration-[160ms] ${
+                    className={`cab-item sublinha flex items-center gap-1.5 rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] transition-colors duration-[160ms] ${
                       isOpen ? "text-accent" : "text-ink hover:text-accent"
                     }`}
                   >
                     <span
                       aria-hidden="true"
-                      className={`text-[0.5625rem] tracking-[0.16em] xl:text-[0.625rem] transition-colors duration-[160ms] ${
+                      className={`cab-num text-[0.5625rem] tracking-[0.16em] xl:text-[0.625rem] transition-colors duration-[160ms] ${
                         isOpen ? "text-accent" : "text-muted"
                       }`}
                       style={{ fontFamily: "var(--mono)" }}
@@ -272,7 +279,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
                       height="6"
                       viewBox="0 0 9 6"
                       aria-hidden="true"
-                      className={`transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] ${isOpen ? "rotate-180" : ""}`}
+                      className={`cab-seta transition-transform duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] ${isOpen ? "rotate-180" : ""}`}
                     >
                       <path
                         d="M1 1.2 4.5 4.6 8 1.2"
@@ -289,7 +296,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
             <li>
               <Link
                 href={NAV_BLOG.href}
-                className="sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
+                className="cab-item sublinha block rounded-sm px-1.5 py-2 text-[0.875rem] xl:px-3 xl:text-[1rem] text-ink transition-colors duration-[160ms] hover:text-accent"
                 onMouseEnter={() => setOpen(null)}
               >
                 {NAV_BLOG.label}
@@ -309,7 +316,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
           href={contato.whatsapp}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-fill [--fill:var(--color-action)] hidden items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-3 py-2 text-[0.75rem] xl:px-3.5 xl:py-2.5 xl:text-[0.875rem] font-medium whitespace-nowrap text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0 lg:inline-flex lg:justify-self-end"
+          className="cab-cta btn-fill [--fill:var(--color-action)] hidden items-center gap-2 rounded-md border-[1.5px] border-ink/25 px-3 py-2 text-[0.75rem] xl:px-3.5 xl:py-2.5 xl:text-[0.875rem] font-medium whitespace-nowrap text-ink transition-[transform,box-shadow,color,border-color] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] hover:-translate-y-0.5 hover:border-action-deep/30 hover:text-ink-strong hover:shadow-tag active:translate-y-0 lg:inline-flex lg:justify-self-end"
         >
           Falar Sobre o Meu Caso
         </a>
@@ -445,6 +452,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
           className="absolute bottom-0 left-0 h-px w-full origin-left scale-x-0 rounded-b-[14px] bg-accent"
         />
 
+      </div>
       </div>
 
       {/* Drawer mobile */}

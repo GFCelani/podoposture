@@ -498,29 +498,112 @@ body {
 }
 
 /* ===============================================================
-   CABECALHO — largura da chapa.
+   CABECALHO — escala.
 
-   A chapa comeca sempre antes do texto do hero. Ela usa a mesma unidade do
-   palco (ver "HERO - palco"), calculada aqui pela largura da janela, porque
-   o cabecalho e' fixo e nao pode ser contentor (viraria bloco contentor do
-   drawer, que e' fixed). Na referencia, 1536 x 695, a chapa tem 1240px e
-   comeca so um pouco antes do texto, 46px (era 1358, encurtada a pedido); rolada, 1200px, e comeca 26px antes. As duas
-   larguras escalam com u e tem piso (1240 e 1200px; menos que 1240 e' o menu de xl que nao cabe,
-   "Nosso Blog" passa por baixo do botao em 1280): abaixo de u = 1 so o
-   piso vale, e acima a chapa cresce junto com o texto. O piso da rolada e'
-   1200, e nao os 1160 de antes, porque 1160 e' exatamente a coluna de texto
-   das paginas internas (1240 menos 40 de cada lado): a chapa empatava com o
-   texto em vez de comecar antes dele.
-   (100% + 48px) e' a largura da janela: 100% e' a caixa do <header>, que
-   tem 24px de respiro de cada lado em lg.
+   Abaixo de 1200px (telefone, tablet, e o menu completo de 1024 a 1199) o
+   cabecalho fica como sempre foi, com as classes do componente e os tetos
+   de largura abaixo.
+
+   A partir de 1200px ele entra na mesma logica do hero: altura do cartao,
+   marca, navegacao, botao e respiros sao medida-da-referencia (1536 x 695)
+   vezes uma unidade --uc, e a borda esquerda do cartao fica 46uc antes do
+   titulo da pagina, a relacao que a referencia tinha (cartao em 148, titulo
+   em 194). A direita e' simetrica, entao o cartao continua centrado no
+   conteudo. Rolado, ele encolhe 20uc de cada lado (26uc antes do titulo).
+
+   A unidade e' a do conteudo que o cabecalho acompanha:
+   - home (.cab-hero): a do palco do hero, min(largura/1536, altura/695);
+   - paginas internas (.cab-pagina): a coluna delas nao escala (1240px), entao
+     a unidade e' min(1, largura/1536). Um cabecalho escalado como o da home
+     nao caberia na coluna de uma pagina interna em 1920.
+   O titulo da pagina interna fica 40px dentro da coluna de 1240 centrada.
+
+   Pisos so onde a leitura pede: navegacao 13px, numero 9px, botao 12px,
+   marca 40px de altura. Recuo nunca abaixo de 12px da borda.
+
+   100cqw e' a largura do trilho (o cabecalho inteiro, sem a barra de
+   rolagem), a mesma medida que o hero usa. O trilho e' o contentor, e nao o
+   <header>: contentor vira bloco contentor de descendente fixed, e o drawer
+   mobile (fixed) precisa da janela.
    =============================================================== */
-@media (min-width: 1024px) {
+@media (min-width: 1024px) and (max-width: 1199.98px) {
   .chapa-topo {
-    max-width: max(1240px, calc(min((100% + 48px) / 1536, (100svh - 97px) / 598) * 1240));
+    max-width: 1240px;
   }
 
   .chapa-rolou {
-    max-width: max(1200px, calc(min((100% + 48px) / 1536, (100svh - 97px) / 598) * 1200));
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cab {
+    padding: 0;
+  }
+
+  .cab-trilho {
+    container-type: inline-size;
+  }
+
+  .cab-hero .cab-cartao {
+    --uc: min(100cqw / 1536, 100svh / 695);
+    --recuo: calc(max(0px, (100cqw - 1536 * var(--uc)) / 2) + 148 * var(--uc));
+  }
+
+  .cab-pagina .cab-cartao {
+    --uc: min(1px, 100cqw / 1536);
+    --recuo: max(12px, calc(max(0px, (100cqw - 1240px) / 2) + 40px - 46 * var(--uc)));
+  }
+
+  /* min-width: max-content com o column-gap e' a guarda dos pisos: quando
+     eles deixam o conteudo maior que a proporcao (1200px, cartao rolado), o
+     cartao alarga em vez de o menu passar por cima do botao. Na referencia
+     sobra espaco, e nada se move. */
+  .cab-cartao {
+    width: calc(100cqw - 2 * var(--recuo));
+    min-width: max-content;
+    max-width: none;
+    column-gap: calc(20 * var(--uc));
+    height: calc(74 * var(--uc));
+    margin-top: calc(24 * var(--uc));
+    padding-inline: calc(28 * var(--uc));
+    border-radius: calc(14 * var(--uc));
+  }
+
+  .cab-cartao.chapa-rolou {
+    width: calc(100cqw - 2 * (var(--recuo) + 20 * var(--uc)));
+  }
+
+  .cab-marca {
+    height: max(40px, calc(54 * var(--uc)));
+  }
+
+  .cab-lista {
+    gap: calc(4 * var(--uc));
+  }
+
+  .cab-item {
+    padding: calc(8 * var(--uc)) calc(12 * var(--uc));
+    font-size: max(13px, calc(16 * var(--uc)));
+  }
+
+  button.cab-item {
+    gap: calc(6 * var(--uc));
+  }
+
+  .cab-num {
+    font-size: max(9px, calc(10 * var(--uc)));
+  }
+
+  .cab-seta {
+    width: max(8px, calc(9 * var(--uc)));
+    height: max(5px, calc(6 * var(--uc)));
+  }
+
+  .cab-cta {
+    gap: calc(8 * var(--uc));
+    padding: calc(10 * var(--uc)) calc(14 * var(--uc));
+    font-size: max(12px, calc(14 * var(--uc)));
   }
 }
 
@@ -529,8 +612,9 @@ body {
 
    Uma composicao so, a aprovada em 1536 x 695, escalada inteira por uma
    unidade: --u e' quanto 1px daquela tela vale nesta. E' o menor entre a
-   largura do hero sobre 1536 e a altura util da janela (menos os 97px do
-   cabecalho fixo, que nao escala) sobre 598. Toda medida do palco e'
+   largura do hero sobre 1536 e a altura da janela sobre 695. O cabecalho
+   escala pela mesma unidade (ver "CABECALHO - escala"), entao o espaco
+   reservado para ele no topo tambem e' 97u. Toda medida do palco e'
    "medida em 1536 x 695" vezes --u: corpo do titulo, espacos, recuo do
    texto, altura das figuras, vao entre elas, faixa dos rotulos. Por isso
    texto, vao e figuras guardam a mesma proporcao entre si em qualquer tela,
@@ -642,13 +726,13 @@ body {
 
 @media (min-width: 1200px) {
   .hero-palco {
-    --u: min(calc(100cqw / 1536), calc((100svh - 97px) / 598));
+    --u: min(calc(100cqw / 1536), calc(100svh / 695));
     --lado: max(0px, calc((100cqw - 1536 * var(--u)) / 2));
     display: flex;
     align-items: center;
     max-width: none;
-    min-height: max(100svh, calc(97px + 598 * var(--u)));
-    padding: 97px var(--lado) 0 calc(var(--lado) + 194 * var(--u));
+    min-height: max(100svh, calc(695 * var(--u)));
+    padding: calc(97 * var(--u)) var(--lado) 0 calc(var(--lado) + 194 * var(--u));
   }
 
   /* Largura da coluna pela unidade, e nao pela tinta: com a fonte de
