@@ -4,8 +4,9 @@
 #
 # Sempre: tsc, eslint e vitest. Se o commit toca em src/, no CSS ou nos
 # proprios testes de layout, tambem o teste de layout no navegador
-# (e2e/cabecalho.spec.ts): build de producao e as 11 telas da folha de
-# contato. E' ele que impede o cabecalho de voltar a comecar depois do titulo.
+# (e2e/*.spec.ts): build de producao e as 11 telas da folha de contato.
+# Cabecalho antes do titulo, subtitulo do hero em duas linhas, anotacao do
+# mapa no proprio ponto e capas do blog sem vazio na moldura.
 set -e
 
 echo "pre-commit: tsc"
