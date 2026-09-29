@@ -57,7 +57,7 @@ export function PaginaInicial({
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome />
       <main id="conteudo">
         <Hero
           conteudo={conteudo.hero}

@@ -7,8 +7,8 @@ import { SITE_NAME } from "@/lib/site";
 /**
  * A descricao vem da "Descricao para o Google" publicada no painel, a mesma
  * que o layout usa. A leitura nunca lanca e cai no padrao sem banco, entao o
- * manifest continua gerado no build; a publicacao do contato invalida o
- * layout raiz, e o manifest se refaz junto.
+ * manifest continua gerado no build. Ele nao entra no layout raiz: a rota do
+ * painel o revalida pelo proprio caminho, junto com o site.
  */
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const { contato, marca } = await lerConteudoDoSite();
