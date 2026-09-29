@@ -97,6 +97,10 @@ async function nadaGravado(chave: ChaveDeSecao) {
  */
 function revalidarOSite() {
   revalidatePath("/", "layout");
+  // O manifest nao entra no layout: na Vercel ele seguia em cache com o icone
+  // e a descricao antigos (medido em producao). Mesmo motivo do /sitemap.xml
+  // revalidado a parte nas rotas de post.
+  revalidatePath("/manifest.webmanifest");
 }
 
 /** Salva o rascunho (so a previa ve) ou publica (vai ao site e zera o rascunho). */

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
@@ -16,8 +15,21 @@ import { MarcaDoSite } from "./marca-do-site";
  * inteiro em cada pagina.
  */
 /** `logo`: o enviado pelo painel, ou null para a marca desenhada. So ele: o componente e de cliente, e o resto da secao iria junto no HTML. */
-export function SiteHeader({ contato, logo }: { contato: ContatoDoCabecalho; logo: Imagem | null }) {
-  const pathname = usePathname();
+export function SiteHeader({
+  contato,
+  logo,
+  naHome = false,
+}: {
+  contato: ContatoDoCabecalho;
+  logo: Imagem | null;
+  /**
+   * Quem monta a pagina diz se e a home, e nao o endereco. Com `usePathname`,
+   * a home regerada depois de uma publicacao do painel (revalidatePath) saia
+   * com o cabecalho das paginas internas — outra escala da chapa a partir de
+   * 1200 px —, e a previa da home, em /publicar/previa, tambem.
+   */
+  naHome?: boolean;
+}) {
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [rolou, setRolou] = useState(false);
@@ -36,7 +48,7 @@ export function SiteHeader({ contato, logo }: { contato: ContatoDoCabecalho; log
      /#contato continuaria com a ancora no endereco depois de voltar ao topo. */
   const irParaOInicio = useCallback(
     (evento: MouseEvent<HTMLAnchorElement>) => {
-      if (pathname !== "/") return;
+      if (!naHome) return;
       if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) {
         return;
       }
@@ -53,7 +65,7 @@ export function SiteHeader({ contato, logo }: { contato: ContatoDoCabecalho; log
         window.history.replaceState(null, "", window.location.pathname);
       }
     },
-    [pathname],
+    [naHome],
   );
 
   const cancelClose = useCallback(() => {
@@ -197,7 +209,7 @@ export function SiteHeader({ contato, logo }: { contato: ContatoDoCabecalho; log
     // home a do palco do hero, nas internas a da coluna da pagina (ver
     // "CABECALHO - escala" no globals.css).
     <header
-      className={`cab ${pathname === "/" ? "cab-hero" : "cab-pagina"} fixed inset-x-0 top-0 z-50 px-3 pt-4 lg:px-6 lg:pt-6`}
+      className={`cab ${naHome ? "cab-hero" : "cab-pagina"} fixed inset-x-0 top-0 z-50 px-3 pt-4 lg:px-6 lg:pt-6`}
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
