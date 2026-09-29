@@ -27,7 +27,7 @@ import { contatoDoCabecalho, derivarContato } from "@/lib/site";
  * auricular, e ainda trocou a foto de banco da pagina de Neuromodulacao por
  * foto da propria clinica. Nao ha mais PlaceholderFoto em nenhuma pagina.
  *
- * O que sobra sao quatro paginas com foto ilustrativa de acervo livre, que
+ * O que sobra sao cinco paginas com foto ilustrativa de acervo livre, que
  * funcionam mas nao mostram a clinica, e uma foto de atendimento real que
  * existe e esta desligada por falta de autorizacao (ver
  * AGUARDANDO_AUTORIZACAO em ilustracao-da-pagina.ts). Quando as fotos
@@ -75,6 +75,12 @@ const PEDIDOS: Pedido[] = [
   {
     pagina: "Tratamento da Dor",
     foto: "Avaliação da coluna em pé",
+    comPaciente: true,
+    nota: ILUSTRATIVA + " Sem rosto na cena.",
+  },
+  {
+    pagina: "Acupuntura Clínica",
+    foto: "Aplicação das agulhas em consulta, de luva",
     comPaciente: true,
     nota: ILUSTRATIVA + " Sem rosto na cena.",
   },
@@ -358,15 +364,16 @@ export default async function FotosQueFaltam() {
               <Reveal delay={190}>
                 <div className="mt-10 border-t border-rule pt-7 md:mt-0">
                   <h3 className="max-w-[24ch] font-display text-[1.375rem] leading-[1.25] font-medium text-balance text-ink-strong">
-                    As quatro saem na mesma tarde
+                    As cinco saem na mesma tarde
                   </h3>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-ink">
-                    RPG, DTM, dor lombar e avaliação da dor usam a mesma sala e
-                    as mesmas mãos. Com um paciente, uma autorização e meia
-                    hora, as quatro páginas trocam de foto de uma vez.
+                    RPG, DTM, dor lombar, avaliação da dor e acupuntura usam a
+                    mesma sala e as mesmas mãos. Com um paciente, uma
+                    autorização e meia hora, as cinco páginas trocam de foto
+                    de uma vez.
                   </p>
                   <p className="mt-4 max-w-[52ch] text-[1.0625rem] leading-[1.7] text-muted">
-                    Se preferir não envolver paciente, as quatro cenas também
+                    Se preferir não envolver paciente, as cinco cenas também
                     funcionam enquadrando só as mãos e a região tratada.
                   </p>
                 </div>

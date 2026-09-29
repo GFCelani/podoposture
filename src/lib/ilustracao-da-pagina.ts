@@ -64,7 +64,6 @@ const FOTOS: Record<string, Foto> = {
     altura: 1200,
   },
   acupuntura: AGULHAS,
-  "acupuntura-clínica": AGULHAS,
   posturologia: {
     src: `${GALERIA}/avaliacao-postural.webp`,
     alt: "Painel quadriculado usado na avaliação postural, com marcações verticais e horizontais.",
@@ -183,6 +182,17 @@ const FOTOS: Record<string, Foto> = {
     src: "/img/palpacao-da-mandibula.webp",
     alt: "Mão de um profissional apoiada na mandíbula de um rapaz, com os dedos ao longo do queixo, logo abaixo da orelha.",
     legenda: "Imagem ilustrativa: palpação da mandíbula.",
+    largura: 1200,
+    altura: 1500,
+  },
+  /* Ate 2026-09-29 dividia AGULHAS com a pagina de Acupuntura; a cliente nao
+     quer foto repetida e o acervo dela nao tem outra de agulhamento. Licenca
+     Pexels, recorte 4:5 pelo topo do original (4457x6685). */
+  "acupuntura-clínica": {
+    // pexels.com/photo/6193365, Thirdman
+    src: "/img/agulhamento-no-trapezio.webp",
+    alt: "Mão de luva inserindo uma agulha de acupuntura com tubo-guia na parte alta das costas de uma pessoa deitada, perto da nuca.",
+    legenda: "Imagem ilustrativa: agulhamento na região do trapézio, com luva e tubo-guia.",
     largura: 1200,
     altura: 1500,
   },
