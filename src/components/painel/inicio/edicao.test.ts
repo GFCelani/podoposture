@@ -318,9 +318,11 @@ describe("textos para a tela", () => {
     );
     const contato = resumoDaSecao("contato", CONTEUDO_PADRAO.contato);
     expect(contato.startsWith("(21) 99203-5643 · (21) 2255-4845")).toBe(true);
+    // Logo/icone e cartao so tem imagem: a lista mostra a miniatura, e resumo vazio e o certo.
     for (const chave of CHAVES_DE_SECAO) {
       const resumo = resumoDaSecao(chave, CONTEUDO_PADRAO[chave]);
-      expect(resumo.length).toBeGreaterThan(0);
+      if (DESCRITORES[chave].soImagem && !DESCRITORES[chave].pagina) expect(resumo).toBe("");
+      else expect(resumo.length, chave).toBeGreaterThan(0);
       expect(Array.from(resumo).length).toBeLessThanOrEqual(91);
     }
     expect(resumoDaSecao("bem-vindo", CONTEUDO_PADRAO["bem-vindo"]).endsWith("…")).toBe(true);

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { tipoDaImagem } from "@/lib/imagem-webp";
 import { SITE_NAME } from "@/lib/site";
 
 /**
@@ -10,7 +11,8 @@ import { SITE_NAME } from "@/lib/site";
  * layout raiz, e o manifest se refaz junto.
  */
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  const { contato } = await lerConteudoDoSite();
+  const { contato, marca } = await lerConteudoDoSite();
+  const icone = marca.icone[0];
   return {
     name: `${SITE_NAME} — Coluna Vertebral, Dor Crônica`,
     short_name: SITE_NAME,
@@ -20,6 +22,8 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     background_color: "#FBF8F3",
     theme_color: "#0e7bb4",
     lang: "pt-BR",
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
+    icons: icone
+      ? [{ src: icone.src, sizes: `${icone.largura}x${icone.altura}`, type: tipoDaImagem(icone.src) }]
+      : [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
   };
 }

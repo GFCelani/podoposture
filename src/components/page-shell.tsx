@@ -124,7 +124,7 @@ export async function PageShell({
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} />
       <main id="conteudo">
         {/* data-hero: o observador do flutuante procurava "main > section", que
             nesta casca cai na faixa social do rodape; o disco aparecia no topo
@@ -272,7 +272,7 @@ export async function PageShell({
         <SeamRuler />
         <SocialBand titulo={conteudo["redes-secao"].titulo} redes={contato.redes} />
       </main>
-      <SiteFooter contato={contato} />
+      <SiteFooter contato={contato} logos={conteudo.marca} />
       <FloatingWhatsApp whatsapp={contato.whatsapp} />
     </>
   );

@@ -12,6 +12,18 @@
  * WebP num canvas. Pedir `image/webp` devolve um PNG, sem erro nenhum, e o
  * servidor recusava PNG — capa e foto nao subiam de iPhone nem de Mac. Agora o
  * tipo do que voltou e conferido e, se nao for WebP, a imagem sai em JPEG.
+ *
+ * Tres jeitos de preparar, escolhidos pelo campo (`ComoEnviar`):
+ * - "foto": WebP, ou JPEG onde o navegador nao gera WebP. O de sempre.
+ * - "transparente": WebP, ou PNG onde nao ha WebP. Logo e icone: o JPEG do
+ *   Safari pintaria de branco o fundo transparente.
+ * - "jpeg": sempre JPEG. O cartao de compartilhamento: e o formato que toda
+ *   rede social le, e WebP ali ainda falha em alguns aplicativos.
+ * - "png": sempre PNG. O icone da aba: favicon em WebP ainda falha em parte
+ *   dos navegadores e buscadores.
+ * Com `corte`, a imagem e recortada pelo centro na proporcao pedida antes de
+ * reduzir: o cartao sai em 1200 x 630 e o icone quadrado, sem depender de ela
+ * saber recortar.
  */
 
 /** O que o servidor aceita: acima disso ele recusa com 413. */
@@ -41,6 +53,50 @@ export class ErroAoEnviarImagem extends Error {
 }
 
 export type ImagemEnviada = { url: string; largura: number; altura: number };
+
+export type FormatoDoEnvio = "foto" | "transparente" | "jpeg" | "png";
+
+/**
+ * Recorte exato pelo centro. A saida tem `largura` x `altura`; com
+ * `ladoMinimo`, uma imagem menor que isso ainda passa, sem ser ampliada (o
+ * icone de 256 px continua de 256 px), mas nunca menor que `ladoMinimo`.
+ */
+export type CorteDoEnvio = { largura: number; altura: number; ladoMinimo?: number };
+
+export type ComoEnviar = { larguraMaxima: number; formato?: FormatoDoEnvio; corte?: CorteDoEnvio };
+
+/**
+ * A regiao da imagem que o recorte usa (a maior na proporcao pedida, pelo
+ * centro) e o tamanho de saida. null quando a imagem e pequena demais para o
+ * recorte: ampliar entregaria um cartao borrado.
+ */
+export function planoDoCorte(
+  largura: number,
+  altura: number,
+  corte: CorteDoEnvio,
+): { x: number; y: number; l: number; a: number; saidaL: number; saidaA: number } | null {
+  const razao = corte.largura / corte.altura;
+  const l = Math.min(largura, altura * razao);
+  const a = l / razao;
+  if (Math.round(l) < (corte.ladoMinimo ?? corte.largura)) return null;
+  const cabe = l >= corte.largura;
+  return {
+    x: (largura - l) / 2,
+    y: (altura - a) / 2,
+    l,
+    a,
+    saidaL: cabe ? corte.largura : Math.round(l),
+    saidaA: cabe ? corte.altura : Math.round(a),
+  };
+}
+
+/** A frase para a imagem pequena demais para o recorte. */
+export function mensagemDeImagemPequena(corte: CorteDoEnvio): string {
+  const minimo = corte.ladoMinimo ?? corte.largura;
+  return corte.largura === corte.altura
+    ? `A imagem precisa ter pelo menos ${minimo} × ${minimo} pixels. Tente uma maior.`
+    : `A imagem precisa ter pelo menos ${corte.largura} × ${corte.altura} pixels. Tente uma maior.`;
+}
 
 /**
  * Quanto a imagem encolhe. Pela largura, que e o que a coluna do site usa, e
@@ -80,30 +136,39 @@ function paraBlob(tela: HTMLCanvasElement, tipo: string, qualidade: number): Pro
 
 /**
  * Reduz para no maximo `larguraMaxima` pixels de largura (e para o maior lado
- * que o servidor le) e devolve WebP, ou JPEG onde o navegador nao gera WebP.
+ * que o servidor le) e devolve no formato do campo (ver `FormatoDoEnvio`).
  * Nunca aumenta uma imagem menor. Se ainda assim passar de 3 MB, encolhe mais
  * algumas vezes antes de desistir: mandar para o servidor recusar seria a
  * mesma foto voltando com erro.
  */
-export async function prepararImagem(arquivo: File, larguraMaxima: number): Promise<Blob> {
+export async function prepararImagem(arquivo: File, como: ComoEnviar | number): Promise<Blob> {
+  const { larguraMaxima, formato = "foto", corte } = typeof como === "number" ? { larguraMaxima: como } : como;
   const bitmap = await createImageBitmap(arquivo);
   try {
-    let escala = escalaDoEnvio(bitmap.width, bitmap.height, larguraMaxima);
+    // Com corte, a origem e a regiao central na proporcao pedida.
+    const plano = corte ? planoDoCorte(bitmap.width, bitmap.height, corte) : null;
+    if (corte && !plano) throw new ErroAoEnviarImagem(mensagemDeImagemPequena(corte));
+    const origem = plano ?? { x: 0, y: 0, l: bitmap.width, a: bitmap.height, saidaL: bitmap.width, saidaA: bitmap.height };
+
+    let escala = plano ? 1 : escalaDoEnvio(bitmap.width, bitmap.height, larguraMaxima);
     let pronta: Blob | null = null;
     for (let tentativa = 0; tentativa < 5; tentativa += 1) {
-      const largura = Math.max(1, Math.round(bitmap.width * escala));
-      const altura = Math.max(1, Math.round(bitmap.height * escala));
+      const largura = Math.max(1, Math.round(origem.saidaL * escala));
+      const altura = Math.max(1, Math.round(origem.saidaA * escala));
 
       const tela = document.createElement("canvas");
       tela.width = largura;
       tela.height = altura;
       const ctx = tela.getContext("2d");
       if (!ctx) throw new Error("sem contexto de desenho");
-      ctx.drawImage(bitmap, 0, 0, largura, altura);
+      ctx.drawImage(bitmap, origem.x, origem.y, origem.l, origem.a, 0, 0, largura, altura);
 
-      const webp = await paraBlob(tela, "image/webp", 0.82);
-      if (webp.type === "image/webp") {
+      const webp = formato === "jpeg" || formato === "png" ? null : await paraBlob(tela, "image/webp", 0.82);
+      if (webp && webp.type === "image/webp") {
         pronta = webp;
+      } else if (formato === "transparente" || formato === "png") {
+        // PNG guarda a transparencia do logo; o JPEG a pintaria de branco.
+        pronta = await paraBlob(tela, "image/png", 1);
       } else {
         // JPEG nao tem transparencia: sem um fundo pintado ATRAS do desenho, o
         // que era transparente num PNG (um logotipo, por exemplo) sairia preto.
@@ -113,6 +178,11 @@ export async function prepararImagem(arquivo: File, larguraMaxima: number): Prom
         pronta = await paraBlob(tela, "image/jpeg", 0.85);
       }
       if (pronta.size <= TAMANHO_MAXIMO_DO_ENVIO) return pronta;
+      // Com recorte, a medida e contrato (cartao 1200 x 630): encolher daria um
+      // erro de "largura minima" para uma foto grande. Nao acontece com foto
+      // de verdade (1200 x 630 em JPEG fica longe de 3 MB); se acontecer, o
+      // motivo certo e o tamanho.
+      if (plano) throw new ErroAoEnviarImagem("Imagem pesada demais para este campo. Tente outra, em JPG ou PNG.");
       escala *= 0.8;
     }
     return pronta!;
@@ -126,11 +196,12 @@ export async function prepararImagem(arquivo: File, larguraMaxima: number): Prom
  * medidas lidas pelo servidor, ou lanca `ErroAoEnviarImagem` com a mensagem
  * pronta para a tela.
  */
-export async function enviarImagem(arquivo: File, larguraMaxima: number): Promise<ImagemEnviada> {
+export async function enviarImagem(arquivo: File, como: ComoEnviar | number): Promise<ImagemEnviada> {
   let pronta: Blob;
   try {
-    pronta = await prepararImagem(arquivo, larguraMaxima);
-  } catch {
+    pronta = await prepararImagem(arquivo, como);
+  } catch (erro) {
+    if (erro instanceof ErroAoEnviarImagem) throw erro;
     // Formato que o navegador nao decodifica (HEIC fora do Safari, arquivo
     // que nao e imagem): a saida util e pedir outro arquivo.
     throw new ErroAoEnviarImagem("Não foi possível preparar essa imagem. Tente outra, em JPG ou PNG.");

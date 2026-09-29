@@ -16,7 +16,12 @@
  *
  * Toda foto e retrato (proporcao 4:5) — as medidas sao as reais do arquivo,
  * para o navegador reservar o espaco e o CLS continuar zero.
+ *
+ * Desde 2026-09-28 esta tabela e o ORIGINAL: o painel (aba Paginas) troca,
+ * tira e acrescenta fotos por cima dela, e "voltar ao original" volta aqui.
  */
+
+import type { ConteudoDaPagina, FotoDaPagina } from "./conteudo-tipos";
 
 export type Foto = {
   src: string;
@@ -276,20 +281,65 @@ const APOIO_POR_SLUG = new Map(
   Object.entries(APOIO).map(([slug, fotos]) => [slug.normalize("NFC"), fotos]),
 );
 
-export function fotosDeApoio(slug: string): Foto[] | undefined {
-  return APOIO_POR_SLUG.get(slug.normalize("NFC"));
+function paraFotoDaPagina(foto: Foto): FotoDaPagina {
+  return {
+    imagem: { src: foto.src, largura: foto.largura, altura: foto.altura, alt: foto.alt },
+    legenda: foto.legenda,
+  };
 }
 
-export function ilustracaoDaPagina(slug: string): {
+/**
+ * As fotos de hoje de uma pagina, no formato que o painel edita. E o padrao
+ * das secoes "pagina-*" (conteudo-padrao.ts): sem nada publicado, a pagina
+ * sai com exatamente estas fotos, e "voltar ao original" volta a elas.
+ */
+export function fotosOriginaisDaPagina(slug: string): ConteudoDaPagina {
+  const chave = slug.normalize("NFC");
+  const foto = POR_SLUG.get(chave);
+  const apoio = APOIO_POR_SLUG.get(chave) ?? [];
+  return {
+    foto: foto ? [paraFotoDaPagina(foto)] : [],
+    apoio: apoio.map(paraFotoDaPagina),
+    ancoraDoApoio: apoio[0]?.secao ?? "",
+  };
+}
+
+/** O formato do painel de volta ao que a pagina renderiza. */
+function paraFoto(foto: FotoDaPagina, secao?: string): Foto {
+  return {
+    src: foto.imagem.src,
+    alt: foto.imagem.alt,
+    legenda: foto.legenda,
+    largura: foto.imagem.largura,
+    altura: foto.imagem.altura,
+    ...(secao ? { secao } : {}),
+  };
+}
+
+/**
+ * O que a pagina mostra: o glifo (do codigo) e as fotos publicadas no painel
+ * (ou as de hoje, que sao o padrao). Sem foto publicada, o placeholder so
+ * aparece para a pagina que esta em PLACEHOLDERS; foto tirada pelo painel e
+ * escolha dela, e a pagina vai sem moldura.
+ */
+export function ilustracaoDaPagina(
+  slug: string,
+  fotos: ConteudoDaPagina | null,
+): {
   glifo: string;
   foto?: Foto;
   /** Rotulo do placeholder, quando a foto ainda nao existe. */
   placeholder?: string;
+  /** Fotografias de apoio, distribuidas no corpo (ver SecoesDeConteudo). */
+  apoio?: Foto[];
 } {
   const chave = slug.normalize("NFC");
+  const principal = fotos?.foto[0];
+  const apoio = fotos?.apoio ?? [];
   return {
     glifo: `/${chave}`,
-    foto: POR_SLUG.get(chave),
-    placeholder: PLACEHOLDER_POR_SLUG.get(chave),
+    foto: principal ? paraFoto(principal) : undefined,
+    placeholder: principal ? undefined : PLACEHOLDER_POR_SLUG.get(chave),
+    apoio: apoio.length > 0 ? apoio.map((f, i) => paraFoto(f, i === 0 ? fotos?.ancoraDoApoio : undefined)) : undefined,
   };
 }

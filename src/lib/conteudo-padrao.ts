@@ -1,4 +1,10 @@
-import type { ConteudoDoSite } from "./conteudo-tipos";
+import { CHAVES_DE_PAGINA, PAGINAS_COM_FOTOS, type ConteudoDaPagina, type ConteudoDoSite } from "./conteudo-tipos";
+import { fotosOriginaisDaPagina } from "./ilustracao-da-pagina";
+
+/** As fotos de hoje de cada pagina interna, tiradas da tabela de ilustracao-da-pagina.ts. */
+const PAGINAS = Object.fromEntries(
+  CHAVES_DE_PAGINA.map((chave) => [chave, fotosOriginaisDaPagina(PAGINAS_COM_FOTOS[chave].slug)]),
+) as { [K in (typeof CHAVES_DE_PAGINA)[number]]: ConteudoDaPagina };
 
 /**
  * O conteudo do site como ele e hoje, palavra por palavra.
@@ -18,6 +24,8 @@ import type { ConteudoDoSite } from "./conteudo-tipos";
  * - O segundo paragrafo da secao 03 nao tem ponto final no original.
  */
 export const CONTEUDO_PADRAO: ConteudoDoSite = {
+  ...PAGINAS,
+
   contato: {
     whatsapp: "5521992035643",
     telefoneFixo: "552122554845",
@@ -52,6 +60,13 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
       "Osteopatia, posturologia e acupuntura em Copacabana, Rio de Janeiro.",
   },
 
+  /* Listas vazias: o original e a marca desenhada (brand-mark.tsx) e o
+     icone.svg, que nao sao arquivos enviados. */
+  marca: { logo: [], logoEscuro: [], icone: [] },
+
+  /* public/og.png: captura do proprio topo em 1200 x 630. */
+  compartilhamento: { imagem: { src: "/og.png", largura: 1200, altura: 630, alt: "" } },
+
   /* As quebras do titulo e do subtitulo foram escolhidas enumerando as
      particoes possiveis e medidas no corte de display da Newsreader; o
      porque esta em hero.tsx. */
@@ -78,6 +93,9 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
        primeiro toque mostra o nome da regiao, ver mapa-de-dor.tsx). Tres
        linhas escritas: e' a anotacao que aponta a dor ciatica do perfil. */
     convite: ["Clique no", "ponto da", "sua dor"],
+    /* A sala de atendimento, a mesma foto que o topo tinha antes do plano em
+       WebGL (ver hero.tsx). Largura e altura sao as do arquivo. */
+    fundo: [{ src: "/img/clinica-podoposture-5.webp", largura: 2560, altura: 1155, alt: "" }],
   },
 
   "bem-vindo": {

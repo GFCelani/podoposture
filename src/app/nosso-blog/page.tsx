@@ -6,6 +6,7 @@ import { TrilhaJsonLd } from "@/components/json-ld";
 import { PageGrid, SectionMark } from "@/components/layers";
 import { PageShell } from "@/components/page-shell";
 import { Reveal } from "@/components/reveal";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { BLOG_INDEX } from "@/lib/posts";
 import { categoriasDoSite, todosOsPosts } from "@/lib/posts-do-site";
 
@@ -45,6 +46,7 @@ export async function generateMetadata({
   const pagina = Math.max(1, Number(p) || 1);
   const titulo = pagina > 1 ? `${TITULO} — página ${pagina}` : TITULO;
   const url = pagina > 1 ? `${BLOG_INDEX}?p=${pagina}` : BLOG_INDEX;
+  const cartao = (await lerConteudoDoSite()).compartilhamento.imagem;
 
   return {
     title: titulo,
@@ -60,7 +62,7 @@ export async function generateMetadata({
       title: titulo,
       description: DESCRICAO,
       url,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: titulo }],
+      images: [{ url: cartao.src, width: cartao.largura, height: cartao.altura, alt: titulo }],
     },
   };
 }

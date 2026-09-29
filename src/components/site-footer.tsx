@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ContatoDoSite } from "@/lib/site";
-import { BrandMark } from "./brand-mark";
+import { MarcaDoSite, type LogosDoSite } from "./marca-do-site";
 import { PageGrid } from "./layers";
 import { SocialLinks } from "./social-links";
 
@@ -40,7 +40,7 @@ function Rotulo({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SiteFooter({ contato }: { contato: ContatoDoSite }) {
+export function SiteFooter({ contato, logos }: { contato: ContatoDoSite; logos: LogosDoSite }) {
   const { endereco, telefones, email, horario, mapsDirecoes, redes } = contato;
 
   return (
@@ -164,7 +164,7 @@ export function SiteFooter({ contato }: { contato: ContatoDoSite }) {
             nao muda, e e' o que carrega a identidade. A propria cliente ja usa
             a marca em branco por cima de foto no material dela. */}
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <BrandMark tone="deep" className="h-7 w-auto shrink-0" />
+          <MarcaDoSite logos={logos} tom="deep" className="h-7 w-auto shrink-0" />
 
           <div
             className="flex flex-wrap items-center gap-x-8 gap-y-2 text-[0.75rem] tracking-[0.12em] text-on-deep-muted uppercase"

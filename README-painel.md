@@ -1,13 +1,18 @@
 # Painel do site
 
 Uma página com senha, em `/publicar`, para a clínica cuidar do site sem precisar
-de ninguém. Tem três abas:
+de ninguém. Tem quatro abas:
 
 | Aba | Para quê |
 |---|---|
 | **Meu blog** | Escrever, editar, publicar, despublicar e apagar os textos do blog — os 69 do site antigo e os novos — e gerir os temas |
-| **Página inicial** | Trocar textos, listas, botões e fotos da home, com prévia antes de publicar |
+| **Página inicial** | Trocar textos, listas, botões e fotos da home — inclusive a foto de fundo do topo —, o logo, o ícone da aba e a imagem de compartilhamento, com prévia antes de publicar |
+| **Páginas** | Trocar, tirar e pôr as fotos das 17 páginas internas (a do lado do título e até 3 no meio do texto), com prévia da própria página |
 | **Números** | Ver quantas pessoas leram o site, de onde vieram e quais buscas no Google trouxeram gente |
+
+Toda imagem do site passa pelo painel. Ficam no código só os desenhos (as
+figuras do corpo, os ícones dos serviços, as linhas do fundo) e a página
+Contato, que no lugar da foto tem o mapa.
 
 O endereço não aparece em menu, rodapé nem sitemap, e está bloqueado no
 `robots.txt`. Isso evita que ele apareça numa busca, mas **não é o que protege**.
@@ -29,7 +34,7 @@ configuração. A lista completa, com o porquê de cada uma, está em
 | Variável | Liga | Sem ela |
 |---|---|---|
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | A entrada no painel | Ninguém entra; o painel diz que não foi configurado |
-| `DATABASE_URL` | O blog no banco (textos do site antigo e novos, editáveis), temas, imagens enviadas, edição da página inicial, números guardados | O blog mostra os textos do arquivo do repositório e a home mostra o texto padrão; as abas explicam que falta o banco |
+| `DATABASE_URL` | O blog no banco (textos do site antigo e novos, editáveis), temas, imagens enviadas, edição da página inicial e das fotos das páginas, logo, ícone e cartão de compartilhamento, números guardados | O blog mostra os textos do arquivo do repositório e a home mostra o texto padrão; as abas explicam que falta o banco |
 | `CRON_SECRET` | A coleta diária dos números (`/api/cron/numeros`) e a renovação diária do cache do site. **Cadastre assim que houver `DATABASE_URL`**, mesmo sem ligar os números | A coleta recusa todo pedido, inclusive o da Vercel. E uma página que tenha ido ao cache com o texto padrão durante uma queda do banco só se refaz na próxima publicação ou deploy |
 | `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` (opcional) | Visitas na aba Números | A aba diz "a contagem de visitas ainda não foi ligada", nunca "0 visitas" |
 | `GSC_SERVICE_ACCOUNT`, `GSC_SITE_URL` | Buscas no Google na aba Números | A aba diz "as buscas no Google ainda não foram ligadas" |
@@ -201,6 +206,37 @@ textos cada um tem. Dá para criar, renomear e apagar.
    que foi publicado naquela seção, na hora; ele só aparece quando o publicado
    difere do original.
 
+### Páginas
+
+1. Escolhe a página na lista, que mostra as fotos que estão no ar.
+2. **Foto ao lado do título**: troca, tira (a página passa a abrir sem moldura)
+   ou põe de volta. Cada foto pede uma descrição (lida para quem não enxerga) e
+   a legenda curta que aparece embaixo dela.
+3. **Fotos no meio do texto**: até 3, que entram juntas — a primeira grande, em
+   paisagem, e as outras menores, em retrato. Ela escolhe ao lado de qual
+   trecho do texto elas ficam, ou deixa a escolha automática.
+4. **Ver como vai ficar** abre a própria página com as fotos novas; publicar
+   pede a confirmação, como na página inicial. **Voltar o site às fotos
+   originais** traz de volta as fotos de antes de uma vez.
+
+### Logo, ícone e compartilhamento (na aba Página inicial)
+
+- **Logo**: aparece no cabeçalho e no rodapé. Vale PNG com fundo transparente.
+  Ele ocupa exatamente o espaço da marca de hoje; um logo mais largo aparece
+  menor, sem empurrar o menu. Sem a versão para fundo escuro, o rodapé mostra o
+  logo todo em branco.
+- **Ícone da aba**: é recortado em quadrado, pelo centro, na hora do envio.
+- **Imagem de compartilhamento**: é recortada em 1200 × 630 e enviada em JPEG,
+  o formato que o WhatsApp e as redes leem. Vale para o site inteiro; os textos
+  do blog com capa própria continuam usando a capa. A prévia mostra como o link
+  aparece numa conversa.
+- Sem nada enviado, o site usa a marca desenhada, o ícone original e o cartão
+  de sempre (`public/og.png`). "Voltar o site ao original" volta a eles.
+
+No Safari, que não gera WebP, o painel manda o logo e o ícone em PNG (para não
+perder a transparência) e as fotos em JPEG. O servidor confere o formato e as
+medidas pelos próprios bytes do arquivo.
+
 ### Números
 
 Abre a aba e a resposta está no primeiro quadro: quantas pessoas leram, de onde
@@ -229,6 +265,8 @@ seção reabre sozinho.
 | Texto ou botão da home quebrar a página | O servidor valida cada seção: limite por campo, destino só entre as páginas do site ou o WhatsApp, medida da foto tirada do arquivo e não do navegador |
 | Script malicioso dentro de um texto | O texto do blog é Markdown e a conversão não produz HTML executável |
 | Rastreador de terceiro dentro de um texto | Só imagem hospedada aqui vira imagem na página |
+| Arquivo que não é imagem enviado como foto, logo ou ícone | O servidor reconhece WebP, JPEG e PNG pelos próprios bytes, exige o arquivo inteiro bem-formado (nada anexado depois do fim) e lê as medidas dele. SVG não é aceito: ele pode carregar script |
+| Foto, logo ou cartão apontando para fora do site | Só vale imagem enviada pelo painel ou uma das fotos originais do site; qualquer outro endereço é recusado |
 | Consulta ao banco montada com texto de fora | Toda consulta é parametrizada |
 | Banco fora do ar derrubar o site, ou mostrar texto velho | A página que já estava pronta continua no ar; a que não estava responde erro, que não vai para o cache, até o banco voltar. Nunca a versão antiga de um texto editado nem um texto apagado. Uma conexão que caiu ganha uma segunda tentativa; depois de uma falha real, as leituras do site param de tentar o banco por 15 segundos (60 no build). Deploy com o banco fora falha, e a Vercel mantém o anterior no ar. A home serve o texto padrão |
 | O painel sujar os números | A medição de visitas descarta tudo que começa com `/publicar` |

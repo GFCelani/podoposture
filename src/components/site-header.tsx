@@ -6,14 +6,17 @@ import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
 import type { ContatoDoCabecalho } from "@/lib/site";
-import { BrandMark } from "./brand-mark";
+import type { Imagem } from "@/lib/conteudo-tipos";
+
+import { MarcaDoSite } from "./marca-do-site";
 
 /**
  * Componente de cliente: o contato chega pronto por prop, do servidor que leu
  * o banco. So o pedaco que o menu usa, para nao mandar ao navegador o cadastro
  * inteiro em cada pagina.
  */
-export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
+/** `logo`: o enviado pelo painel, ou null para a marca desenhada. So ele: o componente e de cliente, e o resto da secao iria junto no HTML. */
+export function SiteHeader({ contato, logo }: { contato: ContatoDoCabecalho; logo: Imagem | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
@@ -227,7 +230,7 @@ export function SiteHeader({ contato }: { contato: ContatoDoCabecalho }) {
               com 54 e' de 92px. Se o menu ganhar item ou o CTA mudar de
               rotulo, e' o numero de 1024 que tem de ser remedido antes de
               crescer mais. */}
-          <BrandMark className="cab-marca h-11 w-auto lg:h-12 xl:h-[54px]" />
+          <MarcaDoSite logos={{ logo: logo ? [logo] : [], logoEscuro: [] }} className="cab-marca h-11 w-auto lg:h-12 xl:h-[54px]" />
         </Link>
 
         {/* Desktop */}

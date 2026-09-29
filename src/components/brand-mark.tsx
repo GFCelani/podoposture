@@ -12,7 +12,7 @@
  *
  * Cor chapada, sem gradiente e sem contorno, porque o master tem duas cores
  * e so. As coordenadas seguem no espaco antigo (2036x716), que e' o que
- * src/app/icon.svg recorta; os dois arquivos saem deste mesmo gerador.
+ * public/icon.svg recorta; os dois arquivos saem deste mesmo gerador.
  *
  * Gerado por scripts/gerar-marca.py. Nao editar a mao.
  */

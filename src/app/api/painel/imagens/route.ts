@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { lerBytesLimitados } from "@/lib/corpo";
 import { exigirSessao } from "@/lib/guarda";
 import { dimensoesDoJpeg } from "@/lib/imagem-jpeg";
+import { dimensoesDoPng } from "@/lib/imagem-png";
 import { dimensoesDoWebp, nomeDoArquivo, type Dimensoes, type TipoDeImagem } from "@/lib/imagem-webp";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { bancoConfigurado, guardarImagem, registrarAuditoria } from "@/lib/painel-db";
@@ -13,11 +14,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Recebe uma imagem enviada pelo painel (capa, foto no texto, foto da home).
+ * Recebe uma imagem enviada pelo painel (capa, foto no texto, foto da home e
+ * das paginas, logo, icone, cartao de compartilhamento).
  *
  * O navegador ja manda a imagem pronta: o painel decodifica, reduz a largura e
  * converte para WebP antes de enviar (`src/lib/preparar-imagem.ts`). Onde o
- * navegador nao sabe gerar WebP — o Safari —, ele manda JPEG. Isso tira do
+ * navegador nao sabe gerar WebP — o Safari —, ele manda JPEG, ou PNG nos campos
+ * que precisam de transparencia (logo e icone). Isso tira do
  * servidor a necessidade de processar imagem — nada de `sharp` numa funcao
  * serverless — e faz o arquivo que trafega ser o mesmo que sera servido.
  *
@@ -35,6 +38,8 @@ function reconhecer(bytes: Uint8Array): (Dimensoes & { tipo: TipoDeImagem }) | n
   if (webp) return { ...webp, tipo: "image/webp" };
   const jpeg = dimensoesDoJpeg(bytes);
   if (jpeg) return { ...jpeg, tipo: "image/jpeg" };
+  const png = dimensoesDoPng(bytes);
+  if (png) return { ...png, tipo: "image/png" };
   return null;
 }
 

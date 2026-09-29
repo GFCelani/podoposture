@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import {
+  CHAVES_DE_PAGINA,
   CHAVES_DE_SECAO,
   DESCRITORES,
   IMAGENS_DO_SITE,
@@ -21,6 +22,7 @@ import {
   type ChaveDeSecao,
   type Imagem,
 } from "./conteudo-tipos";
+import { dimensoesDoPng } from "./imagem-png";
 import { dimensoesDoWebp } from "./imagem-webp";
 import { NAV_BLOG, NAV_GROUPS } from "./nav";
 import { PREFIXO_IMAGEM } from "./painel-tipos";
@@ -275,7 +277,7 @@ describe("imagem so do site ou enviada pelo painel", () => {
       "/img/outra.webp",
       "https://exemplo.com/foto.webp",
       "/img/post/../../../etc/passwd",
-      `/img/post/${RESUMO}-1200x1500.png`,
+      `/img/post/${RESUMO}-1200x1500.gif`,
       "javascript:alert(1)",
       "",
     ]) {
@@ -307,7 +309,7 @@ describe("imagem so do site ou enviada pelo painel", () => {
   it("a medida de cada foto do site e a do arquivo de verdade", () => {
     for (const [src, medida] of Object.entries(IMAGENS_DO_SITE)) {
       const bytes = new Uint8Array(readFileSync(join(RAIZ, "public", src)));
-      expect(dimensoesDoWebp(bytes), src).toEqual(medida);
+      expect(src.endsWith(".png") ? dimensoesDoPng(bytes) : dimensoesDoWebp(bytes), src).toEqual(medida);
     }
   });
 
@@ -318,6 +320,11 @@ describe("imagem so do site ou enviada pelo painel", () => {
       CONTEUDO_PADRAO.abordagem.imagem,
       ...CONTEUDO_PADRAO.tratamentos.cartoes.map((c) => c.imagem),
       ...CONTEUDO_PADRAO.galeria.fotos,
+      ...CONTEUDO_PADRAO.hero.fundo,
+      CONTEUDO_PADRAO.compartilhamento.imagem,
+      ...CHAVES_DE_PAGINA.flatMap((chave) =>
+        [...CONTEUDO_PADRAO[chave].foto, ...CONTEUDO_PADRAO[chave].apoio].map((f) => f.imagem),
+      ),
     ];
     for (const foto of fotos) {
       expect(IMAGENS_DO_SITE[foto.src], foto.src).toEqual({ largura: foto.largura, altura: foto.altura });

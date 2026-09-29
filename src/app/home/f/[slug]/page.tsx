@@ -8,6 +8,7 @@ import { PageShell } from "@/components/page-shell";
 import { PostsRelacionados } from "@/components/relacionados";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { medidaDaCapa, ogDaCapa } from "@/lib/capa";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
 import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
 
@@ -56,7 +57,7 @@ export async function generateMetadata({
   /* O cartao de compartilhamento ja vem em 1200x630 (ver lib/capa.ts). A
      capa crua era recortada pela rede social para 1.91:1, e o recorte
      cortava o texto da arte. */
-  const og = ogDaCapa(post.capa || undefined);
+  const og = ogDaCapa(post.capa || undefined, (await lerConteudoDoSite()).compartilhamento.imagem.src);
 
   return {
     title: post.titulo,
@@ -114,6 +115,7 @@ export default async function PostDoBlog({
         caminho={caminho}
         dataISO={post.dataISO}
         imagem={post.capa || undefined}
+        reserva={(await lerConteudoDoSite()).compartilhamento.imagem.src}
       />
 
       <PageShell

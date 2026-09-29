@@ -19,11 +19,13 @@ import {
   ehChaveDeSecao,
   type AlvoDoDescarte,
   type Campo,
+  type CampoImagem,
   type ChaveDeSecao,
   type Destino,
   type ErrosDeCampo,
   type EstadoDaSecao,
 } from "../../../lib/conteudo-tipos";
+import type { ComoEnviar } from "../../../lib/preparar-imagem";
 import type { Armazem } from "../../../lib/recado-do-editor";
 
 export type DadosEmEdicao = Record<string, unknown>;
@@ -111,6 +113,8 @@ export function valorVazio(campo: Campo): unknown {
       return Object.fromEntries(Object.entries(campo.campos).map(([nome, sub]) => [nome, valorVazio(sub)]));
     case "imagem":
       return { src: "", largura: 0, altura: 0, alt: "" };
+    case "escolha":
+      return campo.opcoes[0]?.valor ?? "";
     case "destino":
       return campo.aceita.includes("pagina") ? { tipo: "pagina", slug: "" } : { tipo: campo.aceita[0] };
   }
@@ -270,6 +274,57 @@ export function larguraDoEnvio(chave: ChaveDeSecao): number {
   return chave === "hero" || chave === "galeria" ? 2000 : 1600;
 }
 
+/**
+ * Como preparar o arquivo deste campo: o que o descritor pede (logo com
+ * transparencia, cartao em JPEG recortado, fundo do topo mais largo) ou, sem
+ * pedido, a foto comum na largura da secao.
+ */
+export function comoEnviarDoCampo(chave: ChaveDeSecao, campo: CampoImagem): ComoEnviar {
+  return campo.envio ?? { larguraMaxima: larguraDoEnvio(chave) };
+}
+
+/**
+ * Posicao do item na lista mais proxima do caminho ("apoio.1.imagem" -> 1), ou
+ * null fora de lista. O recorte das fotos de apoio muda do 2o item em diante.
+ */
+export function posicaoNaLista(caminho: string): number | null {
+  const partes = caminho.split(".");
+  for (let i = partes.length - 1; i >= 0; i -= 1) {
+    if (/^\d+$/.test(partes[i])) return Number(partes[i]);
+  }
+  return null;
+}
+
+/** Proporcao da previa da foto no editor: a do recorte que o site aplica naquela posicao. */
+export function proporcaoDaPrevia(campo: CampoImagem, caminho: string, largura: number, altura: number): string {
+  const recorte = campo.recorte;
+  if (recorte) {
+    const posicao = posicaoNaLista(caminho);
+    const depois = recorte.proporcaoDepoisDoPrimeiro;
+    return String(depois !== undefined && posicao !== null && posicao > 0 ? depois : recorte.proporcao);
+  }
+  return largura > 0 && altura > 0 ? `${largura} / ${altura}` : "4 / 3";
+}
+
+/**
+ * Endereco da miniatura: a foto reduzida pelo otimizador do Next, e nao o
+ * arquivo inteiro. A lista de paginas mostra ~20 fotos de 1200 px em 56 px de
+ * altura, e no celular dela isso eram varios MB.
+ */
+export function miniatura(src: string, largura: 128 | 256 = 128): string {
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${largura}&q=75`;
+}
+
+/** As fotos dentro de um valor (lista de fotos, grupo com foto), para mostrar o original. */
+export function fotosDoValor(campo: Campo, valor: unknown): string[] {
+  if (campo.tipo === "imagem") return ehObjeto(valor) && typeof valor.src === "string" && valor.src ? [valor.src] : [];
+  if (campo.tipo === "lista") return Array.isArray(valor) ? valor.flatMap((item) => fotosDoValor(campo.item, item)) : [];
+  if (campo.tipo === "grupo") {
+    return ehObjeto(valor) ? Object.entries(campo.campos).flatMap(([nome, sub]) => fotosDoValor(sub, valor[nome])) : [];
+  }
+  return [];
+}
+
 /* ------------------------------------------------------ textos para a tela */
 
 function linhaUnica(texto: string): string {
@@ -295,6 +350,8 @@ export function textoDoValor(campo: Campo, valor: unknown): string {
       return Array.isArray(valor) ? valor.filter((l) => typeof l === "string").join("\n") : "";
     case "destino":
       return rotuloDoDestino(valor);
+    case "escolha":
+      return campo.opcoes.find((o) => o.valor === valor)?.rotulo ?? "";
     case "imagem":
       return ehObjeto(valor) && typeof valor.alt === "string" ? valor.alt : "";
     case "grupo": {
@@ -307,10 +364,19 @@ export function textoDoValor(campo: Campo, valor: unknown): string {
         .filter(Boolean)
         .join(" · ");
     }
-    case "lista":
-      return Array.isArray(valor)
-        ? valor.map((item, i) => `${i + 1}. ${linhaUnica(textoDoValor(campo.item, item))}`).join("\n")
-        : "";
+    case "lista": {
+      if (!Array.isArray(valor)) return "";
+      if (valor.length === 0 && campo.vazio) return campo.vazio;
+      // Item sem texto (logo, fundo do topo: imagem sem descricao) nao vira um
+      // "1. " solto: a foto dele ja aparece ao lado.
+      return valor
+        .map((item, i) => {
+          const texto = linhaUnica(textoDoValor(campo.item, item));
+          return texto ? `${i + 1}. ${texto}` : "";
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
   }
 }
 
@@ -340,7 +406,7 @@ export function resumoDaSecao(chave: ChaveDeSecao, dados: unknown, max = 90): st
       if (Array.isArray(valor) && valor.length > 0) juntar(campo.item, valor[0]);
       return;
     }
-    if (campo.tipo === "imagem" || campo.tipo === "destino" || campo.tipo === "numero") return;
+    if (campo.tipo === "imagem" || campo.tipo === "destino" || campo.tipo === "numero" || campo.tipo === "escolha") return;
     const texto = linhaUnica(textoDoValor(campo, valor));
     if (texto) partes.push(texto);
   };
@@ -349,6 +415,54 @@ export function resumoDaSecao(chave: ChaveDeSecao, dados: unknown, max = 90): st
 }
 
 export type MarcaDeEstado = { texto: string; tom: "original" | "alterado" | "pendente" };
+
+/**
+ * Como a tela chama o original da secao. Nas secoes de texto e "o texto
+ * original"; nas so de imagem (fotos das paginas, logo e icone, cartao) falar
+ * em texto confunde: la o que volta e a foto de antes, ou a marca desenhada.
+ */
+export type PalavrasDoOriginal = {
+  /** Marca da lista ("Texto original"). */
+  marca: string;
+  /** Botao que tira o publicado ("Voltar o site ao texto original"). */
+  botao: string;
+  /** Aviso depois de voltar ("O texto original voltou ao site."). */
+  voltou: string;
+  /** Comeco da confirmacao ("O texto original desta seção volta"). */
+  volta: string;
+  /** Estado ja no original ("o site já está com o texto original"). */
+  jaEsta: string;
+};
+
+const PALAVRAS_DE_TEXTO: PalavrasDoOriginal = {
+  marca: "Texto original",
+  botao: "Voltar o site ao texto original",
+  voltou: "O texto original voltou ao site.",
+  volta: "O texto original desta seção volta",
+  jaEsta: "o site já está com o texto original",
+};
+
+export function palavrasDoOriginal(chave: ChaveDeSecao): PalavrasDoOriginal {
+  if (DESCRITORES[chave].pagina) {
+    return {
+      marca: "Fotos originais",
+      botao: "Voltar o site às fotos originais",
+      voltou: "As fotos originais voltaram ao site.",
+      volta: "As fotos originais desta página voltam",
+      jaEsta: "o site já está com as fotos originais",
+    };
+  }
+  if (DESCRITORES[chave].soImagem) {
+    return {
+      marca: "Original",
+      botao: "Voltar o site ao original",
+      voltou: "O original voltou ao site.",
+      volta: "O original desta seção volta",
+      jaEsta: "o site já está com o original",
+    };
+  }
+  return PALAVRAS_DE_TEXTO;
+}
 
 const DATA = new Intl.DateTimeFormat("pt-BR", {
   day: "numeric",
@@ -367,14 +481,18 @@ function data(iso: string | null): string | null {
  * O estado da secao em palavras. "Alterado" so quando o que esta no ar difere
  * do original: publicar sem mudar nada nao pode marcar a secao como mexida.
  */
-export function estadoEmPalavras(estado: EstadoDaSecao<unknown>, temCopiaLocal: boolean): MarcaDeEstado[] {
+export function estadoEmPalavras(
+  estado: EstadoDaSecao<unknown>,
+  temCopiaLocal: boolean,
+  palavras: PalavrasDoOriginal = PALAVRAS_DE_TEXTO,
+): MarcaDeEstado[] {
   const marcas: MarcaDeEstado[] = [];
   const noAr = estado.publicado ?? estado.padrao;
   if (estado.publicado !== null && JSON.stringify(estado.publicado) !== JSON.stringify(estado.padrao)) {
     const quando = data(estado.publicadoEm);
     marcas.push({ texto: quando ? `Alterado em ${quando}` : "Alterado", tom: "alterado" });
   } else {
-    marcas.push({ texto: "Texto original", tom: "original" });
+    marcas.push({ texto: palavras.marca, tom: "original" });
   }
   if (estado.rascunho !== null && JSON.stringify(estado.rascunho) !== JSON.stringify(noAr)) {
     marcas.push({ texto: "Rascunho não publicado", tom: "pendente" });
@@ -411,7 +529,7 @@ export function explicacaoDePublicar(chave: ChaveDeSecao): string {
  * como fica — e precisa dizer isso, e onde, como a de publicar diz.
  */
 export function explicacaoDeVoltarAoOriginal(chave: ChaveDeSecao): string {
-  return `O texto original desta seção volta ao site agora, sem ver antes como fica: ${ondeAparece(chave)}. O que está publicado sai do ar. Para confirmar, clique outra vez em “Confirmar e voltar ao original”.`;
+  return `${palavrasDoOriginal(chave).volta} ao site agora, sem ver antes como fica: ${ondeAparece(chave)}. O que está publicado sai do ar. Para confirmar, clique outra vez em “Confirmar e voltar ao original”.`;
 }
 
 /** A aba de como vai ficar mostra so o rascunho desta secao (o resto como esta no site). */
@@ -478,17 +596,18 @@ export function respostaAoConflito(
   alvo: AlvoDoDescarte | null,
   secaoNova: EstadoDaSecao<unknown> | null = null,
   comAlteracao = false,
+  palavras: PalavrasDoOriginal = PALAVRAS_DE_TEXTO,
 ): { aviso: string } {
   const mudou = "Esta seção mudou em outra janela ou aparelho depois que você a abriu.";
   const suaMudanca = comAlteracao ? " O que você mudou nesta tela continua aqui, por cima da versão nova." : "";
   if (alvo === "publicado") {
     if (secaoNova && !publicadoDiferenteDoPadrao(secaoNova)) {
       return {
-        aviso: `${mudou} Nada foi feito agora por aqui: o site já está com o texto original, e o editor já mostra essa versão.${suaMudanca}`,
+        aviso: `${mudou} Nada foi feito agora por aqui: ${palavras.jaEsta}, e o editor já mostra essa versão.${suaMudanca}`,
       };
     }
     return {
-      aviso: `${mudou} Nada foi feito agora por aqui: o site mostra a versão que a outra janela deixou, e o editor já mostra essa versão.${suaMudanca} Confira e, se ainda quiser, clique de novo em “Voltar o site ao texto original”.`,
+      aviso: `${mudou} Nada foi feito agora por aqui: o site mostra a versão que a outra janela deixou, e o editor já mostra essa versão.${suaMudanca} Confira e, se ainda quiser, clique de novo em “${palavras.botao}”.`,
     };
   }
   if (alvo === "rascunho") {
@@ -632,12 +751,24 @@ export function deixarSecaoParaReabrir(armazem: Armazem | null, chave: ChaveDeSe
   }
 }
 
-/** Le e apaga. */
-export function tomarSecaoParaReabrir(armazem: Armazem | null): ChaveDeSecao | null {
+/**
+ * Le e apaga. Com `daAba`, so toma a secao que a aba reconhece: as abas
+ * "Pagina inicial" e "Paginas" montam juntas depois da senha, e a primeira a
+ * ler apagaria o recado da outra.
+ */
+export function tomarSecaoParaReabrir(
+  armazem: Armazem | null,
+  daAba: (chave: ChaveDeSecao) => boolean = () => true,
+): ChaveDeSecao | null {
   try {
     const valor = armazem?.getItem(CHAVE_DE_REABRIR) ?? null;
+    if (!valor || !ehChaveDeSecao(valor)) {
+      armazem?.removeItem(CHAVE_DE_REABRIR);
+      return null;
+    }
+    if (!daAba(valor)) return null;
     armazem?.removeItem(CHAVE_DE_REABRIR);
-    return valor && ehChaveDeSecao(valor) ? valor : null;
+    return valor;
   } catch {
     return null;
   }

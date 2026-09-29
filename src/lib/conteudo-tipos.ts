@@ -1,4 +1,5 @@
 import { lerNomeDoArquivo } from "./imagem-webp";
+import type { ComoEnviar } from "./preparar-imagem";
 import { linhaCabeNoTopo, ocupacaoNoTopo } from "./largura-do-titulo";
 
 /**
@@ -67,6 +68,8 @@ export type ConteudoHero = {
   botoes: Botao[];
   /** Anotacao que aponta um ponto do mapa de dor, em tres linhas escritas. */
   convite: string[];
+  /** A fotografia apagada atras do titulo. Vazia = so o azul e a trama. */
+  fundo: Imagem[];
 };
 
 export type ConteudoBemVindo = { titulo: string; paragrafo: string; local: string; imagem: Imagem };
@@ -109,9 +112,239 @@ export type ConteudoBlogSecao = { titulo: string };
 export type ConteudoGaleria = { titulo: string; fotos: Imagem[] };
 export type ConteudoRedesSecao = { titulo: string };
 
+/**
+ * Logo e icone. Lista vazia = a marca desenhada em codigo (brand-mark.tsx) e o
+ * icone de app/icon.svg: o original nao e um arquivo que ela possa reenviar.
+ */
+export type ConteudoMarca = { logo: Imagem[]; logoEscuro: Imagem[]; icone: Imagem[] };
+
+/** O cartao que as redes mostram ao compartilhar um link do site (1200 x 630). */
+export type ConteudoCompartilhamento = { imagem: Imagem };
+
+/** Foto de pagina interna: a imagem e a linha em mono embaixo dela. */
+export type FotoDaPagina = { imagem: Imagem; legenda: string };
+
+/**
+ * As fotos de uma pagina interna: a da moldura ao lado do titulo (0 ou 1) e as
+ * de apoio no meio do texto (0 a 3), que entram juntas ao lado do trecho
+ * `ancoraDoApoio` ("" = onde o plano da pagina escolher; ver secoes-de-conteudo).
+ */
+export type ConteudoDaPagina = { foto: FotoDaPagina[]; apoio: FotoDaPagina[]; ancoraDoApoio: string };
+
+/* ------------------------------------------------------ paginas internas */
+
+/** Um titulo do texto da pagina ao lado do qual as fotos de apoio podem entrar. */
+export type TrechoDaPagina = { id: string; titulo: string };
+
+/**
+ * As paginas internas com fotos editaveis, na ordem do menu. /contato fica de
+ * fora: la o lado do titulo e o mapa, e a pagina nao tem texto corrido.
+ *
+ * A chave e ASCII e sem "+" de proposito: ela vai para a URL da rota do painel
+ * e para o banco, e os slugs acentuados so existem pelo rewrite do middleware.
+ *
+ * `trechos` sao os titulos que de fato recebem as fotos (secao com corpo e
+ * fora de um par de listas, ver `planejar`). Escritos aqui, e nao lidos de
+ * pages.json, porque este arquivo vai para o navegador; o teste confere que
+ * continuam iguais ao que a pagina renderiza.
+ */
+export const CHAVES_DE_PAGINA = [
+  "pagina-tratamento-da-dor",
+  "pagina-dor-lombar-cronica",
+  "pagina-tratamento-do-zumbido",
+  "pagina-tratamento-da-dtm",
+  "pagina-osteopatia",
+  "pagina-posturologia",
+  "pagina-rpg",
+  "pagina-acupuntura",
+  "pagina-acupuntura-clinica",
+  "pagina-flexo-distracao",
+  "pagina-neuromodulacao",
+  "pagina-metodo-posture",
+  "pagina-baropodometria",
+  "pagina-palmilhas-personalizadas",
+  "pagina-quem-somos",
+  "pagina-responsavel-tecnica",
+  "pagina-curriculo-profissional",
+] as const;
+
+export type ChaveDePagina = (typeof CHAVES_DE_PAGINA)[number];
+
+export const PAGINAS_COM_FOTOS: Readonly<Record<ChaveDePagina, { slug: string; trechos: readonly TrechoDaPagina[] }>> = {
+  "pagina-tratamento-da-dor": {
+    slug: "tratamento-da-dor",
+    trechos: [
+      { id: "para-quem-e-indicado", titulo: "PARA QUEM É INDICADO ?" },
+      { id: "onde-esta-a-sua-dor", titulo: "ONDE ESTÁ A SUA DOR?" },
+      { id: "programa-de-tratamento", titulo: "PROGRAMA DE TRATAMENTO" },
+    ],
+  },
+  "pagina-dor-lombar-cronica": {
+    slug: "dor-lombar-crônica",
+    trechos: [
+      { id: "tratamento-sem-cirurgia-em-copacabana-para-aliviar-a-dor-e-volta", titulo: "Tratamento sem cirurgia em Copacabana para aliviar a dor e voltar a se movimentar com segurança." },
+      { id: "voce-sente-algo-assim-no-dia-a-dia", titulo: "Você sente algo assim no dia a dia?" },
+      { id: "como-avaliamos-a-dor-lombar", titulo: "Como avaliamos a dor lombar" },
+      { id: "como-tratamos-a-dor-lombar-na-pratica", titulo: "Como tratamos a dor lombar na prática" },
+      { id: "resultados-reais-de-pacientes-com-dor-lombar", titulo: "Resultados reais de pacientes com dor lombar" },
+      { id: "nao-espere-a-dor-piorar-para-buscar-ajuda", titulo: "Não espere a dor piorar para buscar ajuda" },
+      { id: "se-a-dor-nao-melhora-e-hora-de-tratar-a-causa", titulo: "Se a dor não melhora, é hora de tratar a causa" },
+    ],
+  },
+  "pagina-tratamento-do-zumbido": {
+    slug: "tratamento-do-zumbido",
+    trechos: [
+      { id: "neuromodulacao-auricular-vagal-para-zumbido-somatossensorial", titulo: "Neuromodulação Auricular Vagal para Zumbido Somatossensorial" },
+      { id: "neuromodulacao-auricular-vagal-tavns", titulo: "Neuromodulação Auricular Vagal - taVNS" },
+      { id: "neuromodulacao-auricular-vagal-para-o-zumbido", titulo: "Neuromodulação Auricular Vagal para o Zumbido" },
+    ],
+  },
+  "pagina-tratamento-da-dtm": {
+    slug: "tratamento-da-dtm",
+    trechos: [
+      { id: "cefaleia-tensional", titulo: "Cefaleia Tensional" },
+      { id: "bruxismo-e-apertamento-dentario", titulo: "Bruxismo e Apertamento Dentário" },
+      { id: "neuralgia-do-trigemeo", titulo: "Neuralgia do Trigêmeo" },
+      { id: "tratamento-do-bruxismo-da-dtm-e-dor-orofacial", titulo: "Tratamento do Bruxismo, da DTM e Dor Orofacial" },
+    ],
+  },
+  "pagina-osteopatia": {
+    slug: "osteopatia",
+    trechos: [
+      { id: "principios-fundamentais-da-osteopatia", titulo: "Princípios Fundamentais da Osteopatia" },
+      { id: "a-osteopatia-abrange-diversas-tecnicas", titulo: "A Osteopatia abrange diversas Técnicas:" },
+      { id: "beneficios-da-osteopatia", titulo: "Benefícios da Osteopatia" },
+      { id: "evidencias-cientificas", titulo: "Evidências Científicas" },
+      { id: "por-que-escolher-a-osteopatia", titulo: "Por Que Escolher a Osteopatia?" },
+      { id: "conclusao", titulo: "Conclusão" },
+      { id: "referencias", titulo: "Referências" },
+    ],
+  },
+  "pagina-posturologia": {
+    slug: "posturologia",
+    trechos: [
+      { id: "o-que-e-posturologia", titulo: "O Que é Posturologia?" },
+      { id: "tecnicas-e-ferramentas-utilizadas-na-posturologia", titulo: "Técnicas e Ferramentas Utilizadas na Posturologia" },
+      { id: "aplicacoes-da-posturologia", titulo: "Aplicações da Posturologia" },
+      { id: "evidencias-cientificas", titulo: "Evidências Científicas" },
+      { id: "conclusao", titulo: "Conclusão" },
+      { id: "referencias", titulo: "Referências" },
+    ],
+  },
+  "pagina-rpg": { slug: "rpg", trechos: [] },
+  "pagina-acupuntura": {
+    slug: "acupuntura",
+    trechos: [
+      { id: "acupuntura-e-eletroacupuntura-beneficios-e-aplicacoes", titulo: "Acupuntura e Eletroacupuntura: Benefícios e Aplicações" },
+    ],
+  },
+  "pagina-acupuntura-clinica": {
+    slug: "acupuntura-clínica",
+    trechos: [
+      { id: "acupuntura-clinica-trate-a-causa-da-dor-e-reduza-o-estresse", titulo: "Acupuntura Clínica: Trate a Causa da Dor e Reduza o Estresse" },
+      { id: "para-quem-e-este-tratamento-a-acupuntura-clinica-e-indicada-para", titulo: "Para quem é este tratamento? A acupuntura clínica é indicada para você que sofre com:" },
+      { id: "o-diferencial-podoposture", titulo: "O Diferencial PodoPosture" },
+      { id: "cuidado-de-quem-entende-de-movimento", titulo: "Cuidado de quem entende de movimento" },
+      { id: "vamos-entender-sua-dor-com-mais-cuidado", titulo: "Vamos entender sua dor com mais cuidado." },
+    ],
+  },
+  "pagina-flexo-distracao": {
+    slug: "flexo-distração",
+    trechos: [
+      { id: "como-funciona-a-flexo-distracao", titulo: "Como Funciona a Flexo-distração" },
+      { id: "beneficios-da-flexo-distracao", titulo: "Benefícios da Flexo-distração" },
+      { id: "indicacoes-para-o-uso-da-flexo-distracao", titulo: "Indicações para o Uso da Flexo-distração" },
+      { id: "evidencias-cientificas", titulo: "Evidências Científicas" },
+      { id: "conclusao", titulo: "Conclusão" },
+      { id: "referencias", titulo: "Referências" },
+    ],
+  },
+  "pagina-neuromodulacao": {
+    slug: "neuromodulação",
+    trechos: [
+      { id: "tecnologia-para-reequilibrar-o-cerebro-e-o-corpo-quando-a-dor-pe", titulo: "Tecnologia para reequilibrar o cérebro e o corpo quando a dor persiste." },
+      { id: "como-funciona", titulo: "Como funciona?" },
+      { id: "em-que-situacoes-pode-ser-usado", titulo: "Em que situações pode ser usado?" },
+      { id: "seguranca-e-cuidado", titulo: "Segurança e cuidado" },
+      { id: "por-que-isso-importa", titulo: "Por que isso importa?" },
+      { id: "converse-conosco-sobre-sua-dor-e-sintomas", titulo: "Converse conosco sobre sua dor e sintomas." },
+    ],
+  },
+  "pagina-metodo-posture": {
+    slug: "método-posture+",
+    trechos: [
+      { id: "fundamentos-neurofisiologicos", titulo: "Fundamentos Neurofisiológicos" },
+      { id: "o-processo-de-reorganizacao", titulo: "O Processo de Reorganização" },
+      { id: "beneficios-clinicos", titulo: "Benefícios Clínicos:" },
+      { id: "1-disfuncoes-de-dor-cronica-e-regulacao-neural", titulo: "1. Disfunções de Dor Crônica e Regulação Neural" },
+      { id: "2-disfuncoes-posturais-e-biomecanicas", titulo: "2. Disfunções Posturais e Biomecânicas" },
+      { id: "3-patologias-do-aparelho-locomotor", titulo: "3. Patologias do Aparelho Locomotor" },
+      { id: "4-disfuncoes-neurovegetativas-e-funcionais", titulo: "4. Disfunções Neurovegetativas e Funcionais" },
+      { id: "5-pos-traumas-e-reabilitacao-integrada", titulo: "5. Pós-traumas e Reabilitação Integrada" },
+    ],
+  },
+  "pagina-baropodometria": {
+    slug: "baropodometria",
+    trechos: [
+      { id: "baropodometria-e-estabilometria-ferramentas-essenciais-para-anal", titulo: "BAROPODOMETRIA e ESTABILOMETRIA: Ferramentas Essenciais para Análise Postural" },
+      { id: "como-funciona-a-baropodometria", titulo: "Como Funciona a Baropodometria" },
+      { id: "beneficios-da-baropodometria", titulo: "Benefícios da Baropodometria" },
+      { id: "estabilometria", titulo: "Estabilometria" },
+      { id: "beneficios-da-estabilometria", titulo: "Benefícios da Estabilometria" },
+      { id: "evidencias-cientificas", titulo: "Evidências Científicas" },
+      { id: "conclusao", titulo: "Conclusão" },
+      { id: "referencias", titulo: "Referências" },
+    ],
+  },
+  "pagina-palmilhas-personalizadas": {
+    slug: "palmilhas-personalizadas",
+    trechos: [
+      { id: "pes-e-coluna-interligados", titulo: "Pés e Coluna Interligados" },
+      { id: "nossas-palmilhas-personalizadas", titulo: "Nossas Palmilhas Personalizadas" },
+      { id: "prescricao-e-confeccao-de-palmilhas-posturais", titulo: "Prescrição e Confecção de Palmilhas Posturais" },
+    ],
+  },
+  "pagina-quem-somos": {
+    slug: "quem-somos",
+    trechos: [
+      { id: "visao", titulo: "Visão" },
+      { id: "o-que-orienta-nosso-trabalho", titulo: "O que orienta nosso trabalho" },
+    ],
+  },
+  "pagina-responsavel-tecnica": {
+    slug: "responsável-técnica",
+    trechos: [
+      { id: "areas-de-atuacao", titulo: "Áreas de atuação" },
+      { id: "filosofia-de-cuidado", titulo: "Filosofia de cuidado" },
+      { id: "formacao-e-credenciais", titulo: "Formação e credenciais" },
+    ],
+  },
+  "pagina-curriculo-profissional": {
+    slug: "currículo-profissional",
+    trechos: [
+      { id: "posturologia-podoposturologia-e-biomecanica", titulo: "Posturologia, Podoposturologia e Biomecânica" },
+      { id: "abordagens-integrativas-e-complementares", titulo: "Abordagens Integrativas e Complementares" },
+      { id: "observacao-final", titulo: "Observação Final" },
+    ],
+  },
+};
+
+const CHAVE_POR_SLUG = new Map(
+  CHAVES_DE_PAGINA.map((chave) => [PAGINAS_COM_FOTOS[chave].slug.normalize("NFC"), chave] as const),
+);
+
+/** A chave das fotos de uma pagina interna, ou null para a pagina sem fotos editaveis (/contato). */
+export function chaveDaPagina(slug: string): ChaveDePagina | null {
+  return CHAVE_POR_SLUG.get(slug.normalize("NFC")) ?? null;
+}
+
+type ConteudoDasPaginas = { [K in ChaveDePagina]: ConteudoDaPagina };
+
 /** Um documento por chave, na mesma ordem em que as secoes aparecem. */
-export type ConteudoDoSite = {
+export type ConteudoDoSite = ConteudoDasPaginas & {
   contato: ConteudoContato;
+  marca: ConteudoMarca;
+  compartilhamento: ConteudoCompartilhamento;
   hero: ConteudoHero;
   "bem-vindo": ConteudoBemVindo;
   responsabilidade: ConteudoResponsabilidade;
@@ -130,6 +363,8 @@ export type ChaveDeSecao = keyof ConteudoDoSite;
 
 export const CHAVES_DE_SECAO = [
   "contato",
+  "marca",
+  "compartilhamento",
   "hero",
   "bem-vindo",
   "responsabilidade",
@@ -142,6 +377,7 @@ export const CHAVES_DE_SECAO = [
   "blog-secao",
   "galeria",
   "redes-secao",
+  ...CHAVES_DE_PAGINA,
 ] as const satisfies readonly ChaveDeSecao[];
 
 export function ehChaveDeSecao(valor: string): valor is ChaveDeSecao {
@@ -258,6 +494,16 @@ export const IMAGENS_DO_SITE: Readonly<Record<string, { largura: number; altura:
   "/img/galeria/acupuntura.webp": { largura: 1024, altura: 1280 },
   "/img/galeria/plataforma-de-pressao.webp": { largura: 864, altura: 1080 },
   "/img/galeria/consultorio.webp": { largura: 869, altura: 1086 },
+  "/img/galeria/retrato-responsavel-tecnica.webp": { largura: 1024, altura: 1280 },
+  "/img/galeria/neuromodulacao-auricular.webp": { largura: 712, altura: 890 },
+  "/img/galeria/neuromodulacao-auricular-dupla.webp": { largura: 704, altura: 880 },
+  "/img/palpacao-lombar.webp": { largura: 1200, altura: 1500 },
+  "/img/avaliacao-da-coluna.webp": { largura: 1200, altura: 1500 },
+  "/img/conducao-da-perna-na-maca.webp": { largura: 1200, altura: 1500 },
+  "/img/palpacao-da-mandibula.webp": { largura: 1200, altura: 1500 },
+  "/img/terapia-manual-na-base-do-cranio.webp": { largura: 1600, altura: 1000 },
+  "/img/clinica-podoposture-5.webp": { largura: 2560, altura: 1155 },
+  "/og.png": { largura: 1200, altura: 630 },
 };
 
 /* ------------------------------------------------------------ descritores */
@@ -297,6 +543,8 @@ export type CampoLista = CampoBase & {
   max: number;
   rotuloDoItem: string;
   item: Campo;
+  /** O que a lista vazia quer dizer no site ("Sem foto: o titulo ocupa a largura toda"). */
+  vazio?: string;
 };
 export type CampoGrupo = CampoBase & { tipo: "grupo"; campos: Record<string, Campo> };
 export type CampoImagem = CampoBase & {
@@ -308,8 +556,28 @@ export type CampoImagem = CampoBase & {
    * Recorte que o site aplica (largura / altura), para o editor mostrar a previa. null = sem recorte.
    * `proporcaoNoComputador`: quando o recorte muda a partir de 1024px, o editor diz que o do lado e o do celular.
    */
-  recorte: { proporcao: number; descricao: string; proporcaoNoComputador?: number } | null;
+  recorte: {
+    proporcao: number;
+    descricao: string;
+    proporcaoNoComputador?: number;
+    /** Dentro de lista: do 2o item em diante o recorte e outro (fotos de apoio: 16:10 e depois 4:5). */
+    proporcaoDepoisDoPrimeiro?: number;
+  } | null;
+  /**
+   * Sem descricao: a imagem e enfeite (fundo do topo) ou tem nome dito em outro
+   * lugar (logo, icone, cartao). O campo nao pede o texto e guarda alt vazio.
+   */
+  decorativa?: boolean;
+  /** Proporcao obrigatoria do arquivo (icone quadrado, cartao 1200 x 630). */
+  proporcaoExata?: { valor: number; mensagem: string };
+  /** Como o navegador prepara o arquivo antes de enviar (ver preparar-imagem.ts). */
+  envio?: ComoEnviar;
+  /** Previa no editor: inteira (logo, icone) e sobre o fundo onde ela vai aparecer. */
+  previa?: { inteira: true; fundo: "claro" | "escuro" };
 };
+
+/** Lista fechada de opcoes, num seletor. */
+export type CampoEscolha = CampoBase & { tipo: "escolha"; opcoes: readonly { valor: string; rotulo: string }[] };
 export type CampoDestino = CampoBase & { tipo: "destino"; aceita: readonly TipoDeDestino[] };
 export type CampoNumero = CampoBase & { tipo: "numero"; min: number; max: number };
 export type CampoEmail = CampoBase & { tipo: "email"; max: number };
@@ -327,6 +595,7 @@ export type Campo =
   | CampoLista
   | CampoGrupo
   | CampoImagem
+  | CampoEscolha
   | CampoDestino
   | CampoNumero
   | CampoEmail
@@ -350,6 +619,15 @@ export type DescritorDeSecao<T> = {
   /** true = o dado aparece no site inteiro, nao so na pagina inicial. */
   global: boolean;
   aparece: string;
+  /** Slug da pagina interna que a secao muda: a previa abre essa pagina, e a aba e a "Paginas". */
+  pagina?: string;
+  /**
+   * Secao so de imagem (fotos de pagina, logo e icone, cartao): a tela fala em
+   * "original", e nao em "texto original", e a lista mostra a foto no lugar do
+   * comeco do texto. Na aba "Pagina inicial", as globais so de imagem ficam
+   * juntas, logo abaixo do contato.
+   */
+  soImagem?: true;
   campos: { [K in keyof T]: Campo };
   regras: readonly RegraDaSecao<T>[];
 };
@@ -402,6 +680,103 @@ function campoBotao(rotuloMax: number, aceita: readonly TipoDeDestino[]): CampoG
     },
   };
 }
+
+/** Arquivos com transparencia (logo, icone): WebP, ou PNG onde o navegador nao gera WebP. */
+const ENVIO_TRANSPARENTE = { formato: "transparente", larguraMaxima: 1200 } as const;
+
+/** Imagem sem descricao, com a previa inteira sobre o fundo onde vai aparecer. */
+function campoDeLogo(rotulo: string, fundo: "claro" | "escuro"): CampoImagem {
+  return {
+    tipo: "imagem",
+    rotulo,
+    larguraMinima: 240,
+    maxAlt: LIMITE_DO_ALT,
+    recorte: null,
+    decorativa: true,
+    envio: ENVIO_TRANSPARENTE,
+    previa: { inteira: true, fundo },
+  };
+}
+
+/** Recorte das fotos de apoio (FotosDeApoio + paginas-internas.css). */
+const RECORTE_DO_APOIO = {
+  proporcao: 16 / 10,
+  proporcaoDepoisDoPrimeiro: 4 / 5,
+  descricao:
+    "A primeira foto é recortada em paisagem (16:10) e as seguintes em retrato (4:5), sempre pelo centro.",
+};
+
+function campoFotoDaPagina(recorte: CampoImagem["recorte"]): CampoGrupo {
+  return {
+    tipo: "grupo",
+    rotulo: "Foto",
+    campos: {
+      imagem: campoImagem("Foto", recorte),
+      legenda: {
+        tipo: "texto",
+        rotulo: "Legenda",
+        max: 120,
+        ajuda:
+          "A linha curta embaixo da foto. Diga o que ela mostra, sem prometer resultado; em foto que não é da clínica, comece com “Imagem ilustrativa:”.",
+      },
+    },
+  };
+}
+
+/** Rotulo da pagina como no menu (o mesmo de PAGINAS_DE_DESTINO). */
+function rotuloDaPaginaComFotos(chave: ChaveDePagina): string {
+  const slug = PAGINAS_COM_FOTOS[chave].slug.normalize("NFC");
+  return PAGINAS_DE_DESTINO.find((p) => p.slug === slug)?.rotulo ?? slug;
+}
+
+function descritorDaPagina(chave: ChaveDePagina): DescritorDeSecao<ConteudoDaPagina> {
+  const { slug, trechos } = PAGINAS_COM_FOTOS[chave];
+  const rotulo = rotuloDaPaginaComFotos(chave);
+  return {
+    rotulo,
+    ajuda: "A foto em moldura ao lado do título e as fotos no meio do texto desta página.",
+    global: false,
+    aparece: `Na página “${rotulo}”`,
+    pagina: slug,
+    soImagem: true,
+    campos: {
+      foto: {
+        tipo: "lista",
+        rotulo: "Foto ao lado do título",
+        rotuloDoItem: "Foto",
+        min: 0,
+        max: 1,
+        ajuda: "Em moldura, na coluna da direita do topo da página.",
+        vazio: "Sem foto: o título da página ocupa a largura toda.",
+        item: campoFotoDaPagina(IMAGEM_4_5),
+      },
+      apoio: {
+        tipo: "lista",
+        rotulo: "Fotos no meio do texto",
+        rotuloDoItem: "Foto",
+        min: 0,
+        max: 3,
+        ajuda: "Até 3. Entram juntas, ao lado de um trecho do texto: a primeira grande e as outras menores, lado a lado.",
+        vazio: "Sem fotos no meio do texto.",
+        item: campoFotoDaPagina(RECORTE_DO_APOIO),
+      },
+      ancoraDoApoio: {
+        tipo: "escolha",
+        rotulo: "Ao lado de qual trecho as fotos do meio do texto entram",
+        ajuda: "Só vale quando há fotos no meio do texto.",
+        opcoes: [
+          { valor: "", rotulo: "Escolha automática (primeiro quadro em destaque do texto)" },
+          ...trechos.map((t) => ({ valor: t.id, rotulo: t.titulo })),
+        ],
+      },
+    },
+    regras: [],
+  };
+}
+
+const DESCRITORES_DAS_PAGINAS = Object.fromEntries(
+  CHAVES_DE_PAGINA.map((chave) => [chave, descritorDaPagina(chave)]),
+) as { [K in ChaveDePagina]: DescritorDeSecao<ConteudoDaPagina> };
 
 export const DESCRITORES: Descritores = {
   contato: {
@@ -503,6 +878,82 @@ export const DESCRITORES: Descritores = {
     regras: [],
   },
 
+  marca: {
+    rotulo: "Logo e ícone",
+    ajuda:
+      "O logotipo do cabeçalho e do rodapé e o ícone da aba do navegador. Enquanto nenhum arquivo for enviado, o site usa a marca original, desenhada.",
+    global: true,
+    aparece: "Em todas as páginas",
+    soImagem: true,
+    campos: {
+      logo: {
+        tipo: "lista",
+        rotulo: "Logo",
+        rotuloDoItem: "Logo",
+        min: 0,
+        max: 1,
+        ajuda:
+          "Aparece no cabeçalho, sobre fundo claro. Prefira PNG com fundo transparente. Ele ocupa o mesmo espaço da marca de hoje: um logo mais largo aparece menor.",
+        vazio: "Sem logo enviado: o site usa a marca original.",
+        item: campoDeLogo("Logo", "claro"),
+      },
+      logoEscuro: {
+        tipo: "lista",
+        rotulo: "Logo para fundo escuro",
+        rotuloDoItem: "Logo",
+        min: 0,
+        max: 1,
+        ajuda: "Aparece no rodapé, sobre o azul-escuro. É a versão clara (em branco) do logo.",
+        vazio: "Sem esta versão: o rodapé mostra o logo de cima todo em branco, ou a marca original se não houver logo.",
+        item: campoDeLogo("Logo para fundo escuro", "escuro"),
+      },
+      icone: {
+        tipo: "lista",
+        rotulo: "Ícone da aba do navegador",
+        rotuloDoItem: "Ícone",
+        min: 0,
+        max: 1,
+        ajuda:
+          "A imagem pequena ao lado do nome do site, na aba e nos favoritos. É recortada em quadrado, pelo centro: use só o símbolo, não o nome inteiro.",
+        vazio: "Sem ícone enviado: o site usa o ícone original, com as duas bolinhas verdes da marca.",
+        item: {
+          ...campoDeLogo("Ícone", "claro"),
+          larguraMinima: 192,
+          proporcaoExata: { valor: 1, mensagem: "O ícone precisa ser quadrado. Envie a imagem de novo." },
+          // Sempre PNG: e o formato de icone que todo navegador, celular e
+          // buscador le. WebP de favicon ainda falha em parte deles.
+          envio: { formato: "png", larguraMaxima: 512, corte: { largura: 512, altura: 512, ladoMinimo: 192 } },
+        },
+      },
+    },
+    regras: [],
+  },
+
+  compartilhamento: {
+    rotulo: "Imagem de compartilhamento",
+    ajuda:
+      "A imagem que aparece quando alguém manda o link do site no WhatsApp, no Facebook ou no LinkedIn. Vale para o site inteiro, menos os textos do blog que vieram do site antigo, que continuam com a arte da própria capa.",
+    global: true,
+    aparece: "Ao compartilhar um link do site",
+    soImagem: true,
+    campos: {
+      imagem: {
+        ...campoImagem("Imagem", {
+          proporcao: 1200 / 630,
+          descricao: "A imagem é recortada pelo centro em 1200 × 630 pixels, o formato que as redes mostram.",
+        }),
+        decorativa: true,
+        larguraMinima: 1200,
+        proporcaoExata: {
+          valor: 1200 / 630,
+          mensagem: "A imagem precisa estar no formato 1200 × 630. Envie a imagem de novo.",
+        },
+        envio: { formato: "jpeg", larguraMaxima: 1200, corte: { largura: 1200, altura: 630 } },
+      },
+    },
+    regras: [],
+  },
+
   hero: {
     rotulo: "01 · Abertura",
     ajuda: "O primeiro bloco da página inicial: título, apresentação e os dois botões.",
@@ -571,6 +1022,25 @@ export const DESCRITORES: Descritores = {
         maxPorLinha: 12,
         ajuda:
           "A anotação que aponta um dos pontos verdes, em três linhas curtas. No celular o primeiro toque mostra o nome da região e o segundo abre a página, então não prometa que um toque leva direto.",
+      },
+      fundo: {
+        tipo: "lista",
+        rotulo: "Foto de fundo",
+        rotuloDoItem: "Foto de fundo",
+        min: 0,
+        max: 1,
+        ajuda:
+          "Fica atrás do título, bem apagada sobre o azul: aparecem só a luz e as formas. Escolha uma foto sem texto e sem rosto em destaque.",
+        vazio: "Sem foto de fundo: o topo fica só no azul, com as linhas finas.",
+        item: {
+          ...campoImagem("Foto de fundo", {
+            proporcao: 1536 / 695,
+            descricao: "A foto cobre o topo inteiro, recortada um pouco à esquerda do centro.",
+          }),
+          decorativa: true,
+          larguraMinima: 1280,
+          envio: { larguraMaxima: 2560 },
+        },
       },
     },
     regras: [
@@ -861,6 +1331,8 @@ export const DESCRITORES: Descritores = {
     },
     regras: [],
   },
+
+  ...DESCRITORES_DAS_PAGINAS,
 };
 
 /* ------------------------------------------------------- limpeza de texto */
@@ -1077,10 +1549,24 @@ function validarImagem(
   if (!medida) {
     // Sem "escolha uma foto do site": o editor so oferece enviar arquivo. Para
     // trazer de volta uma foto original, ha o "Usar o original" do proprio item.
-    erros[juntar(caminho, "src")] = "Envie uma foto pelo botão “Escolher foto”.";
+    erros[juntar(caminho, "src")] = campo.previa?.inteira
+      ? "Envie o arquivo pelo botão “Escolher arquivo”."
+      : "Envie uma foto pelo botão “Escolher foto”.";
   } else if (medida.largura < campo.larguraMinima) {
     erros[juntar(caminho, "src")] =
       `A foto precisa ter pelo menos ${campo.larguraMinima} pixels de largura (esta tem ${medida.largura}).`;
+  } else if (
+    campo.proporcaoExata &&
+    Math.abs(medida.largura / medida.altura - campo.proporcaoExata.valor) > campo.proporcaoExata.valor * 0.01
+  ) {
+    erros[juntar(caminho, "src")] = campo.proporcaoExata.mensagem;
+  }
+
+  // Decorativa: a descricao nao e pedida e nao e guardada. Um alt que viesse
+  // junto seria lido para quem nao enxerga numa imagem que o site marca como enfeite.
+  if (campo.decorativa) {
+    if (Object.keys(erros).length > antes || !medida) return undefined;
+    return { src, largura: medida.largura, altura: medida.altura, alt: "" };
   }
 
   if (!alt) erros[juntar(caminho, "alt")] = "Descreva a foto em uma frase.";
@@ -1090,6 +1576,20 @@ function validarImagem(
 
   if (Object.keys(erros).length > antes || !medida || !alt) return undefined;
   return { src, largura: medida.largura, altura: medida.altura, alt };
+}
+
+function validarEscolha(
+  campo: CampoEscolha,
+  valor: unknown,
+  caminho: string,
+  erros: ErrosDeCampo,
+): string | undefined {
+  const escolhido = typeof valor === "string" ? valor.normalize("NFC") : null;
+  if (escolhido === null || !campo.opcoes.some((o) => o.valor === escolhido)) {
+    erros[caminho] = "Escolha uma opção da lista.";
+    return undefined;
+  }
+  return escolhido;
 }
 
 function validarDestino(
@@ -1212,6 +1712,8 @@ function validarCampo(campo: Campo, valor: unknown, caminho: string, erros: Erro
       return validarGrupo(campo, valor, caminho, erros);
     case "imagem":
       return validarImagem(campo, valor, caminho, erros);
+    case "escolha":
+      return validarEscolha(campo, valor, caminho, erros);
     case "destino":
       return validarDestino(campo, valor, caminho, erros);
     case "numero":

@@ -111,11 +111,12 @@ const EXTENSO = ["nenhuma", "Uma", "Duas", "Três", "Quatro", "Cinco", "Seis", "
 export default async function FotosQueFaltam() {
   const comPaciente = PEDIDOS.filter((p) => p.comPaciente).length;
   const total = EXTENSO[PEDIDOS.length];
-  const contato = derivarContato((await lerConteudoDoSite()).contato);
+  const conteudo = await lerConteudoDoSite();
+  const contato = derivarContato(conteudo.contato);
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} />
 
       <main id="conteudo">
         {/* Abertura. O respiro de cima e' o que faz o texto nascer abaixo do
@@ -405,7 +406,7 @@ export default async function FotosQueFaltam() {
         <SeamRuler />
       </main>
 
-      <SiteFooter contato={contato} />
+      <SiteFooter contato={contato} logos={conteudo.marca} />
       <FloatingWhatsApp whatsapp={contato.whatsapp} />
     </>
   );
