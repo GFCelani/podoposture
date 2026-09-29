@@ -340,15 +340,17 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
      saiu a pedido da cliente (2026-09-07) e entrou o consultorio.
      Escritorio, corredor de marcha e consultorio foram refotografados depois
      da reforma da sala (2026-09-24); as tres sao a mesma sala, entao ficam
-     intercaladas para nenhuma encostar na outra em 3 nem em 2 colunas. */
+     intercaladas para nenhuma encostar na outra em 3 nem em 2 colunas.
+     A sala de exame escura saiu a pedido da cliente (2026-09-29) e entraram
+     as palmilhas, que nao aparecem em nenhum outro lugar do site. */
   galeria: {
     titulo: "Galeria",
     fotos: [
       {
-        src: "/img/galeria/sala-de-exame.webp",
-        largura: 924,
-        altura: 1155,
-        alt: "Sala de exame com maca e bancada de equipamentos",
+        src: "/img/galeria/palmilhas.webp",
+        largura: 960,
+        altura: 1200,
+        alt: "Palmilhas personalizadas em três tamanhos e acabamentos, sobrepostas sobre fundo branco",
       },
       {
         src: "/img/galeria/escritorio.webp",

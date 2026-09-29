@@ -9,7 +9,7 @@
  *     mapa: quem nao tem glifo cai em undefined e a pagina vai sem emblema.
  *   - a fotografia, e essa precisa de tabela, porque vale uma regra dura: a
  *     foto entra SO se mostra o lugar, o aparelho ou o gesto de que a pagina
- *     fala. Usar a sala de exame para ilustrar "Quem Somos" seria decorar,
+ *     fala. Usar a sala de atendimento para ilustrar "Quem Somos" seria decorar,
  *     nao informar. A fonte e' a galeria da clinica; onde ela nao tem a cena,
  *     entra foto de acervo livre marcada como ilustrativa (ver o fim de
  *     FOTOS). Sem foto honesta de nenhuma das duas, fica o placeholder.
@@ -37,14 +37,6 @@ export type Foto = {
 
 const GALERIA = "/img/galeria";
 
-/** Cena + medidas; so a legenda muda de uma pagina para a outra. */
-const SALA = {
-  src: `${GALERIA}/sala-de-exame.webp`,
-  alt: "Maca de atendimento na sala de exame da Podoposture, com apoio de cabeça e lençol claro.",
-  largura: 924,
-  altura: 1155,
-};
-
 const AGULHAS = {
   src: `${GALERIA}/acupuntura.webp`,
   alt: "Materiais de acupuntura organizados sobre a bancada do consultório.",
@@ -54,19 +46,22 @@ const AGULHAS = {
 };
 
 const FOTOS: Record<string, Foto> = {
-  /* Troca pedida pela cliente em 2026-09-29: a sala de exame (SALA) saia
-     escura. Esta e' clara e mostra as macas de terapia manual e o
-     material que a osteopatia usa na consulta. SALA segue na flexo-distracao. */
+  /* A sala de exame escura saiu do site a pedido da cliente (2026-09-29).
+     As duas fotos abaixo sao arquivos diferentes do acervo e nao aparecem em
+     nenhum outro lugar do site. */
   osteopatia: {
-    src: `${GALERIA}/sala-de-osteopatia.webp`,
-    alt: "Sala de atendimento da Podoposture com duas macas de terapia manual, um modelo de coluna e um crânio sobre o armário e, na parede, o quadro que relaciona os níveis da coluna a músculos e vísceras.",
-    legenda: "Sala de terapia manual: as macas, o modelo de coluna e o quadro que liga os níveis da coluna a músculos e vísceras.",
+    src: `${GALERIA}/sala-de-atendimento.webp`,
+    alt: "Sala de atendimento da Podoposture com maca de lençol branco e travesseiros, pia com armário, carrinho auxiliar e cortinas nas janelas.",
+    legenda: "Sala de atendimento: a consulta de osteopatia é feita na maca.",
     largura: 960,
     altura: 1200,
   },
   "flexo-distração": {
-    ...SALA,
-    legenda: "A flexo-distração é aplicada em maca própria, na sala de exame.",
+    src: `${GALERIA}/sala-de-flexo-distracao.webp`,
+    alt: "Duas macas de flexo-distração na sala da Podoposture; ao fundo, modelo de coluna e crânio sobre o armário e o quadro dos níveis da coluna na parede.",
+    legenda: "As macas de flexo-distração, com o modelo de coluna e o quadro dos níveis vertebrais ao fundo.",
+    largura: 960,
+    altura: 1200,
   },
   acupuntura: AGULHAS,
   "acupuntura-clínica": AGULHAS,
@@ -209,13 +204,13 @@ const FOTOS: Record<string, Foto> = {
  *      galeria. Vale refazer a cena, nao so liberar esta.
  *
  * Para ligar: mover este objeto para dentro de FOTOS, na chave
- * "flexo-distração", no lugar de SALA.
+ * "flexo-distração", no lugar da foto das macas.
  */
 const AGUARDANDO_AUTORIZACAO: Record<string, Foto> = {
   "flexo-distração": {
     src: `${GALERIA}/flexo-distracao-em-sessao.webp`,
     alt: "Paciente deitada de bruços na maca de flexo-distração, com fitas de apoio nas costas; ao fundo, a grade de avaliação postural da clínica.",
-    legenda: "Sessão de flexo-distração na sala de exame.",
+    legenda: "Sessão de flexo-distração.",
     largura: 864,
     altura: 1080,
   },
