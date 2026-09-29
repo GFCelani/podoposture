@@ -54,9 +54,15 @@ const AGULHAS = {
 };
 
 const FOTOS: Record<string, Foto> = {
+  /* Troca pedida pela cliente em 2026-09-29: a sala de exame (SALA) saia
+     escura. Esta e' clara e mostra as macas de terapia manual e o
+     material que a osteopatia usa na consulta. SALA segue na flexo-distracao. */
   osteopatia: {
-    ...SALA,
-    legenda: "Sala de exame onde são feitas as sessões de terapia manual.",
+    src: `${GALERIA}/sala-de-osteopatia.webp`,
+    alt: "Sala de atendimento da Podoposture com duas macas de terapia manual, um modelo de coluna e um crânio sobre o armário e, na parede, o quadro que relaciona os níveis da coluna a músculos e vísceras.",
+    legenda: "Sala de terapia manual: as macas, o modelo de coluna e o quadro que liga os níveis da coluna a músculos e vísceras.",
+    largura: 960,
+    altura: 1200,
   },
   "flexo-distração": {
     ...SALA,
