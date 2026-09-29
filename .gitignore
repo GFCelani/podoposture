@@ -16,3 +16,7 @@ __pycache__/
 fotos-site/
 fotos-site.zip
 preview.webp
+
+# Playwright (npm run test:layout)
+test-results/
+playwright-report/

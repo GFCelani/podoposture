@@ -1,0 +1,28 @@
+#!/bin/sh
+# Pre-commit do Podoposture. Ativado pelo `npm install` (script prepare:
+# git config core.hooksPath .githooks).
+#
+# Sempre: tsc, eslint e vitest. Se o commit toca em src/, no CSS ou nos
+# proprios testes de layout, tambem o teste de layout no navegador
+# (e2e/cabecalho.spec.ts): build de producao e as 11 telas da folha de
+# contato. E' ele que impede o cabecalho de voltar a comecar depois do titulo.
+set -e
+
+echo "pre-commit: tsc"
+npx tsc --noEmit -p .
+
+echo "pre-commit: eslint"
+npx eslint src e2e
+
+echo "pre-commit: vitest"
+npx vitest run --reporter=dot
+
+if git diff --cached --name-only | grep -qE '^(src/|e2e/|playwright\.config\.ts|package\.json)'; then
+  echo "pre-commit: layout (build de producao + Playwright, alguns minutos)"
+  if ! npx playwright test; then
+    echo ""
+    echo "pre-commit: o teste de layout falhou. Se faltar o navegador:"
+    echo "  npx playwright install chromium"
+    exit 1
+  fi
+fi

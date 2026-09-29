@@ -11,4 +11,6 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
+  // e2e/ e' do Playwright (npm run test:layout), contra o build de producao.
+  test: { exclude: ["**/node_modules/**", "e2e/**"] },
 });

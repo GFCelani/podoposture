@@ -11,6 +11,8 @@
     "rotas": "node scripts/gerar-mapa-de-rotas.mjs",
     "verificar-urls": "python scripts/verificar_urls.py --alvo http://localhost:3000",
     "test": "vitest run",
+    "test:layout": "playwright test",
+    "prepare": "git config core.hooksPath .githooks || true",
     "senha": "node scripts/gerar-senha.mjs"
   },
   "dependencies": {

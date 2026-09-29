@@ -1,0 +1,2 @@
+﻿# gancho de shell: LF sempre, senao o sh do Windows le 'set -e\r'
+.githooks/* text eol=lf
