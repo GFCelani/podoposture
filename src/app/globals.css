@@ -649,16 +649,23 @@ body {
    =============================================================== */
 
 .hero-campo {
-  --hero-vao: 40px; /* entre as duas figuras */
+  /* entre as duas figuras. Empilhado, o convite do mapa mora nesse vao
+     (anotacao da lombar, abaixo): com 80px o texto padrao fica a ~30px da
+     mao da frontal e ~25px das costas do perfil, e a linha mais longa que o
+     painel aceita (12 letras) ainda guarda ~11px da mao. */
+  --hero-vao: 80px;
   --hero-reducao: 0.92; /* "um pouco menores" (2026-09-06) */
   /* empilhado: duas figuras lado a lado no que sobra de largura
-     (221 + 118 de viewBox por 560, mais 40 de vao), teto de 405px */
-  --hero-fig-h: calc(min(calc((100vw - 88px) * 560 / 339), 440px) * var(--hero-reducao));
+     (221 + 118 de viewBox por 560, mais o vao e 48px de goteiras),
+     teto de 405px */
+  --hero-fig-h: calc(
+    min(calc((100vw - 48px - var(--hero-vao)) * 560 / 339), 440px) * var(--hero-reducao)
+  );
   position: relative;
   display: flex;
   justify-content: center;
   margin-top: 3rem;
-  padding-bottom: 64px; /* a anotacao do calcanhar, sob os pes */
+  padding-bottom: 16px;
 }
 
 .hero-quadro {
@@ -698,12 +705,15 @@ body {
    anotacao fica no ponto (left/top em % da caixa da figura), entao aponta o
    mesmo ponto em qualquer escala.
 
-   Tela larga (640px ou mais): a dor ciatica do perfil, pela direita. Os
+   Palco (1200px ou mais): a dor ciatica do perfil, pela direita. Os
    rotulos do perfil abrem para a esquerda, e ali, entre as linhas de
    Osteopatia e Acupuntura, nao ha nada: o texto fica a ~19u de cada uma.
    O fio so entra na silhueta nos ultimos ~20u, que e' onde o ponto esta.
-   Telefone estreito: a direita do perfil tem menos de 30px, entao a
-   anotacao aponta o calcanhar (fascite) por baixo, com o texto sob os pes.
+   Empilhado (abaixo de 1200px): a dor lombar do perfil, pela esquerda,
+   com o texto no vao entre as figuras. Ali o ponto esta a 6u das costas
+   (x 41,8 contra 35,7 do contorno), entao o fio nasce ja fora da silhueta
+   e corre na horizontal ate o vao, sem cruzar contorno, coluna nem outro
+   ponto. A cliente achou escondido o calcanhar que ficava aqui antes.
    Nada se move: o unico movimento e' o pulso que o ponto ja tem.
    =============================================================== */
 .pd-fig--perfil {
@@ -760,37 +770,40 @@ body {
   translate: 0 -0.7em;
 }
 
-/* fascite: fio vertical para baixo, texto centrado sob os pes */
-.pd-anot--fascite .pd-anot-fio {
-  left: -0.5px;
-  top: calc(11 * var(--a));
-  width: 1px;
-  height: calc(23 * var(--a));
+/* lombar: fio horizontal para a esquerda, texto alinhado a direita e
+   centrado na altura do fio, no vao entre as figuras */
+.pd-anot--lombar .pd-anot-fio {
+  right: calc(11 * var(--a));
+  top: -0.5px;
+  width: calc(24 * var(--a));
+  height: 1px;
 }
 
-.pd-anot--fascite .pd-anot-texto {
-  left: 0;
-  top: calc(40 * var(--a));
-  translate: -50% 0;
-  align-items: center;
+.pd-anot--lombar .pd-anot-texto {
+  right: calc(42 * var(--a));
+  top: 0;
+  translate: 0 -50%;
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Com um ponto em destaque, a placa dele pode abrir sobre o vao: o convite
+   sai de cena enquanto isso. */
+.hero-campo:has(.pd-ponto:hover, .pd-ponto:focus-visible, .pd-ponto.pd-armado) .pd-anot--lombar {
+  opacity: 0;
 }
 
 .pd-anot--ciatica {
   display: none;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1200px) {
   .pd-anot--ciatica {
     display: block;
   }
 
-  .pd-anot--fascite {
+  .pd-anot--lombar {
     display: none;
-  }
-
-  /* a anotacao da ciatica mora dentro da altura da figura */
-  .hero-campo {
-    padding-bottom: 16px;
   }
 }
 

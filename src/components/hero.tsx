@@ -182,7 +182,7 @@ function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
  * fino e o texto. A posicao sai do mesmo arquivo gerado dos pontos, em
  * porcentagem da caixa da figura, entao acompanha o ponto em qualquer escala.
  */
-function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "fascite"; linhas: string[] }) {
+function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "lombar"; linhas: string[] }) {
   const { largura, pontos } = MAPA_DE_DOR_PONTOS.perfil;
   const alvo = pontos.find((p) => p.chave === ponto);
   if (!alvo) return null;
@@ -578,14 +578,13 @@ export function Hero({
                 <FiguraCorpo vista="perfil" mapa fase={2.3} className="rule-in hero-figura" />
                 <MapaDeDor vista="perfil" />
                 {/* Convite do mapa: anotacao de diagrama apontando um ponto.
-                    Em tela larga, a dor ciatica, pela direita, entre as linhas
-                    de Osteopatia e Acupuntura, onde nenhum rotulo abre (os do
-                    perfil abrem para a esquerda). No telefone estreito nao ha
-                    lado livre: aponta o calcanhar (fascite) por baixo, com o
-                    texto sob os pes. So um dos dois aparece (globals.css,
-                    "HERO - anotacao"). */}
+                    No palco, a dor ciatica, pela direita, entre as linhas de
+                    Osteopatia e Acupuntura, onde nenhum rotulo abre (os do
+                    perfil abrem para a esquerda). Empilhado, a dor lombar,
+                    pela esquerda, com o texto no vao entre as duas figuras.
+                    So um dos dois aparece (globals.css, "HERO - anotacao"). */}
                 <Anotacao ponto="ciatica" linhas={conteudo.convite} />
-                <Anotacao ponto="fascite" linhas={conteudo.convite} />
+                <Anotacao ponto="lombar" linhas={conteudo.convite} />
               </div>
             </div>
           </div>

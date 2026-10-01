@@ -1015,8 +1015,8 @@ export const DESCRITORES: Descritores = {
         ajuda: "O primeiro é o botão verde; o segundo, o de contorno.",
       },
       /* Tres linhas curtas: a anotacao mora entre duas linhas de referencia
-         e, no telefone, sob o calcanhar do perfil. 12 letras por linha e' o
-         que cabe nos dois lugares. Valor antigo de uma linha so, salvo no
+         e, abaixo de 1200px, no vao entre as duas figuras. 12 letras por
+         linha e' o que cabe nos dois lugares. Valor antigo de uma linha so, salvo no
          banco, nao valida e cai no padrao. */
       convite: {
         tipo: "linhas",
