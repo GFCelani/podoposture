@@ -48,18 +48,30 @@ export async function lerBlogDaPaginaInicial(): Promise<BlogDaPaginaInicial> {
 export function PaginaInicial({
   conteudo,
   blog,
+  HeroDaPagina = Hero,
+  classeDoCabecalho,
 }: {
   conteudo: ConteudoDoSite;
   blog: BlogDaPaginaInicial;
+  /** So a previa do hero novo (app/previa-hero) troca isto. */
+  HeroDaPagina?: typeof Hero;
+  /** Idem: embrulha o cabecalho numa classe que o reestiliza (barra chapada). */
+  classeDoCabecalho?: string;
 }) {
   const contato = derivarContato(conteudo.contato);
   const { whatsapp } = contato;
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome />
+      {classeDoCabecalho ? (
+        <div className={classeDoCabecalho}>
+          <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome />
+        </div>
+      ) : (
+        <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome />
+      )}
       <main id="conteudo">
-        <Hero
+        <HeroDaPagina
           conteudo={conteudo.hero}
           whatsapp={whatsapp}
           anosDeExperiencia={contato.anosDeExperiencia}

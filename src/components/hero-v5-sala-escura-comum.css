@@ -1,0 +1,74 @@
+/* ===============================================================
+   Regras do hero novo que mexem nas pecas compartilhadas (mapa de dor,
+   grifo do titulo, convite). Saidas dos audits cegos de 2026-10-05.
+
+   - Um ponto pulsa, nao treze: o que o convite aponta (a lombar abaixo de
+     1200px, a ciatica no palco). Os outros ficam parados e continuam
+     reagindo ao hover/toque.
+   - O destaque de "efetiva" e' o italico da Newsreader na cor de destaque,
+     sem bloco atras das letras e sem sublinhado (que lia como link).
+   - O convite sai do tom dos rotulos tecnicos e vai para o azul: e' uma
+     chamada, nao mais uma legenda; entra junto com os pontos.
+   =============================================================== */
+
+.hv5 .pd-onda,
+.hv5 .pd-nucleo {
+  animation: none;
+}
+
+.hv5 .pd-fig--perfil .pd-lista li:nth-child(3) .pd-onda {
+  animation: sonar-onda 3.2s cubic-bezier(0.2, 0.6, 0.4, 1) 1.4s infinite;
+}
+
+@media (min-width: 1200px) {
+  .hv5 .pd-fig--perfil .pd-lista li:nth-child(3) .pd-onda {
+    animation: none;
+  }
+
+  .hv5 .pd-fig--perfil .pd-lista li:nth-child(5) .pd-onda {
+    animation: sonar-onda 3.2s cubic-bezier(0.2, 0.6, 0.4, 1) 1.4s infinite;
+  }
+}
+
+.hv5 .marca-grifo {
+  background: none;
+  box-shadow: none;
+  font-style: italic;
+  color: var(--color-accent-light);
+}
+
+.hv5 .pd-anot {
+  animation-delay: 420ms;
+  animation-duration: 0.6s;
+}
+
+.hv5 .pd-anot-texto {
+  font-size: max(12.5px, calc(13 * var(--a)));
+  color: var(--color-accent-light);
+}
+
+/* Abaixo de 1200px o texto do convite fica no vao entre as figuras, onde
+   passam as linhas numeradas: um fundo da cor do hero o separa delas. */
+.hv5 .pd-anot--lombar .pd-anot-texto {
+  padding: 2px 0 2px 6px;
+  background: #20231F;
+}
+
+/* Com um ponto em destaque, a placa dele pode abrir sobre o vao: o convite
+   sai de cena enquanto isso (como no hero de producao). */
+.hv5-campo:has(.pd-ponto:hover, .pd-ponto:focus-visible, .pd-ponto.pd-armado) .pd-anot--lombar {
+  opacity: 0;
+}
+
+/* Telefone: lugar e anos em duas linhas, sem o fio pendurado. */
+@media (max-width: 639px) {
+  .hv5 .hv5-dado {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .hv5-dado-fio {
+    display: none;
+  }
+}

@@ -1,0 +1,100 @@
+/* ===============================================================
+   Cabecalho em barra chapada — so na previa do hero novo (app/previa-hero).
+
+   O cartao flutuante de producao (raio, borda, sombra, recuo das bordas)
+   vira uma barra de borda a borda, integrada ao hero: transparente no topo,
+   papel com fio embaixo depois de rolar. Nada muda no componente
+   (site-header.tsx); a pagina so embrulha o cabecalho numa classe
+   (PaginaInicial, prop classeDoCabecalho).
+
+   --escuro: hero escuro atras. No topo a marca vai para branco por filtro
+   (o mesmo recurso do rodape), menu e botao em papel. Rolado, volta a ser a
+   barra clara de sempre.
+
+   A partir de 1200px a barra mede 80 da referencia (1536 x 695) e o recuo
+   lateral e' o das variantes: 56u alem da sobra centrada.
+   =============================================================== */
+
+.cab-plano .cab {
+  padding: 0;
+}
+
+.cab-plano .cab .cab-cartao {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 64px;
+  margin: 0;
+  padding-inline: 24px;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Na barra chapada saem os dois enfeites do cartao: o fio com pulso verde
+   na base (sem o cartao, ele boiava sob o menu) e a numeracao 01-04, que
+   cobria 4 dos 6 itens e lia como ornamento. Os itens continuam iguais. */
+.cab-plano .cab .cab-cartao > .pointer-events-none.absolute.inset-x-0.bottom-0 {
+  display: none;
+}
+
+.cab-plano .cab .cab-num {
+  display: none;
+}
+
+.cab-plano .cab .cab-cartao.chapa-rolou {
+  width: 100%;
+  border-color: var(--color-rule);
+  background: var(--color-paper);
+}
+
+@media (min-width: 768px) {
+  .cab-plano .cab .cab-cartao {
+    height: 72px;
+    padding-inline: 40px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .cab-plano .cab .cab-cartao {
+    padding-inline: 28px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cab-plano .cab .cab-cartao {
+    min-width: max-content;
+    height: max(64px, calc(80 * var(--ucc)));
+    padding-inline: calc(max(0px, (100cqw - 1536 * var(--uc)) / 2) + 56 * var(--uc));
+  }
+}
+
+/* ---------- sobre hero escuro ---------- */
+
+.cab-plano--escuro .cab .chapa-topo .cab-marca {
+  filter: brightness(0) invert(1);
+}
+
+.cab-plano--escuro .cab .chapa-topo :is(.cab-item, .cab-num, .cab-seta) {
+  color: var(--color-paper);
+}
+
+.cab-plano--escuro .cab .chapa-topo .cab-num {
+  color: color-mix(in srgb, var(--color-paper) 62%, transparent);
+}
+
+.cab-plano--escuro .cab .chapa-topo .cab-cta {
+  border-color: color-mix(in srgb, var(--color-paper) 38%, transparent);
+  color: var(--color-paper);
+}
+
+.cab-plano--escuro .cab .chapa-topo button[aria-controls="menu-mobile"] span span {
+  background-color: var(--color-paper);
+}
+
+.cab-plano--escuro .cab .chapa-topo button[aria-controls="menu-mobile"]:hover {
+  background-color: color-mix(in srgb, var(--color-paper) 10%, transparent);
+}
