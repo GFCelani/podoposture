@@ -8,7 +8,7 @@ import { ClinicalResponsibility } from "./clinical-responsibility";
 import { Contact } from "./contact";
 import { FloatingWhatsApp } from "./floating-whatsapp";
 import { Gallery } from "./gallery";
-import { Hero, HeroTransicao } from "./hero";
+import { Hero } from "./hero";
 import { Journal } from "./journal";
 import { SeamRuler } from "./layers";
 import { MetodoRegulador } from "./metodo-regulador";
@@ -64,7 +64,6 @@ export function PaginaInicial({
           whatsapp={whatsapp}
           anosDeExperiencia={contato.anosDeExperiencia}
         />
-        <HeroTransicao />
         <SeamRuler />
         <Welcome conteudo={conteudo["bem-vindo"]} />
         <ClinicalResponsibility

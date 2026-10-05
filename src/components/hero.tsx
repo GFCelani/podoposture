@@ -600,16 +600,3 @@ export function Hero({
     </section>
   );
 }
-
-/**
- * A passagem do hero para a secao seguinte. O hero e' azul profundo e a
- * secao 02 e' papel: encostados, o corte era seco (pedido de 2026-10-05:
- * "muito bruta"). Esta faixa vai do azul exato do fundo do hero ao papel, e
- * a foto ja chega aqui apagada (a mascara da .hero-foto esvanece na base),
- * entao a borda de baixo do hero nao se ve. Interpolada em oklab: em sRGB o
- * meio do caminho entre o azul e o linho sai cinza sujo. Visual em
- * globals.css, .hero-transicao.
- */
-export function HeroTransicao() {
-  return <div aria-hidden="true" className="hero-transicao" />;
-}

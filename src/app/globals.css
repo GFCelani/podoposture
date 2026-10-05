@@ -412,48 +412,36 @@ body {
 }
 
 /* ===============================================================
-   HERO — foto de fundo e passagem para a secao 02. Ver hero.tsx.
+   HERO — foto de fundo. Ver hero.tsx.
 
-   A foto da sala entra a partir de 36% da largura e esvanece por duas
-   mascaras que se multiplicam (intersect): pela esquerda, para nascer antes
-   do centro sem corte, e pela base, para chegar apagada a borda de baixo do
-   hero, onde a faixa .hero-transicao continua o azul ate o papel.
+   A foto da sala entra a partir de 36% da largura e esvanece pela
+   esquerda, para nascer antes do centro sem corte. Ate a base, sem fade: a
+   passagem para a secao 02 e' o corte seco de sempre (uma faixa em degrade
+   do azul ao papel foi tentada e retirada em 2026-10-05).
    =============================================================== */
 
 .hero-foto {
   position: absolute;
   inset: 0 0 0 36%;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent, #000 34%),
-    linear-gradient(to bottom, #000 72%, transparent);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent, #000 34%),
-    linear-gradient(to bottom, #000 72%, transparent);
-  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 34%);
+  mask-image: linear-gradient(to right, transparent, #000 34%);
 }
 
 /* Empilhado (abaixo de 1200px) o texto ocupa o topo da largura inteira e
    a foto passaria atras dele: a 22% os bullets da credencial caiam para
-   3,9:1. Ali a mascara vertical a faz nascer abaixo da coluna de texto,
-   atras das figuras, e o texto fica sobre o azul limpo. */
+   3,9:1. Ali uma segunda mascara, vertical, a faz nascer abaixo da coluna
+   de texto, atras das figuras; as duas se multiplicam (intersect). */
 @media (max-width: 1199.98px) {
   .hero-foto {
     -webkit-mask-image:
       linear-gradient(to right, transparent, #000 34%),
-      linear-gradient(to bottom, transparent 42%, #000 62% 82%, transparent);
+      linear-gradient(to bottom, transparent 42%, #000 62%);
+    -webkit-mask-composite: source-in;
     mask-image:
       linear-gradient(to right, transparent, #000 34%),
-      linear-gradient(to bottom, transparent 42%, #000 62% 82%, transparent);
+      linear-gradient(to bottom, transparent 42%, #000 62%);
+    mask-composite: intersect;
   }
-}
-
-/* Do azul do fundo do hero (#08496b, a mesma caixa) ao papel. Altura pela
-   largura, com piso e teto: no telefone uma faixa alta demais empurraria a
-   secao 02 para longe; no desktop largo, curta demais voltaria a ser corte. */
-.hero-transicao {
-  height: clamp(72px, 9vw, 168px);
-  background: linear-gradient(to bottom in oklab, #08496b, var(--color-paper));
 }
 
 /* ===============================================================
