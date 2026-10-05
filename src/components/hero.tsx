@@ -31,7 +31,7 @@ import { TramaHero } from "./trama-hero";
  * menos passos, passo mais largo e faixa mais alta. Tres passos na largura da
  * fila de botoes dao 54px de faixa na janela de laptop; quatro davam 40.
  */
-const TRACO_MARCHA =
+export const TRACO_MARCHA =
   "M0 40 H24 C34 40 36 16 46 15 C54 14 56 26 66 27 C76 28 78 13 86 13 C96 13 100 40 110 40 H164 C174 40 176 16 186 15 C194 14 196 26 206 27 C216 28 218 13 226 13 C236 13 240 40 250 40 H304 C314 40 316 16 326 15 C334 14 336 26 346 27 C356 28 358 13 366 13 C376 13 380 40 390 40 H420";
 
 /**
@@ -43,7 +43,7 @@ const TRACO_MARCHA =
  * Nao e' rotulo decorativo, e' legenda de diagrama: mexer no y sem mexer no
  * nome quebra a correspondencia.
  */
-const LINHAS_DE_REFERENCIA = [
+export const LINHAS_DE_REFERENCIA = [
   { y: 149.5, abordagem: "Posturologia", marca: "prumo e níveis" },
   { y: 309.5, abordagem: "Osteopatia", marca: "coluna" },
   { y: 408, abordagem: "Acupuntura", marca: "pontos" },
@@ -54,7 +54,7 @@ const LINHAS_DE_REFERENCIA = [
  * verde, o segundo o de contorno. O painel edita so rotulo e destino; um
  * icone ou uma variante trocados mudariam a hierarquia que a fila mede.
  */
-const FORMA_DOS_BOTOES = [
+export const FORMA_DOS_BOTOES = [
   { variant: "primary", icone: "balao" },
   { variant: "secondary-deep", icone: "pergunta" },
 ] as const;
@@ -65,7 +65,7 @@ const FORMA_DOS_BOTOES = [
  * linha so, e a quebra continua escolhida, nao emergente. Cada linha menos a
  * ultima termina com espaco, para o texto copiado sair corrido.
  */
-function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: string }) {
+export function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: string }) {
   return linhas.map((linha, i) => {
     const fim = i < linhas.length - 1 ? " " : "";
     if (i === 0) {
@@ -106,7 +106,7 @@ function TituloEmLinhas({ linhas, destaque }: { linhas: string[]; destaque: stri
  * linha. Um trecho em destaque que atravesse a quebra vira dois pedacos, um
  * em cada linha, com o mesmo destaque.
  */
-function porLinha(segmentos: SegmentoDoSubtitulo[]): SegmentoDoSubtitulo[][] {
+export function porLinha(segmentos: SegmentoDoSubtitulo[]): SegmentoDoSubtitulo[][] {
   const linhas: SegmentoDoSubtitulo[][] = [[]];
   for (const segmento of segmentos) {
     segmento.texto.split("\n").forEach((parte, i) => {
@@ -141,7 +141,7 @@ function ComBullets({ texto }: { texto: string }) {
 const QUEBRA = "\n";
 const NBSP = "\u00a0";
 
-function unirItens(segmentos: SegmentoDoSubtitulo[], linhas: string[]): SegmentoDoSubtitulo[] {
+export function unirItens(segmentos: SegmentoDoSubtitulo[], linhas: string[]): SegmentoDoSubtitulo[] {
   const texto = linhas.join(QUEBRA);
   const comBullet: boolean[] = [];
   let linha = 0;
@@ -165,7 +165,7 @@ function unirItens(segmentos: SegmentoDoSubtitulo[], linhas: string[]): Segmento
 }
 
 /** Pedacos de uma linha do subtitulo: destaque 0 com peso, 1 so com a cor. */
-function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
+export function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
   return pedacos.map((pedaco, i) =>
     pedaco.destaque === null ? (
       <ComBullets key={i} texto={pedaco.texto} />
@@ -182,7 +182,7 @@ function Pedacos({ pedacos }: { pedacos: SegmentoDoSubtitulo[] }) {
  * fino e o texto. A posicao sai do mesmo arquivo gerado dos pontos, em
  * porcentagem da caixa da figura, entao acompanha o ponto em qualquer escala.
  */
-function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "lombar"; linhas: string[] }) {
+export function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "lombar"; linhas: string[] }) {
   const { largura, pontos } = MAPA_DE_DOR_PONTOS.perfil;
   const alvo = pontos.find((p) => p.chave === ponto);
   if (!alvo) return null;
