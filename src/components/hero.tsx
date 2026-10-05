@@ -250,7 +250,7 @@ export function Hero({
 
             Desde 2026-10-05 ela nao cobre mais o hero inteiro: entra a partir
             de 36% da largura e sobe a 22% (era 18%), esmaecendo pela esquerda
-            e pela base (.hero-foto, globals.css). O texto fica sobre o azul
+            (.hero-foto, globals.css). O texto fica sobre o azul
             limpo e a foto mora atras das figuras. A trama de curvas de nivel
             saiu na mesma troca (trama-hero.tsx, no historico do git). Medido
             sobre a composicao final, o pior texto e' a anotacao do mapa sobre
