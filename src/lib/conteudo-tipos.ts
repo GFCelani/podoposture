@@ -504,6 +504,7 @@ export const IMAGENS_DO_SITE: Readonly<Record<string, { largura: number; altura:
   "/img/conducao-da-perna-na-maca.webp": { largura: 1200, altura: 1500 },
   "/img/palpacao-da-mandibula.webp": { largura: 1200, altura: 1500 },
   "/img/agulhamento-no-trapezio.webp": { largura: 1200, altura: 1500 },
+  "/img/osteopatia-decubito-lateral.webp": { largura: 640, altura: 800 },
   "/img/terapia-manual-na-base-do-cranio.webp": { largura: 1600, altura: 1000 },
   "/img/clinica-podoposture-5.webp": { largura: 2560, altura: 1155 },
   "/og.png": { largura: 1200, altura: 630 },

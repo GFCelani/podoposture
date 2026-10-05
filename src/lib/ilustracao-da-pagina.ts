@@ -48,13 +48,20 @@ const AGULHAS = {
 const FOTOS: Record<string, Foto> = {
   /* A sala de exame escura saiu do site a pedido da cliente (2026-09-29).
      As duas fotos abaixo sao arquivos diferentes do acervo e nao aparecem em
-     nenhum outro lugar do site. */
+     nenhum outro lugar do site.
+
+     Osteopatia (2026-10-05, a pedido): sai a sala de atendimento vazia e
+     entra o gesto, a manobra em decubito lateral. Do acervo da cliente
+     (blob-9808ae7.png, post de rede social 1080x1080 com tarja preta em cima
+     e azul embaixo); a foto util tem 1080x795 e o recorte 4:5 sai em 636x795,
+     ampliado 0,6% para 640x800, o piso de largura do painel. A sala nao e' nenhuma das da clinica (persiana vertical,
+     vaso), entao a legenda marca "Imagem ilustrativa". */
   osteopatia: {
-    src: `${GALERIA}/sala-de-atendimento.webp`,
-    alt: "Sala de atendimento da Podoposture com maca de lençol branco e travesseiros, pia com armário, carrinho auxiliar e cortinas nas janelas.",
-    legenda: "Sala de atendimento: a consulta de osteopatia é feita na maca.",
-    largura: 960,
-    altura: 1200,
+    src: "/img/osteopatia-decubito-lateral.webp",
+    alt: "Osteopata em pé atrás da paciente deitada de lado na maca, com uma mão no ombro e a outra no abdômen dela, durante uma manobra.",
+    legenda: "Manobra osteopática com a paciente de lado: uma mão no ombro, a outra no abdômen. Imagem ilustrativa.",
+    largura: 640,
+    altura: 800,
   },
   "flexo-distração": {
     src: `${GALERIA}/sala-de-flexo-distracao.webp`,
