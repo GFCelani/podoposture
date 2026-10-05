@@ -393,7 +393,11 @@ body {
 }
 
 /* Linhas de referencia do hero: recolhem a partir da esquerda e voltam, com
-   a ponta direita (o traco curto) parada. Origem a direita. */
+   a ponta direita (o traco curto) parada. Origem a direita.
+   --recuo e' a escala no meio do ciclo; o padrao (0,42) e' o das linhas das
+   paginas internas. As do hero da home ficam quase estaticas (pedido de
+   2026-10-05): 0,985, uns 15px na linha de 1000px, ciclo de 18 a 28s.
+   Movimento que se percebe so olhando, nao que puxa o olho. */
 .estende {
   transform: scaleX(1);
   transform-origin: right center;
@@ -403,98 +407,120 @@ body {
 
 @keyframes estende {
   50% {
-    transform: scaleX(0.42);
+    transform: scaleX(var(--recuo, 0.42));
   }
 }
 
 /* ===============================================================
-   HERO — trama de curvas de nivel (camada de fundo). Ver trama-hero.tsx.
+   HERO — foto de fundo e passagem para a secao 02. Ver hero.tsx.
 
-   --trama-forca e' a opacidade da camada inteira, e e' o unico numero a
-   mexer se ela ficar forte ou fraca demais.
-
-   Os dois pocos de mascara NAO abrem buraco: sao elipses de alfa parcial que
-   atenuam. A trama e' fundo e pode passar por tras do conteudo; o que ela nao
-   pode e' disputar com ele, entao chega na tinta do titulo e no campo das
-   figuras com cerca de um terco da forca que tem no vazio. Sobre o titulo
-   isso tem um efeito colateral util: o contraste do texto, que e' medido
-   sobre a composicao final, praticamente nao se move.
-
-   As duas mascaras vivem em elementos ANINHADOS de proposito. Duas camadas de
-   mask-image no mesmo elemento se somam (uniao), que e' o oposto do que se
-   quer aqui; mascara de pai multiplica a do filho, e multiplicar e' o que faz
-   os dois pocos coexistirem.
-
-   As elipses sao em porcentagem da caixa do hero, entao acompanham a faixa
-   sozinhas; so o arranjo muda em 1200px, quando o texto deixa de ocupar a
-   largura toda e as figuras saem de baixo dele para o lado direito.
+   A foto da sala entra a partir de 36% da largura e esvanece por duas
+   mascaras que se multiplicam (intersect): pela esquerda, para nascer antes
+   do centro sem corte, e pela base, para chegar apagada a borda de baixo do
+   hero, onde a faixa .hero-transicao continua o azul ate o papel.
    =============================================================== */
 
-.hero-trama {
-  /* Empilhado a coluna e' unica e o conteudo ocupa quase toda a caixa:
-     sobra pouco fundo livre, entao a camada inteira entra mais fraca e o poco
-     e' um platou largo em vez de uma elipse. */
-  --trama-forca: 0.11;
+.hero-foto {
   position: absolute;
-  inset: 0;
-  opacity: var(--trama-forca);
-  /* empilhado: um poco so, sobre o miolo, que e' onde esta todo o conteudo */
-  -webkit-mask-image: radial-gradient(
-    ellipse 78% 62% at 50% 44%,
-    rgb(0 0 0 / 0.2) 0 72%,
-    #000 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 78% 62% at 50% 44%,
-    rgb(0 0 0 / 0.2) 0 72%,
-    #000 100%
-  );
+  inset: 0 0 0 36%;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 34%),
+    linear-gradient(to bottom, #000 72%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 34%),
+    linear-gradient(to bottom, #000 72%, transparent);
+  mask-composite: intersect;
 }
 
-.hero-trama-poco {
-  height: 100%;
-}
-
-/* 1px de verdade em qualquer largura: com preserveAspectRatio="slice" a
-   escala do viewBox muda por janela, e sem isto a linha engrossaria justo no
-   telefone, onde sobra menos fundo livre. */
-.hero-trama path {
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
-}
-
-@media (min-width: 1200px) {
-  /* Coluna de texto. A elipse cobre do numeral (17% da altura) a' curva de
-     marcha (90%), e nao so a mancha do titulo: o degrau de alfa comeca em 55%
-     do raio justamente para o subtitulo e os botoes, que ficam na metade de
-     baixo, receberem a mesma atenuacao do titulo e nao a da borda. */
-  .hero-trama {
-    --trama-forca: 0.14;
-    -webkit-mask-image: radial-gradient(
-      ellipse 46% 52% at 22% 53%,
-      rgb(0 0 0 / 0.22) 0 55%,
-      #000 100%
-    );
-    mask-image: radial-gradient(
-      ellipse 46% 52% at 22% 53%,
-      rgb(0 0 0 / 0.22) 0 55%,
-      #000 100%
-    );
+/* Empilhado (abaixo de 1200px) o texto ocupa o topo da largura inteira e
+   a foto passaria atras dele: a 22% os bullets da credencial caiam para
+   3,9:1. Ali a mascara vertical a faz nascer abaixo da coluna de texto,
+   atras das figuras, e o texto fica sobre o azul limpo. */
+@media (max-width: 1199.98px) {
+  .hero-foto {
+    -webkit-mask-image:
+      linear-gradient(to right, transparent, #000 34%),
+      linear-gradient(to bottom, transparent 42%, #000 62% 82%, transparent);
+    mask-image:
+      linear-gradient(to right, transparent, #000 34%),
+      linear-gradient(to bottom, transparent 42%, #000 62% 82%, transparent);
   }
+}
 
-  /* campo das figuras, as linhas de referencia e a faixa dos rotulos */
-  .hero-trama-poco {
-    -webkit-mask-image: radial-gradient(
-      ellipse 30% 46% at 74% 52%,
-      rgb(0 0 0 / 0.3) 0 58%,
-      #000 100%
-    );
-    mask-image: radial-gradient(
-      ellipse 30% 46% at 74% 52%,
-      rgb(0 0 0 / 0.3) 0 58%,
-      #000 100%
-    );
-  }
+/* Do azul do fundo do hero (#08496b, a mesma caixa) ao papel. Altura pela
+   largura, com piso e teto: no telefone uma faixa alta demais empurraria a
+   secao 02 para longe; no desktop largo, curta demais voltaria a ser corte. */
+.hero-transicao {
+  height: clamp(72px, 9vw, 168px);
+  background: linear-gradient(to bottom in oklab, #08496b, var(--color-paper));
+}
+
+/* ===============================================================
+   CABECALHO — sobre o hero. Ver site-header.tsx (sobreHero).
+
+   Na home sem rolar, o cartao fica invisivel sobre o azul do hero: sem
+   fundo, sem borda, sem sombra e sem o fio do pe. A marca troca de tom pelo
+   proprio componente; menu, numeros, botao e hamburguer passam a papel aqui.
+   Ao rolar a classe sai e o cartao volta pela transicao de sempre, agora
+   com o fundo na lista. Nada aqui mexe em medida.
+   Contraste sobre a composicao: o pior e' o numero "04", 5,2:1.
+   =============================================================== */
+
+.cab-cartao {
+  transition-property: width, max-width, border-color, box-shadow, background-color;
+}
+
+.cab-fio {
+  transition: opacity var(--dur-lenta) var(--ease-saida);
+}
+
+.cab-sobre-hero {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.cab-sobre-hero .cab-fio {
+  opacity: 0;
+}
+
+.cab-sobre-hero .cab-lista .cab-item {
+  color: var(--color-paper);
+}
+
+.cab-sobre-hero .cab-lista .cab-num {
+  color: var(--color-on-hero);
+}
+
+.cab-sobre-hero .cab-lista .cab-item:hover,
+.cab-sobre-hero .cab-lista .grupo-aberto .cab-item,
+.cab-sobre-hero .cab-lista .grupo-aberto .cab-num {
+  color: var(--color-accent-light);
+}
+
+.cab-sobre-hero .cab-cta {
+  border-color: color-mix(in srgb, var(--color-paper) 45%, transparent);
+  color: var(--color-paper);
+}
+
+.cab-sobre-hero .cab-cta:hover {
+  border-color: transparent;
+  color: var(--color-ink-strong);
+}
+
+.cab-sobre-hero > button span span {
+  background-color: var(--color-paper);
+}
+
+.cab-sobre-hero > button:hover {
+  background-color: color-mix(in srgb, var(--color-paper) 12%, transparent);
+}
+
+.cab-sobre-hero > a:focus-visible,
+.cab-sobre-hero > button:focus-visible,
+.cab-sobre-hero .cab-lista :focus-visible {
+  outline-color: var(--color-accent-light);
 }
 
 /* ===============================================================

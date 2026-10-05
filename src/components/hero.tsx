@@ -14,7 +14,6 @@ import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
 import { MAPA_DE_DOR_PONTOS } from "./mapa-de-dor-pontos";
 import { SectionMark } from "./layers";
-import { TramaHero } from "./trama-hero";
 
 /**
  * Curva de forca da marcha. O mesmo traco serve de geometria para a linha e
@@ -247,21 +246,28 @@ export function Hero({
           (`priority` foi descontinuado no Next 16 e nao marcava a prioridade). */}
       <div aria-hidden="true" className="absolute inset-0 bg-[#08496b]">
         {/* A foto vem do painel (Abertura > Foto de fundo); sem ela, fica o
-            azul com a trama. O enquadramento e a opacidade sao do layout. */}
+            azul chapado. O enquadramento e a opacidade sao do layout.
+
+            Desde 2026-10-05 ela nao cobre mais o hero inteiro: entra a partir
+            de 36% da largura e sobe a 22% (era 18%), esmaecendo pela esquerda
+            e pela base (.hero-foto, globals.css). O texto fica sobre o azul
+            limpo e a foto mora atras das figuras. A trama de curvas de nivel
+            saiu na mesma troca (trama-hero.tsx, no historico do git). Medido
+            sobre a composicao final, o pior texto e' a anotacao do mapa sobre
+            a foto, com 4,92:1. Aprovado no preview _previews/hero-v3/azul-foto. */}
         {fundo && (
-          <Image
-            src={fundo.src}
-            alt=""
-            fill
-            loading="eager"
-            fetchPriority="high"
-            sizes="100vw"
-            className="object-cover object-[34%_45%] opacity-[0.18]"
-          />
+          <div className="hero-foto">
+            <Image
+              src={fundo.src}
+              alt=""
+              fill
+              loading="eager"
+              fetchPriority="high"
+              sizes="64vw"
+              className="object-cover object-[34%_45%] opacity-[0.22]"
+            />
+          </div>
         )}
-        {/* Camada 0b: a trama de curvas de nivel, dentro da caixa do fundo e
-            depois da foto. Ver trama-hero.tsx. */}
-        <TramaHero />
       </div>
 
       {/* Composicao fluida (globals.css, "HERO - palco"): no telefone e no
@@ -551,8 +557,9 @@ export function Hero({
                 <div
                   className="estende h-px w-full bg-paper/30"
                   style={{
-                    ["--dur" as string]: `${9 + i * 2.5}s`,
-                    ["--fase" as string]: `${i * 1.7}s`,
+                    ["--dur" as string]: `${18 + i * 5}s`,
+                    ["--fase" as string]: `${i * 3.4}s`,
+                    ["--recuo" as string]: 0.985,
                   }}
                 />
                 <div className="absolute -top-px -right-5 h-[1.4px] w-[14px] bg-paper/80" />
@@ -592,4 +599,17 @@ export function Hero({
       </div>
     </section>
   );
+}
+
+/**
+ * A passagem do hero para a secao seguinte. O hero e' azul profundo e a
+ * secao 02 e' papel: encostados, o corte era seco (pedido de 2026-10-05:
+ * "muito bruta"). Esta faixa vai do azul exato do fundo do hero ao papel, e
+ * a foto ja chega aqui apagada (a mascara da .hero-foto esvanece na base),
+ * entao a borda de baixo do hero nao se ve. Interpolada em oklab: em sRGB o
+ * meio do caminho entre o azul e o linho sai cinza sujo. Visual em
+ * globals.css, .hero-transicao.
+ */
+export function HeroTransicao() {
+  return <div aria-hidden="true" className="hero-transicao" />;
 }

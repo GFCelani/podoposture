@@ -202,6 +202,12 @@ export function SiteHeader({
   const activeGroup = NAV_GROUPS.find((g) => g.label === open) ?? null;
   const activeIndex = activeGroup ? NAV_GROUPS.indexOf(activeGroup) : -1;
 
+  // Na home sem rolar, o cabecalho fica sobre o azul do hero: o cartao some
+  // (sem fundo, borda e sombra) e marca, menu e botao passam a papel. Ao
+  // rolar o cartao volta, com a transicao de sempre. A geometria nao muda
+  // entre os dois estados. Visual em globals.css, "CABECALHO - sobre o hero".
+  const sobreHero = naHome && !rolou;
+
   return (
     // Sem backdrop-filter: ele tornaria o header bloco contentor dos
     // descendentes fixed e o drawer mobile nasceria com altura zero.
@@ -226,7 +232,7 @@ export function SiteHeader({
           rolou
             ? "chapa-rolou border-rule shadow-lift"
             : "chapa-topo border-rule/60 shadow-plate"
-        }`}
+        }${sobreHero ? " cab-sobre-hero" : ""}`}
       >
         <Link
           href="/"
@@ -242,7 +248,7 @@ export function SiteHeader({
               com 54 e' de 92px. Se o menu ganhar item ou o CTA mudar de
               rotulo, e' o numero de 1024 que tem de ser remedido antes de
               crescer mais. */}
-          <MarcaDoSite logos={{ logo: logo ? [logo] : [], logoEscuro: [] }} className="cab-marca h-11 w-auto lg:h-12 xl:h-[54px]" />
+          <MarcaDoSite logos={{ logo: logo ? [logo] : [], logoEscuro: [] }} tom={sobreHero ? "deep" : "paper"} className="cab-marca h-11 w-auto lg:h-12 xl:h-[54px]" />
         </Link>
 
         {/* Desktop */}
@@ -442,7 +448,7 @@ export function SiteHeader({
             percorrendo a linha em loop */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden rounded-b-[14px]"
+          className="cab-fio pointer-events-none absolute inset-x-0 bottom-0 h-px overflow-hidden rounded-b-[14px]"
         >
           <div
             className="absolute inset-0"
