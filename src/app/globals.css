@@ -729,7 +729,7 @@ body {
    (x 41,8 contra 35,7 do contorno), entao o fio nasce ja fora da silhueta
    e corre na horizontal ate o vao, sem cruzar contorno, coluna nem outro
    ponto. A cliente achou escondido o calcanhar que ficava aqui antes.
-   Nada se move: o unico movimento e' o pulso que o ponto ja tem.
+   O texto flutua (ver FLUTUACAO, abaixo); anel e ponto ficam parados.
    =============================================================== */
 .pd-fig--perfil {
   --a: calc(var(--hero-fig-h) / 498);
@@ -800,6 +800,115 @@ body {
   translate: 0 -50%;
   align-items: flex-end;
   text-align: right;
+}
+
+/* FLUTUACAO. O texto boia num raio de ate 4,6 unidades de --a em volta
+   do repouso (4,6px no palco de 1536, ~3,7px no telefone, 5,7px no 1920):
+   x entre -3,2 e 3,6, y entre -2,4 e 2,8, em dois ciclos de periodo sem multiplo comum (17s e 11,3s),
+   entao o caminho nao se repete a vista. A folga medida ate o vizinho mais
+   perto e' de ~19 unidades no palco (as linhas de Osteopatia e Acupuntura,
+   acima e abaixo) e de mais de 20 no empilhado (mao da frontal e costas do
+   perfil): o raio come no maximo um quarto dela.
+
+   So a boia anima, e anima dois numeros registrados (--boia-x, --boia-y).
+   Deles saem dois transforms: o do texto, que so translada, e o do fio,
+   que gira e estica em torno do centro do anel. O fio nasce no contorno do
+   anel (11 unidades do centro) e mede o que falta ate 7 unidades antes do
+   texto, como em repouso; girar em volta do centro mantem a ponta de dentro
+   sobre o anel em qualquer angulo. Nada de layout por quadro: so transform.
+   Sem atan2/hypot no navegador, ou com movimento reduzido, nada disso entra
+   e a anotacao fica exatamente como era. */
+@property --boia-x {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --boia-y {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.pd-anot-boia {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+@supports (rotate: atan2(1, 1)) and (scale: hypot(1, 1)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .pd-anot-boia {
+      animation:
+        pd-boia-x 17s ease-in-out infinite,
+        pd-boia-y 11.3s ease-in-out infinite;
+    }
+
+    .pd-anot-texto {
+      transform: translate(calc(var(--boia-x) * var(--a)), calc(var(--boia-y) * var(--a)));
+    }
+
+    /* ciatica: ponta de fora em (63 + x, y), fio de 52 em repouso */
+    .pd-anot--ciatica .pd-anot-fio {
+      transform-origin: 0 50%;
+      transform: translateX(calc(-11 * var(--a)))
+        rotate(atan2(var(--boia-y), calc(63 + var(--boia-x))))
+        translateX(calc(11 * var(--a)))
+        scaleX(calc((hypot(calc(63 + var(--boia-x)), var(--boia-y)) - 11) / 52));
+    }
+
+    /* lombar: espelhada, ponta de fora em (-35 + x, y), fio de 24 */
+    .pd-anot--lombar .pd-anot-fio {
+      transform-origin: 100% 50%;
+      transform: translateX(calc(11 * var(--a)))
+        rotate(atan2(calc(-1 * var(--boia-y)), calc(35 - var(--boia-x))))
+        translateX(calc(-11 * var(--a)))
+        scaleX(calc((hypot(calc(35 - var(--boia-x)), var(--boia-y)) - 11) / 24));
+    }
+  }
+}
+
+@keyframes pd-boia-x {
+  0%,
+  100% {
+    --boia-x: 0;
+  }
+  14% {
+    --boia-x: 2.6;
+  }
+  31% {
+    --boia-x: -1.4;
+  }
+  47% {
+    --boia-x: 3.6;
+  }
+  63% {
+    --boia-x: -3.2;
+  }
+  81% {
+    --boia-x: 1.2;
+  }
+}
+
+@keyframes pd-boia-y {
+  0%,
+  100% {
+    --boia-y: 0;
+  }
+  19% {
+    --boia-y: -2.4;
+  }
+  38% {
+    --boia-y: 1.6;
+  }
+  56% {
+    --boia-y: 2.8;
+  }
+  77% {
+    --boia-y: -1.8;
+  }
 }
 
 /* Com um ponto em destaque, a placa dele pode abrir sobre o vao: o convite

@@ -97,3 +97,101 @@ for (const [largura, altura] of TODAS) {
     expect(m.linhas).toBe(3);
   });
 }
+
+/** Raio da flutuacao da anotacao, em unidades de --a: x ate 3,6 e y ate
+ *  2,8 (ver FLUTUACAO em globals.css). */
+const RAIO_U = Math.hypot(3.6, 2.8);
+
+/**
+ * Com movimento: so o texto boia. As duas animacoes da boia sao pausadas e
+ * levadas a 48 instantes de um minuto; em cada um o anel continua centrado
+ * no ponto, o texto fica dentro do raio, o fio sai do contorno do anel e
+ * chega a 7 unidades do texto, e as folgas do teste de repouso continuam
+ * valendo com o texto deslocado.
+ */
+for (const [largura, altura] of TODAS) {
+  test(`anotacao flutua presa ao anel e ao texto: ${largura}x${altura}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.setViewportSize({ width: largura, height: altura });
+    await page.goto("/", { waitUntil: "load" });
+    await page.evaluate(() => document.fonts.ready);
+
+    const empilhado = largura < 1200;
+    const m = await page.evaluate(
+      ({ maoU, raioU }) => {
+        const anot = [...document.querySelectorAll(".pd-anot")].find((e) => getComputedStyle(e).display !== "none")!;
+        const lombar = anot.classList.contains("pd-anot--lombar");
+        const boia = anot.querySelector<HTMLElement>(".pd-anot-boia")!;
+        const anims = boia.getAnimations();
+        anims.forEach((a) => a.pause());
+        const alvo = lombar ? /^dor lombar/i : /ciática/i;
+        const ponto = [...document.querySelectorAll(".pd-fig--perfil .pd-ponto")].find((p) =>
+          alvo.test(p.getAttribute("aria-label") ?? ""),
+        )!;
+        const anelEl = anot.querySelector(".pd-anot-anel")!;
+        const textoEl = anot.querySelector(".pd-anot-texto")!;
+        const fioEl = anot.querySelector(".pd-anot-fio")!;
+        const linhas = [...document.querySelectorAll(".hero-linha")].filter((l) => getComputedStyle(l).display !== "none");
+
+        let pior = { anel: 0, raio: 0, inicio: 0, fim: 0, vao: 0, folgaMao: Infinity, folgaPerfil: Infinity, folgaLinha: Infinity };
+        let maior = 0;
+        for (let k = 0; k < 48; k++) {
+          anims.forEach((a) => (a.currentTime = k * 1250));
+          const anel = anelEl.getBoundingClientRect();
+          const a = anel.width / 22;
+          const cx = anel.left + anel.width / 2;
+          const cy = anel.top + anel.height / 2;
+          const p = ponto.querySelector(".pd-anel")!.getBoundingClientRect();
+          const t = textoEl.getBoundingClientRect();
+          const mt = new DOMMatrix(getComputedStyle(textoEl).transform);
+          const [dx, dy] = [mt.e, mt.f];
+          maior = Math.max(maior, Math.hypot(dx, dy) / a);
+
+          // Pontas do fio pela caixa dele: 1px de espessura, entao cada ponta
+          // fica a meio pixel da borda, do lado para onde o texto desceu.
+          const f = fioEl.getBoundingClientRect();
+          const [yIni, yFim] = dy >= 0 ? [f.top + 0.5, f.bottom - 0.5] : [f.bottom - 0.5, f.top + 0.5];
+          const ini = { x: lombar ? f.right : f.left, y: yIni };
+          const fim = { x: lombar ? f.left : f.right, y: yFim };
+          const esperadoFim = { x: cx + (lombar ? -35 : 63) * a + dx, y: cy + dy };
+
+          const fr = document.querySelector(".pd-fig--frontal")!.getBoundingClientRect();
+          const pf = document.querySelector(".pd-fig--perfil")!.getBoundingClientRect();
+          const folgaLinha = Math.min(
+            ...linhas.map((l) => {
+              const r = l.getBoundingClientRect();
+              if (r.right < t.left || r.left > t.right) return Infinity;
+              return Math.max(r.top - t.bottom, t.top - r.bottom);
+            }),
+          );
+          pior = {
+            anel: Math.max(pior.anel, Math.hypot(cx - (p.left + p.width / 2), cy - (p.top + p.height / 2))),
+            raio: Math.max(pior.raio, Math.hypot(dx, dy) - raioU * a),
+            inicio: Math.max(pior.inicio, Math.abs(Math.hypot(ini.x - cx, ini.y - cy) - 11 * a)),
+            fim: Math.max(pior.fim, Math.hypot(fim.x - esperadoFim.x, fim.y - esperadoFim.y)),
+            vao: Math.max(pior.vao, Math.abs((lombar ? fim.x - t.right : t.left - fim.x) - 7 * a)),
+            folgaMao: Math.min(pior.folgaMao, t.left - (fr.left + (fr.width * maoU) / 221)),
+            folgaPerfil: Math.min(pior.folgaPerfil, pf.left - t.right),
+            folgaLinha: Math.min(pior.folgaLinha, folgaLinha),
+          };
+        }
+        return { animacoes: anims.length, lombar, maior, ...pior };
+      },
+      { maoU: MAO_FRONTAL_U, raioU: RAIO_U },
+    );
+
+    expect(m.animacoes, "a boia tem as duas animacoes, x e y").toBe(2);
+    expect(m.maior, "o texto de fato se move").toBeGreaterThan(1.5);
+    expect(m.anel, "o anel fica parado sobre o ponto").toBeLessThanOrEqual(1);
+    expect(m.raio, "o texto nao sai do raio").toBeLessThanOrEqual(0.05);
+    expect(m.inicio, "o fio nasce no contorno do anel").toBeLessThanOrEqual(1);
+    expect(m.fim, "o fio chega aonde o texto foi").toBeLessThanOrEqual(1);
+    expect(m.vao, "o vao entre fio e texto continua o de repouso").toBeLessThanOrEqual(1);
+    if (empilhado) {
+      expect(m.folgaMao, "texto longe da mao da frontal").toBeGreaterThanOrEqual(12);
+      expect(m.folgaPerfil, "texto antes da caixa do perfil").toBeGreaterThanOrEqual(0);
+    } else {
+      expect(m.folgaLinha, "texto longe das linhas de referencia").toBeGreaterThanOrEqual(8);
+    }
+  });
+}
