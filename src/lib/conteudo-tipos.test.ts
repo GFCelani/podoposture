@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -246,10 +246,12 @@ describe("destino e uma lista fechada", () => {
     expect(resultado.dados?.cartoes[0].destino).toEqual({ tipo: "pagina", slug: "dor-lombar-crônica".normalize("NFC") });
   });
 
-  it("a lista de paginas e a de pages.json, sem a home", () => {
+  it("a lista de paginas e a de pages.json, sem a home, mais as de rota propria", () => {
     const paginas = JSON.parse(readFileSync(join(RAIZ, "src", "content", "pages.json"), "utf8")) as { slug: string }[];
-    const doJson = paginas.map((p) => p.slug.normalize("NFC")).filter((s) => s !== "home").sort();
-    expect(PAGINAS_DE_DESTINO.map((p) => p.slug).sort()).toEqual(doJson);
+    const doJson = paginas.map((p) => p.slug.normalize("NFC")).filter((s) => s !== "home");
+    const proprias = ["como-e-o-meu-atendimento"];
+    for (const slug of proprias) expect(existsSync(join(RAIZ, "src", "app", slug, "page.tsx")), slug).toBe(true);
+    expect(PAGINAS_DE_DESTINO.map((p) => p.slug).sort()).toEqual([...doJson, ...proprias].sort());
   });
 
   it("os rotulos sao os do menu que a clinica ja conhece", () => {

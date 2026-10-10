@@ -163,6 +163,45 @@ export function PaginaMedicaJsonLd({
   );
 }
 
+/**
+ * Pagina em que a responsavel tecnica descreve o proprio atendimento. Nao e'
+ * pagina de uma terapia, entao o `about` e' a clinica e o autor e' ela; os
+ * recursos que a pagina cita com pagina propria no site entram em `mentions`.
+ */
+export function PaginaDoAtendimentoJsonLd({
+  titulo,
+  descricao,
+  caminho,
+  recursos,
+}: {
+  titulo: string;
+  descricao: string;
+  caminho: string;
+  recursos: { nome: string; caminho: string }[];
+}) {
+  return (
+    <JsonLd
+      dados={{
+        "@context": "https://schema.org",
+        "@type": "MedicalWebPage",
+        name: titulo,
+        description: descricao,
+        url: urlAbsoluta(caminho),
+        inLanguage: "pt-BR",
+        isPartOf: { "@id": `${SITE_URL}/#site` },
+        about: { "@id": ID_CLINICA },
+        author: { "@id": `${SITE_URL}/#responsavel` },
+        publisher: { "@id": ID_CLINICA },
+        mentions: recursos.map((r) => ({
+          "@type": "MedicalTherapy",
+          name: r.nome,
+          url: urlAbsoluta(r.caminho),
+        })),
+      }}
+    />
+  );
+}
+
 /** Post do blog. */
 export function ArtigoJsonLd({
   titulo,

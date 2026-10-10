@@ -441,7 +441,8 @@ export type PaginaDeDestino = { slug: string; rotulo: string };
 
 /**
  * As paginas que um botao pode abrir: as 18 de pages.json que tem rota em
- * [slug], mais o indice do blog. "home" fica de fora porque e redirect para
+ * [slug], mais o indice do blog e /como-e-o-meu-atendimento, que tem rota
+ * propria (app/como-e-o-meu-atendimento). "home" fica de fora porque e redirect para
  * "/". Rotulos iguais aos do menu, que a clinica ja reconhece.
  *
  * Lista escrita aqui, e nao importada de pages.json, porque este arquivo vai
@@ -464,6 +465,7 @@ export const PAGINAS_DE_DESTINO: readonly PaginaDeDestino[] = [
   { slug: "baropodometria", rotulo: "Baropodometria" },
   { slug: "palmilhas-personalizadas", rotulo: "Palmilhas Personalizadas" },
   { slug: "quem-somos", rotulo: "Quem Somos" },
+  { slug: "como-e-o-meu-atendimento", rotulo: "Como é o meu atendimento" },
   { slug: "responsável-técnica", rotulo: "Responsável Técnica" },
   { slug: "currículo-profissional", rotulo: "Currículo Profissional" },
   { slug: "contato", rotulo: "Contato" },

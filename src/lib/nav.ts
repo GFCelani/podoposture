@@ -42,6 +42,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "A Clínica",
     items: [
       { label: "Quem Somos", href: "/quem-somos" },
+      { label: "Como é o meu atendimento", href: "/como-e-o-meu-atendimento" },
       { label: "Responsável Técnica", href: "/responsável-técnica" },
       { label: "Currículo Profissional", href: "/currículo-profissional" },
       { label: "Contato", href: "/contato" },

@@ -134,8 +134,13 @@ describe("recorte feito no navegador antes de enviar", () => {
 });
 
 describe("paginas internas com fotos", () => {
-  it("sao as paginas do menu, na ordem, menos Contato e o blog", () => {
-    const esperadas = PAGINAS_DE_DESTINO.filter((p) => p.slug !== "contato" && p.slug !== "nosso-blog").map((p) => p.slug);
+  /* /como-e-o-meu-atendimento fica de fora por ora: as fotos dela sao uma
+     por etapa (1, 3 e 7), e o modelo da aba Paginas e' uma ao lado do titulo
+     mais ate tres juntas num trecho. Leva-la ao painel pede um modelo
+     proprio; decisao pendente com a clinica. */
+  it("sao as paginas do menu, na ordem, menos Contato, o blog e a do atendimento", () => {
+    const fora = new Set(["contato", "nosso-blog", "como-e-o-meu-atendimento"]);
+    const esperadas = PAGINAS_DE_DESTINO.filter((p) => !fora.has(p.slug)).map((p) => p.slug);
     expect(CHAVES_DE_PAGINA.map((c) => PAGINAS_COM_FOTOS[c].slug.normalize("NFC"))).toEqual(esperadas);
     for (const chave of CHAVES_DE_PAGINA) {
       expect(chave).toMatch(/^pagina-[a-z0-9-]+$/);

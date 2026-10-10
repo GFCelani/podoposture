@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { CAMINHO_DO_ATENDIMENTO } from "@/lib/atendimento";
 import { PAGINAS_DINAMICAS } from "@/lib/pages";
 import { BLOG_INDEX } from "@/lib/posts";
 import { todosOsPosts } from "@/lib/posts-do-site";
@@ -44,6 +45,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Paginas com rota propria, fora de pages.json. Data fixa: a da ultima
+  // mudanca do texto da cliente, e nao a do build.
+  const proprias = [CAMINHO_DO_ATENDIMENTO].map((caminho) => ({
+    url: urlAbsoluta(caminho),
+    lastModified: new Date("2026-10-10"),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
   const posts = posts_.map((post) => ({
     url: urlAbsoluta(post.href),
     lastModified: new Date(post.dateISO),
@@ -61,5 +71,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.2,
   }));
 
-  return [home, indiceDoBlog, ...paginas, ...posts, ...legais];
+  return [home, indiceDoBlog, ...paginas, ...proprias, ...posts, ...legais];
 }
