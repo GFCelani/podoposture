@@ -5,7 +5,11 @@
  *
  * Rota propria, e nao uma entrada de pages.json: aquele arquivo e' gerado
  * pelo extrator do site antigo, e esta pagina nasceu depois dele, com uma
- * composicao que o sistema de blocos nao tem (a jornada em oito etapas).
+ * composicao que o sistema de blocos nao tem (as oito etapas em grade fixa,
+ * texto a esquerda e foto a direita).
+ *
+ * Os numeros "1." a "8." que a cliente pos antes de cada titulo so marcavam a
+ * ordem no texto dela e nao entram na pagina; a ordem vive na do array.
  */
 
 export const CAMINHO_DO_ATENDIMENTO = "/como-e-o-meu-atendimento";
@@ -31,8 +35,6 @@ export const INTRODUCAO_DO_ATENDIMENTO = [
 export type RecursoDoAtendimento = { texto: string; href?: string };
 
 export type EtapaDoAtendimento = {
-  /** O numero como a cliente escreveu ("1."). */
-  numero: string;
   titulo: string;
   /** Ancora da etapa, ASCII. */
   id: string;
@@ -44,7 +46,6 @@ export type EtapaDoAtendimento = {
 
 export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
   {
-    numero: "1.",
     titulo: "Primeiro, compreender a sua história",
     id: "compreender-a-sua-historia",
     paragrafos: [
@@ -55,7 +56,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "2.",
     titulo: "Uma avaliação clínica e neurológica detalhada",
     id: "avaliacao-clinica-e-neurologica",
     paragrafos: [
@@ -66,7 +66,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "3.",
     titulo: "Avaliação postural e biomecânica",
     id: "avaliacao-postural-e-biomecanica",
     paragrafos: [
@@ -77,7 +76,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "4.",
     titulo: "Investigação das conexões musculares e funcionais",
     id: "conexoes-musculares-e-funcionais",
     paragrafos: [
@@ -89,7 +87,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "5.",
     titulo: "Compreender como o sistema nervoso participa da dor",
     id: "sistema-nervoso-e-dor",
     paragrafos: [
@@ -101,7 +98,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "6.",
     titulo: "Um plano terapêutico construído a partir da avaliação",
     id: "plano-terapeutico",
     paragrafos: [
@@ -125,7 +121,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "7.",
     titulo: "Acompanhamento da evolução",
     id: "acompanhamento-da-evolucao",
     paragrafos: [
@@ -136,7 +131,6 @@ export const ETAPAS_DO_ATENDIMENTO: readonly EtapaDoAtendimento[] = [
     ],
   },
   {
-    numero: "8.",
     titulo: "Integração com outros profissionais",
     id: "integracao-com-outros-profissionais",
     paragrafos: [

@@ -1,371 +1,115 @@
 /* ===========================================================================
-   COMO E O MEU ATENDIMENTO (components/como-e-o-meu-atendimento.tsx e
-   components/atendimento-figuras.tsx). Importado por globals.css; tokens do
-   @theme de la.
+   COMO E O MEU ATENDIMENTO (components/como-e-o-meu-atendimento.tsx).
+   Importado por globals.css; tokens do @theme de la.
 
-   Movimento, todo ele:
-     - Reveal, como no resto do site;
-     - o pulso dos fios das ilustracoes (stroke-dashoffset, base opacity 0);
-     - o trilho da jornada, que enche com o scroll, e o no' de cada etapa,
-       que acende quando ela passa do meio da tela. Scroll-driven por CSS,
-       so transform e opacidade. O repouso (trilho cheio, nos acesos) e' o
-       estilo base: sem suporte a animation-timeline ou com movimento
-       reduzido, e' isso que aparece, inteiro e parado.
+   So a grade e o respiro. Titulo, corpo, citacao e lead sao as classes das
+   outras paginas internas (.pi-h2, .prosa, .pi-citacao, .pi-lead), para a
+   pagina nao ter tipografia propria.
+
+   A grade e' a do topo (PageShell com midia): doze colunas de 24px de
+   goteira dentro do mesmo involucro de 1240px; texto em 1-7, imagem em 9-12.
+   Abaixo de 1024 empilha, como o topo.
    =========================================================================== */
 
-/* ---- placas das ilustracoes --------------------------------------------- */
-
-.ja-trama {
-  background-image:
-    linear-gradient(to bottom, rgb(251 248 243 / 0.06) 1px, transparent 1px),
-    linear-gradient(to right, rgb(251 248 243 / 0.06) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: -1px -1px;
+/* Respiro igual em todas as faixas, papel ou areia: o das faixas em papel
+   das paginas internas (.pi-faixa). */
+.ja-wrap {
+  padding-top: 56px;
+  padding-bottom: 56px;
 }
 
-.ja-figura {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.ja-figura-caixa {
-  position: relative;
-  height: 90%;
-  margin-bottom: 4%;
-}
-
-/* Recorte: a figura cresce ate a faixa pedida ocupar a placa, e sobe o
-   bastante para a faixa comecar no topo. A escala e o topo vem do TSX. */
-.ja-figura-recorte {
-  align-items: flex-start;
-  mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 97%);
-}
-
-.ja-figura-recorte .ja-figura-caixa {
-  height: calc(100% * var(--escala-fig));
-  margin-bottom: 0;
-  transform: translateY(calc(var(--topo-fig) * 100%));
-}
-
-.ja-figura-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.ja-pulso {
-  stroke-dasharray: 7 100;
-  stroke-dashoffset: 7;
-  opacity: 0;
-  animation: ja-pulso var(--dur, 6s) linear infinite;
-  animation-delay: calc(-1 * var(--fase, 0s));
-}
-
-@keyframes ja-pulso {
-  0% {
-    stroke-dashoffset: 7;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -100;
-    opacity: 0;
-  }
-}
-
-/* ---- introducao e indice ------------------------------------------------- */
-
-.ja-ponto {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 14%, transparent);
-}
-
-.ja-parada-linha {
-  position: relative;
-  height: 1px;
-  background: var(--color-rule);
-}
-
-.ja-parada-no {
-  position: absolute;
-  left: 0;
-  top: -5px;
-  width: 11px;
-  height: 11px;
-  border: 1px solid var(--color-accent);
-  border-radius: 50%;
-  background: var(--color-surface);
-  transition: background-color var(--dur-media) var(--ease-saida);
-}
-
-.ja-parada:hover .ja-parada-no,
-.ja-parada:focus-visible .ja-parada-no {
-  background: var(--color-accent);
-}
-
-/* ---- jornada: trilho, lateral, numeral ----------------------------------- */
-
-.ja-etapa {
-  --ja-fundo: var(--color-paper);
-}
-
-.ja-etapa.bg-surface {
-  --ja-fundo: var(--color-surface);
-}
-
-.ja-etapa[data-tone="deep"] {
-  --ja-fundo: var(--color-deep-calm);
-}
-
-.ja-titulo {
-  scroll-margin-top: 112px;
-}
-
-.ja-numeral-titulo {
-  display: block;
-  margin-bottom: 0.35em;
-  font-size: clamp(2.75rem, 2rem + 3vw, 3.5rem);
-  line-height: 1;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-}
-
-.ja-etapa-grade {
+.ja-grade {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  row-gap: 40px;
 }
 
-.ja-lateral,
-.ja-trilho {
-  display: none;
+.ja-texto {
+  min-width: 0;
+}
+
+/* Empilhada, a foto vem por ultimo e se comporta como a do topo: no
+   telefone ocupa a largura toda; do tablet em diante para em 360px,
+   centrada, como a midia do PageShell. */
+.ja-foto {
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+}
+
+/* O corpo encosta na esquerda da coluna em toda largura (a .prosa centra a
+   medida por padrao, o que no tablet deslocaria o texto do titulo). */
+.ja-prosa {
+  margin-inline: 0;
+}
+
+.ja-corpo {
+  margin-top: 28px;
+}
+
+.ja-depois-do-lead {
+  margin-top: 1.35em;
+}
+
+/* O separador da cliente, antes do fecho. */
+.ja-separador {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.ja-depois-do-separador {
+  margin-top: 32px;
+}
+
+.ja-citacao {
+  margin-top: 48px;
+}
+
+.ja-citacao blockquote {
+  margin: 0;
+}
+
+.ja-assinatura {
+  margin-top: 32px;
+  padding-left: 22px;
 }
 
 @media (min-width: 768px) {
-  .ja-jornada {
-    --ja-pad: 32px;
+  .ja-wrap {
+    padding-top: 64px;
+    padding-bottom: 64px;
   }
 
-  .ja-etapa-grade {
-    grid-template-columns: 88px minmax(0, 1fr);
-    column-gap: 24px;
-  }
-
-  .ja-lateral {
-    display: block;
-  }
-
-  /* Fixo enquanto a etapa rola, logo abaixo da chapa do cabecalho. Acima
-     do trilho, para o no' cobrir o fio. */
-  .ja-lateral-in {
-    position: sticky;
-    top: 120px;
-    z-index: 2;
-  }
-
-  .ja-trilho {
-    display: block;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: calc(max(0px, (100% - 1240px) / 2) + var(--ja-pad) + 5.5px);
-    z-index: 1;
-    width: 1px;
-    background: color-mix(in srgb, var(--color-accent-vivid) 26%, transparent);
-    pointer-events: none;
-  }
-
-  .ja-trilho-cheio {
-    position: absolute;
-    inset: 0;
-    background: var(--color-accent-vivid);
-    transform-origin: top;
+  .ja-corpo {
+    margin-top: 32px;
   }
 }
 
 @media (min-width: 1024px) {
-  .ja-jornada {
-    --ja-pad: 40px;
+  .ja-wrap {
+    padding-top: 88px;
+    padding-bottom: 88px;
   }
 
-  .ja-etapa-grade {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 10fr);
+  .ja-grade {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
   }
-}
 
-.ja-no {
-  position: relative;
-  display: block;
-  width: 12px;
-  height: 12px;
-  margin-top: 0.75rem;
-  border: 1px solid var(--color-accent-vivid);
-  border-radius: 50%;
-  background: var(--ja-fundo);
-  box-shadow: 0 0 0 5px var(--ja-fundo);
-}
-
-.ja-no-cheio {
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  background: var(--color-accent-vivid);
-}
-
-.ja-etapa[data-tone="deep"] .ja-no {
-  border-color: var(--color-accent-light);
-}
-
-.ja-etapa[data-tone="deep"] .ja-no-cheio {
-  background: var(--color-accent-light);
-}
-
-.ja-numeral {
-  display: block;
-  margin-top: 1.25rem;
-  font-family: var(--display);
-  font-size: clamp(3rem, 1.6rem + 3.4vw, 5.5rem);
-  line-height: 0.9;
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  font-variant-numeric: lining-nums;
-}
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .ja-jornada {
-      view-timeline: --jornada block;
-    }
-
-    /* Enche do topo da jornada no meio da tela ate o fim dela no meio da
-       tela: a ponta do fio acompanha a linha de leitura. */
-    .ja-trilho-cheio {
-      animation: ja-enche linear both;
-      animation-timeline: --jornada;
-      animation-range: cover 50vh cover calc(100% - 50vh);
-    }
-
-    .ja-etapa {
-      view-timeline: --etapa block;
-    }
-
-    .ja-no-cheio {
-      animation: ja-acende linear both;
-      animation-timeline: --etapa;
-      animation-range: cover 38vh cover 50vh;
-    }
+  .ja-texto {
+    grid-column: 1 / 8;
   }
-}
 
-@keyframes ja-enche {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes ja-acende {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* ---- etapa 4: os dois casos ---------------------------------------------- */
-
-.ja-caso-elo {
-  width: 44px;
-  height: 9px;
-  background:
-    radial-gradient(circle at 4.5px 50%, var(--color-accent) 3.2px, transparent 3.8px),
-    radial-gradient(circle at calc(100% - 4.5px) 50%, var(--color-accent) 3.2px, transparent 3.8px),
-    linear-gradient(var(--color-accent), var(--color-accent)) center / calc(100% - 9px) 1px no-repeat;
-}
-
-/* ---- etapa 6: os recursos ------------------------------------------------ */
-
-.ja-recursos {
-  counter-reset: recurso;
-}
-
-.ja-recurso {
-  counter-increment: recurso;
-}
-
-.ja-recurso-in {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  min-height: 44px;
-  padding: 1.05rem 0;
-  font-size: 1.0625rem;
-  line-height: 1.5;
-  color: var(--color-ink);
-}
-
-.ja-recurso-in::before {
-  content: counter(recurso, decimal-leading-zero);
-  flex-shrink: 0;
-  width: 1.75rem;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--color-muted);
-}
-
-.ja-recurso-texto {
-  flex: 1;
-  min-width: 0;
-}
-
-.ja-recurso-link {
-  color: var(--color-accent);
-}
-
-.ja-recurso-link .ja-recurso-texto {
-  text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
-  transition: text-decoration-color var(--dur-media) var(--ease-saida);
-}
-
-.ja-recurso-link:hover .ja-recurso-texto {
-  text-decoration-color: var(--color-accent);
-}
-
-.ja-recurso-seta {
-  flex-shrink: 0;
-  transition: transform var(--dur-media) var(--ease-saida);
-}
-
-.ja-recurso-link:hover .ja-recurso-seta {
-  transform: translateX(4px);
-}
-
-/* ---- fecho --------------------------------------------------------------- */
-
-.ja-citacao {
-  border-left: 2px solid var(--color-accent-light);
-  padding-left: 1.25rem;
-}
-
-@media (min-width: 768px) {
-  .ja-citacao {
-    padding-left: 2.5rem;
+  /* Mesma coluna e mesma largura da foto do topo; o topo da moldura alinha
+     com o topo do titulo da etapa. */
+  .ja-foto {
+    grid-column: 9 / 13;
+    max-width: none;
+    margin-inline: 0;
+    align-self: start;
   }
 }

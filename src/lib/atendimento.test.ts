@@ -4,8 +4,11 @@ import { ETAPAS_DO_ATENDIMENTO } from "./atendimento";
 import { NAV_GROUPS } from "./nav";
 
 describe("como e o meu atendimento", () => {
-  it("as oito etapas, numeradas como a cliente escreveu", () => {
-    expect(ETAPAS_DO_ATENDIMENTO.map((e) => e.numero)).toEqual(["1.", "2.", "3.", "4.", "5.", "6.", "7.", "8."]);
+  it("as oito etapas, na ordem e sem numero no titulo", () => {
+    expect(ETAPAS_DO_ATENDIMENTO).toHaveLength(8);
+    expect(ETAPAS_DO_ATENDIMENTO[0].titulo).toBe("Primeiro, compreender a sua história");
+    expect(ETAPAS_DO_ATENDIMENTO[7].titulo).toBe("Integração com outros profissionais");
+    for (const e of ETAPAS_DO_ATENDIMENTO) expect(e.titulo).not.toMatch(/^\d/);
     expect(new Set(ETAPAS_DO_ATENDIMENTO.map((e) => e.id)).size).toBe(8);
     for (const e of ETAPAS_DO_ATENDIMENTO) expect(e.id).toMatch(/^[a-z0-9-]+$/);
   });

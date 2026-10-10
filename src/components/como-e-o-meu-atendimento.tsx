@@ -13,81 +13,76 @@ import {
   TITULO_DO_ATENDIMENTO,
   type EtapaDoAtendimento,
 } from "@/lib/atendimento";
+import type { Foto } from "@/lib/ilustracao-da-pagina";
 
-import {
-  FiguraDaAbertura,
-  FiguraDaRede,
-  FiguraDasConexoes,
-  FiguraDoExame,
-  FiguraDoSinal,
-} from "./atendimento-figuras";
 import { ConviteConsulta } from "./convite-consulta";
 import { PageGrid } from "./layers";
 import { PageShell } from "./page-shell";
+import { FotoEmMoldura } from "./pagina-interna";
 import { Reveal } from "./reveal";
 
 /**
  * "Como é o meu atendimento": o metodo da Dra. Claudia em oito etapas.
  *
  * O texto e' o da cliente, inteiro e na ordem (lib/atendimento.ts); aqui so
- * se decide a forma. Ritmo, de cima para baixo:
+ * se decide a forma, e a forma e' a das outras paginas internas: o mesmo
+ * topo com foto em moldura, os mesmos titulos (.pi-h2), o mesmo corpo
+ * (.prosa), os mesmos fundos (papel e areia) e o mesmo respiro das faixas.
  *
- *   topo        a casca das paginas internas, com o titulo e as duas
- *               frases de abertura; a direita, a figura do primeiro exemplo
- *               da introducao (a dor cervical e os fios ate mandibula e
- *               ombros).
- *   introducao  a primeira frase grande; o exemplo e o "por isso" ao lado.
- *   indice      as oito etapas em fila, cada uma levando a sua.
- *   jornada     uma banda por etapa, alternando papel, areia e azul
- *               profundo, com um formato proprio em cada (foto ao lado,
- *               placa desenhada, par de fotos, dois casos lado a lado,
- *               lista de recursos). O que as amarra e' o trilho: um fio
- *               vertical que corre pelas oito bandas na abscissa do
- *               numeral, enche conforme a leitura desce e acende o no' de
- *               cada etapa quando ela chega ao meio da tela. So transform
- *               e opacidade, ligados ao scroll por CSS; sem suporte, ou com
- *               movimento reduzido, o trilho ja nasce cheio e parado.
- *   fecho       o separador, os dois paragrafos finais, e a ultima frase
- *               em destaque com a assinatura, em banda profunda.
- *   convite     o mesmo de todas as paginas.
+ * Uma grade so, do topo ao fecho, e e' a do proprio topo: doze colunas, texto
+ * em 1-7 e imagem em 9-12. Toda faixa abaixo repete essas duas colunas, entao
+ * o titulo de cada etapa cai na mesma abscissa do titulo da pagina, e cada
+ * foto na mesma coluna e na mesma largura da foto do topo. Etapa sem foto
+ * deixa a coluna da direita vazia. Abaixo de 1024 tudo empilha: titulo,
+ * texto e a foto por ultimo.
  *
- * Fotografias: so da clinica, e nenhuma aparece em outro lugar do site.
- * Onde o acervo nao tem a cena, a etapa leva ilustracao
- * (atendimento-figuras.tsx).
+ * Fotografias: so da clinica, nenhuma em outro lugar do site. Etapa para a
+ * qual o acervo nao tem foto inedita fica sem imagem.
  */
 
-type Foto = { src: string; alt: string; legenda: string; largura: number; altura: number };
+const GALERIA = "/img/galeria";
 
-const FOTOS = {
-  mesa: {
-    src: "/img/galeria/mesa-da-consulta.webp",
+const FOTO_DO_TOPO: Foto = {
+  src: `${GALERIA}/bancada-do-consultorio.webp`,
+  alt: "Bancada branca do consultório com abajur aceso, livros, um modelo de osso e dois quadros encostados na parede: um cérebro em aquarela e vértebras coloridas.",
+  legenda: "A bancada do consultório.",
+  largura: 960,
+  altura: 1200,
+};
+
+/** A foto de cada etapa, pelo id da etapa. Sem entrada, sem foto. */
+const FOTOS_DAS_ETAPAS: Partial<Record<string, Foto>> = {
+  "compreender-a-sua-historia": {
+    src: `${GALERIA}/mesa-da-consulta.webp`,
     alt: "Mesa de atendimento do consultório, com notebook e duas cadeiras brancas de frente para ela; ao lado, a bancada com o abajur aceso.",
     legenda: "A mesa do consultório, onde a consulta começa.",
     largura: 1200,
     altura: 750,
   },
-  corredor: {
-    src: "/img/galeria/corredor-com-espelho.webp",
+  "avaliacao-postural-e-biomecanica": {
+    src: `${GALERIA}/corredor-com-espelho.webp`,
     alt: "Faixa de marcha no piso do consultório, com a plataforma de pressão no meio, diante de um espelho de corpo inteiro.",
     legenda: "A faixa de marcha, com a plataforma de pressão e o espelho.",
     largura: 960,
     altura: 1200,
   },
-  tela: {
-    src: "/img/galeria/baropodometria-na-tela.webp",
+  "plano-terapeutico": {
+    src: `${GALERIA}/palmilhas-na-bancada.webp`,
+    alt: "Par de palmilhas cinza sobre a bancada do consultório, diante de dois quadros com ilustrações da coluna vertebral.",
+    legenda: "Palmilhas posturais sobre a bancada do consultório.",
+    largura: 960,
+    altura: 1200,
+  },
+  "acompanhamento-da-evolucao": {
+    src: `${GALERIA}/baropodometria-na-tela.webp`,
     alt: "Tela de notebook com o mapa colorido da pressão dos dois pés, em duas medições lado a lado, com a porcentagem de carga de cada região.",
-    legenda: "Distribuição das pressões plantares na tela, durante o exame.",
+    legenda: "Duas medições da pressão plantar, lado a lado na tela.",
     largura: 1100,
     altura: 688,
   },
-  relatorio: {
-    src: "/img/galeria/relatorio-de-baropodometria.webp",
-    alt: "Relatório impresso de baropodometria aberto sobre a mesa, com o mapa de pressão dos dois pés e a tabela de medidas do exame.",
-    legenda: "Relatório de baropodometria: as medidas ficam registradas para comparar.",
-    largura: 900,
-    altura: 564,
-  },
-} satisfies Record<string, Foto>;
+};
+
+type Tom = "paper" | "surface";
 
 export function ComoEOMeuAtendimento() {
   return (
@@ -97,18 +92,14 @@ export function ComoEOMeuAtendimento() {
       subtitulo={ABERTURA_DO_ATENDIMENTO.join(" ")}
       subtituloLinhas={[...ABERTURA_DO_ATENDIMENTO]}
       trilha={[{ nome: TITULO_DO_ATENDIMENTO }]}
-      midia={<FiguraDaAbertura />}
+      midia={<FotoEmMoldura foto={FOTO_DO_TOPO} />}
     >
       <Introducao />
-      <Indice />
-      <div className="ja-jornada relative">
-        <div className="ja-trilho" aria-hidden="true">
-          <div className="ja-trilho-cheio" />
-        </div>
-        {ETAPAS_DO_ATENDIMENTO.map((etapa, i) => (
-          <Etapa key={etapa.id} etapa={etapa} indice={i} />
-        ))}
-      </div>
+      {/* Papel e areia alternados; a introducao, logo abaixo do topo em
+          areia, e' papel, entao a primeira etapa abre em areia. */}
+      {ETAPAS_DO_ATENDIMENTO.map((etapa, i) => (
+        <Etapa key={etapa.id} etapa={etapa} tom={i % 2 === 0 ? "surface" : "paper"} />
+      ))}
       <Fecho />
       <ConviteConsulta />
     </PageShell>
@@ -117,58 +108,53 @@ export function ComoEOMeuAtendimento() {
 
 /* ------------------------------------------------------------ pecas */
 
-const P = "text-[1.0625rem] leading-[1.75] md:text-[1.125rem]";
-
-function Paragrafo({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <p className={`${P} max-w-[62ch] ${className}`}>{children}</p>;
-}
-
-/** Primeiro paragrafo de cada etapa: um degrau acima do corpo. */
-function Lead({ children, deep = false }: { children: ReactNode; deep?: boolean }) {
+/** Uma faixa da pagina, com a grade de duas colunas. */
+function Faixa({
+  tom,
+  rotulo,
+  rotuloId,
+  fio = false,
+  children,
+}: {
+  tom: Tom;
+  rotulo?: string;
+  rotuloId?: string;
+  /** Fio no topo, para separar duas faixas seguidas em papel. */
+  fio?: boolean;
+  children: ReactNode;
+}) {
+  const fundo = tom === "surface" ? "border-y border-rule bg-surface" : fio ? "border-t border-rule" : "";
   return (
-    <p
-      className={`max-w-[44ch] text-[1.1875rem] leading-[1.6] font-medium tracking-[-0.005em] md:text-[1.3125rem] ${
-        deep ? "text-paper" : "text-ink-strong"
-      }`}
+    <section
+      aria-label={rotulo}
+      aria-labelledby={rotuloId}
+      className={`ja-faixa relative overflow-hidden ${fundo}`}
     >
-      {children}
-    </p>
-  );
-}
-
-/** A frase que fecha a etapa, em display com fio de acento a esquerda. */
-function Destaque({ children, deep = false }: { children: ReactNode; deep?: boolean }) {
-  return (
-    <p
-      className={`max-w-[34ch] border-l-2 pl-5 font-display text-[clamp(1.3125rem,1.05rem+1vw,1.75rem)] leading-[1.3] font-medium tracking-[-0.01em] text-balance md:pl-7 ${
-        deep ? "border-accent-light text-paper" : "border-accent text-ink-strong"
-      }`}
-    >
-      {children}
-    </p>
-  );
-}
-
-function FotoEmMoldura({ foto, sizes, deep = false }: { foto: Foto; sizes: string; deep?: boolean }) {
-  return (
-    <figure>
-      <div className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate">
-        <Image
-          src={foto.src}
-          alt={foto.alt}
-          width={foto.largura}
-          height={foto.altura}
-          sizes={sizes}
-          className="h-auto w-full rounded-md saturate-[0.92]"
-        />
+      <PageGrid />
+      <div className="ja-wrap relative mx-auto max-w-[1240px] px-6 md:px-8 lg:px-10">
+        <div className="ja-grade">{children}</div>
       </div>
+    </section>
+  );
+}
+
+/** A foto de uma etapa: a mesma moldura e a mesma legenda da foto do topo. */
+function FotoDaEtapa({ foto }: { foto: Foto }) {
+  return (
+    <figure className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate">
+      <Image
+        src={foto.src}
+        alt={foto.alt}
+        width={foto.largura}
+        height={foto.altura}
+        sizes="(min-width: 1024px) 380px, 360px"
+        className="h-auto w-full rounded-md saturate-[0.9]"
+      />
       <figcaption
-        className={`mt-3 flex items-start gap-3 text-[0.6875rem] leading-[1.6] tracking-[0.08em] ${
-          deep ? "text-on-deep-muted" : "text-muted"
-        }`}
+        className="flex items-start gap-3 px-1 pt-3 pb-1 text-[0.6875rem] leading-[1.5] tracking-[0.12em] text-muted"
         style={{ fontFamily: "var(--mono)" }}
       >
-        <span aria-hidden="true" className={`mt-[0.55em] h-px w-6 shrink-0 ${deep ? "bg-on-deep-muted/50" : "bg-rule"}`} />
+        <span aria-hidden="true" className="mt-[0.55em] h-px w-6 shrink-0 bg-rule" />
         {foto.legenda}
       </figcaption>
     </figure>
@@ -178,317 +164,73 @@ function FotoEmMoldura({ foto, sizes, deep = false }: { foto: Foto; sizes: strin
 /* ------------------------------------------------------- introducao */
 
 function Introducao() {
-  const [primeira, exemplo, porIsso] = INTRODUCAO_DO_ATENDIMENTO;
+  const [primeira, ...resto] = INTRODUCAO_DO_ATENDIMENTO;
   return (
-    <section aria-label="Introdução" className="relative overflow-hidden">
-      <PageGrid />
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
-        <div className="grid gap-y-10 lg:grid-cols-12 lg:gap-x-6">
-          <Reveal className="lg:col-span-7">
-            <span aria-hidden="true" className="ja-ponto mb-8 block" />
-            <p className="max-w-[24ch] font-display text-[clamp(1.75rem,1.2rem+2.4vw,3rem)] leading-[1.15] font-medium tracking-[-0.018em] text-balance text-ink-strong">
-              {primeira}
-            </p>
-          </Reveal>
-          <Reveal delay={120} className="lg:col-span-4 lg:col-start-9 lg:pt-3">
-            <span aria-hidden="true" className="mb-6 block h-px w-full bg-rule" />
-            <Paragrafo className="text-ink">{exemplo}</Paragrafo>
-          </Reveal>
-          <Reveal delay={200} className="lg:col-span-9 lg:col-start-3">
-            <p className="max-w-[56ch] border-t border-rule pt-8 text-[1.1875rem] leading-[1.65] text-ink-strong md:text-[1.3125rem]">
-              {porIsso}
-            </p>
-          </Reveal>
-        </div>
+    <Faixa tom="paper" rotulo="Introdução">
+      <div className="ja-texto">
+        <Reveal>
+          <div className="pi-lead">
+            <p>{primeira}</p>
+          </div>
+        </Reveal>
+        <Reveal delay={100}>
+          <div className="prosa ja-prosa ja-depois-do-lead">
+            {resto.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+          </div>
+        </Reveal>
       </div>
-    </section>
-  );
-}
-
-/* ----------------------------------------------------------- indice */
-
-function Indice() {
-  return (
-    <nav aria-label="As etapas do atendimento" className="relative overflow-hidden border-y border-rule bg-surface">
-      <PageGrid />
-      <div className="relative mx-auto max-w-[1240px] px-6 py-14 md:px-8 md:py-16 lg:px-10">
-        <ol className="grid gap-x-6 gap-y-2 sm:grid-cols-2 sm:gap-y-8 lg:grid-cols-4 lg:gap-y-10">
-          {ETAPAS_DO_ATENDIMENTO.map((etapa, i) => (
-            <li key={etapa.id} className="flex">
-              <Reveal delay={Math.min(280, 40 * i)} className="flex w-full">
-                <a href={`#${etapa.id}`} className="ja-parada group flex w-full gap-4 py-3 sm:block sm:py-0">
-                  <span aria-hidden="true" className="ja-parada-linha hidden sm:block">
-                    <span className="ja-parada-no" />
-                  </span>
-                  <span
-                    className="block shrink-0 pt-[0.2em] text-[0.8125rem] tracking-[0.06em] text-accent sm:mt-4"
-                    style={{ fontFamily: "var(--mono)" }}
-                  >
-                    {etapa.numero}
-                  </span>
-                  <span className="block text-[0.9375rem] leading-[1.45] text-ink transition-colors duration-[var(--dur-media)] group-hover:text-accent sm:mt-2">
-                    {etapa.titulo}
-                  </span>
-                </a>
-              </Reveal>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </nav>
+    </Faixa>
   );
 }
 
 /* ------------------------------------------------------------ etapa */
 
-type Tom = "paper" | "surface" | "deep";
-
-/** Ritmo das bandas: papel, areia, profundo, e de novo, sem repetir vizinho. */
-const TONS: readonly Tom[] = ["paper", "surface", "deep", "paper", "surface", "paper", "surface", "deep"];
-
-function Etapa({ etapa, indice }: { etapa: EtapaDoAtendimento; indice: number }) {
-  const tom = TONS[indice];
-  const deep = tom === "deep";
-  const fundo = deep ? "bg-deep-calm text-paper" : tom === "surface" ? "border-y border-rule bg-surface" : "";
+function Etapa({ etapa, tom }: { etapa: EtapaDoAtendimento; tom: Tom }) {
+  const foto = FOTOS_DAS_ETAPAS[etapa.id];
   return (
-    <section
-      aria-labelledby={etapa.id}
-      className={`ja-etapa relative overflow-hidden ${fundo}`}
-      data-tone={deep ? "deep" : undefined}
-    >
-      <PageGrid tone={deep ? "deep" : "light"} />
-      <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
-        <div className="ja-etapa-grade">
-          <div className="ja-lateral" aria-hidden="true">
-            <div className="ja-lateral-in">
-              <span className="ja-no">
-                <span className="ja-no-cheio" />
-              </span>
-              <span className={`ja-numeral ${deep ? "text-accent-light" : "text-accent"}`}>{etapa.numero}</span>
-            </div>
-          </div>
-          <div className="min-w-0">
-            <Reveal variante="cortina">
-              <h2
-                id={etapa.id}
-                className={`ja-titulo max-w-[22ch] font-display text-[clamp(1.75rem,1.25rem+2.1vw,2.875rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance ${
-                  deep ? "text-paper" : "text-ink-strong"
-                }`}
-              >
-                <span className={`ja-numeral-titulo md:sr-only ${deep ? "text-accent-light" : "text-accent"}`}>
-                  {etapa.numero}
-                </span>{" "}
-                {etapa.titulo}
-              </h2>
-            </Reveal>
-            <div className={`mt-10 md:mt-12 ${deep ? "text-on-deep-muted" : "text-ink"}`}>
-              <CorpoDaEtapa etapa={etapa} indice={indice} />
-            </div>
-          </div>
-        </div>
+    <Faixa tom={tom} rotuloId={etapa.id}>
+      <div className="ja-texto">
+        <Reveal variante="cortina">
+          <h2 id={etapa.id} className="pi-h2">
+            {etapa.titulo}
+          </h2>
+        </Reveal>
+        <Reveal delay={80}>
+          <CorpoDaEtapa etapa={etapa} />
+        </Reveal>
       </div>
-    </section>
+      {foto && (
+        <Reveal delay={160} className="ja-foto">
+          <FotoDaEtapa foto={foto} />
+        </Reveal>
+      )}
+    </Faixa>
   );
 }
 
-/** Um formato por etapa. A ordem dos paragrafos e' sempre a do texto. */
-function CorpoDaEtapa({ etapa, indice }: { etapa: EtapaDoAtendimento; indice: number }) {
+/** Os paragrafos na ordem do texto; a lista do passo 6 no lugar dela. */
+function CorpoDaEtapa({ etapa }: { etapa: EtapaDoAtendimento }) {
   const p = etapa.paragrafos;
-  switch (indice) {
-    /* 1. a historia: texto e a mesa da consulta lado a lado */
-    case 0:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <Reveal delay={80} className="space-y-5 lg:col-span-5">
-            <Lead>{p[0]}</Lead>
-            <Paragrafo>{p[1]}</Paragrafo>
-            <Paragrafo>{p[2]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={180} className="lg:col-span-5 lg:pt-2">
-            <FotoEmMoldura foto={FOTOS.mesa} sizes="(min-width: 1024px) 470px, 100vw" />
-          </Reveal>
-          <Reveal delay={120} className="lg:col-span-8">
-            <Destaque>{p[3]}</Destaque>
-          </Reveal>
-        </div>
-      );
-
-    /* 2. o exame: texto e a placa do trajeto do nervo */
-    case 1:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <div className="space-y-5 lg:col-span-6">
-            <Reveal delay={80}>
-              <Lead>{p[0]}</Lead>
-            </Reveal>
-            <Reveal delay={140} className="space-y-5">
-              <Paragrafo>{p[1]}</Paragrafo>
-              <Paragrafo>{p[2]}</Paragrafo>
-              <Paragrafo>{p[3]}</Paragrafo>
-            </Reveal>
-          </div>
-          <Reveal delay={200} className="mx-auto w-full max-w-[300px] lg:col-span-3 lg:col-start-8 lg:max-w-none">
-            <FiguraDoExame />
-          </Reveal>
-        </div>
-      );
-
-    /* 3. postural e biomecanica: banda profunda, par de fotos */
-    case 2:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <Reveal delay={80} className="lg:col-span-7">
-            <Lead deep>{p[0]}</Lead>
-          </Reveal>
-          <Reveal delay={140} className="sm:grid sm:grid-cols-[minmax(0,4fr)_minmax(0,6fr)] sm:items-end sm:gap-6 lg:col-span-10">
-            <div className="mx-auto max-w-[340px] sm:max-w-none">
-              <FotoEmMoldura foto={FOTOS.corredor} deep sizes="(min-width: 1024px) 380px, (min-width: 640px) 40vw, 340px" />
-            </div>
-            <div className="mt-10 sm:mt-0">
-              <FotoEmMoldura foto={FOTOS.tela} deep sizes="(min-width: 1024px) 580px, (min-width: 640px) 60vw, 100vw" />
-            </div>
-          </Reveal>
-          <Reveal delay={100} className="lg:col-span-5">
-            <Paragrafo>{p[1]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={160} className="lg:col-span-5">
-            <Paragrafo>{p[2]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={120} className="lg:col-span-8">
-            <Destaque deep>{p[3]}</Destaque>
-          </Reveal>
-        </div>
-      );
-
-    /* 4. conexoes: a figura com a cadeia e os dois exemplos lado a lado */
-    case 3:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <div className="space-y-10 lg:col-span-6">
-            <Reveal delay={80} className="space-y-5">
-              <Lead>{p[0]}</Lead>
-              <Paragrafo>{p[1]}</Paragrafo>
-            </Reveal>
-            <div className="grid gap-5 sm:grid-cols-2">
-              {[p[2], p[3]].map((texto, k) => (
-                <Reveal key={k} delay={140 + 80 * k} className="flex">
-                  <div className="ja-caso w-full rounded-lg border border-rule bg-surface p-5 md:p-6">
-                    <span aria-hidden="true" className="ja-caso-elo mb-4 block" />
-                    <p className="text-[1rem] leading-[1.65] text-ink">{texto}</p>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-            <Reveal delay={120}>
-              <p className="flex max-w-[60ch] gap-4 text-[1rem] leading-[1.7] text-muted">
-                <span aria-hidden="true" className="mt-[0.8em] h-px w-8 shrink-0 bg-accent/40" />
-                <span>{p[4]}</span>
-              </p>
-            </Reveal>
-          </div>
-          <Reveal delay={200} className="mx-auto w-full max-w-[300px] lg:col-span-3 lg:col-start-8 lg:max-w-none">
-            <FiguraDasConexoes />
-          </Reveal>
-        </div>
-      );
-
-    /* 5. sistema nervoso: frase grande, texto e a placa do sinal */
-    case 4:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <Reveal delay={80} className="lg:col-span-8">
-            <p className="max-w-[30ch] font-display text-[clamp(1.5rem,1.15rem+1.5vw,2.25rem)] leading-[1.25] font-medium tracking-[-0.012em] text-balance text-ink-strong">
-              {p[0]}
-            </p>
-          </Reveal>
-          <Reveal delay={140} className="space-y-5 lg:col-span-5">
-            <Paragrafo>{p[1]}</Paragrafo>
-            <Paragrafo>{p[2]}</Paragrafo>
-            <Paragrafo>{p[3]}</Paragrafo>
-          </Reveal>
-          <div className="space-y-8 lg:col-span-5">
-            <Reveal delay={200}>
-              <FiguraDoSinal />
-            </Reveal>
-            <Reveal delay={160}>
-              <p className="flex max-w-[60ch] gap-4 text-[1rem] leading-[1.7] text-muted">
-                <span aria-hidden="true" className="mt-[0.8em] h-px w-8 shrink-0 bg-accent/40" />
-                <span>{p[4]}</span>
-              </p>
-            </Reveal>
-          </div>
-        </div>
-      );
-
-    /* 6. o plano: a lista de recursos e' a peca da etapa */
-    case 5:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <Reveal delay={80} className="space-y-5 lg:col-span-6">
-            <Lead>{p[0]}</Lead>
-            <Paragrafo>{p[1]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={140} className="lg:col-span-10">
-            <ul className="ja-recursos grid border-t border-rule md:grid-cols-2 md:gap-x-6">
-              {etapa.lista?.map((recurso) => (
-                <li key={recurso.texto} className="ja-recurso border-b border-rule">
-                  {recurso.href ? (
-                    <Link href={recurso.href} className="ja-recurso-in group ja-recurso-link">
-                      <span className="ja-recurso-texto">{recurso.texto}</span>
-                      <span aria-hidden="true" className="ja-recurso-seta">
-                        →
-                      </span>
-                    </Link>
-                  ) : (
-                    <span className="ja-recurso-in">
-                      <span className="ja-recurso-texto">{recurso.texto}</span>
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-          <Reveal delay={100} className="lg:col-span-8">
-            <Destaque>{p[2]}</Destaque>
-          </Reveal>
-          <Reveal delay={160} className="lg:col-span-6">
-            <Paragrafo>{p[3]}</Paragrafo>
-          </Reveal>
-        </div>
-      );
-
-    /* 7. acompanhamento: o relatorio do exame a esquerda, o texto a direita */
-    case 6:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:gap-x-6">
-          <Reveal delay={160} className="lg:order-1 lg:col-span-5 lg:pt-2">
-            <FotoEmMoldura foto={FOTOS.relatorio} sizes="(min-width: 1024px) 470px, 100vw" />
-          </Reveal>
-          <Reveal delay={80} className="space-y-5 lg:order-2 lg:col-span-5">
-            <Lead>{p[0]}</Lead>
-            <Paragrafo>{p[1]}</Paragrafo>
-            <Paragrafo>{p[2]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={120} className="lg:order-3 lg:col-span-8">
-            <Destaque>{p[3]}</Destaque>
-          </Reveal>
-        </div>
-      );
-
-    /* 8. integracao: texto e a rede */
-    default:
-      return (
-        <div className="grid gap-y-10 lg:grid-cols-10 lg:items-center lg:gap-x-6">
-          <Reveal delay={80} className="space-y-5 lg:col-span-5">
-            <Lead deep>{p[0]}</Lead>
-            <Paragrafo>{p[1]}</Paragrafo>
-          </Reveal>
-          <Reveal delay={180} className="lg:col-span-5">
-            <FiguraDaRede />
-          </Reveal>
-        </div>
-      );
-  }
+  const corte = etapa.lista ? (etapa.listaDepois ?? p.length) : p.length;
+  return (
+    <div className="prosa ja-prosa ja-corpo">
+      {p.slice(0, corte).map((t) => (
+        <p key={t}>{t}</p>
+      ))}
+      {etapa.lista && (
+        <ul>
+          {etapa.lista.map((r) => (
+            <li key={r.texto}>{r.href ? <Link href={r.href}>{r.texto}</Link> : r.texto}</li>
+          ))}
+        </ul>
+      )}
+      {p.slice(corte).map((t) => (
+        <p key={t}>{t}</p>
+      ))}
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------ fecho */
@@ -496,58 +238,44 @@ function CorpoDaEtapa({ etapa, indice }: { etapa: EtapaDoAtendimento; indice: nu
 function Fecho() {
   const [perguntas, proposta] = FECHO_DO_ATENDIMENTO;
   return (
-    <>
-      <section aria-label="Fechamento" className="relative overflow-hidden">
-        <PageGrid />
-        <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
-          <div className="mx-auto max-w-[760px] text-center">
-            <Reveal>
-              <p aria-hidden="true" className="ja-separador font-display text-[2.5rem] leading-none text-accent">
-                {SEPARADOR_DO_ATENDIMENTO}
-              </p>
-            </Reveal>
-            <Reveal delay={100}>
-              <p className="mx-auto mt-10 max-w-[28ch] font-display text-[clamp(1.5rem,1.15rem+1.5vw,2.25rem)] leading-[1.25] font-medium tracking-[-0.012em] text-balance text-ink-strong">
-                {perguntas}
-              </p>
-            </Reveal>
-            <Reveal delay={180}>
-              <p className={`${P} mx-auto mt-8 max-w-[56ch] text-ink`}>{proposta}</p>
-            </Reveal>
+    <Faixa tom="paper" rotulo="Fechamento" fio>
+      <div className="ja-texto">
+        <Reveal>
+          <p aria-hidden="true" className="ja-separador">
+            {SEPARADOR_DO_ATENDIMENTO}
+          </p>
+        </Reveal>
+        <Reveal delay={80}>
+          <div className="pi-lead ja-depois-do-separador">
+            <p>{perguntas}</p>
           </div>
-        </div>
-      </section>
-
-      <section aria-label="Assinatura" className="relative overflow-hidden bg-deep-calm text-paper" data-tone="deep">
-        <PageGrid tone="deep" />
-        <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 md:py-24 lg:px-10 lg:py-28">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
-            <Reveal variante="cortina" className="lg:col-span-10 lg:col-start-2">
-              <blockquote className="ja-citacao">
-                <p className="font-display text-[clamp(1.75rem,1.2rem+2.6vw,3.25rem)] leading-[1.18] font-medium tracking-[-0.018em] text-balance text-paper">
-                  {CITACAO_DO_ATENDIMENTO}
-                </p>
-              </blockquote>
-            </Reveal>
-            <Reveal delay={200} className="mt-12 lg:col-span-10 lg:col-start-2 md:mt-14">
-              <div className="flex items-start gap-5">
-                <span aria-hidden="true" className="mt-[0.9em] h-px w-14 shrink-0 bg-accent-light/60" />
-                <div>
-                  <p className="font-display text-[1.5rem] leading-[1.2] font-semibold text-paper md:text-[1.75rem]">
-                    {ASSINATURA_DO_ATENDIMENTO.nome}
-                  </p>
-                  <p
-                    className="mt-3 text-[0.75rem] leading-[1.8] tracking-[0.04em] text-on-deep-muted"
-                    style={{ fontFamily: "var(--mono)" }}
-                  >
-                    {ASSINATURA_DO_ATENDIMENTO.especialidades}
-                  </p>
-                </div>
-              </div>
-            </Reveal>
+        </Reveal>
+        <Reveal delay={140}>
+          <div className="prosa ja-prosa ja-depois-do-lead">
+            <p>{proposta}</p>
           </div>
-        </div>
-      </section>
-    </>
+        </Reveal>
+        <Reveal delay={200}>
+          <div className="pi-citacao ja-citacao">
+            <blockquote>
+              <p>{CITACAO_DO_ATENDIMENTO}</p>
+            </blockquote>
+          </div>
+        </Reveal>
+        <Reveal delay={260}>
+          <div className="ja-assinatura">
+            <p className="font-display text-[1.375rem] leading-[1.2] font-semibold text-ink-strong md:text-[1.5rem]">
+              {ASSINATURA_DO_ATENDIMENTO.nome}
+            </p>
+            <p
+              className="mt-2 text-[0.75rem] leading-[1.8] tracking-[0.04em] text-muted"
+              style={{ fontFamily: "var(--mono)" }}
+            >
+              {ASSINATURA_DO_ATENDIMENTO.especialidades}
+            </p>
+          </div>
+        </Reveal>
+      </div>
+    </Faixa>
   );
 }

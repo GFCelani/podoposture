@@ -42,7 +42,7 @@ function tipoDaPagina(slug: string): TipoDePagina {
  * arquivo, para o navegador reservar o espaco e o CLS continuar em zero. A
  * legenda em mono vem do painel (o original esta em ilustracao-da-pagina.ts).
  */
-function FotoEmMoldura({ foto }: { foto: Foto }) {
+export function FotoEmMoldura({ foto }: { foto: Foto }) {
   return (
     <figure className="overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate">
       <Image
