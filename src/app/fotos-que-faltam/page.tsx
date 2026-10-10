@@ -30,8 +30,13 @@ import { contatoDoCabecalho, derivarContato } from "@/lib/site";
  * O que sobra sao cinco paginas com foto ilustrativa de acervo livre, que
  * funcionam mas nao mostram a clinica, e uma foto de atendimento real que
  * existe e esta desligada por falta de autorizacao (ver
- * AGUARDANDO_AUTORIZACAO em ilustracao-da-pagina.ts). Quando as fotos
- * chegarem, esta pagina pode ser apagada inteira.
+ * AGUARDANDO_AUTORIZACAO em ilustracao-da-pagina.ts).
+ *
+ * Desde 2026-10-10 ha um segundo pedido, separado do primeiro: a pagina Como
+ * e o meu atendimento subiu com fotos de 2023, de antes da reforma da sala,
+ * e quatro etapas sem foto nenhuma. As de 2023 ficam ate chegarem as atuais.
+ * Sao fotos da sala, sem paciente, entao nao entram na conta da autorizacao.
+ * Quando as duas listas chegarem, esta pagina pode ser apagada inteira.
  */
 
 export const metadata: Metadata = {
@@ -83,6 +88,41 @@ const PEDIDOS: Pedido[] = [
     foto: "Aplicação das agulhas em consulta, de luva",
     comPaciente: true,
     nota: ILUSTRATIVA + " Sem rosto na cena.",
+  },
+];
+
+/* Uma para o topo e uma para cada etapa que hoje fica sem foto (ver
+   FOTOS_DAS_ETAPAS em components/como-e-o-meu-atendimento.tsx). */
+const PEDIDOS_DO_ATENDIMENTO: Pedido[] = [
+  {
+    pagina: "Topo da página",
+    foto: "A sala reformada, inteira, vista da porta",
+    comPaciente: false,
+    nota: "Hoje o topo mostra a bancada do consultório numa foto de 2023, de antes da reforma.",
+  },
+  {
+    pagina: "Avaliação clínica e neurológica",
+    foto: "A maca de exame, com o material do exame neurológico à mão",
+    comPaciente: false,
+    nota: "Martelo de reflexo, diapasão e o que mais você usa nos testes. Hoje a etapa fica sem foto.",
+  },
+  {
+    pagina: "Conexões musculares e funcionais",
+    foto: "A área de avaliação de movimento da sala reformada",
+    comPaciente: false,
+    nota: "O espaço onde você observa o paciente em pé e se movendo. Hoje a etapa fica sem foto.",
+  },
+  {
+    pagina: "Sistema nervoso e dor",
+    foto: "A mesa da sala reformada, com os questionários clínicos",
+    comPaciente: false,
+    nota: "Questionários em branco, sem nome nem resposta de paciente. Hoje a etapa fica sem foto.",
+  },
+  {
+    pagina: "Integração com outros profissionais",
+    foto: "Exames de outros profissionais sobre a mesa ou na tela",
+    comPaciente: false,
+    nota: "Sem nome, data de nascimento ou qualquer dado de paciente legível. Hoje a etapa fica sem foto.",
   },
 ];
 
@@ -234,7 +274,7 @@ export default async function FotosQueFaltam() {
                 id="lista-titulo"
                 className="mt-8 font-display text-[clamp(1.5rem,1.15rem+1.75vw,2.25rem)] leading-[1.16] font-semibold tracking-[-0.018em] text-ink-strong"
               >
-                As {total.toLowerCase()} fotos
+                As {total.toLowerCase()} fotos de atendimento
               </h2>
             </Reveal>
 
@@ -242,43 +282,54 @@ export default async function FotosQueFaltam() {
               {PEDIDOS.map((pedido, i) => (
                 <li key={pedido.pagina} className="flex">
                   <Reveal delay={60 + i * 70} className="flex w-full">
-                    <article className="flex w-full flex-col rounded-lg border border-rule bg-paper p-6 shadow-tag">
-                      <p className="flex items-baseline gap-4">
-                        <span
-                          aria-hidden="true"
-                          className="text-[0.6875rem] tracking-[0.18em] text-accent"
-                          style={{ fontFamily: "var(--mono)" }}
-                        >
-                          {String(i + 1).padStart(2, "0")}
-                        </span>
-                        <span
-                          className="text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-muted uppercase"
-                          style={{ fontFamily: "var(--mono)" }}
-                        >
-                          {pedido.pagina}
-                        </span>
-                      </p>
+                    <CartaoDePedido pedido={pedido} ordem={i + 1} />
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-                      <p className="mt-4 [overflow-wrap:anywhere] font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink-strong">
-                        {pedido.foto}
-                      </p>
+        {/* A sala reformada, para Como e o meu atendimento. Faixa em areia
+            para separar das fotos de atendimento logo acima. */}
+        <section
+          aria-labelledby="atendimento-titulo"
+          className="relative overflow-hidden border-t border-rule bg-surface"
+        >
+          <PageGrid />
+          <div className="relative mx-auto max-w-[1240px] px-6 py-16 md:px-8 md:py-20 lg:px-10 lg:py-24">
+            <Reveal variante="cortina">
+              <SectionMark n={String(PEDIDOS_DO_ATENDIMENTO.length).padStart(2, "0")} />
+              <h2
+                id="atendimento-titulo"
+                className="mt-8 max-w-[24ch] font-display text-[clamp(1.5rem,1.15rem+1.75vw,2.25rem)] leading-[1.16] font-semibold tracking-[-0.018em] text-balance text-ink-strong"
+              >
+                {EXTENSO[PEDIDOS_DO_ATENDIMENTO.length]} fotos da sala reformada, para Como é o meu atendimento
+              </h2>
+            </Reveal>
 
-                      {pedido.nota && (
-                        <p className="mt-3 text-[0.9375rem] leading-[1.6] text-ink">
-                          {pedido.nota}
-                        </p>
-                      )}
+            <Reveal delay={100}>
+              <p className="mt-6 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-ink">
+                A página Como é o meu atendimento entrou no ar com fotos de
+                2023, de antes da reforma da sala, e algumas etapas ficaram sem
+                foto. As de 2023 continuam lá por enquanto. Com fotos atuais,
+                a página passa a mostrar a sala como ela é hoje: uma para o
+                topo e uma para cada etapa que está sem imagem.
+              </p>
+            </Reveal>
 
-                      {pedido.comPaciente && (
-                        <p className="mt-auto flex items-center gap-3 pt-5 text-[0.8125rem] leading-[1.5] text-muted">
-                          <span
-                            aria-hidden="true"
-                            className="h-px w-5 shrink-0 bg-accent/40"
-                          />
-                          Precisa de autorização
-                        </p>
-                      )}
-                    </article>
+            <Reveal delay={160}>
+              <p className="mt-5 max-w-[58ch] text-[1.0625rem] leading-[1.7] text-muted">
+                Nenhuma delas precisa de paciente: é a sala, os aparelhos e o
+                material de trabalho. Por isso não dependem de autorização.
+              </p>
+            </Reveal>
+
+            <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+              {PEDIDOS_DO_ATENDIMENTO.map((pedido, i) => (
+                <li key={pedido.pagina} className="flex">
+                  <Reveal delay={60 + i * 70} className="flex w-full">
+                    <CartaoDePedido pedido={pedido} ordem={i + 1} />
                   </Reveal>
                 </li>
               ))}
@@ -289,7 +340,7 @@ export default async function FotosQueFaltam() {
         {/* Como tirar */}
         <section
           aria-labelledby="como-titulo"
-          className="corte-alto-dir relative overflow-hidden border-y border-rule bg-surface"
+          className="corte-alto-dir relative overflow-hidden border-y border-rule bg-paper"
         >
           <PageGrid />
           <div className="relative mx-auto max-w-[1240px] px-6 py-16 md:px-8 md:py-20 lg:px-10 lg:py-24">
@@ -416,5 +467,47 @@ export default async function FotosQueFaltam() {
       <SiteFooter contato={contato} logos={conteudo.marca} />
       <FloatingWhatsApp whatsapp={contato.whatsapp} />
     </>
+  );
+}
+
+function CartaoDePedido({ pedido, ordem }: { pedido: Pedido; ordem: number }) {
+  return (
+    <article className="flex w-full flex-col rounded-lg border border-rule bg-paper p-6 shadow-tag">
+      <p className="flex items-baseline gap-4">
+        <span
+          aria-hidden="true"
+          className="text-[0.6875rem] tracking-[0.18em] text-accent"
+          style={{ fontFamily: "var(--mono)" }}
+        >
+          {String(ordem).padStart(2, "0")}
+        </span>
+        <span
+          className="text-[0.6875rem] leading-[1.5] tracking-[0.14em] text-muted uppercase"
+          style={{ fontFamily: "var(--mono)" }}
+        >
+          {pedido.pagina}
+        </span>
+      </p>
+
+      <p className="mt-4 [overflow-wrap:anywhere] font-display text-[1.25rem] leading-[1.3] font-medium text-balance text-ink-strong">
+        {pedido.foto}
+      </p>
+
+      {pedido.nota && (
+        <p className="mt-3 text-[0.9375rem] leading-[1.6] text-ink">
+          {pedido.nota}
+        </p>
+      )}
+
+      {pedido.comPaciente && (
+        <p className="mt-auto flex items-center gap-3 pt-5 text-[0.8125rem] leading-[1.5] text-muted">
+          <span
+            aria-hidden="true"
+            className="h-px w-5 shrink-0 bg-accent/40"
+          />
+          Precisa de autorização
+        </p>
+      )}
+    </article>
   );
 }
