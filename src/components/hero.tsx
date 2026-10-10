@@ -9,6 +9,7 @@ import {
   type SegmentoDoSubtitulo,
 } from "@/lib/conteudo-tipos";
 
+import { BoiaDaAnotacao } from "./boia-da-anotacao";
 import { ButtonLink } from "./button-link";
 import { FiguraCorpo } from "./figura-corpo";
 import { MapaDeDor } from "./mapa-de-dor";
@@ -199,14 +200,14 @@ function Anotacao({ ponto, linhas }: { ponto: "ciatica" | "lombar"; linhas: stri
       <span aria-hidden="true" className="pd-anot-anel" />
       {/* Boia: so o texto flutua, e o fio estica e gira para continuar
           preso ao anel e ao texto. O anel fica fora dela, parado no ponto. */}
-      <span className="pd-anot-boia">
+      <BoiaDaAnotacao lado={ponto}>
         <span aria-hidden="true" className="pd-anot-fio" />
         <p className="pd-anot-texto">
           {linhas.map((linha, i) => (
             <span key={i}>{linha}</span>
           ))}
         </p>
-      </span>
+      </BoiaDaAnotacao>
     </div>
   );
 }

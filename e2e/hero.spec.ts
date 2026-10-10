@@ -99,11 +99,12 @@ for (const [largura, altura] of TODAS) {
 }
 
 /** Raio da flutuacao da anotacao, em unidades de --a: x ate 3,6 e y ate
- *  2,8 (ver FLUTUACAO em globals.css). */
+ *  2,8 (ver PARADAS_X e PARADAS_Y em components/boia-da-anotacao.tsx). */
 const RAIO_U = Math.hypot(3.6, 2.8);
 
 /**
- * Com movimento: so o texto boia. As duas animacoes da boia sao pausadas e
+ * Com movimento: so o texto boia. As duas animacoes da boia (texto e fio,
+ * Web Animations de transform) sao pausadas e
  * levadas a 48 instantes de um minuto; em cada um o anel continua centrado
  * no ponto, o texto fica dentro do raio, o fio sai do contorno do anel e
  * chega a 7 unidades do texto, e as folgas do teste de repouso continuam
@@ -116,13 +117,19 @@ for (const [largura, altura] of TODAS) {
     await page.goto("/", { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
 
+    // As animacoes nascem na hidratacao do componente da boia.
+    await page.waitForFunction(() => {
+      const anot = [...document.querySelectorAll(".pd-anot")].find((e) => getComputedStyle(e).display !== "none");
+      return (anot?.querySelector(".pd-anot-boia")?.getAnimations({ subtree: true }).length ?? 0) >= 2;
+    });
+
     const empilhado = largura < 1200;
     const m = await page.evaluate(
       ({ maoU, raioU }) => {
         const anot = [...document.querySelectorAll(".pd-anot")].find((e) => getComputedStyle(e).display !== "none")!;
         const lombar = anot.classList.contains("pd-anot--lombar");
         const boia = anot.querySelector<HTMLElement>(".pd-anot-boia")!;
-        const anims = boia.getAnimations();
+        const anims = boia.getAnimations({ subtree: true });
         anims.forEach((a) => a.pause());
         const alvo = lombar ? /^dor lombar/i : /ciática/i;
         const ponto = [...document.querySelectorAll(".pd-fig--perfil .pd-ponto")].find((p) =>
@@ -180,7 +187,7 @@ for (const [largura, altura] of TODAS) {
       { maoU: MAO_FRONTAL_U, raioU: RAIO_U },
     );
 
-    expect(m.animacoes, "a boia tem as duas animacoes, x e y").toBe(2);
+    expect(m.animacoes, "a boia tem as duas animacoes, texto e fio").toBe(2);
     expect(m.maior, "o texto de fato se move").toBeGreaterThan(1.5);
     expect(m.anel, "o anel fica parado sobre o ponto").toBeLessThanOrEqual(1);
     expect(m.raio, "o texto nao sai do raio").toBeLessThanOrEqual(0.05);
