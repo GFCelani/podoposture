@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { Contact } from "@/components/contact";
+import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
 import { ConviteConsulta } from "@/components/convite-consulta";
 import { PaginaMedicaJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell, type TipoDePagina } from "@/components/page-shell";
@@ -31,6 +32,17 @@ const INSTITUCIONAIS = new Set(
     (s) => s.normalize("NFC"),
   ),
 );
+
+/**
+ * Paginas ja na grade em duas colunas (texto a esquerda, toda imagem a
+ * direita, ver corpo-em-fluxo.tsx). Comecou pela de palmilhas, onde as
+ * fotos que a cliente pos pelo painel caiam no meio do texto.
+ */
+export const PAGINAS_EM_FLUXO = new Set(["palmilhas-personalizadas"].map((s) => s.normalize("NFC")));
+
+export function emFluxo(slug: string): boolean {
+  return PAGINAS_EM_FLUXO.has(slug.normalize("NFC"));
+}
 
 function tipoDaPagina(slug: string): TipoDePagina {
   return INSTITUCIONAIS.has(slug.normalize("NFC")) ? "institucional" : "tratamento";
@@ -123,6 +135,8 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: Pagina; conteudo: 
             numero={null}
             comoSecao={false}
           />
+        ) : emFluxo(pagina.slug) ? (
+          <CorpoEmFluxo html={pagina.html} apoio={ilustracao.apoio} />
         ) : (
           <SecoesDeConteudo
             html={pagina.html}

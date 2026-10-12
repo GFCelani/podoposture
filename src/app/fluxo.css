@@ -1,0 +1,56 @@
+/* ===========================================================================
+   PAGINAS DE CONTEUDO EM FLUXO (components/corpo-em-fluxo.tsx).
+   Importado por globals.css, depois de atendimento.css: a grade e o respiro
+   sao os dele (.ja-faixa, .ja-wrap, .ja-grade, .ja-texto, .ja-foto); aqui so
+   o que o fluxo acrescenta. Texto em 1-7, imagem em 9-12; abaixo de 1024
+   empilha, com as imagens logo depois do texto a que pertencem.
+   =========================================================================== */
+
+/* Uma linha da faixa por bloco com imagem: a seguinte comeca depois da mais
+   alta das duas colunas, com o mesmo salto que separa dois blocos. */
+.fx-linha + .fx-linha {
+  margin-top: 1.6rem;
+}
+
+.fx-blocos > * + * {
+  margin-top: 1.6rem;
+}
+
+.fx-blocos .prosa {
+  margin-inline: 0;
+}
+
+.fx-depois-do-titulo {
+  margin-top: 28px;
+}
+
+.fx-depois-do-lead {
+  margin-top: 1.35em;
+}
+
+/* Duas imagens seguidas: uma embaixo da outra, nunca lado a lado. */
+.fx-fotos {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Os blocos largos das paginas antigas (listas em colunas, azulejos,
+   protocolo) ficam na medida da coluna do texto. */
+.fx-texto .pi-compacta ul,
+.fx-texto .pi-compacta ol {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 639px) {
+  .fx-texto .pi-compacta ul,
+  .fx-texto .pi-compacta ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .fx-depois-do-titulo {
+    margin-top: 32px;
+  }
+}
