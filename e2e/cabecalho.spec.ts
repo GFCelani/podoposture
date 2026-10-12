@@ -7,10 +7,12 @@ import { expect, test, type Page } from "@playwright/test";
  * com o cabecalho das paginas internas (recuo medido pela coluna de 1240px),
  * e em 1920 x 945 o cartao comecava 90px DEPOIS do titulo.
  *
- * As 11 telas sao as da folha de contato do hero. A 1536 x 695 e' a
- * referencia aprovada, e o cartao dela e' conferido ao pixel.
+ * As 12 telas sao as da folha de contato do hero. A 1536 x 695 e' a
+ * referencia aprovada, e o cartao dela e' conferido ao pixel. A 1280 x 559
+ * e' a tela da cliente (Windows em 150%), medida no login do painel.
  */
 const TELAS: [number, number][] = [
+  [1280, 559],
   [1280, 586],
   [1366, 657],
   [1440, 900],

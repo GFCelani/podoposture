@@ -7,6 +7,7 @@ import { expect, test } from "@playwright/test";
  * ciatica no palco, a lombar no empilhado, com o texto no vao das figuras.
  */
 const DESKTOP: [number, number][] = [
+  [1280, 559],
   [1280, 586],
   [1366, 657],
   [1440, 900],

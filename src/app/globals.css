@@ -2212,6 +2212,77 @@ a:focus-visible .marca-vertebra {
 }
 
 /* ===============================================================
+   HERO E CABECALHO DA HOME — janela larga e baixa.
+
+   Tela da cliente: 1280 x 559 (Windows em 150%). O palco escala por
+   min(largura/1536, altura/695); com a janela mais larga que a referencia
+   em proporcao (mais de 1536:695), quem limita e' a altura, o conjunto
+   encolhe e a largura que sobra virava margem: o cartao em 141px de cada
+   lado e o titulo em 178. Ela pediu o conteudo de borda a borda.
+
+   So nessa faixa (proporcao acima de 2,211, ou seja, a altura limita; a
+   1536 x 695, de 2,2101, fica de fora e nada nela muda) a composicao
+   deixa de ser a referencia escalada e passa a ser medida pela largura:
+   - margem --m de 1,75% da largura dos dois lados (22px em 1280), a mesma
+     ordem de recuo do cabecalho das paginas internas nessa janela;
+   - o cartao do cabecalho vai de --m a --m, e o titulo comeca 46 unidades
+     depois dele, a relacao da referencia;
+   - a ponta das linhas de referencia cai na borda direita do cartao;
+   - cabecalho e coluna de texto crescem com --u, que aqui e' a largura
+     util sobre a largura util da referencia (1372, do cartao em 148 a ponta
+     das linhas em 1520), com teto de 1,1 vez a unidade da altura: e' o que
+     ainda deixa o bloco de texto e o cabecalho caberem em 559 com folga;
+   - as figuras continuam pela altura (--uf; 6% acima dela a partir de
+     1200px, ver abaixo), e a largura que sobra no campo abre o espaco
+     entre o texto, o par e os rotulos.
+   De 1024 a 1199px (Full HD em 175%, 1097 x 494) o cabecalho tem tamanho
+   fixo e a janela nao tem altura para o texto crescer: ali so a margem
+   muda, e o texto fica no tamanho que tinha.
+   =============================================================== */
+@media (min-width: 1024px) and (min-aspect-ratio: 2211/1000) {
+  .hero-palco {
+    --m: 1.75cqw;
+    --uf: min(calc(100cqw / 1536), calc(100svh / 695));
+    --u: min(calc((100cqw - 2 * var(--m)) / 1372), calc(1.1 * var(--uf)));
+    min-height: max(100svh, calc(695 * var(--uf)));
+    padding: calc(97 * var(--u)) var(--m) 0 calc(var(--m) + 46 * var(--u));
+  }
+
+  .hero-campo {
+    --u: var(--uf);
+  }
+
+  .hero-linha {
+    right: 20px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1199.98px) and (min-aspect-ratio: 2211/1000) {
+  /* --m e' o recuo fixo do cartao nessa faixa (lg:px-6 do cabecalho) */
+  .hero-palco {
+    --m: 24px;
+    --u: var(--uf);
+    padding-top: max(calc(97 * var(--u)), 112px);
+  }
+}
+
+@media (min-width: 1200px) and (min-aspect-ratio: 2211/1000) {
+  .cab-hero .cab-cartao {
+    --m: 1.75cqw;
+    --uc: min(calc((100cqw - 2 * var(--m)) / 1372), calc(1.1 * min(100cqw / 1536, 100svh / 695)));
+    --recuo: var(--m);
+  }
+
+  /* A altura que o palco tem abaixo do cabecalho comporta figuras 6%
+     maiores que a escala da altura (24px de folga em cima e embaixo em
+     1280 x 559). Sem isso, a anotacao no piso de 11px ficava a menos de
+     8px das linhas de Osteopatia e Acupuntura. */
+  .hero-campo {
+    --u: calc(1.06 * var(--uf));
+  }
+}
+
+/* ===============================================================
    TOPO DAS PAGINAS INTERNAS EM JANELA BAIXA (page-shell.tsx, .ps-*).
 
    Laptop com zoom: Full HD com o Windows em 150% ou 175%, ou 1536 com o

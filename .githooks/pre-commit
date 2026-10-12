@@ -4,7 +4,7 @@
 #
 # Sempre: tsc, eslint e vitest. Se o commit toca em src/, no CSS ou nos
 # proprios testes de layout, tambem o teste de layout no navegador
-# (e2e/*.spec.ts): build de producao e as 11 telas da folha de contato.
+# (e2e/*.spec.ts): build de producao e as 12 telas da folha de contato.
 # Cabecalho antes do titulo, subtitulo do hero em duas linhas, anotacao do
 # mapa no proprio ponto, capas do blog sem vazio na moldura, as paginas
 # antigas pixel a pixel iguais as de antes (regressao.spec.ts) e o layout
