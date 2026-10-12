@@ -31,7 +31,7 @@ export function ServicesGrid({ conteudo }: { conteudo: ConteudoServicos }) {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-20 lg:py-24">
         <Reveal>
-          <SectionMark n="08" />
+          <SectionMark n="09" />
         </Reveal>
 
         {/* O "08" e' um numeral, nao um nome: sem um h2 a secao entrava no

@@ -12,7 +12,7 @@ import { Reveal } from "./reveal";
  */
 
 /**
- * Secao 06 da home, entre a abordagem (05) e as condicoes tratadas (07).
+ * Secao 07 da home, entre o atendimento (06) e as condicoes tratadas (08).
  *
  * Banda escura, como a 04: e' a peca propria da clinica, e o valor de fundo
  * e' a alavanca mais barata de presenca. Para nao repetir a composicao da 04
@@ -42,7 +42,7 @@ export function MetodoRegulador({ conteudo, whatsapp }: { conteudo: ConteudoMeto
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-6">
           <div className="lg:col-span-5">
             <Reveal variante="cortina">
-              <SectionMark n="06" tone="deep" />
+              <SectionMark n="07" tone="deep" />
               {/* Caixa alta e' a escrita da cliente, nao CSS: por isso o
                   tracking abre em vez de fechar, que e' o que versal pede
                   em corpo de display. O ® desce de tamanho e sobe de linha,

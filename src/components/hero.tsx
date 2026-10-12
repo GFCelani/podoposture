@@ -440,7 +440,7 @@ export function Hero({
               presa a largura do bloco. */}
           <div className="sm:w-fit">
             {/* Acao do hero. No padrao, o primario e' o par completo da
-              secao 09, rotulo e destino; o secundario e' o CTA da Avaliacao
+              secao 10, rotulo e destino; o secundario e' o CTA da Avaliacao
               Clinica da Dor Persistente, a porta de entrada clinica. O teto de
               24 caracteres do rotulo e' o que a fila aguenta sem passar do titulo. */}
             <div

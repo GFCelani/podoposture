@@ -332,6 +332,53 @@ body {
   }
 }
 
+/* O percurso da consulta (secao 06 da home). O ponto anda do primeiro ao
+   ultimo marco em 80% do ciclo e some; cada marco solta uma onda quando o
+   ponto passa (a fase de cada um e' calculada no componente). Repouso no
+   estilo base: ponto e ondas em opacity 0, entao com movimento reduzido fica
+   so o trilho com os marcos. */
+.percurso-ponto {
+  opacity: 0;
+  transform: translateX(0);
+  animation: percurso-ponto var(--dur, 9.6s) linear infinite;
+}
+
+@keyframes percurso-ponto {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(var(--trajeto));
+  }
+  86%,
+  100% {
+    opacity: 0;
+    transform: translateX(var(--trajeto));
+  }
+}
+
+.percurso-onda {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: percurso-onda var(--dur, 9.6s) cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  animation-delay: var(--fase, 0s);
+}
+
+@keyframes percurso-onda {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  14%,
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
 /* A figura esquematica do hero. Um transform por no', repouso no estilo
    base; o que nao deve existir com movimento reduzido nasce em opacity 0. */
 

@@ -5,8 +5,8 @@ import { Reveal } from "./reveal";
 import { SocialLinks } from "./social-links";
 
 /**
- * O numeral e' da sequencia da home (01 a 12). Nas paginas internas a faixa
- * fecha um documento que tem a propria numeracao de secoes, e um "12" solto
+ * O numeral e' da sequencia da home (01 a 13). Nas paginas internas a faixa
+ * fecha um documento que tem a propria numeracao de secoes, e um "13" solto
  * ali nao conta nada: sem `n`, a faixa vai so com o fio e o titulo.
  *
  * O titulo e os enderecos vem do painel e valem para o site inteiro: a mesma

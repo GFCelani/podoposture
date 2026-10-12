@@ -17,7 +17,7 @@ function SemEntrada({ children }: { children: React.ReactNode; delay?: number; v
 }
 
 /**
- * Na home e' a secao 09 de uma sequencia; na rota /contato e' a pagina inteira.
+ * Na home e' a secao 10 de uma sequencia; na rota /contato e' a pagina inteira.
  * As duas props cobrem essa diferenca sem duplicar o componente: sem numero de
  * secao, sem corte diagonal (nao ha banda anterior para cortar) e sem repetir
  * no h2 o que o h1 do PageShell ja diz.
@@ -28,7 +28,7 @@ function SemEntrada({ children }: { children: React.ReactNode; delay?: number; v
 export function Contact({
   contato,
   textos,
-  numero = "09",
+  numero = "10",
   comoSecao = true,
 }: {
   contato: ContatoDoSite;

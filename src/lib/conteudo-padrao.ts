@@ -168,6 +168,13 @@ export const CONTEUDO_PADRAO: ConteudoDoSite = {
     botao: { rotulo: "Falar Sobre o Meu Caso", destino: { tipo: "whatsapp" } },
   },
 
+  /* Verbatim da pagina: o titulo dela e as duas frases de abertura. */
+  atendimento: {
+    titulo: "Como é o meu atendimento",
+    texto: "Uma avaliação que vai além do local da dor. Um tratamento que considera o funcionamento do corpo como um todo.",
+    botao: { rotulo: "Leia mais", destino: { tipo: "pagina", slug: "como-e-o-meu-atendimento" } },
+  },
+
   metodo: {
     titulo: "MÉTODO REGULADOR",
     abertura: "Dor persistente não é analisada por uma única estrutura.",

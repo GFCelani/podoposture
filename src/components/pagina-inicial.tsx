@@ -4,6 +4,7 @@ import { categoriasDoSite, todosOsPosts } from "@/lib/posts-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
 import { Approach } from "./approach";
+import { AtendimentoNaHome } from "./atendimento-na-home";
 import { ClinicalResponsibility } from "./clinical-responsibility";
 import { Contact } from "./contact";
 import { FloatingWhatsApp } from "./floating-whatsapp";
@@ -20,13 +21,13 @@ import { TreatmentCards } from "./treatment-cards";
 import { UnderstandFirst } from "./understand-first";
 import { Welcome } from "./welcome";
 
-/** Quantos textos do blog a secao 10 lista. */
+/** Quantos textos do blog a secao 11 lista. */
 const TEXTOS_NA_PAGINA_INICIAL = 10;
 
 export type BlogDaPaginaInicial = { posts: Post[]; categorias: Tema[] };
 
 /**
- * Os textos e temas da secao 10, do JSON e do banco. Nunca lanca: sem banco, ou
+ * Os textos e temas da secao 11, do JSON e do banco. Nunca lanca: sem banco, ou
  * com ele fora, `posts-do-site` devolve so o acervo do repositorio.
  */
 export async function lerBlogDaPaginaInicial(): Promise<BlogDaPaginaInicial> {
@@ -43,7 +44,7 @@ export async function lerBlogDaPaginaInicial(): Promise<BlogDaPaginaInicial> {
  * nao tem.
  *
  * Numerais das secoes, figuras e a ordem ficam aqui, fora do painel: a
- * numeracao 01-12 conta a sequencia, e esconder ou reordenar secao a quebraria.
+ * numeracao 01-13 conta a sequencia, e esconder ou reordenar secao a quebraria.
  */
 export function PaginaInicial({
   conteudo,
@@ -74,6 +75,7 @@ export function PaginaInicial({
         <UnderstandFirst conteudo={conteudo.compreender} />
         <SeamRuler />
         <Approach conteudo={conteudo.abordagem} whatsapp={whatsapp} />
+        <AtendimentoNaHome conteudo={conteudo.atendimento} whatsapp={whatsapp} />
         <MetodoRegulador conteudo={conteudo.metodo} whatsapp={whatsapp} />
         <TreatmentCards conteudo={conteudo.tratamentos} />
         <ServicesGrid conteudo={conteudo.servicos} />
@@ -85,7 +87,7 @@ export function PaginaInicial({
         />
         <Gallery conteudo={conteudo.galeria} />
         <SeamRuler />
-        <SocialBand n="12" titulo={conteudo["redes-secao"].titulo} redes={contato.redes} />
+        <SocialBand n="13" titulo={conteudo["redes-secao"].titulo} redes={contato.redes} />
       </main>
       <SiteFooter contato={contato} logos={conteudo.marca} />
       <FloatingWhatsApp whatsapp={whatsapp} />

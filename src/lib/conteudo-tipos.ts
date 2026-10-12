@@ -93,6 +93,9 @@ export type ConteudoAbordagem = {
   botao: Botao;
 };
 
+/** Secao 06 da home: apresenta a pagina "Como e o meu atendimento". */
+export type ConteudoAtendimentoSecao = { titulo: string; texto: string; botao: Botao };
+
 export type ConteudoMetodo = { titulo: string; abertura: string; corpo: string[]; botao: Botao };
 
 export type CartaoDeTratamento = { titulo: string; destino: Destino; imagem: Imagem };
@@ -350,6 +353,7 @@ export type ConteudoDoSite = ConteudoDasPaginas & {
   responsabilidade: ConteudoResponsabilidade;
   compreender: ConteudoCompreender;
   abordagem: ConteudoAbordagem;
+  atendimento: ConteudoAtendimentoSecao;
   metodo: ConteudoMetodo;
   tratamentos: ConteudoTratamentos;
   servicos: ConteudoServicos;
@@ -370,6 +374,7 @@ export const CHAVES_DE_SECAO = [
   "responsabilidade",
   "compreender",
   "abordagem",
+  "atendimento",
   "metodo",
   "tratamentos",
   "servicos",
@@ -1168,8 +1173,21 @@ export const DESCRITORES: Descritores = {
     regras: [],
   },
 
+  atendimento: {
+    rotulo: "06 · Como é o meu atendimento",
+    ajuda: "Chamada curta para a página do atendimento, com o botão que leva a ela.",
+    global: false,
+    aparece: "Na página inicial",
+    campos: {
+      titulo: { tipo: "texto", rotulo: "Título", max: 40 },
+      texto: { tipo: "paragrafo", rotulo: "Texto", max: 240 },
+      botao: campoBotao(30, ["pagina", "whatsapp"]),
+    },
+    regras: [],
+  },
+
   metodo: {
-    rotulo: "06 · Método RegulaDOR",
+    rotulo: "07 · Método RegulaDOR",
     ajuda: "Apresentação do método, sobre o fundo azul.",
     global: false,
     aparece: "Na página inicial",
@@ -1209,7 +1227,7 @@ export const DESCRITORES: Descritores = {
   },
 
   tratamentos: {
-    rotulo: "07 · Tratamentos",
+    rotulo: "08 · Tratamentos",
     ajuda: "Os cartões com foto que levam às páginas de tratamento.",
     global: false,
     aparece: "Na página inicial",
@@ -1241,7 +1259,7 @@ export const DESCRITORES: Descritores = {
   },
 
   servicos: {
-    rotulo: "08 · Serviços",
+    rotulo: "09 · Serviços",
     ajuda: "A grade de serviços, cada um com o próprio botão.",
     global: false,
     aparece: "Na página inicial",
@@ -1283,7 +1301,7 @@ export const DESCRITORES: Descritores = {
   },
 
   "contato-secao": {
-    rotulo: "09 · Converse com a clínica",
+    rotulo: "10 · Converse com a clínica",
     ajuda: "Os textos da seção de contato. Telefones e endereço ficam em “Contato e dados da clínica”.",
     global: false,
     aparece: "Na página inicial e na página Contato",
@@ -1297,7 +1315,7 @@ export const DESCRITORES: Descritores = {
   },
 
   "blog-secao": {
-    rotulo: "10 · Blog",
+    rotulo: "11 · Blog",
     ajuda: "Só o título. Os textos da lista vêm do blog.",
     global: false,
     aparece: "Na página inicial",
@@ -1308,7 +1326,7 @@ export const DESCRITORES: Descritores = {
   },
 
   galeria: {
-    rotulo: "11 · Galeria",
+    rotulo: "12 · Galeria",
     ajuda: "As fotos da clínica. A ordem define a numeração.",
     global: false,
     aparece: "Na página inicial",
@@ -1328,7 +1346,7 @@ export const DESCRITORES: Descritores = {
   },
 
   "redes-secao": {
-    rotulo: "12 · Redes sociais",
+    rotulo: "13 · Redes sociais",
     ajuda: "O título da faixa com os ícones das redes. Os endereços ficam em “Contato e dados da clínica”.",
     global: true,
     aparece: "No fim de todas as páginas",

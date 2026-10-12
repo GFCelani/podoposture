@@ -27,7 +27,7 @@ export function Gallery({ conteudo }: { conteudo: ConteudoGaleria }) {
 
       <div className="relative mx-auto max-w-[1240px] px-6 py-20 md:px-8 lg:px-10 md:py-24 lg:py-28">
         <Reveal variante="cortina">
-          <SectionMark n="11" tone="deep" />
+          <SectionMark n="12" tone="deep" />
           <h2 className="mt-9 font-display text-[clamp(1.875rem,3.2vw,2.75rem)] leading-[1.14] font-medium tracking-[-0.018em] text-balance text-paper">
             {conteudo.titulo}
           </h2>
