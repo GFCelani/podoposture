@@ -142,6 +142,8 @@ export function PostsRelacionados({ posts }: { posts: Post[] }) {
                   <Link href={outro.href} className="block">
                     <Capa
                       src={outro.cover}
+                    titulo={outro.title}
+                    tema={outro.category}
                       sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
                       className="rounded-lg shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate"
                     />

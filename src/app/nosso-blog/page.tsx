@@ -130,6 +130,8 @@ export default async function IndiceDoBlog({
                       moldura nao tomar a tela do tablet. */}
                   <Capa
                     src={destaque.cover}
+                    titulo={destaque.title}
+                    tema={destaque.category}
                     prioridade
                     sizes="(min-width: 1024px) 480px, 440px"
                     className="mx-auto max-w-[440px] rounded-lg shadow-plate transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-lift lg:max-w-none"
@@ -178,6 +180,8 @@ export default async function IndiceDoBlog({
                       <Link href={post.href} className="block">
                         <Capa
                           src={post.cover}
+                    titulo={post.title}
+                    tema={post.category}
                           sizes="(min-width: 1024px) 340px, (min-width: 640px) 50vw, calc(100vw - 3rem)"
                           className="rounded-lg shadow-tag transition-[transform,box-shadow] duration-[260ms] ease-[cubic-bezier(0.22,0.7,0.28,1)] group-hover:-translate-y-1 group-hover:shadow-plate"
                         />

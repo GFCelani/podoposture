@@ -48,6 +48,8 @@ export function Journal({
                       >
                         <Capa
                           src={post.cover}
+                    titulo={post.title}
+                    tema={post.category}
                           sizes="192px"
                           className="w-28 rounded-md sm:w-48"
                         />
