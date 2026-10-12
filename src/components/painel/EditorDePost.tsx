@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import TurndownService from "turndown";
 
+import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
@@ -17,10 +18,18 @@ import {
   rotuloDaData,
   validarPost,
   type ContextoDoPost,
-  type DadosDoPost,
-  type ErrosPost,
   type PostDoPainel,
 } from "@/lib/painel-tipos";
+import {
+  GRUPOS_DO_MENU,
+  LIMITES_PAGINA,
+  errosDaPaginaComCampo,
+  mensagemAoSalvarPagina,
+  validarPagina,
+  type DadosDaPagina,
+  type ErrosPagina,
+  type PaginaDoPainel,
+} from "@/lib/paginas-tipos";
 import { ErroAoEnviarImagem, enviarImagem as enviarAoServidor } from "@/lib/preparar-imagem";
 import { armazemDaAba, deixarRecado } from "@/lib/recado-do-editor";
 
@@ -60,15 +69,46 @@ const BOTAO_FORMATO =
 const FOCO_NO_ROTULO =
   "focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent";
 
-// Texto novo nasce sem tema: ela escolhe (a lista vem do banco).
-const VAZIO: DadosDoPost = {
+/**
+ * Post e pagina usam este mesmo editor (ver paginas-tipos.ts): os dados tem a
+ * mesma forma, e a pagina acrescenta a descricao e a legenda da foto. No post
+ * esses dois ficam vazios e o servidor os ignora.
+ */
+export type TipoDeTexto = "post" | "pagina";
+type Dados = DadosDaPagina;
+type Erros = ErrosPagina;
+
+// Texto novo nasce sem tema (e pagina nova, fora do menu): ela escolhe.
+const VAZIO: Dados = {
   titulo: "",
   resumo: "",
   categoria: "",
   capa: "",
   corpo: "",
   publicado: false,
+  capaAlt: "",
+  capaLegenda: "",
 };
+
+/** Os dados na forma do editor; a copia antiga (sem as linhas da foto) tambem. */
+function comoDados(d: Omit<Dados, "capaAlt" | "capaLegenda"> & Partial<Dados>): Dados {
+  return {
+    titulo: d.titulo,
+    resumo: d.resumo,
+    categoria: d.categoria,
+    capa: d.capa,
+    corpo: d.corpo,
+    publicado: d.publicado,
+    capaAlt: d.capaAlt ?? "",
+    capaLegenda: d.capaLegenda ?? "",
+  };
+}
+
+/** O que muda de post para pagina, fora o formulario. */
+const PERFIL = {
+  post: { api: "/api/painel/posts", chave: "post", nome: "texto" },
+  pagina: { api: "/api/painel/paginas", chave: "pagina", nome: "página" },
+} as const;
 
 /** Word cola HTML cheio de sujeira; interessa so a estrutura. */
 const conversor = new TurndownService({
@@ -107,34 +147,29 @@ function ids(...lista: (string | false | null | undefined)[]): string | undefine
 type Saida = "topo" | "fim";
 
 export function EditorDePost({
+  tipo = "post",
   post: postAoAbrir,
   semBanco,
   aoSalvar,
   aoCancelar,
   aoPerderSessao,
 }: {
-  post: PostDoPainel | null;
+  tipo?: TipoDeTexto;
+  post: PostDoPainel | PaginaDoPainel | null;
   semBanco: boolean;
   aoSalvar: () => void;
   aoCancelar: () => void;
   aoPerderSessao: () => void;
 }) {
+  const pagina = tipo === "pagina";
+  const perfil = PERFIL[tipo];
   // Estado, e nao so a prop: um texto que abriu como "novo" pode descobrir no
   // servidor que ja esta publicado (envio repetido, ver `salvar`). Dali em
   // diante o editor trata ele como o texto no ar que ele e.
-  const [post, setPost] = useState<PostDoPainel | null>(postAoAbrir);
-  const inicial: DadosDoPost = post
-    ? {
-        titulo: post.titulo,
-        resumo: post.resumo,
-        categoria: post.categoria,
-        capa: post.capa,
-        corpo: post.corpo,
-        publicado: post.publicado,
-      }
-    : VAZIO;
+  const [post, setPost] = useState<PostDoPainel | PaginaDoPainel | null>(postAoAbrir);
+  const inicial: Dados = post ? comoDados(post) : VAZIO;
   const versaoDoServidor = post?.atualizadoEm ?? null;
-  const chaveDoRascunho = chaveDaCopia(post?.id);
+  const chaveDoRascunho = chaveDaCopia(post?.id, tipo);
 
   // Lido na inicializacao, e nao num efeito: o editor so monta depois de um
   // clique no painel, nunca no servidor, e ler aqui evita mostrar o texto salvo
@@ -146,16 +181,17 @@ export function EditorDePost({
     } catch {
       // copia ilegivel nao pode impedir de escrever
     }
+    if (copia) copia = { ...copia, dados: comoDados(copia.dados) };
     return decidirCopia(copia, inicial, versaoDoServidor);
   });
   const [idDoNovo] = useState(() => (post ? null : novoId()));
   const [hoje] = useState(() => new Date().toISOString());
 
-  const [campos, setCampos] = useState<DadosDoPost>(inicio.tipo === "aplicar" ? inicio.copia.dados : inicial);
+  const [campos, setCampos] = useState<Dados>(inicio.tipo === "aplicar" ? comoDados(inicio.copia.dados) : inicial);
   const [recuperado, setRecuperado] = useState(inicio.tipo === "aplicar");
   /** Copia de uma versao anterior do texto, esperando ela decidir. */
   const [pendente, setPendente] = useState<CopiaDoPost | null>(inicio.tipo === "perguntar" ? inicio.copia : null);
-  const [erros, setErros] = useState<ErrosPost>({});
+  const [erros, setErros] = useState<Erros>({});
   const [aviso, setAviso] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [salvando, setSalvando] = useState<"publicar" | "rascunho" | null>(null);
@@ -176,6 +212,8 @@ export function EditorDePost({
   const [temas, setTemas] = useState<string[] | null>(null);
   const [erroDosTemas, setErroDosTemas] = useState(false);
   useEffect(() => {
+    // A pagina escolhe um grupo do menu, lista fixa: nao ha o que buscar.
+    if (pagina) return;
     let vivo = true;
     void (async () => {
       try {
@@ -196,12 +234,19 @@ export function EditorDePost({
     return () => {
       vivo = false;
     };
-  }, []);
+  }, [pagina]);
 
   // Enquanto a lista nao chega, o tema que o texto ja tem vale: sem isto, sair
   // do campo antes da resposta acusava "esse tema nao existe mais".
   const temasValidos = temas ?? (inicial.categoria ? [inicial.categoria] : []);
   const contexto: ContextoDoPost = { temas: temasValidos, capaAceita: postAoAbrir?.capa };
+  const validar = (d: Dados): Erros => (pagina ? validarPagina(d, contexto) : validarPost(d, contexto));
+  const errosNoCampo = (e: Erros, d: Dados, campo: keyof Dados): Erros =>
+    pagina
+      ? errosDaPaginaComCampo(e, d, campo, contexto)
+      : campo === "capaAlt" || campo === "capaLegenda"
+        ? e
+        : errosComCampo(e, d, campo, contexto);
 
   useEffect(() => {
     // O editor substitui a lista inteira: sem mover o foco, quem usa teclado
@@ -265,7 +310,7 @@ export function EditorDePost({
 
   function usarCopiaPendente() {
     if (!pendente) return;
-    setCampos(pendente.dados);
+    setCampos(comoDados(pendente.dados));
     setPendente(null);
     setRecuperado(true);
     setSucesso(null);
@@ -285,7 +330,7 @@ export function EditorDePost({
         // sem espaco: o recado ainda reabre o texto salvo no servidor
       }
     }
-    deixarRecado(armazemDaAba(), { tipo: "reabrir", id: post?.id ?? null });
+    deixarRecado(armazemDaAba(), { tipo: "reabrir", id: post?.id ?? null, ...(pagina ? { pagina: true as const } : {}) });
     aoPerderSessao();
   }
 
@@ -302,6 +347,16 @@ export function EditorDePost({
 
   /* -------- pre-visualizacao -------- */
 
+  // A largura util da janela (sem a barra de rolagem), para a previa da pagina.
+  const [larguraDaJanela, setLarguraDaJanela] = useState<number | null>(null);
+  useEffect(() => {
+    if (!pagina || !verPrevia) return;
+    const medir = () => setLarguraDaJanela(document.documentElement.clientWidth);
+    queueMicrotask(medir);
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, [pagina, verPrevia]);
+
   // So converte com a previa aberta: a cada tecla, um texto longo passaria pelo
   // Markdown inteiro para uma previa que ninguem esta olhando.
   const previa = useMemo(
@@ -315,7 +370,7 @@ export function EditorDePost({
 
   /* -------- escrever no texto -------- */
 
-  function mudar<C extends keyof DadosDoPost>(campo: C, valor: DadosDoPost[C]) {
+  function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
     const novos = { ...campos, [campo]: valor };
     setCampos(novos);
     setConfirmandoSaida(null);
@@ -324,13 +379,13 @@ export function EditorDePost({
     if (pendente) setPendente(null);
     // Aviso que ja esta na tela some assim que o campo fica certo. Aviso novo
     // so aparece ao sair do campo, nunca no meio da digitacao.
-    if (erros[campo]) setErros((e) => errosComCampo(e, novos, campo, contexto));
+    if (erros[campo]) setErros((e) => errosNoCampo(e, novos, campo));
   }
 
   // ui-ux-pro-max ux: Forms/Inline Validation — avisa ao sair do campo, e so
   // sobre ele
-  function aoSairDo(campo: keyof DadosDoPost) {
-    setErros((e) => errosComCampo(e, campos, campo, contexto));
+  function aoSairDo(campo: keyof Dados) {
+    setErros((e) => errosNoCampo(e, campos, campo));
   }
 
   /**
@@ -404,10 +459,18 @@ export function EditorDePost({
         });
         setSucesso("Imagem de capa definida.");
       } else {
-        const trecho = `\n\n![descreva a imagem](${url})\n\n`;
+        // Na pagina a foto ganha legenda, como a do lado do titulo: o lugar dela
+        // ja vai escrito, entre aspas, para ela trocar.
+        const trecho = pagina
+          ? `\n\n![descreva a imagem](${url} "legenda curta")\n\n`
+          : `\n\n![descreva a imagem](${url})\n\n`;
         // Com a previa aberta a caixa nao existe: a imagem vai para o fim.
         if (!inserir(trecho)) setCampos((c) => ({ ...c, corpo: c.corpo + trecho }));
-        setSucesso("Imagem inserida. Troque o texto entre colchetes pela descrição dela.");
+        setSucesso(
+          pagina
+            ? "Imagem inserida. Troque o texto entre colchetes pela descrição dela, e o entre aspas pela legenda."
+            : "Imagem inserida. Troque o texto entre colchetes pela descrição dela.",
+        );
       }
     } catch (erro) {
       if (erro instanceof ErroAoEnviarImagem && erro.sessaoPerdida) {
@@ -440,10 +503,10 @@ export function EditorDePost({
    */
   async function passarAoTextoNoAr(id: string): Promise<boolean> {
     try {
-      const resposta = await fetch(`/api/painel/posts/${id}`);
+      const resposta = await fetch(`${perfil.api}/${id}`);
       if (!resposta.ok) return false;
       const corpo = await resposta.json().catch(() => null);
-      const situacao = situacaoDaReleitura(corpo?.post, id);
+      const situacao = situacaoDaReleitura(corpo?.[perfil.chave], id);
       if (situacao === "ilegivel") return false;
       if (situacao === "fora-do-ar") {
         // Saiu do ar entre a recusa e a releitura: repetir o envio ja passa. A
@@ -452,7 +515,7 @@ export function EditorDePost({
         setAviso(AVISO_SAIU_DO_AR);
         return true;
       }
-      const salvo = corpo.post as PostDoPainel;
+      const salvo = corpo[perfil.chave] as PostDoPainel | PaginaDoPainel;
       // A copia de texto novo vive noutra chave; sem apagar, ela voltaria
       // sozinha na proxima vez que ela abrisse "Escrever texto".
       apagarCopia();
@@ -474,7 +537,7 @@ export function EditorDePost({
   async function salvar(publicar: boolean) {
     if (emCurso.current || enviandoAgora.current) return;
     const dados = { ...campos, publicado: publicar };
-    const encontrados = validarPost(dados, contexto);
+    const encontrados = validar(dados);
     setErros(encontrados);
     if (Object.keys(encontrados).length > 0) {
       setConfirmandoRascunho(false);
@@ -501,7 +564,7 @@ export function EditorDePost({
     setAviso(null);
     try {
       const resposta = await fetch(
-        post ? `/api/painel/posts/${post.id}` : "/api/painel/posts",
+        post ? `${perfil.api}/${post.id}` : perfil.api,
         {
           method: post ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
@@ -525,7 +588,8 @@ export function EditorDePost({
       apagarCopia();
       deixarRecado(armazemDaAba(), {
         tipo: "salvo",
-        mensagem: mensagemAoSalvar(publicar, post?.publicado ?? false),
+        mensagem: (pagina ? mensagemAoSalvarPagina : mensagemAoSalvar)(publicar, post?.publicado ?? false),
+        ...(pagina ? { pagina: true as const } : {}),
       });
       aoSalvar();
     } catch {
@@ -572,7 +636,7 @@ export function EditorDePost({
         tabIndex={-1}
         className="mt-6 font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
       >
-        {post ? "Editar texto" : "Escrever texto"}
+        {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto" : "Escrever texto"}
       </h1>
 
       {semBanco && (
@@ -659,11 +723,12 @@ export function EditorDePost({
 
         <div>
           <label htmlFor="campo-resumo" className={rotulo}>
-            Resumo <span className="font-normal text-muted">(opcional)</span>
+            {pagina ? "Subtítulo" : "Resumo"} <span className="font-normal text-muted">(opcional)</span>
           </label>
           <p id="ajuda-resumo" className="mt-1 text-[0.875rem] text-muted">
-            É o trecho que aparece na lista do blog e no Google. Se deixar em branco, usamos
-            o começo do texto.
+            {pagina
+              ? "É a frase que aparece embaixo do título e no Google. Se deixar em branco, usamos o começo do texto."
+              : "É o trecho que aparece na lista do blog e no Google. Se deixar em branco, usamos o começo do texto."}
           </p>
           <textarea
             id="campo-resumo"
@@ -686,8 +751,14 @@ export function EditorDePost({
 
         <div>
           <label htmlFor="campo-categoria" className={rotulo}>
-            Tema
+            {pagina ? "Onde entra no menu" : "Tema"}
           </label>
+          {pagina && (
+            <p id="ajuda-categoria" className="mt-1 text-[0.875rem] text-muted">
+              A página entra no fim do grupo escolhido, no menu do topo do site. Fora do menu, ela fica no ar só
+              pelo endereço e pelo Google.
+            </p>
+          )}
           <select
             id="campo-categoria"
             value={campos.categoria}
@@ -695,12 +766,12 @@ export function EditorDePost({
             onChange={(e) => mudar("categoria", e.target.value)}
             onBlur={() => aoSairDo("categoria")}
             aria-invalid={erros.categoria ? true : undefined}
-            aria-describedby={erros.categoria ? "erro-categoria" : undefined}
+            aria-describedby={ids(pagina && "ajuda-categoria", erros.categoria && "erro-categoria")}
             className={entrada}
           >
-            <option value="">Sem tema</option>
+            <option value="">{pagina ? "Fora do menu" : "Sem tema"}</option>
             {/* O tema atual entra mesmo antes da lista chegar do servidor. */}
-            {(temas ?? temasValidos).map((t) => (
+            {(pagina ? GRUPOS_DO_MENU : (temas ?? temasValidos)).map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -719,14 +790,24 @@ export function EditorDePost({
         </div>
 
         <div>
-          <span className={rotulo}>Imagem de capa <span className="font-normal text-muted">(opcional)</span></span>
+          <span className={rotulo}>
+            {pagina ? "Foto ao lado do título" : "Imagem de capa"} <span className="font-normal text-muted">(opcional)</span>
+          </span>
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <label
               className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
                 enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
               }`}
             >
-              {enviando === "capa" ? "Enviando…" : campos.capa ? "Trocar capa" : "Escolher capa"}
+              {enviando === "capa"
+                ? "Enviando…"
+                : campos.capa
+                  ? pagina
+                    ? "Trocar foto"
+                    : "Trocar capa"
+                  : pagina
+                    ? "Escolher foto"
+                    : "Escolher capa"}
               <input
                 id="campo-capa"
                 type="file"
@@ -766,6 +847,58 @@ export function EditorDePost({
               {erros.capa}
             </p>
           )}
+          {pagina && campos.capa && (
+            <div className="mt-5 space-y-5">
+              <div>
+                <label htmlFor="campo-capaAlt" className={rotulo}>
+                  Descrição da foto
+                </label>
+                <p id="ajuda-capaAlt" className="mt-1 text-[0.875rem] text-muted">
+                  O que aparece na foto, para quem não enxerga ouvir.
+                </p>
+                <input
+                  id="campo-capaAlt"
+                  value={campos.capaAlt}
+                  maxLength={LIMITES_PAGINA.capaAlt}
+                  readOnly={travado}
+                  onChange={(e) => mudar("capaAlt", e.target.value)}
+                  onBlur={() => aoSairDo("capaAlt")}
+                  aria-invalid={erros.capaAlt ? true : undefined}
+                  aria-describedby={ids("ajuda-capaAlt", erros.capaAlt && "erro-capaAlt")}
+                  className={entrada}
+                />
+                {erros.capaAlt && (
+                  <p id="erro-capaAlt" role="alert" className={erroDoCampo}>
+                    {erros.capaAlt}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="campo-capaLegenda" className={rotulo}>
+                  Legenda <span className="font-normal text-muted">(opcional)</span>
+                </label>
+                <p id="ajuda-capaLegenda" className="mt-1 text-[0.875rem] text-muted">
+                  A linha curta que aparece embaixo da foto.
+                </p>
+                <input
+                  id="campo-capaLegenda"
+                  value={campos.capaLegenda}
+                  maxLength={LIMITES_PAGINA.capaLegenda}
+                  readOnly={travado}
+                  onChange={(e) => mudar("capaLegenda", e.target.value)}
+                  onBlur={() => aoSairDo("capaLegenda")}
+                  aria-invalid={erros.capaLegenda ? true : undefined}
+                  aria-describedby={ids("ajuda-capaLegenda", erros.capaLegenda && "erro-capaLegenda")}
+                  className={entrada}
+                />
+                {erros.capaLegenda && (
+                  <p id="erro-capaLegenda" role="alert" className={erroDoCampo}>
+                    {erros.capaLegenda}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
@@ -784,6 +917,8 @@ export function EditorDePost({
 
           <p id="ajuda-corpo" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
             Pode colar direto do Word — negrito, títulos e listas vêm junto.
+            {pagina &&
+              " Cada imagem aparece na coluna da direita, ao lado do título ou parágrafo depois do qual ela foi inserida. O botão Imagem já deixa o lugar da descrição (entre colchetes) e da legenda (entre aspas)."}
           </p>
 
           {!verPrevia && (
@@ -833,7 +968,60 @@ export function EditorDePost({
             </p>
           )}
 
-          {verPrevia ? (
+          {verPrevia && pagina ? (
+            // A pagina: o topo com a foto em moldura e o corpo no MESMO
+            // componente da pagina publicada (corpo-em-fluxo.tsx), na largura
+            // da janela: as duas colunas dependem dela, e dentro da coluna do
+            // editor a previa mostraria outra pagina.
+            <div
+              className="mt-4 overflow-hidden border-y border-rule bg-paper"
+              style={larguraDaJanela ? { width: larguraDaJanela, marginLeft: `calc(50% - ${larguraDaJanela / 2}px)` } : undefined}
+            >
+              <div className="border-b border-rule bg-surface">
+                <div className="mx-auto max-w-[1240px] px-6 pt-10 pb-10 md:px-8 lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-6 lg:px-10">
+                  <div className="lg:col-span-7">
+                    {campos.categoria && (
+                      <p
+                        className="mb-6 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                        style={{ fontFamily: "var(--mono)" }}
+                      >
+                        Início / {campos.categoria} / {campos.titulo || "Título da página"}
+                      </p>
+                    )}
+                    <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
+                      {campos.titulo || "Título da página"}
+                    </p>
+                    {resumoDaPrevia && (
+                      <p className="mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
+                        {resumoDaPrevia}
+                      </p>
+                    )}
+                  </div>
+                  {campos.capa && (
+                    <figure className="mt-10 max-w-[360px] overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate lg:col-span-4 lg:col-start-9 lg:mt-0 lg:max-w-none">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={campos.capa} alt={campos.capaAlt} className="aspect-[4/5] w-full rounded-md object-cover saturate-[0.9]" />
+                      {campos.capaLegenda && (
+                        <figcaption
+                          className="px-1 pt-3 pb-1 text-[0.6875rem] leading-[1.5] tracking-[0.12em] text-muted"
+                          style={{ fontFamily: "var(--mono)" }}
+                        >
+                          {campos.capaLegenda}
+                        </figcaption>
+                      )}
+                    </figure>
+                  )}
+                </div>
+              </div>
+              {campos.corpo.trim() ? (
+                <CorpoEmFluxo html={previa} />
+              ) : (
+                <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
+                  Escreva o texto para ver como a página vai ficar.
+                </p>
+              )}
+            </div>
+          ) : verPrevia ? (
             // O mesmo componente da pagina publicada (home/f/[slug]) e o topo com
             // as mesmas classes da casca do post. Uma previa com estilo proprio
             // mostraria outra coisa, e ela publicaria confiando no que nao vai ao ar.
@@ -952,8 +1140,9 @@ export function EditorDePost({
             faz o segundo clique cair em outro lugar. */}
         {confirmandoRascunho && (
           <p id="aviso-rascunho" role="alert" className={`mt-4 ${alerta}`}>
-            Este texto está no site. Guardar como rascunho tira ele do ar até você publicar de
-            novo. Para confirmar, clique outra vez em “Tirar do site e guardar”.
+            {pagina
+              ? "Esta página está no site. Guardar como rascunho tira ela do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."
+              : "Este texto está no site. Guardar como rascunho tira ele do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."}
           </p>
         )}
         {confirmandoSaida === "fim" && (

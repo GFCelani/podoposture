@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel } from "@/lib/painel-tipos";
+import type { PaginaDoPainel } from "@/lib/paginas-tipos";
 import { BrandMark } from "../brand-mark";
 import { AbaTextos } from "./AbaTextos";
 import { EditorDePost } from "./EditorDePost";
@@ -50,7 +51,13 @@ type Tela =
   | { nome: "carregando" }
   | { nome: "entrar" }
   | { nome: "painel"; aba: Aba }
-  | { nome: "editor"; post: PostDoPainel | null; semBanco: boolean; abaDeOrigem: Aba };
+  | {
+      nome: "editor";
+      tipo: "post" | "pagina";
+      post: PostDoPainel | PaginaDoPainel | null;
+      semBanco: boolean;
+      abaDeOrigem: Aba;
+    };
 
 const SESSAO_TERMINOU = "Sua sessão terminou. Digite a senha de novo para continuar de onde parou.";
 const SESSAO_TERMINOU_NO_TEXTO =
@@ -157,10 +164,14 @@ export function Painel() {
 
   const perderSessaoEmTextos = useCallback(() => perderSessao("textos", SESSAO_TERMINOU), [perderSessao]);
   const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
-  const perderSessaoEmPaginas = useCallback(() => perderSessao("paginas", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
+  const perderSessaoEmPaginas = useCallback(() => perderSessao("paginas", SESSAO_TERMINOU), [perderSessao]);
   const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
-  const abrirEditor = useCallback((post: PostDoPainel | null, semBanco: boolean) => {
-    setTela({ nome: "editor", post, semBanco, abaDeOrigem: "textos" });
+  const abrirEditor = useCallback((post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => {
+    setTela({ nome: "editor", tipo: "post", post, semBanco, abaDeOrigem: "textos" });
+  }, []);
+  // A pagina abre no MESMO editor do post (ver paginas-tipos.ts).
+  const abrirEditorDePagina = useCallback((pagina: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => {
+    setTela({ nome: "editor", tipo: "pagina", post: pagina, semBanco, abaDeOrigem: "paginas" });
   }, []);
 
   async function sair() {
@@ -201,14 +212,16 @@ export function Painel() {
     // O editor ocupa a tela inteira, fora do cabecalho e das abas, de
     // proposito: um clique numa aba ou em "Sair" no meio do texto desmontaria
     // o editor sem passar pelo aviso do navegador de alteracao nao salva.
-    const { abaDeOrigem, post } = tela;
+    const { abaDeOrigem, post, tipo } = tela;
     const voltar = () => {
       // O foco volta ao "Editar" do texto de onde ela saiu, ou ao titulo da lista.
-      focoNaLista.current = post ? `editar-${post.id}` : "textos-titulo";
+      focoNaLista.current = post ? `editar-${post.id}` : tipo === "pagina" ? "paginas-titulo" : "textos-titulo";
       abrirPainel(abaDeOrigem);
     };
     return (
       <EditorDePost
+        key={`${tipo}-${post?.id ?? "novo"}`}
+        tipo={tipo}
         post={post}
         semBanco={tela.semBanco}
         aoSalvar={voltar}
@@ -318,7 +331,12 @@ export function Painel() {
             <AbaInicio aoPerderSessao={perderSessaoEmInicio} />
           )}
           {visitadas.includes(id) && id === "paginas" && (
-            <AbaInicio aba="paginas" aoPerderSessao={perderSessaoEmPaginas} />
+            <AbaTextos
+              tipo="pagina"
+              aoPerderSessao={perderSessaoEmPaginas}
+              aoAbrirEditor={abrirEditorDePagina}
+              tomarFoco={tomarFocoDaLista}
+            />
           )}
           {visitadas.includes(id) && id === "numeros" && (
             <Numeros aoPerderSessao={perderSessaoEmNumeros} />

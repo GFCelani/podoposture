@@ -5,6 +5,7 @@ import {
   deixarRecado,
   lerRecado,
   tomarRecado,
+  tomarRecadoDa,
   type Armazem,
 } from "./recado-do-editor";
 
@@ -73,5 +74,17 @@ describe("recado do editor", () => {
     };
     expect(() => deixarRecado(quebrado, { tipo: "salvo", mensagem: "ok" })).not.toThrow();
     expect(tomarRecado(quebrado)).toBeNull();
+  });
+});
+
+describe("recado de pagina", () => {
+  it("so a lista de paginas le o recado do editor de paginas; a do blog o devolve", () => {
+    const armazem = armazemDeTeste();
+    deixarRecado(armazem, { tipo: "reabrir", id: ID, pagina: true });
+    expect(tomarRecadoDa(armazem, "blog")).toBeNull();
+    expect(tomarRecadoDa(armazem, "paginas")).toEqual({ tipo: "reabrir", id: ID, pagina: true });
+    deixarRecado(armazem, { tipo: "salvo", mensagem: "Texto publicado." });
+    expect(tomarRecadoDa(armazem, "paginas")).toBeNull();
+    expect(tomarRecadoDa(armazem, "blog")).toEqual({ tipo: "salvo", mensagem: "Texto publicado." });
   });
 });

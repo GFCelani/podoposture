@@ -19,9 +19,13 @@
 
 export const CHAVE_DO_RECADO = "podoposture_recado_do_editor";
 
+/**
+ * `pagina`: o recado e' do editor de paginas (aba Paginas), e so a lista de
+ * paginas o le; sem ele, e' da lista do blog.
+ */
 export type RecadoDoEditor =
-  | { tipo: "reabrir"; id: string | null }
-  | { tipo: "salvo"; mensagem: string };
+  | { tipo: "reabrir"; id: string | null; pagina?: true }
+  | { tipo: "salvo"; mensagem: string; pagina?: true };
 
 export type Armazem = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
@@ -42,15 +46,16 @@ export function lerRecado(valor: string | null): RecadoDoEditor | null {
     return null;
   }
   if (typeof bruto !== "object" || bruto === null) return null;
-  const { tipo, id, mensagem } = bruto as Record<string, unknown>;
+  const { tipo, id, mensagem, pagina } = bruto as Record<string, unknown>;
+  const dePagina = pagina === true ? ({ pagina: true } as const) : {};
 
   if (tipo === "reabrir") {
-    if (id === null) return { tipo, id: null };
-    return typeof id === "string" && ID_DE_POST.test(id) ? { tipo, id } : null;
+    if (id === null) return { tipo, id: null, ...dePagina };
+    return typeof id === "string" && ID_DE_POST.test(id) ? { tipo, id, ...dePagina } : null;
   }
   if (tipo === "salvo") {
     return typeof mensagem === "string" && mensagem && mensagem.length <= MAXIMO_DA_MENSAGEM
-      ? { tipo, mensagem }
+      ? { tipo, mensagem, ...dePagina }
       : null;
   }
   return null;
@@ -85,4 +90,16 @@ export function tomarRecado(armazem: Armazem | null): RecadoDoEditor | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Le e apaga so o recado da lista certa (blog ou paginas). O da outra lista
+ * volta para o armazem: quem o deixou e' quem deve le-lo.
+ */
+export function tomarRecadoDa(armazem: Armazem | null, lista: "blog" | "paginas"): RecadoDoEditor | null {
+  const recado = tomarRecado(armazem);
+  if (!recado) return null;
+  if ((recado.pagina === true) === (lista === "paginas")) return recado;
+  deixarRecado(armazem, recado);
+  return null;
 }

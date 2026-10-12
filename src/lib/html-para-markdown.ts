@@ -124,6 +124,10 @@ const ESCAPES: [RegExp, string][] = [
   [/^>/g, "\\>"],
   [/(?<![\p{L}\p{N}])_|_(?![\p{L}\p{N}])/gu, "\\_"],
   [/^(\d+)\. /g, "$1\\. "],
+  // "3." sozinho no no de texto, com o negrito colado depois (`<p>3.<strong>
+  // Acupuntura</strong>`): o espaco vem de dentro da enfase e o Markdown leria
+  // um item de lista numerada, e o numero sumia. Achado na pagina da DTM.
+  [/^(\d+)\.$/g, "$1\\."],
 ];
 conversor.escape = (texto: string) => ESCAPES.reduce((t, [re, troca]) => t.replace(re, troca), texto);
 

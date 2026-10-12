@@ -13,6 +13,7 @@ import { bancoConfigurado, bancoDoPainel } from "./painel-db";
 import { ehEstreia, enderecoPodeMudar, gerarSlug, juntarSlug } from "./painel-tipos";
 import {
   ENDERECOS_RESERVADOS,
+  GRUPOS_DO_MENU,
   type DadosDaPagina,
   type PaginaDoPainel,
   type ResumoDaPagina,
@@ -193,8 +194,16 @@ export async function listarTodasAsPaginas(): Promise<ResumoDaPagina[]> {
   const linhas = await sql<Omit<LinhaPagina, "corpo">[]>`
     SELECT id, slug, titulo, resumo, grupo, capa, capa_alt, capa_legenda, formato, descricao,
            identificacao, ordem, publicado, criado_em, atualizado_em, publicado_em
-    FROM paginas ORDER BY grupo NULLS LAST, ordem, titulo`;
-  return linhas.map(paraResumo);
+    FROM paginas`;
+  // Na ordem do menu (os grupos na ordem do cabecalho, e dentro de cada um a
+  // posicao), com as fora do menu no fim.
+  const grupo = (g: string | null) => {
+    const i = g ? (GRUPOS_DO_MENU as readonly string[]).indexOf(g) : -1;
+    return i < 0 ? GRUPOS_DO_MENU.length : i;
+  };
+  return linhas
+    .sort((a, b) => grupo(a.grupo) - grupo(b.grupo) || a.ordem - b.ordem || a.titulo.localeCompare(b.titulo, "pt-BR"))
+    .map(paraResumo);
 }
 
 /** As publicadas, sem o corpo: menu, sitemap e relacionados. */

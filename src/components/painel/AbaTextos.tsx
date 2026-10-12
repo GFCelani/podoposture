@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel, ResumoDoPainel } from "@/lib/painel-tipos";
-import { armazemDaAba, deixarRecado, tomarRecado } from "@/lib/recado-do-editor";
+import type { PaginaDoPainel, ResumoDaPagina } from "@/lib/paginas-tipos";
+import { armazemDaAba, deixarRecado, tomarRecadoDa } from "@/lib/recado-do-editor";
 
 import { GestaoDeTemas } from "./GestaoDeTemas";
 /**
@@ -21,25 +22,80 @@ import { GestaoDeTemas } from "./GestaoDeTemas";
 
 type Aviso = { tipo: "erro" | "feito"; texto: string };
 
+/**
+ * A mesma lista serve o blog e as paginas (aba "Paginas"): mesmo carregar,
+ * mesmo abrir, mesmo apagar em dois cliques. Muda o endereco das rotas, as
+ * palavras e onde cada item mora no site.
+ */
+const PERFIL = {
+  post: {
+    api: "/api/painel/posts",
+    lista: "posts",
+    item: "post",
+    recado: "blog",
+    titulo: "Meu blog",
+    idDoTitulo: "textos-titulo",
+    novo: "Escrever texto",
+    semGrupo: "Sem tema",
+    endereco: (slug: string) => `/home/f/${slug}`,
+    carregando: "Carregando seus textos…",
+    vazio: "Você ainda não escreveu nenhum texto por aqui.",
+    apagado: "Texto apagado.",
+    naoExiste: "Esse texto não existe mais: ele pode ter sido apagado em outra janela. A lista foi atualizada.",
+    naoAbre: "Não foi possível abrir esse texto agora. Tente de novo em alguns minutos.",
+    naoCarrega: "Não foi possível carregar os textos. Tente de novo em alguns minutos.",
+    nome: "texto",
+    oNome: "O texto",
+    esteNome: "Este texto",
+    rascunho: "Rascunho — ainda não está no site",
+  },
+  pagina: {
+    api: "/api/painel/paginas",
+    lista: "paginas",
+    item: "pagina",
+    recado: "paginas",
+    titulo: "Páginas",
+    idDoTitulo: "paginas-titulo",
+    novo: "Nova página",
+    semGrupo: "Fora do menu",
+    endereco: (slug: string) => `/${slug}`,
+    carregando: "Carregando as páginas…",
+    vazio: "Ainda não há páginas por aqui.",
+    apagado: "Página apagada.",
+    naoExiste: "Essa página não existe mais: ela pode ter sido apagada em outra janela. A lista foi atualizada.",
+    naoAbre: "Não foi possível abrir essa página agora. Tente de novo em alguns minutos.",
+    naoCarrega: "Não foi possível carregar as páginas. Tente de novo em alguns minutos.",
+    nome: "página",
+    oNome: "A página",
+    esteNome: "Esta página",
+    rascunho: "Rascunho — ainda não está no site",
+  },
+} as const;
+
+type Resumo = ResumoDoPainel | ResumoDaPagina;
+
 const SEM_CONEXAO = "Sem conexão com o servidor. Verifique a internet e tente de novo.";
 
 export function AbaTextos({
+  tipo = "post",
   aoPerderSessao,
   aoAbrirEditor,
   tomarFoco,
 }: {
+  tipo?: "post" | "pagina";
   aoPerderSessao: () => void;
-  aoAbrirEditor: (post: PostDoPainel | null, semBanco: boolean) => void;
+  aoAbrirEditor: (post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => void;
   /** Para onde vai o foco quando a lista termina de carregar (voltando do editor), ou null. */
   tomarFoco: () => string | null;
 }) {
+  const perfil = PERFIL[tipo];
   const primeiraCarga = useRef(true);
   /** O id que espera o foco, lido do painel na primeira carga e consumido depois do render da lista. */
   const focoPendente = useRef<string | null>(null);
   // Em ref, e nao so no estado: o editor precisa saber se ha banco, e ler o
   // estado aqui refaria `abrirEditor` e recarregaria a aba quando ele chega.
   const semBancoAgora = useRef(false);
-  const [posts, setPosts] = useState<ResumoDoPainel[]>([]);
+  const [posts, setPosts] = useState<Resumo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [semBanco, setSemBanco] = useState(false);
   const [verTemas, setVerTemas] = useState(false);
@@ -51,7 +107,7 @@ export function AbaTextos({
 
   const carregar = useCallback(async (): Promise<void> => {
     try {
-      const resposta = await fetch("/api/painel/posts", { cache: "no-store" });
+      const resposta = await fetch(perfil.api, { cache: "no-store" });
 
       if (resposta.status === 401 || resposta.status === 403) {
         aoPerderSessao();
@@ -62,13 +118,13 @@ export function AbaTextos({
         setErroDaLista(
           resposta.status === 503 && typeof corpo?.erro === "string"
             ? `${corpo.erro} Avise quem cuida do site.`
-            : "Não foi possível carregar os textos. Tente de novo em alguns minutos.",
+            : perfil.naoCarrega,
         );
         return;
       }
 
       const corpo = await resposta.json();
-      setPosts(corpo.posts ?? []);
+      setPosts(corpo[perfil.lista] ?? []);
       setSemBanco(Boolean(corpo.semBanco));
       semBancoAgora.current = Boolean(corpo.semBanco);
       setErroDaLista(null);
@@ -84,7 +140,7 @@ export function AbaTextos({
         focoPendente.current = tomarFoco();
       }
     }
-  }, [aoPerderSessao, tomarFoco]);
+  }, [aoPerderSessao, tomarFoco, perfil]);
 
   /**
    * O foco so vai ao "Editar" depois que a lista foi para a tela.
@@ -102,8 +158,8 @@ export function AbaTextos({
     focoPendente.current = null;
     // O reserva continua valendo: o texto pode ter sido apagado em outra janela
     // e nao estar mais na lista que acabou de chegar.
-    (document.getElementById(alvo) ?? document.getElementById("textos-titulo"))?.focus();
-  }, [posts, carregando]);
+    (document.getElementById(alvo) ?? document.getElementById(perfil.idDoTitulo))?.focus();
+  }, [posts, carregando, perfil]);
 
   /**
    * Busca o texto completo e abre o editor. `reabrindo` e o caso da sessao que
@@ -119,16 +175,18 @@ export function AbaTextos({
       setAbrindo(id);
       setAviso(null);
       try {
-        const resposta = await fetch(`/api/painel/posts/${id}`, { cache: "no-store" });
+        const resposta = await fetch(`${perfil.api}/${id}`, { cache: "no-store" });
         if (resposta.status === 401 || resposta.status === 403) {
-          if (reabrindo) deixarRecado(armazemDaAba(), { tipo: "reabrir", id });
+          if (reabrindo) {
+            deixarRecado(armazemDaAba(), { tipo: "reabrir", id, ...(tipo === "pagina" ? { pagina: true as const } : {}) });
+          }
           aoPerderSessao();
           return;
         }
         if (resposta.status === 404) {
           setAviso({
             tipo: "erro",
-            texto: "Esse texto não existe mais: ele pode ter sido apagado em outra janela. A lista foi atualizada.",
+            texto: perfil.naoExiste,
           });
           void carregar();
           return;
@@ -140,36 +198,36 @@ export function AbaTextos({
             texto:
               resposta.status === 503 && typeof corpo?.erro === "string"
                 ? `${corpo.erro} Avise quem cuida do site.`
-                : "Não foi possível abrir esse texto agora. Tente de novo em alguns minutos.",
+                : perfil.naoAbre,
           });
           return;
         }
         const corpo = await resposta.json();
-        aoAbrirEditor(corpo.post, semBancoAgora.current);
+        aoAbrirEditor(corpo[perfil.item], semBancoAgora.current);
       } catch {
         setAviso({ tipo: "erro", texto: SEM_CONEXAO });
       } finally {
         setAbrindo(null);
       }
     },
-    [aoAbrirEditor, aoPerderSessao, carregar],
+    [aoAbrirEditor, aoPerderSessao, carregar, perfil, tipo],
   );
 
   useEffect(() => {
     // Mesmo motivo do efeito em Painel.tsx: o estado so muda fora do corpo do
     // efeito. O recado e lido na mesma microtarefa, e so uma vez: quem le apaga.
     queueMicrotask(() => {
-      const recado = tomarRecado(armazemDaAba());
+      const recado = tomarRecadoDa(armazemDaAba(), perfil.recado);
       if (recado?.tipo === "salvo") setAviso({ tipo: "feito", texto: recado.mensagem });
       if (recado?.tipo === "reabrir") void abrirEditor(recado.id, true);
       void carregar();
     });
-  }, [abrirEditor, carregar]);
+  }, [abrirEditor, carregar, perfil]);
 
   const aoApagado = useCallback(() => {
-    setAviso({ tipo: "feito", texto: "Texto apagado." });
+    setAviso({ tipo: "feito", texto: perfil.apagado });
     void carregar();
-  }, [carregar]);
+  }, [carregar, perfil]);
 
   const aoFalhar = useCallback((texto: string) => setAviso({ tipo: "erro", texto }), []);
 
@@ -211,13 +269,14 @@ export function AbaTextos({
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1
-          id="textos-titulo"
+          id={perfil.idDoTitulo}
           tabIndex={-1}
           className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
         >
-          Meu blog
+          {perfil.titulo}
         </h1>
         <div className="flex flex-wrap items-center gap-3">
+          {tipo === "post" && (
           <button
             onClick={() => setVerTemas((v) => !v)}
             aria-expanded={verTemas}
@@ -226,17 +285,18 @@ export function AbaTextos({
           >
             {verTemas ? "Fechar temas" : "Temas"}
           </button>
+          )}
           {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
           <button
           onClick={() => void abrirEditor(null)}
           className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-6 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift"
         >
-            Escrever texto
+            {perfil.novo}
           </button>
         </div>
       </div>
 
-      {verTemas && (
+      {tipo === "post" && verTemas && (
         <div id="painel-temas">
           <GestaoDeTemas aoPerderSessao={aoPerderSessao} aoMudarTextos={() => void carregar()} />
         </div>
@@ -246,20 +306,21 @@ export function AbaTextos({
         // ui-ux-pro-max ux: Animation/Loading States — sem isto, o estado vazio
         // piscava "voce ainda nao escreveu nenhum texto" antes da lista chegar.
         <p role="status" className="mt-10 text-[1.0625rem] text-muted">
-          Carregando seus textos…
+          {perfil.carregando}
         </p>
       ) : posts.length === 0 ? (
         // ui-ux-pro-max ux: estado vazio que ensina o proximo passo, nunca em branco
         <p className="mt-10 rounded-lg border border-rule bg-surface px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
-          Você ainda não escreveu nenhum texto por aqui.
+          {perfil.vazio}
           <br />
-          Comece pelo botão <strong className="text-ink-strong">Escrever texto</strong>.
+          Comece pelo botão <strong className="text-ink-strong">{perfil.novo}</strong>.
         </p>
       ) : (
         <ul className="mt-8 divide-y divide-rule border-t border-rule">
           {posts.map((post) => (
             <LinhaDePost
               key={post.id}
+              tipo={tipo}
               post={post}
               abrindo={abrindo === post.id}
               aoEditar={() => {
@@ -280,6 +341,7 @@ export function AbaTextos({
 }
 
 function LinhaDePost({
+  tipo,
   post,
   abrindo,
   aoEditar,
@@ -287,13 +349,15 @@ function LinhaDePost({
   aoFalhar,
   aoPerderSessao,
 }: {
-  post: ResumoDoPainel;
+  tipo: "post" | "pagina";
+  post: Resumo;
   abrindo: boolean;
   aoEditar: () => void;
   aoApagado: () => void;
   aoFalhar: (texto: string) => void;
   aoPerderSessao: () => void;
 }) {
+  const perfil = PERFIL[tipo];
   const [confirmando, setConfirmando] = useState(false);
   const [apagando, setApagando] = useState(false);
 
@@ -306,7 +370,7 @@ function LinhaDePost({
     }
     setApagando(true);
     try {
-      const resposta = await fetch(`/api/painel/posts/${post.id}`, { method: "DELETE" });
+      const resposta = await fetch(`${perfil.api}/${post.id}`, { method: "DELETE" });
       if (resposta.status === 401 || resposta.status === 403) {
         aoPerderSessao();
         return;
@@ -320,11 +384,11 @@ function LinhaDePost({
       const corpo = await resposta.json().catch(() => ({}));
       aoFalhar(
         resposta.status === 503 && typeof corpo?.erro === "string"
-          ? `${corpo.erro} O texto não foi apagado. Avise quem cuida do site.`
-          : "Não foi possível apagar o texto agora. Ele continua aqui; tente de novo em alguns minutos.",
+          ? `${corpo.erro} ${perfil.oNome} não foi apagad${tipo === "pagina" ? "a" : "o"}. Avise quem cuida do site.`
+          : `Não foi possível apagar ${tipo === "pagina" ? "a página" : "o texto"} agora. Continua aqui; tente de novo em alguns minutos.`,
       );
     } catch {
-      aoFalhar("Sem conexão com o servidor. O texto não foi apagado; verifique a internet e tente de novo.");
+      aoFalhar(`Sem conexão com o servidor. ${perfil.oNome} não foi apagad${tipo === "pagina" ? "a" : "o"}; verifique a internet e tente de novo.`);
     } finally {
       // Sem isto, um erro deixava o botao preso em "Apagando…".
       setApagando(false);
@@ -343,7 +407,7 @@ function LinhaDePost({
             <>
               No ar ·{" "}
               <a
-                href={`/home/f/${post.slug}`}
+                href={perfil.endereco(post.slug)}
                 target="_blank"
                 rel="noreferrer"
                 className="sublinha text-accent"
@@ -352,10 +416,10 @@ function LinhaDePost({
               </a>
             </>
           ) : (
-            <span className="text-[#8a6d1f]">Rascunho — ainda não está no site</span>
+            <span className="text-[#8a6d1f]">{perfil.rascunho}</span>
           )}
           {" · "}
-          {post.categoria || "Sem tema"}
+          {post.categoria || perfil.semGrupo}
         </p>
       </div>
 
@@ -392,7 +456,7 @@ function LinhaDePost({
           className="w-full rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f]"
         >
           {post.publicado
-            ? "Este texto sai do site e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar exclusão”."
+            ? `${perfil.esteNome} sai do site e não pode ser recuperad${tipo === "pagina" ? "a" : "o"}. Para confirmar, clique outra vez em “Confirmar exclusão”.`
             : "Este rascunho é apagado e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar exclusão”."}
         </p>
       )}

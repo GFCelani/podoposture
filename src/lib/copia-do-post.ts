@@ -22,8 +22,9 @@ export type CopiaDoPost = {
   guardadaEm: string | null;
 };
 
-export function chaveDaCopia(id: string | null | undefined): string {
-  return `podoposture_rascunho:${id ?? "novo"}`;
+/** A pagina nova tem chave propria: a copia dela nao abre no "Escrever texto". */
+export function chaveDaCopia(id: string | null | undefined, tipo: "post" | "pagina" = "post"): string {
+  return tipo === "pagina" ? `podoposture_rascunho:pagina:${id ?? "novo"}` : `podoposture_rascunho:${id ?? "novo"}`;
 }
 
 function ehDados(valor: unknown): valor is DadosDoPost {

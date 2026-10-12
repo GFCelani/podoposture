@@ -147,3 +147,25 @@ describe("figura com legenda, das paginas", () => {
     expect(volta).toContain('title="A mesa do consultório, onde a consulta começa."');
   });
 });
+
+describe("ida e volta nas paginas do site", async () => {
+  // As paginas que foram para o banco abrem no mesmo editor do post. Editar e
+  // salvar uma delas nao pode perder palavra, foto, legenda nem link; a
+  // legenda (figcaption) vira o title da imagem, que a pagina volta a mostrar.
+  const { paginasDoAcervo } = await import("./pagina-do-acervo");
+  const { CONTEUDO_PADRAO } = await import("./conteudo-padrao");
+  const legendas = (html: string) => [
+    ...[...html.matchAll(/<figcaption>([\s\S]*?)<\/figcaption>/g)].map((m) => texto(m[1])),
+    ...[...html.matchAll(/<img\b[^>]*\stitle="([^"]*)"/g)].map((m) => texto(m[1])),
+  ];
+  for (const pagina of paginasDoAcervo(CONTEUDO_PADRAO)) {
+    it(pagina.slug, () => {
+      const volta = markdownParaHtml(htmlParaMarkdown(pagina.corpo));
+      const semLegenda = (h: string) => h.replace(/<figcaption>[\s\S]*?<\/figcaption>/g, "");
+      expect(texto(volta)).toBe(texto(semLegenda(pagina.corpo)));
+      expect(imagens(volta)).toEqual(imagens(pagina.corpo));
+      expect(legendas(volta)).toEqual(legendas(pagina.corpo));
+      expect(links(volta).map(decodeURI)).toEqual(links(pagina.corpo).map(decodeURI));
+    });
+  }
+});
