@@ -69,6 +69,11 @@ export const SLUGS_A_GERAR = PAGINAS_DINAMICAS.map(
   (p) => (rotas.paginas as Record<string, string>)[p.slug] ?? p.slug,
 );
 
+/** O segmento de rota de uma pagina: o ASCII quando ha traducao, senao o proprio slug. */
+export function rotaDaPagina(slug: string): string {
+  return (rotas.paginas as Record<string, string>)[slug.normalize("NFC")] ?? slug;
+}
+
 export function buscarPagina(slug: string): Pagina | undefined {
   // o param que chega e a chave ASCII da rota gerada
   const real = MAPA_ASCII_PAGINAS.get(slug) ?? slug;

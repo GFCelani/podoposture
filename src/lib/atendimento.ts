@@ -12,6 +12,8 @@
  * ordem no texto dela e nao entram na pagina; a ordem vive na do array.
  */
 
+import type { Foto } from "./ilustracao-da-pagina";
+
 export const CAMINHO_DO_ATENDIMENTO = "/como-e-o-meu-atendimento";
 
 export const TITULO_DO_ATENDIMENTO = "Como é o meu atendimento";
@@ -156,3 +158,47 @@ export const ASSINATURA_DO_ATENDIMENTO = {
   nome: "Dra. Claudia Meirelles",
   especialidades: "Fisioterapia | Osteopatia | Acupuntura | Posturologia | Neuromodulação Clínica",
 } as const;
+
+/* As fotos da pagina: so da clinica, nenhuma em outro lugar do site. Etapa
+   para a qual o acervo nao tem foto inedita fica sem imagem. */
+const GALERIA = "/img/galeria";
+
+export const FOTO_DO_TOPO_DO_ATENDIMENTO: Foto = {
+  src: `${GALERIA}/bancada-do-consultorio.webp`,
+  alt: "Bancada branca do consultório com abajur aceso, livros, um modelo de osso e dois quadros encostados na parede: um cérebro em aquarela e vértebras coloridas.",
+  legenda: "A bancada do consultório.",
+  largura: 960,
+  altura: 1200,
+};
+
+/** A foto de cada etapa, pelo id da etapa. Sem entrada, sem foto. */
+export const FOTOS_DAS_ETAPAS: Partial<Record<string, Foto>> = {
+  "compreender-a-sua-historia": {
+    src: `${GALERIA}/mesa-da-consulta.webp`,
+    alt: "Mesa de atendimento do consultório, com notebook e duas cadeiras brancas de frente para ela; ao lado, a bancada com o abajur aceso.",
+    legenda: "A mesa do consultório, onde a consulta começa.",
+    largura: 1200,
+    altura: 750,
+  },
+  "avaliacao-postural-e-biomecanica": {
+    src: `${GALERIA}/corredor-com-espelho.webp`,
+    alt: "Faixa de marcha no piso do consultório, com a plataforma de pressão no meio, diante de um espelho de corpo inteiro.",
+    legenda: "A faixa de marcha, com a plataforma de pressão e o espelho.",
+    largura: 960,
+    altura: 1200,
+  },
+  "plano-terapeutico": {
+    src: `${GALERIA}/palmilhas-na-bancada.webp`,
+    alt: "Par de palmilhas cinza sobre a bancada do consultório, diante de dois quadros com ilustrações da coluna vertebral.",
+    legenda: "Palmilhas posturais sobre a bancada do consultório.",
+    largura: 960,
+    altura: 1200,
+  },
+  "acompanhamento-da-evolucao": {
+    src: `${GALERIA}/baropodometria-na-tela.webp`,
+    alt: "Tela de notebook com o mapa colorido da pressão dos dois pés, em duas medições lado a lado, com a porcentagem de carga de cada região.",
+    legenda: "Duas medições da pressão plantar, lado a lado na tela.",
+    largura: 1100,
+    altura: 688,
+  },
+};
