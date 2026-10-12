@@ -7,8 +7,10 @@
 # (e2e/*.spec.ts): build de producao e as 12 telas da folha de contato.
 # Cabecalho antes do titulo, subtitulo do hero em duas linhas, anotacao do
 # mapa no proprio ponto, capas do blog sem vazio na moldura, as paginas
-# antigas pixel a pixel iguais as de antes (regressao.spec.ts) e o layout
-# da pagina nova (pagina-nova.spec.ts).
+# antigas pixel a pixel iguais as de antes (regressao.spec.ts), a primeira
+# tela da home pixel a pixel em 1536x695, 1536x730, 1920x945, 1280x559 e
+# 390 (home-primeira-tela.spec.ts) e o layout da pagina nova
+# (pagina-nova.spec.ts).
 set -e
 
 echo "pre-commit: tsc"
