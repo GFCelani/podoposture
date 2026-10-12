@@ -29,6 +29,7 @@ export type TipoDeDestino = "pagina" | "whatsapp" | "nenhum";
  */
 export type Destino =
   | { tipo: "pagina"; slug: string }
+  | { tipo: "post"; slug: string }
   | { tipo: "whatsapp" }
   | { tipo: "nenhum" };
 
@@ -419,7 +420,7 @@ export type EstadosDasSecoes = { [C in ChaveDeSecao]: EstadoDaSecao<ConteudoDoSi
  */
 export type RespostaDoInicio = {
   secoes: EstadosDasSecoes;
-  destinos: readonly PaginaDeDestino[];
+  destinos: readonly DestinoConhecido[];
   semBanco: boolean;
 };
 
@@ -490,7 +491,42 @@ export const PAGINAS_DE_DESTINO: readonly PaginaDeDestino[] = [
   { slug: "nosso-blog", rotulo: "Nosso Blog" },
 ].map((p) => ({ ...p, slug: p.slug.normalize("NFC") }));
 
-const SLUGS_DE_DESTINO = new Set(PAGINAS_DE_DESTINO.map((p) => p.slug));
+/**
+ * Uma pagina ou um texto do blog que pode ser destino de botao. A lista vem
+ * do banco (destinos-do-site.ts: as paginas e os textos publicados), para
+ * pagina nova aparecer como destino; sem banco, e' a do codigo.
+ */
+export type DestinoConhecido = { tipo: "pagina" | "post"; slug: string; rotulo: string };
+
+export const DESTINOS_DO_CODIGO: readonly DestinoConhecido[] = PAGINAS_DE_DESTINO.map((p) => ({
+  tipo: "pagina",
+  ...p,
+}));
+
+export function chaveDoDestino(tipo: "pagina" | "post", slug: string): string {
+  return `${tipo}:${slug.normalize("NFC")}`;
+}
+
+const chavesDe = (lista: readonly DestinoConhecido[]) => new Set(lista.map((d) => chaveDoDestino(d.tipo, d.slug)));
+
+/**
+ * Os destinos validos durante UMA validacao ou mescla. A validacao desce
+ * campo a campo (grupos, listas, cartoes) e o destino esta no fundo; em vez de
+ * passar a lista por todas as funcoes, `comDestinos` troca este valor so
+ * enquanto a chamada (sincrona) roda e devolve o anterior no fim.
+ */
+let destinosAtuais: ReadonlySet<string> = chavesDe(DESTINOS_DO_CODIGO);
+
+function comDestinos<T>(destinos: readonly DestinoConhecido[] | undefined, fazer: () => T): T {
+  if (!destinos) return fazer();
+  const antes = destinosAtuais;
+  destinosAtuais = chavesDe(destinos);
+  try {
+    return fazer();
+  } finally {
+    destinosAtuais = antes;
+  }
+}
 
 /** Mesmo prefixo de PREFIXO_IMAGEM em painel-tipos.ts; o teste confere. */
 export const PREFIXO_IMAGEM_ENVIADA = "/img/post/";
@@ -1605,17 +1641,19 @@ function validarDestino(
   erros: ErrosDeCampo,
 ): Destino | undefined {
   const tipo = ehObjeto(valor) ? valor.tipo : undefined;
-  if (typeof tipo !== "string" || !(campo.aceita as readonly string[]).includes(tipo)) {
+  // Texto do blog vale onde pagina vale: os dois sao paginas do site.
+  const aceita = campo.aceita as readonly string[];
+  if (typeof tipo !== "string" || !(aceita.includes(tipo) || (tipo === "post" && aceita.includes("pagina")))) {
     erros[caminho] = "Escolha um destino da lista.";
     return undefined;
   }
-  if (tipo === "pagina") {
+  if (tipo === "pagina" || tipo === "post") {
     const slug = ehObjeto(valor) ? limpar(valor.slug) : null;
-    if (!slug || !SLUGS_DE_DESTINO.has(slug)) {
+    if (!slug || !destinosAtuais.has(chaveDoDestino(tipo, slug))) {
       erros[caminho] = "Essa página não existe no site. Escolha uma da lista.";
       return undefined;
     }
-    return { tipo: "pagina", slug };
+    return { tipo, slug: slug.normalize("NFC") };
   }
   return tipo === "whatsapp" ? { tipo: "whatsapp" } : { tipo: "nenhum" };
 }
@@ -1766,7 +1804,12 @@ function temErroEm(erros: ErrosDeCampo, campo: string): boolean {
 export function validarSecao<C extends ChaveDeSecao>(
   chave: C,
   dados: unknown,
+  destinos?: readonly DestinoConhecido[],
 ): ResultadoDaValidacao<ConteudoDoSite[C]> {
+  return comDestinos(destinos, () => validarSecaoAgora(chave, dados));
+}
+
+function validarSecaoAgora<C extends ChaveDeSecao>(chave: C, dados: unknown): ResultadoDaValidacao<ConteudoDoSite[C]> {
   const descritor = descritorDe(chave);
   const erros: ErrosDeCampo = {};
   if (!ehObjeto(dados)) {
@@ -1820,7 +1863,12 @@ export function mesclarSecao<C extends ChaveDeSecao>(
   chave: C,
   padrao: ConteudoDoSite[C],
   salvo: unknown,
+  destinos?: readonly DestinoConhecido[],
 ): ConteudoDoSite[C] {
+  return comDestinos(destinos, () => mesclarSecaoAgora(chave, padrao, salvo));
+}
+
+function mesclarSecaoAgora<C extends ChaveDeSecao>(chave: C, padrao: ConteudoDoSite[C], salvo: unknown): ConteudoDoSite[C] {
   if (!ehObjeto(salvo)) return padrao;
   const descritor = descritorDe(chave);
   const base = padrao as Record<string, unknown>;
@@ -1846,12 +1894,15 @@ export function mesclarSecao<C extends ChaveDeSecao>(
 export function mesclarConteudo(
   padrao: ConteudoDoSite,
   salvos: Partial<Record<string, unknown>>,
+  destinos?: readonly DestinoConhecido[],
 ): ConteudoDoSite {
-  const saida = {} as Record<ChaveDeSecao, unknown>;
-  for (const chave of CHAVES_DE_SECAO) {
-    saida[chave] = mesclarSecao(chave, padrao[chave], salvos[chave]);
-  }
-  return saida as ConteudoDoSite;
+  return comDestinos(destinos, () => {
+    const saida = {} as Record<ChaveDeSecao, unknown>;
+    for (const chave of CHAVES_DE_SECAO) {
+      saida[chave] = mesclarSecaoAgora(chave, padrao[chave], salvos[chave]);
+    }
+    return saida as ConteudoDoSite;
+  });
 }
 
 /* --------------------------------------------------- apoio para renderizar */
@@ -1863,12 +1914,14 @@ export function linkDoWhatsapp(digitos: string): string {
 /** href do destino; null = botao sem destino (nasce inativo). */
 export function hrefDoDestino(destino: Destino, whatsapp: string): string | null {
   if (destino.tipo === "pagina") return `/${destino.slug}`;
+  if (destino.tipo === "post") return `/home/f/${encodeURIComponent(destino.slug)}`;
   if (destino.tipo === "whatsapp") return whatsapp;
   return null;
 }
 
 /** Para campos que so aceitam pagina (link embutido, cartao, servico). */
 export function hrefDaPagina(destino: Destino): string {
+  if (destino.tipo === "post") return `/home/f/${encodeURIComponent(destino.slug)}`;
   return destino.tipo === "pagina" ? `/${destino.slug}` : "/";
 }
 

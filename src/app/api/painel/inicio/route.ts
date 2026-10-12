@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { listarSecoesSalvas } from "@/lib/conteudo-db";
 import { estadosDasSecoes } from "@/lib/conteudo-do-site";
-import { PAGINAS_DE_DESTINO, type RespostaDoInicio } from "@/lib/conteudo-tipos";
+import { DESTINOS_DO_CODIGO, type RespostaDoInicio } from "@/lib/conteudo-tipos";
+import { destinosDoSite } from "@/lib/destinos-do-site";
 import { exigirSessao } from "@/lib/guarda";
 import { bancoConfigurado } from "@/lib/painel-db";
 
@@ -25,16 +26,18 @@ export async function GET() {
   if (!bancoConfigurado()) {
     const corpo: RespostaDoInicio = {
       secoes: estadosDasSecoes(new Map()),
-      destinos: PAGINAS_DE_DESTINO,
+      destinos: DESTINOS_DO_CODIGO,
       semBanco: true,
     };
     return NextResponse.json(corpo);
   }
 
   try {
+    // Os destinos dos botoes: as paginas e os textos publicados no banco.
+    const destinos = await destinosDoSite();
     const corpo: RespostaDoInicio = {
-      secoes: estadosDasSecoes(await listarSecoesSalvas()),
-      destinos: PAGINAS_DE_DESTINO,
+      secoes: estadosDasSecoes(await listarSecoesSalvas(), destinos),
+      destinos,
       semBanco: false,
     };
     return NextResponse.json(corpo);

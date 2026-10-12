@@ -7,12 +7,14 @@ import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import {
   CHAVES_DE_SECAO,
   mesclarConteudo,
+  type DestinoConhecido,
   mesclarSecao,
   type ChaveDeSecao,
   type ConteudoDoSite,
   type EstadoDaSecao,
   type EstadosDasSecoes,
 } from "./conteudo-tipos";
+import { destinosParaLer } from "./destinos-do-site";
 import { BancoEmPausa } from "./disjuntor";
 import { bancoConfigurado, lerComDisjuntor } from "./painel-db";
 
@@ -42,7 +44,8 @@ import { bancoConfigurado, lerComDisjuntor } from "./painel-db";
 export const lerConteudoDoSite = cache(async (): Promise<ConteudoDoSite> => {
   if (!bancoConfigurado()) return CONTEUDO_PADRAO;
   try {
-    return mesclarConteudo(CONTEUDO_PADRAO, await lerComDisjuntor(lerPublicados));
+    const [publicados, destinos] = await Promise.all([lerComDisjuntor(lerPublicados), destinosParaLer()]);
+    return mesclarConteudo(CONTEUDO_PADRAO, publicados, destinos);
   } catch (erro) {
     // Na pausa o motivo ja foi registrado na falha que a abriu.
     if (!(erro instanceof BancoEmPausa)) {
@@ -83,12 +86,12 @@ export async function lerConteudoComRascunho(soDaSecao: ChaveDeSecao | null = nu
     };
   }
   try {
-    const { publicados, rascunhos, versoes } = await lerPublicadosERascunhos();
+    const [{ publicados, rascunhos, versoes }, destinos] = await Promise.all([lerPublicadosERascunhos(), destinosParaLer()]);
     const saida = {} as Record<ChaveDeSecao, unknown>;
     const outrosRascunhos: ChaveDeSecao[] = [];
     for (const chave of CHAVES_DE_SECAO) {
-      const publicado = mesclarSecao(chave, CONTEUDO_PADRAO[chave], publicados[chave]);
-      const comRascunho = mesclarSecao(chave, publicado, rascunhos[chave]);
+      const publicado = mesclarSecao(chave, CONTEUDO_PADRAO[chave], publicados[chave], destinos);
+      const comRascunho = mesclarSecao(chave, publicado, rascunhos[chave], destinos);
       const entra = soDaSecao === null || chave === soDaSecao;
       saida[chave] = entra ? comRascunho : publicado;
       if (!entra && rascunhos[chave] !== undefined && JSON.stringify(comRascunho) !== JSON.stringify(publicado)) {
@@ -115,12 +118,13 @@ export async function lerConteudoComRascunho(soDaSecao: ChaveDeSecao | null = nu
 export function estadoDaSecao<C extends ChaveDeSecao>(
   chave: C,
   linha: LinhaDeConteudo | null | undefined,
+  destinos?: readonly DestinoConhecido[],
 ): EstadoDaSecao<ConteudoDoSite[C]> {
   const padrao = CONTEUDO_PADRAO[chave];
   const publicado =
-    linha && linha.publicado !== null ? mesclarSecao(chave, padrao, linha.publicado) : null;
+    linha && linha.publicado !== null ? mesclarSecao(chave, padrao, linha.publicado, destinos) : null;
   const rascunho =
-    linha && linha.rascunho !== null ? mesclarSecao(chave, publicado ?? padrao, linha.rascunho) : null;
+    linha && linha.rascunho !== null ? mesclarSecao(chave, publicado ?? padrao, linha.rascunho, destinos) : null;
   return {
     padrao,
     publicado,
@@ -131,8 +135,11 @@ export function estadoDaSecao<C extends ChaveDeSecao>(
 }
 
 /** Todas as secoes, na ordem da pagina. Secao nunca salva vem so com o padrao. */
-export function estadosDasSecoes(linhas: ReadonlyMap<string, LinhaDeConteudo>): EstadosDasSecoes {
+export function estadosDasSecoes(
+  linhas: ReadonlyMap<string, LinhaDeConteudo>,
+  destinos?: readonly DestinoConhecido[],
+): EstadosDasSecoes {
   const saida = {} as Record<ChaveDeSecao, unknown>;
-  for (const chave of CHAVES_DE_SECAO) saida[chave] = estadoDaSecao(chave, linhas.get(chave));
+  for (const chave of CHAVES_DE_SECAO) saida[chave] = estadoDaSecao(chave, linhas.get(chave), destinos);
   return saida as EstadosDasSecoes;
 }

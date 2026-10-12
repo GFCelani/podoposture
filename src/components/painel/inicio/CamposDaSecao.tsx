@@ -18,7 +18,7 @@ import type {
   CampoUrlRede,
   ChaveDeSecao,
   ErrosDeCampo,
-  PaginaDeDestino,
+  DestinoConhecido,
 } from "@/lib/conteudo-tipos";
 import { situacaoDaLinha } from "@/lib/conteudo-tipos";
 
@@ -55,7 +55,7 @@ import {
 export type AcoesDoEditor = {
   chave: ChaveDeSecao;
   erros: ErrosDeCampo;
-  destinos: readonly PaginaDeDestino[];
+  destinos: readonly DestinoConhecido[];
   slugs: ReadonlySet<string>;
   /** Um pedido ou envio em curso: os botoes que disparam outro ficam parados. */
   bloqueado: boolean;
@@ -820,11 +820,17 @@ function CampoDeDestino({ campo, caminho, valor, original, rotulo }: PropsDoCamp
   const atual = codificarDestino(valor, editor.slugs);
   const soPagina = campo.aceita.length === 1 && campo.aceita[0] === "pagina";
 
-  const paginas = editor.destinos.map((p) => (
-    <option key={p.slug} value={`pagina:${p.slug}`}>
-      {p.rotulo}
-    </option>
-  ));
+  // Paginas e textos do blog publicados, da lista que o servidor manda.
+  const opcoes = (tipo: "pagina" | "post") =>
+    editor.destinos
+      .filter((d) => d.tipo === tipo)
+      .map((d) => (
+        <option key={`${d.tipo}:${d.slug}`} value={`${d.tipo}:${d.slug}`}>
+          {d.rotulo}
+        </option>
+      ));
+  const paginas = opcoes("pagina");
+  const textos = opcoes("post");
 
   return (
     <div>
@@ -853,8 +859,8 @@ function CampoDeDestino({ campo, caminho, valor, original, rotulo }: PropsDoCamp
         )}
         {campo.aceita.includes("whatsapp") && <option value="whatsapp">Conversa no WhatsApp</option>}
         {campo.aceita.includes("nenhum") && <option value="nenhum">Sem destino (botão apagado)</option>}
-        {campo.aceita.includes("pagina") &&
-          (soPagina ? paginas : <optgroup label="Páginas do site">{paginas}</optgroup>)}
+        {campo.aceita.includes("pagina") && <optgroup label="Páginas do site">{paginas}</optgroup>}
+        {campo.aceita.includes("pagina") && textos.length > 0 && <optgroup label="Textos do blog">{textos}</optgroup>}
       </select>
       <MensagemDeErro id={`${id}-erro`} erro={erro} />
       <Original campo={campo} caminho={caminho} valor={valor} original={original} />

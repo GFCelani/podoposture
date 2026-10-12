@@ -248,13 +248,19 @@ describe("mesmoValor", () => {
 });
 
 describe("destino no seletor", () => {
-  const slugs = new Set(PAGINAS_DE_DESTINO.map((p) => p.slug));
+  const slugs = new Set([...PAGINAS_DE_DESTINO.map((p) => `pagina:${p.slug}`), "post:um-texto-novo"]);
 
   it("toda pagina da lista vai e volta pelo valor do seletor", () => {
     for (const { slug } of PAGINAS_DE_DESTINO) {
       const valor = codificarDestino({ tipo: "pagina", slug }, slugs);
       expect(decodificarDestino(valor)).toEqual({ tipo: "pagina", slug });
     }
+  });
+
+  it("texto do blog publicado tambem e' destino", () => {
+    const valor = codificarDestino({ tipo: "post", slug: "um-texto-novo" }, slugs);
+    expect(valor).toBe("post:um-texto-novo");
+    expect(decodificarDestino(valor)).toEqual({ tipo: "post", slug: "um-texto-novo" });
   });
 
   it("whatsapp e sem destino tem valor proprio", () => {

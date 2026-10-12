@@ -14,7 +14,9 @@
 
 import {
   DESCRITORES,
-  PAGINAS_DE_DESTINO,
+  DESTINOS_DO_CODIGO,
+  chaveDoDestino,
+  type DestinoConhecido,
   conferirCampo,
   ehChaveDeSecao,
   type AlvoDoDescarte,
@@ -242,26 +244,29 @@ export function mesmoValor(campo: Campo, atual: unknown, original: unknown): boo
 /* ----------------------------------------------------------------- destino */
 
 /** Valor do <select>. "" = nada escolhido ainda (ou pagina que saiu do site). */
-export function codificarDestino(destino: unknown, slugs: ReadonlySet<string>): string {
+export function codificarDestino(destino: unknown, chaves: ReadonlySet<string>): string {
   if (!ehObjeto(destino)) return "";
   if (destino.tipo === "whatsapp" || destino.tipo === "nenhum") return destino.tipo;
-  if (destino.tipo === "pagina" && typeof destino.slug === "string" && slugs.has(destino.slug)) {
-    return `pagina:${destino.slug}`;
+  if ((destino.tipo === "pagina" || destino.tipo === "post") && typeof destino.slug === "string") {
+    const chave = chaveDoDestino(destino.tipo, destino.slug);
+    if (chaves.has(chave)) return chave;
   }
   return "";
 }
 
 export function decodificarDestino(valor: string): Destino {
   if (valor === "whatsapp" || valor === "nenhum") return { tipo: valor };
+  if (valor.startsWith("post:")) return { tipo: "post", slug: valor.slice("post:".length) };
   return { tipo: "pagina", slug: valor.startsWith("pagina:") ? valor.slice("pagina:".length) : "" };
 }
 
-export function rotuloDoDestino(destino: unknown): string {
+export function rotuloDoDestino(destino: unknown, destinos: readonly DestinoConhecido[] = DESTINOS_DO_CODIGO): string {
   if (!ehObjeto(destino)) return "Nenhum destino escolhido";
   if (destino.tipo === "whatsapp") return "Conversa no WhatsApp";
   if (destino.tipo === "nenhum") return "Sem destino (botão apagado)";
-  const pagina = PAGINAS_DE_DESTINO.find((p) => p.slug === destino.slug);
-  return pagina ? `Página “${pagina.rotulo}”` : "Nenhum destino escolhido";
+  const conhecido = destinos.find((d) => d.tipo === destino.tipo && d.slug === destino.slug);
+  if (!conhecido) return "Nenhum destino escolhido";
+  return conhecido.tipo === "post" ? `Texto “${conhecido.rotulo}”` : `Página “${conhecido.rotulo}”`;
 }
 
 /* ----------------------------------------------------------- fotos enviadas */

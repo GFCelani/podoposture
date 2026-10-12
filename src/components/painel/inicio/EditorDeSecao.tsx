@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DESCRITORES,
   conferirCampo,
+  chaveDoDestino,
   validarSecao,
   type AcaoDaEscrita,
   type AlvoDoDescarte,
@@ -12,7 +13,7 @@ import {
   type ChaveDeSecao,
   type ErrosDeCampo,
   type EstadoDaSecao,
-  type PaginaDeDestino,
+  type DestinoConhecido,
 } from "@/lib/conteudo-tipos";
 import { ErroAoEnviarImagem, enviarImagem } from "@/lib/preparar-imagem";
 
@@ -108,7 +109,7 @@ export function EditorDeSecao({
 }: {
   chave: ChaveDeSecao;
   estado: EstadoDaSecao<unknown>;
-  destinos: readonly PaginaDeDestino[];
+  destinos: readonly DestinoConhecido[];
   semBanco: boolean;
   aoAtualizar: (secao: EstadoDaSecao<unknown>) => void;
   aoPublicar: (mensagem: string) => void;
@@ -153,7 +154,7 @@ export function EditorDeSecao({
 
   const textoAtual = useMemo(() => JSON.stringify(dados), [dados]);
   const alterado = useMemo(() => textoAtual !== JSON.stringify(salvo), [textoAtual, salvo]);
-  const slugs = useMemo(() => new Set(destinos.map((p) => p.slug)), [destinos]);
+  const slugs = useMemo(() => new Set(destinos.map((d) => chaveDoDestino(d.tipo, d.slug))), [destinos]);
   const podePublicar = previaDe === textoAtual;
   const temRascunhoNoServidor = estado.rascunho !== null;
   const ocupado = andamento !== null || enviandoEm !== null;
@@ -275,13 +276,13 @@ export function EditorDeSecao({
     setConfirmando(null);
     // Erro na tela some assim que o campo fica certo; erro novo so ao sair do campo.
     if (Object.keys(erros).length > 0) {
-      setErros(atualizarErros(erros, validarSecao(chave, novos).erros, caminho, [], false));
+      setErros(atualizarErros(erros, validarSecao(chave, novos, destinos).erros, caminho, [], false));
     }
   }
 
   function sair(caminho: string) {
     setErros(
-      atualizarErros(erros, validarSecao(chave, dados).erros, caminho, camposRelacionados(chave, caminho), true),
+      atualizarErros(erros, validarSecao(chave, dados, destinos).erros, caminho, camposRelacionados(chave, caminho), true),
     );
   }
 
@@ -363,7 +364,7 @@ export function EditorDeSecao({
 
   /** A secao inteira validada, ou null com os erros ja na tela e o foco no primeiro. */
   function conferirTudo(): DadosEmEdicao | null {
-    const validacao = validarSecao(chave, dados);
+    const validacao = validarSecao(chave, dados, destinos);
     if (validacao.ok) return validacao.dados as DadosEmEdicao;
     setErros(validacao.erros);
     setConfirmando(null);

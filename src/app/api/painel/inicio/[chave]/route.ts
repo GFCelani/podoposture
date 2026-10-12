@@ -11,6 +11,7 @@ import {
   type LinhaDeConteudo,
 } from "@/lib/conteudo-db";
 import { estadoDaSecao } from "@/lib/conteudo-do-site";
+import { destinosDoSite, destinosParaLer } from "@/lib/destinos-do-site";
 import {
   ehChaveDeSecao,
   validarSecao,
@@ -53,8 +54,8 @@ function falhaAoGravar(erro: unknown) {
   );
 }
 
-function respostaDaSecao(chave: ChaveDeSecao, linha: LinhaDeConteudo | null) {
-  const corpo: RespostaDaSecao = { chave, secao: estadoDaSecao(chave, linha) };
+async function respostaDaSecao(chave: ChaveDeSecao, linha: LinhaDeConteudo | null) {
+  const corpo: RespostaDaSecao = { chave, secao: estadoDaSecao(chave, linha, await destinosParaLer()) };
   return NextResponse.json(corpo);
 }
 
@@ -66,12 +67,13 @@ function respostaDaSecao(chave: ChaveDeSecao, linha: LinhaDeConteudo | null) {
  * jeito, e uma mensagem diferente por verbo so faria ela achar que sao coisas
  * diferentes.
  */
-function conflitoDeVersao(chave: ChaveDeSecao, atual: LinhaDeConteudo | null) {
+async function conflitoDeVersao(chave: ChaveDeSecao, atual: LinhaDeConteudo | null) {
+  const destinos = await destinosParaLer();
   return NextResponse.json(
     {
       erro: "Esta seção mudou em outra janela ou aparelho depois que você a abriu, e nada foi salvo agora.",
       chave,
-      secao: estadoDaSecao(chave, atual),
+      secao: estadoDaSecao(chave, atual, destinos),
     },
     { status: 409 },
   );
@@ -139,7 +141,15 @@ export async function PUT(req: Request, ctx: Contexto) {
   const versaoEsperada = versao as string | null | undefined;
 
   // A mesma validacao que o editor usa: o que passa aqui e o que a tela aceitou.
-  const validacao = validarSecao(chave, dados);
+  // Os destinos dos botoes sao as paginas e os textos publicados agora.
+  let destinos;
+  try {
+    destinos = await destinosDoSite();
+  } catch (erro) {
+    console.error("[painel] falha ao ler os destinos dos botoes:", erro);
+    return NextResponse.json({ erro: "Não foi possível salvar agora. Tente de novo em instantes." }, { status: 502 });
+  }
+  const validacao = validarSecao(chave, dados, destinos);
   if (!validacao.ok) {
     return NextResponse.json(
       { erro: "Confira os campos destacados.", erros: validacao.erros },

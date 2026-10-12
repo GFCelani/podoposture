@@ -11,6 +11,7 @@ import {
   PAGINAS_DE_DESTINO,
   PREFIXO_IMAGEM_ENVIADA,
   conferirCampo,
+  DESTINOS_DO_CODIGO,
   hrefDoDestino,
   mesclarConteudo,
   mesclarSecao,
@@ -532,5 +533,30 @@ describe("apoio para renderizar", () => {
     expect(precisaDeEspacoAntes(". Fim")).toBe(false);
     expect(precisaDeEspacoAntes("")).toBe(false);
     expect(precisaDeEspacoAntes("com 30 anos")).toBe(true);
+  });
+});
+
+describe("destinos vindos do banco", () => {
+  it("pagina nova e texto do blog publicados valem como destino; fora da lista, nao", () => {
+    const destinos = [
+      ...DESTINOS_DO_CODIGO,
+      { tipo: "pagina" as const, slug: "fisioterapia-pelvica", rotulo: "Fisioterapia Pélvica" },
+      { tipo: "post" as const, slug: "estresse-cronico-e-fascia", rotulo: "Estresse crônico e fáscia" },
+    ];
+    const comDestino = (destino: unknown) =>
+      validarSecao("abordagem", { ...CONTEUDO_PADRAO.abordagem, botao: { rotulo: "Saiba mais", destino } }, destinos);
+    expect(comDestino({ tipo: "pagina", slug: "fisioterapia-pelvica" }).ok).toBe(true);
+    expect(comDestino({ tipo: "post", slug: "estresse-cronico-e-fascia" }).ok).toBe(true);
+    expect(comDestino({ tipo: "pagina", slug: "nao-existe" }).ok).toBe(false);
+    // sem a lista do banco, so as do codigo
+    expect(validarSecao("abordagem", { ...CONTEUDO_PADRAO.abordagem, botao: { rotulo: "x", destino: { tipo: "pagina", slug: "fisioterapia-pelvica" } } }).ok).toBe(false);
+  });
+
+  it("a leitura mantem o destino novo quando conhece a lista, e o href do texto vai para /home/f/", () => {
+    const destinos = [...DESTINOS_DO_CODIGO, { tipo: "post" as const, slug: "estresse-cronico-e-fascia", rotulo: "x" }];
+    const salvo = { ...CONTEUDO_PADRAO.abordagem, botao: { rotulo: "Leia", destino: { tipo: "post", slug: "estresse-cronico-e-fascia" } } };
+    const lido = mesclarSecao("abordagem", CONTEUDO_PADRAO.abordagem, salvo, destinos);
+    expect(lido.botao.destino).toEqual({ tipo: "post", slug: "estresse-cronico-e-fascia" });
+    expect(hrefDoDestino(lido.botao.destino, "")).toBe("/home/f/estresse-cronico-e-fascia");
   });
 });
