@@ -11,6 +11,7 @@ import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { quebrasDaAbertura } from "@/lib/abertura";
 import { chaveDaPagina, type ConteudoDoSite } from "@/lib/conteudo-tipos";
 import { ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
+import { grupoDoMenu } from "@/lib/nav";
 import { descricaoDaPagina, rotuloDaPagina, tituloDaPagina, type Pagina } from "@/lib/pages";
 import { derivarContato } from "@/lib/site";
 
@@ -78,6 +79,15 @@ export function FotoEmMoldura({ foto }: { foto: Foto }) {
   );
 }
 
+/**
+ * Inicio / grupo do menu / pagina. O grupo nao tem endereco proprio, entao
+ * entra como texto, sem link; pagina fora do menu vai sem ele.
+ */
+export function trilhaDaPagina(caminho: string, rotulo: string): { nome: string }[] {
+  const grupo = grupoDoMenu(decodeURIComponent(caminho));
+  return grupo ? [{ nome: grupo.label }, { nome: rotulo }] : [{ nome: rotulo }];
+}
+
 export function PaginaInterna({ pagina, conteudo }: { pagina: Pagina; conteudo: ConteudoDoSite }) {
   const titulo = tituloDaPagina(pagina);
   /* Na trilha e nos dados estruturados o titulo entra como nome de item de
@@ -120,7 +130,7 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: Pagina; conteudo: 
         subtitulo={subtitulo}
         subtituloLinhas={quebras.subtitulo}
         identificacao={pagina.abertura?.identificacao}
-        trilha={[{ nome: rotulo }]}
+        trilha={trilhaDaPagina(caminho, rotulo)}
         glifo={ilustracao.glifo}
         midia={eContato ? undefined : midia}
       >

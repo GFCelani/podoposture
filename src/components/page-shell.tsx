@@ -180,7 +180,10 @@ export async function PageShell({
                                 {item.nome}
                               </Link>
                             ) : (
-                              <span aria-current="page" className="text-ink">
+                              <span
+                                aria-current={i === trilha.length - 1 ? "page" : undefined}
+                                className={i === trilha.length - 1 ? "text-ink" : undefined}
+                              >
                                 {item.nome}
                               </span>
                             )}

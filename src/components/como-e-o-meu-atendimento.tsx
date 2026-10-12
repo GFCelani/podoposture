@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import {
   ABERTURA_DO_ATENDIMENTO,
+  CAMINHO_DO_ATENDIMENTO,
   ASSINATURA_DO_ATENDIMENTO,
   CITACAO_DO_ATENDIMENTO,
   ETAPAS_DO_ATENDIMENTO,
@@ -18,7 +19,7 @@ import type { Foto } from "@/lib/ilustracao-da-pagina";
 import { ConviteConsulta } from "./convite-consulta";
 import { PageGrid } from "./layers";
 import { PageShell } from "./page-shell";
-import { FotoEmMoldura } from "./pagina-interna";
+import { FotoEmMoldura, trilhaDaPagina } from "./pagina-interna";
 import { Reveal } from "./reveal";
 
 /**
@@ -91,7 +92,7 @@ export function ComoEOMeuAtendimento() {
       titulo={TITULO_DO_ATENDIMENTO}
       subtitulo={ABERTURA_DO_ATENDIMENTO.join(" ")}
       subtituloLinhas={[...ABERTURA_DO_ATENDIMENTO]}
-      trilha={[{ nome: TITULO_DO_ATENDIMENTO }]}
+      trilha={trilhaDaPagina(CAMINHO_DO_ATENDIMENTO, TITULO_DO_ATENDIMENTO)}
       midia={<FotoEmMoldura foto={FOTO_DO_TOPO} />}
     >
       <Introducao />

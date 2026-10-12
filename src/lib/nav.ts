@@ -29,13 +29,13 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Flexo-distração", href: "/flexo-distração" },
       { label: "Neuromodulação", href: "/neuromodulação" },
       { label: "Método Posture+", href: "/método-posture+" },
+      { label: "Palmilhas Personalizadas", href: "/palmilhas-personalizadas" },
     ],
   },
   {
     label: "Avaliação",
     items: [
       { label: "Baropodometria", href: "/baropodometria" },
-      { label: "Palmilhas Personalizadas", href: "/palmilhas-personalizadas" },
     ],
   },
   {
@@ -49,3 +49,9 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+/** O grupo do menu em que a pagina entra; fora do menu, nenhum. */
+export function grupoDoMenu(href: string): NavGroup | undefined {
+  const alvo = href.normalize("NFC");
+  return NAV_GROUPS.find((g) => g.items.some((i) => i.href.normalize("NFC") === alvo));
+}

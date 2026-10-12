@@ -13,7 +13,8 @@ import type { Post } from "@/lib/posts";
  * Paginas de conteudo apontam para as vizinhas do mesmo grupo do menu (os
  * grupos e os rotulos sao os do site em producao, em nav.ts; nada e' escrito
  * aqui). O grupo da o titulo da secao; as tres seguintes na ordem do menu,
- * em roda, sao os cartoes. "Avaliacao" tem duas paginas, entao mostra uma.
+ * em roda, sao os cartoes. Grupo de uma pagina so ("Avaliacao", desde que
+ * Palmilhas foi para Tecnicas) nao tem vizinha, e a secao nao aparece.
  *
  * Posts apontam para outros posts, pela categoria: e' a lista "Leia tambem"
  * que ja existia, agora com a entrada por scroll e o numeral das demais
