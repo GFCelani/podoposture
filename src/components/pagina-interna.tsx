@@ -1,14 +1,18 @@
 import Image from "next/image";
 
 import { Contact } from "@/components/contact";
-import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
+import { CorpoDaPagina } from "@/components/corpo-da-pagina";
 import { ConviteConsulta } from "@/components/convite-consulta";
-import { PaginaMedicaJsonLd, TrilhaJsonLd } from "@/components/json-ld";
+import { PaginaDoAtendimentoJsonLd, PaginaMedicaJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell, type TipoDePagina } from "@/components/page-shell";
+import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { quebrasDaAbertura } from "@/lib/abertura";
+import { ABERTURA_DO_ATENDIMENTO, ETAPAS_DO_ATENDIMENTO } from "@/lib/atendimento";
 import type { ConteudoDoSite } from "@/lib/conteudo-tipos";
-import type { Foto } from "@/lib/ilustracao-da-pagina";
+import { ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
+import { NAV_GROUPS } from "@/lib/nav";
+import { SLUG_DO_ATENDIMENTO, ehInstitucional, fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import type { PaginaDoSite } from "@/lib/paginas-do-site";
 import { derivarContato } from "@/lib/site";
 
@@ -22,11 +26,13 @@ import { derivarContato } from "@/lib/site";
  */
 
 /**
- * Tipo de pagina, pelo grupo do menu: o grupo "A Clinica" e' institucional,
- * os outros (e fora do menu) sao tratamento.
+ * Tipo de pagina. Antiga: pela lista que ela sempre teve (as quatro de
+ * apresentacao). Nova: pelo grupo do menu, "A Clinica" e' institucional, os
+ * outros (e fora do menu) sao tratamento.
  */
-function tipoDaPagina(grupo: string): TipoDePagina {
-  return grupo === "A Clínica" ? "institucional" : "tratamento";
+function tipoDaPagina(pagina: PaginaDoSite): TipoDePagina {
+  if (modeloDaPagina(pagina.slug) === "antigo") return ehInstitucional(pagina.slug) ? "institucional" : "tratamento";
+  return pagina.grupo === "A Clínica" ? "institucional" : "tratamento";
 }
 
 /**
@@ -73,6 +79,8 @@ function rotuloDe(titulo: string): string {
 }
 
 export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; conteudo: ConteudoDoSite }) {
+  if (pagina.slug.normalize("NFC") === SLUG_DO_ATENDIMENTO) return <PaginaDoAtendimento pagina={pagina} />;
+
   const titulo = pagina.titulo;
   /* Na trilha e nos dados estruturados o titulo entra como nome de item de
      lista, nao como frase: sem o ponto final. So o h1 leva a frase inteira. */
@@ -84,10 +92,18 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
   const subtitulo = pagina.resumo || reserva;
   const descricao = pagina.descricao || subtitulo;
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
-  const tipo = tipoDaPagina(pagina.grupo);
+  const tipo = tipoDaPagina(pagina);
   const eContato = pagina.especial === "contato";
+  const antiga = modeloDaPagina(pagina.slug) === "antigo";
   const quebras = quebrasDaAbertura(pagina.slug, titulo, subtitulo);
-  const midia = pagina.capa ? <FotoEmMoldura foto={pagina.capa} /> : undefined;
+  /* Pagina antiga sem foto ao lado do titulo mostra o rotulo da foto que
+     falta, como sempre mostrou; a nova vai sem moldura. */
+  const placeholder = antiga && !pagina.capa ? ilustracaoDaPagina(pagina.slug, null).placeholder : undefined;
+  const midia = pagina.capa ? (
+    <FotoEmMoldura foto={pagina.capa} />
+  ) : placeholder ? (
+    <PlaceholderFoto rotulo={placeholder} />
+  ) : undefined;
 
   return (
     <>
@@ -116,9 +132,51 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
             comoSecao={false}
           />
         ) : (
-          <CorpoEmFluxo html={pagina.html} />
+          <CorpoDaPagina slug={pagina.slug} html={pagina.html} tipo={tipo} fotos={fotosConhecidas(pagina.slug, conteudo)} />
         )}
         <PaginasRelacionadas slug={pagina.slug} />
+        <ConviteConsulta />
+      </PageShell>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------ atendimento */
+
+/** Os recursos do passo do plano terapeutico que tem pagina no site, com o nome do menu. */
+function recursosComPagina() {
+  const rotulos = new Map(NAV_GROUPS.flatMap((g) => g.items).map((i) => [i.href.normalize("NFC"), i.label]));
+  return ETAPAS_DO_ATENDIMENTO.flatMap((e) => e.lista ?? [])
+    .filter((r) => r.href)
+    .map((r) => ({
+      nome: rotulos.get(r.href!.normalize("NFC")) ?? r.texto,
+      caminho: encodeURI(r.href!),
+    }));
+}
+
+/**
+ * Como e o meu atendimento, com a composicao propria que sempre teve
+ * (como-e-o-meu-atendimento.tsx): sem glifo, sem relacionados, as duas
+ * frases da abertura uma por linha.
+ */
+function PaginaDoAtendimento({ pagina }: { pagina: PaginaDoSite }) {
+  const titulo = pagina.titulo;
+  const caminho = `/${pagina.slug}`;
+  const descricao = pagina.descricao || pagina.resumo;
+  const linhas = pagina.resumo === ABERTURA_DO_ATENDIMENTO.join(" ") ? [...ABERTURA_DO_ATENDIMENTO] : undefined;
+  return (
+    <>
+      <TrilhaJsonLd itens={[{ nome: titulo, caminho }]} />
+      <PaginaDoAtendimentoJsonLd titulo={titulo} descricao={descricao} caminho={caminho} recursos={recursosComPagina()} />
+      <PageShell
+        tipo="institucional"
+        titulo={titulo}
+        subtitulo={pagina.resumo || undefined}
+        subtituloLinhas={linhas}
+        trilha={trilhaDaPagina(pagina.grupo, titulo)}
+        midia={pagina.capa ? <FotoEmMoldura foto={pagina.capa} /> : undefined}
+      >
+        <CorpoDaPagina slug={pagina.slug} html={pagina.html} tipo="institucional" />
         <ConviteConsulta />
       </PageShell>
     </>

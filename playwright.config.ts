@@ -12,21 +12,30 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const PORTA = 3217;
 
+/**
+ * Com PW_BASE_URL, os testes rodam contra um servidor ja de pe (sem build):
+ * e' como as referencias de e2e/regressao.spec.ts sao capturadas do build de
+ * um commit antigo.
+ */
+const EXTERNO = process.env.PW_BASE_URL;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   reporter: [["list"]],
   use: {
     ...devices["Desktop Chrome"],
-    baseURL: `http://localhost:${PORTA}`,
+    baseURL: EXTERNO ?? `http://localhost:${PORTA}`,
     reducedMotion: "reduce",
   },
-  webServer: {
-    command: `npm run build && npx next start -p ${PORTA}`,
-    url: `http://localhost:${PORTA}`,
-    reuseExistingServer: false,
-    timeout: 600_000,
-    stdout: "ignore",
-    stderr: "pipe",
-  },
+  webServer: EXTERNO
+    ? undefined
+    : {
+        command: `npm run build && npx next start -p ${PORTA}`,
+        url: `http://localhost:${PORTA}`,
+        reuseExistingServer: false,
+        timeout: 600_000,
+        stdout: "ignore",
+        stderr: "pipe",
+      },
 });
