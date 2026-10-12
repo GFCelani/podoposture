@@ -140,7 +140,7 @@ export async function PageShell({
 
           {/* O cabecalho e' chapa fixa fora do fluxo: este respiro de cima
               e' o que faz o conteudo nascer abaixo dela, e nao debaixo. */}
-          <div className="relative mx-auto max-w-[1240px] px-6 pt-32 pb-12 md:px-8 md:pt-36 md:pb-14 lg:px-10 lg:pt-44 lg:pb-16">
+          <div className="ps-topo relative mx-auto max-w-[1240px] px-6 pt-32 pb-12 md:px-8 md:pt-36 md:pb-14 lg:px-10 lg:pt-44 lg:pb-16">
             <div
               className={
                 duasColunas
@@ -151,7 +151,7 @@ export async function PageShell({
               <div className={duasColunas ? "lg:col-span-7" : ""}>
                 {trilha && trilha.length > 0 && (
                   <Reveal>
-                    <nav aria-label="Trilha de navegação" className="mb-8">
+                    <nav aria-label="Trilha de navegação" className="ps-trilha mb-8">
                       <ol
                         className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.6875rem] tracking-[0.16em] text-muted uppercase [overflow-wrap:anywhere]"
                         style={{ fontFamily: "var(--mono)" }}
@@ -201,7 +201,7 @@ export async function PageShell({
                   <Reveal delay={60}>
                     <span
                       aria-hidden="true"
-                      className="mb-8 block h-14 w-14 text-accent md:h-16 md:w-16 lg:h-20 lg:w-20"
+                      className="ps-emblema mb-8 block h-14 w-14 text-accent md:h-16 md:w-16 lg:h-20 lg:w-20"
                     >
                       {Emblema({ className: "h-full w-full" })}
                     </span>
@@ -226,7 +226,7 @@ export async function PageShell({
                     escrita que nao cabe e' pior que nenhuma. */}
                 <Reveal variante="cortina" delay={120}>
                   <h1
-                    className={`max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] max-[359px]:text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] text-ink-strong${
+                    className={`ps-titulo max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] max-[359px]:text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.02em] text-ink-strong${
                       tituloLinhas ? "" : " text-balance"
                     }`}
                   >
@@ -236,7 +236,7 @@ export async function PageShell({
 
                 {subtitulo && (
                   <Reveal delay={220}>
-                    <p className="mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
+                    <p className="ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
                       {subtituloLinhas ? <Linhas linhas={subtituloLinhas} /> : subtitulo}
                     </p>
                   </Reveal>
@@ -259,7 +259,7 @@ export async function PageShell({
                 <div className="relative mt-12 lg:col-span-4 lg:col-start-9 lg:mt-0">
                   <LinhasDeReferencia />
                   <Reveal delay={180}>
-                    <div className="relative mx-auto max-w-[360px] lg:max-w-none">
+                    <div className="ps-midia relative mx-auto max-w-[360px] lg:max-w-none">
                       <PontoDeSonar />
                       {midia}
                     </div>
@@ -310,7 +310,7 @@ function Linhas({ linhas }: { linhas: string[] }) {
  */
 function Identificacao({ linhas }: { linhas: string[] }) {
   return (
-    <div className="mt-7 max-w-[62ch] md:mt-8">
+    <div className="ps-ident mt-7 max-w-[62ch] md:mt-8">
       <span aria-hidden="true" className="mb-5 block h-px w-14 bg-accent/30" />
       {linhas.map((linha) => {
         const trechos = linha.split(" • ");

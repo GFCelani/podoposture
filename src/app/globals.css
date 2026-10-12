@@ -481,7 +481,7 @@ body {
    a foto passaria atras dele: a 22% os bullets da credencial caiam para
    3,9:1. Ali uma segunda mascara, vertical, a faz nascer abaixo da coluna
    de texto, atras das figuras; as duas se multiplicam (intersect). */
-@media (max-width: 1199.98px) {
+@media (max-width: 1023.98px), (max-width: 1199.98px) and (max-aspect-ratio: 1999/1000) {
   .hero-foto {
     -webkit-mask-image:
       linear-gradient(to right, transparent, #000 34%),
@@ -897,7 +897,7 @@ body {
   display: none;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1200px), (min-width: 1024px) and (min-aspect-ratio: 2/1) {
   .pd-anot--ciatica {
     display: block;
   }
@@ -907,7 +907,7 @@ body {
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1200px), (min-width: 1024px) and (min-aspect-ratio: 2/1) {
   .hero-palco {
     --u: min(calc(100cqw / 1536), calc(100svh / 695));
     --lado: max(0px, calc((100cqw - 1536 * var(--u)) / 2));
@@ -2177,3 +2177,124 @@ a:focus-visible .marca-vertebra {
   }
 }
 
+
+/* ===============================================================
+   HERO — palco em janela baixa e larga, de 1024 a 1199px.
+
+   Laptop Full HD com o Windows em 175% (1097x494) ou 1024x461: o palco
+   lado a lado cabe (proporcao de 2:1 ou mais; ver as media queries do
+   palco acima), mas com o piso de 464px da coluna de texto o campo das
+   figuras ficava estreito e a anotacao "Clique no ponto da sua dor"
+   encostava no rotulo de Acupuntura, e o numeral encostava no cabecalho.
+   Aqui a credencial tem piso de 11px
+   (a coluna desce para 428px) e a faixa dos rotulos reserva 90u a mais,
+   o que leva o par para a esquerda.
+   =============================================================== */
+@media (min-width: 1024px) and (max-width: 1199.98px) and (min-aspect-ratio: 2/1) {
+  /* Nessa faixa o cabecalho nao escala com o palco (74px de cartao mais 24
+     de margem): o respiro de cima nao desce de 112px, senao o numeral do
+     hero encosta na marca. */
+  .hero-palco {
+    padding-top: max(calc(97 * var(--u)), 112px);
+  }
+
+  .hero-texto {
+    width: max(calc(488 * var(--u)), 428px);
+  }
+
+  .hero-credencial {
+    font-size: max(11px, calc(13 * var(--u)));
+  }
+
+  .hero-campo {
+    --hero-reserva: calc(240 * var(--u));
+  }
+}
+
+/* ===============================================================
+   TOPO DAS PAGINAS INTERNAS EM JANELA BAIXA (page-shell.tsx, .ps-*).
+
+   Laptop com zoom: Full HD com o Windows em 150% ou 175%, ou 1536 com o
+   Chrome em 110% ou 125%, da janelas de 461 a 632px de altura. O topo
+   feito para 695 (respiro de 176px, emblema de 80px, titulo de 52px e a
+   foto 4:5 na largura da coluna) media 700 a 850px ali: o titulo caia na
+   dobra e a foto passava dela.
+
+   Abaixo de 680px de altura o topo se dimensiona pela altura (repertorio:
+   elemento de abertura pela altura disponivel): respiro de cima so o do
+   cabecalho, titulo pela altura da janela, e a foto com a largura que
+   cabe na altura util, encostada a direita da coluna. 1536x695 e acima nao
+   entram aqui, nem o telefone.
+   =============================================================== */
+@media (min-width: 1024px) and (max-height: 680px) {
+  .ps-topo {
+    padding-top: 120px;
+    padding-bottom: 40px;
+  }
+
+  .ps-trilha {
+    margin-bottom: 16px;
+  }
+
+  .ps-emblema {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  .ps-titulo {
+    font-size: clamp(2rem, 7.4svh, 3.25rem);
+  }
+
+  .ps-subtitulo {
+    margin-top: 16px;
+  }
+
+  .ps-ident {
+    margin-top: 16px;
+  }
+
+  .ps-ident > span:first-child {
+    margin-bottom: 12px;
+  }
+
+  /* 4:5 mais a moldura e a legenda (ate ~96px, quando ela quebra em quatro
+     linhas na foto estreita): a foto nao passa da altura util
+     entre o respiro de cima e o de baixo. */
+  .ps-midia {
+    width: min(100%, calc((100svh - 160px - 96px) * 0.8 + 16px));
+    margin-left: auto;
+    margin-right: 0;
+  }
+}
+
+/* Mais baixa ainda (Full HD em 175%, 1024x461): o emblema sai, a pagina se
+   apresenta pela trilha e pelo titulo, e o subtitulo e a identificacao
+   apertam o passo para o topo caber na primeira tela. */
+@media (min-width: 1024px) and (max-height: 560px) {
+  .ps-emblema {
+    display: none;
+  }
+
+  .ps-titulo {
+    font-size: clamp(1.875rem, 6.8svh, 3.25rem);
+  }
+
+  .ps-subtitulo {
+    margin-top: 12px;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .ps-ident {
+    margin-top: 12px;
+  }
+
+  .ps-ident > span:first-child {
+    display: none;
+  }
+
+  .ps-ident p {
+    line-height: 1.7;
+  }
+}
