@@ -5,13 +5,11 @@ import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
 import { ConviteConsulta } from "@/components/convite-consulta";
 import { PaginaMedicaJsonLd, TrilhaJsonLd } from "@/components/json-ld";
 import { PageShell, type TipoDePagina } from "@/components/page-shell";
-import { PlaceholderFoto } from "@/components/placeholder-foto";
 import { PaginasRelacionadas } from "@/components/relacionados";
 import { quebrasDaAbertura } from "@/lib/abertura";
-import { chaveDaPagina, type ConteudoDoSite } from "@/lib/conteudo-tipos";
-import { ilustracaoDaPagina, type Foto } from "@/lib/ilustracao-da-pagina";
-import { grupoDoMenu } from "@/lib/nav";
-import { descricaoDaPagina, rotuloDaPagina, tituloDaPagina, type Pagina } from "@/lib/pages";
+import type { ConteudoDoSite } from "@/lib/conteudo-tipos";
+import type { Foto } from "@/lib/ilustracao-da-pagina";
+import type { PaginaDoSite } from "@/lib/paginas-do-site";
 import { derivarContato } from "@/lib/site";
 
 /**
@@ -25,16 +23,10 @@ import { derivarContato } from "@/lib/site";
 
 /**
  * Tipo de pagina, pelo grupo do menu: o grupo "A Clinica" e' institucional,
- * os outros tres sao tratamento. E' a mesma divisao que nav.ts ja faz.
+ * os outros (e fora do menu) sao tratamento.
  */
-const INSTITUCIONAIS = new Set(
-  ["quem-somos", "responsável-técnica", "currículo-profissional", "contato"].map(
-    (s) => s.normalize("NFC"),
-  ),
-);
-
-function tipoDaPagina(slug: string): TipoDePagina {
-  return INSTITUCIONAIS.has(slug.normalize("NFC")) ? "institucional" : "tratamento";
+function tipoDaPagina(grupo: string): TipoDePagina {
+  return grupo === "A Clínica" ? "institucional" : "tratamento";
 }
 
 /**
@@ -71,55 +63,45 @@ export function FotoEmMoldura({ foto }: { foto: Foto }) {
  * Inicio / grupo do menu / pagina. O grupo nao tem endereco proprio, entao
  * entra como texto, sem link; pagina fora do menu vai sem ele.
  */
-export function trilhaDaPagina(caminho: string, rotulo: string): { nome: string }[] {
-  const grupo = grupoDoMenu(decodeURIComponent(caminho));
-  return grupo ? [{ nome: grupo.label }, { nome: rotulo }] : [{ nome: rotulo }];
+export function trilhaDaPagina(grupo: string, rotulo: string): { nome: string }[] {
+  return grupo ? [{ nome: grupo }, { nome: rotulo }] : [{ nome: rotulo }];
 }
 
-export function PaginaInterna({ pagina, conteudo }: { pagina: Pagina; conteudo: ConteudoDoSite }) {
-  const titulo = tituloDaPagina(pagina);
+/** O titulo como rotulo (aba, trilha, dados estruturados): sem o ponto final. */
+function rotuloDe(titulo: string): string {
+  return titulo.replace(/(?<!\.\.)\.$/, "");
+}
+
+export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; conteudo: ConteudoDoSite }) {
+  const titulo = pagina.titulo;
   /* Na trilha e nos dados estruturados o titulo entra como nome de item de
      lista, nao como frase: sem o ponto final. So o h1 leva a frase inteira. */
-  const rotulo = rotuloDaPagina(pagina);
-  const descricao = descricaoDaPagina(pagina, conteudo.contato.descricaoParaBuscadores);
+  const rotulo = rotuloDe(titulo);
+  const reserva = conteudo.contato.descricaoParaBuscadores;
+  /* Subtitulo visivel: o que a pagina tem sob o titulo; sem ele, a descricao
+     do site. A descricao de busca e' a propria da pagina quando ela tem uma
+     (as do site antigo com abertura escrita depois), senao o subtitulo. */
+  const subtitulo = pagina.resumo || reserva;
+  const descricao = pagina.descricao || subtitulo;
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
-  const chave = chaveDaPagina(pagina.slug);
-  const ilustracao = ilustracaoDaPagina(pagina.slug, chave ? conteudo[chave] : null);
-  const tipo = tipoDaPagina(pagina.slug);
-  const eContato = pagina.slug === "contato";
-  /* Subtitulo visivel: o que a cliente escreveu para a abertura, quando
-     existe; senao a descricao de <meta>, como nas demais paginas. A
-     descricao e o JSON-LD nao mudam com a abertura: sao copy de busca. */
-  const subtitulo = pagina.abertura?.subtitulo ?? descricao;
+  const tipo = tipoDaPagina(pagina.grupo);
+  const eContato = pagina.especial === "contato";
   const quebras = quebrasDaAbertura(pagina.slug, titulo, subtitulo);
-
-  const midia = ilustracao.foto ? (
-    <FotoEmMoldura foto={ilustracao.foto} />
-  ) : ilustracao.placeholder ? (
-    <PlaceholderFoto rotulo={ilustracao.placeholder} />
-  ) : undefined;
+  const midia = pagina.capa ? <FotoEmMoldura foto={pagina.capa} /> : undefined;
 
   return (
     <>
       <TrilhaJsonLd itens={[{ nome: rotulo, caminho }]} />
-      <PaginaMedicaJsonLd
-        titulo={rotulo}
-        descricao={descricao}
-        caminho={caminho}
-      />
-      {/* O subtitulo vinha sendo calculado uma linha acima so para o JSON-LD,
-          enquanto o PageShell tinha a prop e ninguem passava: a banda do titulo
-          ficava vazia e a pagina nao se explicava — "/rpg" anunciava "RPG/RPM"
-          sem dizer em momento nenhum o que a sigla significa. */}
+      <PaginaMedicaJsonLd titulo={rotulo} descricao={descricao} caminho={caminho} />
       <PageShell
         tipo={tipo}
         titulo={titulo}
         tituloLinhas={quebras.titulo}
         subtitulo={subtitulo}
         subtituloLinhas={quebras.subtitulo}
-        identificacao={pagina.abertura?.identificacao}
-        trilha={trilhaDaPagina(caminho, rotulo)}
-        glifo={ilustracao.glifo}
+        identificacao={pagina.identificacao.length > 0 ? pagina.identificacao : undefined}
+        trilha={trilhaDaPagina(pagina.grupo, rotulo)}
+        glifo={`/${pagina.slug.normalize("NFC")}`}
         midia={eContato ? undefined : midia}
       >
         {/* /contato tinha 34 palavras raspadas — dessas, 16 eram o aviso de
@@ -134,7 +116,7 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: Pagina; conteudo: 
             comoSecao={false}
           />
         ) : (
-          <CorpoEmFluxo html={pagina.html} apoio={ilustracao.apoio} />
+          <CorpoEmFluxo html={pagina.html} />
         )}
         <PaginasRelacionadas slug={pagina.slug} />
         <ConviteConsulta />

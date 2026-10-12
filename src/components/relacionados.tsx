@@ -4,14 +4,14 @@ import { Capa } from "./capa";
 import { PageGrid, SectionMark } from "./layers";
 import { Reveal } from "./reveal";
 import { GLYPHS } from "./service-glyphs";
-import { NAV_GROUPS } from "@/lib/nav";
+import { menuDoSite } from "@/lib/paginas-do-site";
 import type { Post } from "@/lib/posts";
 
 /**
  * Fecho de navegacao das paginas internas.
  *
  * Paginas de conteudo apontam para as vizinhas do mesmo grupo do menu (os
- * grupos e os rotulos sao os do site em producao, em nav.ts; nada e' escrito
+ * grupos e os rotulos sao os do menu, das paginas publicadas; nada e' escrito
  * aqui). O grupo da o titulo da secao; as tres seguintes na ordem do menu,
  * em roda, sao os cartoes. Grupo de uma pagina so ("Avaliacao", desde que
  * Palmilhas foi para Tecnicas) nao tem vizinha, e a secao nao aparece.
@@ -20,9 +20,9 @@ import type { Post } from "@/lib/posts";
  * que ja existia, agora com a entrada por scroll e o numeral das demais
  * secoes do site.
  */
-export function PaginasRelacionadas({ slug }: { slug: string }) {
+export async function PaginasRelacionadas({ slug }: { slug: string }) {
   const href = `/${slug}`.normalize("NFC");
-  const grupo = NAV_GROUPS.find((g) =>
+  const grupo = (await menuDoSite()).find((g) =>
     g.items.some((i) => i.href.normalize("NFC") === href),
   );
   if (!grupo) return null;

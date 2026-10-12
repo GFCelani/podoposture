@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { menuDoSite } from "@/lib/paginas-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
 import { FloatingWhatsApp } from "./floating-whatsapp";
@@ -119,12 +120,12 @@ export async function PageShell({
   const Emblema = glifo ? GLYPHS[glifo] : undefined;
   const duasColunas = Boolean(midia);
   const post = tipo === "post";
-  const conteudo = await lerConteudoDoSite();
+  const [conteudo, menu] = await Promise.all([lerConteudoDoSite(), menuDoSite()]);
   const contato = derivarContato(conteudo.contato);
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} grupos={menu} />
       <main id="conteudo">
         {/* data-hero: o observador do flutuante procurava "main > section", que
             nesta casca cai na faixa social do rodape; o disco aparecia no topo

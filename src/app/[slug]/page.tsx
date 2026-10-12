@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 
 import { PaginaInterna } from "@/components/pagina-interna";
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
-import { SLUGS_A_GERAR, buscarPagina, descricaoDaPagina, rotuloDaPagina } from "@/lib/pages";
+import { buscarPaginaDoSite, paginasAGerar } from "@/lib/paginas-do-site";
 
 /**
- * As 20 paginas internas.
+ * As paginas de conteudo: as do site antigo, a do atendimento e as que a
+ * clinica criar no painel (paginas-do-site.ts).
  *
  * Segmento dinamico, e nao 20 pastas com nome proprio, por dois motivos
  * concretos: os slugs tem acento ("/dor-lombar-cronica"), e nomes de pasta
@@ -16,8 +17,8 @@ import { SLUGS_A_GERAR, buscarPagina, descricaoDaPagina, rotuloDaPagina } from "
  * caractere literal. Em segmento dinamico os dois casos sao apenas texto.
  */
 
-export function generateStaticParams() {
-  return SLUGS_A_GERAR.map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await paginasAGerar()).map((slug) => ({ slug }));
 }
 
 /**
@@ -37,16 +38,16 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const pagina = buscarPagina(slug);
+  const pagina = await buscarPaginaDoSite(slug);
   if (!pagina) return {};
 
   /* Rotulo, e nao titulo: na aba o nome da pagina e' colado a marca pelo
      template ("... | Podoposture"), e o ponto final ficaria no meio da
      linha. Ver rotuloDaPagina. O corpo da pagina continua com a frase
      inteira, ponto incluido. */
-  const rotulo = rotuloDaPagina(pagina);
+  const rotulo = pagina.titulo.replace(/(?<!\.\.)\.$/, "");
   const { contato, compartilhamento } = await lerConteudoDoSite();
-  const descricao = descricaoDaPagina(pagina, contato.descricaoParaBuscadores);
+  const descricao = pagina.descricao || pagina.resumo || contato.descricaoParaBuscadores;
   const cartao = compartilhamento.imagem;
   const caminho = `/${encodeURIComponent(pagina.slug)}`;
 
@@ -78,7 +79,7 @@ export default async function Pagina({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const pagina = buscarPagina(slug);
+  const pagina = await buscarPaginaDoSite(slug);
   if (!pagina) notFound();
 
   return <PaginaInterna pagina={pagina} conteudo={await lerConteudoDoSite()} />;

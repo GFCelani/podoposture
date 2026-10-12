@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { CAMINHO_DO_ATENDIMENTO } from "@/lib/atendimento";
-import { PAGINAS_DINAMICAS } from "@/lib/pages";
+import { paginasPublicadas } from "@/lib/paginas-do-site";
 import { BLOG_INDEX } from "@/lib/posts";
 import { todosOsPosts } from "@/lib/posts-do-site";
 import { SITE_URL, urlAbsoluta } from "@/lib/site";
@@ -19,7 +18,7 @@ import { SITE_URL, urlAbsoluta } from "@/lib/site";
  * post novo existiria no site e nunca seria anunciado ao buscador.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts_ = await todosOsPosts();
+  const [posts_, paginasDoSite] = await Promise.all([todosOsPosts(), paginasPublicadas()]);
   const maisRecente = posts_[0]?.dateISO;
 
   const home = {
@@ -36,20 +35,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   };
 
-  const paginas = PAGINAS_DINAMICAS.map((pagina) => ({
+  // As publicadas (as do site antigo, a do atendimento e as novas do painel)
+  // e Contato, que mora no codigo.
+  const paginas = [...paginasDoSite, { slug: "contato" }].map((pagina) => ({
     // encodeURIComponent mantem o slug acentuado na forma percent-encoded que o
     // Google ja indexou (ex.: /dor-lombar-cr%C3%B4nica)
     url: urlAbsoluta(`/${encodeURIComponent(pagina.slug)}`),
     lastModified: new Date(),
-    changeFrequency: "monthly" as const,
-    priority: 0.8,
-  }));
-
-  // Paginas com rota propria, fora de pages.json. Data fixa: a da ultima
-  // mudanca do texto da cliente, e nao a do build.
-  const proprias = [CAMINHO_DO_ATENDIMENTO].map((caminho) => ({
-    url: urlAbsoluta(caminho),
-    lastModified: new Date("2026-10-10"),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));
@@ -71,5 +63,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.2,
   }));
 
-  return [home, indiceDoBlog, ...paginas, ...proprias, ...posts, ...legais];
+  return [home, indiceDoBlog, ...paginas, ...posts, ...legais];
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { PageShell } from "@/components/page-shell";
-import { NAV_GROUPS } from "@/lib/nav";
+import { menuDoSite } from "@/lib/paginas-do-site";
 import { BLOG_INDEX } from "@/lib/posts";
 
 export const metadata: Metadata = {
@@ -17,7 +17,8 @@ export const metadata: Metadata = {
  * chegar por um link antigo cai aqui. Em vez do 404 padrao do Next, que e um
  * beco sem saida, esta pagina oferece os destinos reais.
  */
-export default function NaoEncontrada() {
+export default async function NaoEncontrada() {
+  const menu = await menuDoSite();
   return (
     <PageShell
       tipo="institucional"
@@ -26,7 +27,7 @@ export default function NaoEncontrada() {
     >
       <div className="mx-auto max-w-[1240px] px-6 py-16 md:px-8 lg:px-10 lg:py-20">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-          {NAV_GROUPS.map((grupo) => (
+          {menu.map((grupo) => (
             <nav key={grupo.label} aria-label={grupo.label}>
               <h2 className="font-mono text-[0.6875rem] tracking-[0.16em] text-muted uppercase">
                 {grupo.label}

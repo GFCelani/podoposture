@@ -9,7 +9,7 @@ import { VoltarAoPainel } from "@/components/painel/inicio/VoltarAoPainel";
 import { lerConteudoComRascunho } from "@/lib/conteudo-do-site";
 import { DESCRITORES, ehChaveDeSecao, type ChaveDeSecao, type ConteudoDoSite } from "@/lib/conteudo-tipos";
 import { sessaoAtual } from "@/lib/guarda";
-import { buscarPagina } from "@/lib/pages";
+import { buscarPaginaDoSite } from "@/lib/paginas-do-site";
 
 /**
  * Como vai ficar: padrao, publicado e o rascunho da secao aberta no editor
@@ -42,7 +42,8 @@ export default async function PreviaDaPaginaInicial({
   const chave = typeof secao === "string" && ehChaveDeSecao(secao) ? secao : null;
 
   const slug = chave ? DESCRITORES[chave].pagina : undefined;
-  const pagina = slug ? buscarPagina(slug) : undefined;
+  // As fotos das paginas sairam desta aba: a pagina mostra o que esta no ar.
+  const pagina = slug ? await buscarPaginaDoSite(slug) : undefined;
   const [previa, blog] = await Promise.all([
     lerConteudoComRascunho(chave),
     pagina ? null : lerBlogDaPaginaInicial(),

@@ -1,5 +1,6 @@
 import { lerBlogDaPaginaInicial, PaginaInicial } from "@/components/pagina-inicial";
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
+import { menuDoSite } from "@/lib/paginas-do-site";
 
 /**
  * A pagina inicial.
@@ -11,6 +12,6 @@ import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
  * as duas leituras caem no conteudo padrao.
  */
 export default async function Home() {
-  const [conteudo, blog] = await Promise.all([lerConteudoDoSite(), lerBlogDaPaginaInicial()]);
-  return <PaginaInicial conteudo={conteudo} blog={blog} />;
+  const [conteudo, blog, menu] = await Promise.all([lerConteudoDoSite(), lerBlogDaPaginaInicial(), menuDoSite()]);
+  return <PaginaInicial conteudo={conteudo} blog={blog} menu={menu} />;
 }

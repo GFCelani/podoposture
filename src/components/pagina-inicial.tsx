@@ -1,4 +1,5 @@
 import type { ConteudoDoSite } from "@/lib/conteudo-tipos";
+import type { NavGroup } from "@/lib/nav";
 import type { Post, Tema } from "@/lib/posts";
 import { categoriasDoSite, todosOsPosts } from "@/lib/posts-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
@@ -49,16 +50,19 @@ export async function lerBlogDaPaginaInicial(): Promise<BlogDaPaginaInicial> {
 export function PaginaInicial({
   conteudo,
   blog,
+  menu,
 }: {
   conteudo: ConteudoDoSite;
   blog: BlogDaPaginaInicial;
+  /** Os grupos do menu (paginas-do-site.ts, menuDoSite). */
+  menu?: NavGroup[];
 }) {
   const contato = derivarContato(conteudo.contato);
   const { whatsapp } = contato;
 
   return (
     <>
-      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome />
+      <SiteHeader contato={contatoDoCabecalho(contato)} logo={conteudo.marca.logo[0] ?? null} naHome grupos={menu} />
       <main id="conteudo">
         <Hero
           conteudo={conteudo.hero}

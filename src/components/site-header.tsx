@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { NAV_BLOG, NAV_GROUPS, NAV_HOME } from "@/lib/nav";
+import { NAV_BLOG, NAV_GROUPS, NAV_HOME, type NavGroup } from "@/lib/nav";
 import type { ContatoDoCabecalho } from "@/lib/site";
 import type { Imagem } from "@/lib/conteudo-tipos";
 
@@ -19,9 +19,12 @@ export function SiteHeader({
   contato,
   logo,
   naHome = false,
+  grupos = NAV_GROUPS,
 }: {
   contato: ContatoDoCabecalho;
   logo: Imagem | null;
+  /** Os grupos do menu, das paginas publicadas (paginas-do-site.ts). */
+  grupos?: NavGroup[];
   /**
    * Quem monta a pagina diz se e a home, e nao o endereco. Com `usePathname`,
    * a home regerada depois de uma publicacao do painel (revalidatePath) saia
@@ -33,7 +36,7 @@ export function SiteHeader({
   const [open, setOpen] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [rolou, setRolou] = useState(false);
-  const [accordion, setAccordion] = useState<string | null>(NAV_GROUPS[0].label);
+  const [accordion, setAccordion] = useState<string | null>(grupos[0]?.label ?? null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progresso = useRef<HTMLSpanElement>(null);
   const botaoDrawer = useRef<HTMLButtonElement>(null);
@@ -199,8 +202,8 @@ export function SiteHeader({
     };
   }, [drawer]);
 
-  const activeGroup = NAV_GROUPS.find((g) => g.label === open) ?? null;
-  const activeIndex = activeGroup ? NAV_GROUPS.indexOf(activeGroup) : -1;
+  const activeGroup = grupos.find((g) => g.label === open) ?? null;
+  const activeIndex = activeGroup ? grupos.indexOf(activeGroup) : -1;
 
   // Na home sem rolar, o cabecalho fica sobre o azul do hero: o cartao some
   // (sem fundo, borda e sombra) e marca, menu e botao passam a papel. Ao
@@ -267,7 +270,7 @@ export function SiteHeader({
               </Link>
             </li>
 
-            {NAV_GROUPS.map((group, i) => {
+            {grupos.map((group, i) => {
               const isOpen = open === group.label;
               return (
                 <li key={group.label} className={isOpen ? "grupo-aberto" : ""}>
@@ -502,7 +505,7 @@ export function SiteHeader({
               </Link>
             </div>
 
-            {NAV_GROUPS.map((group, gi) => {
+            {grupos.map((group, gi) => {
               const isOpen = accordion === group.label;
               return (
                 <div
@@ -571,7 +574,7 @@ export function SiteHeader({
 
             <div
               className="item-menu"
-              style={{ ["--i" as string]: NAV_GROUPS.length + 1 }}
+              style={{ ["--i" as string]: grupos.length + 1 }}
             >
               <Link
                 href={NAV_BLOG.href}
@@ -588,7 +591,7 @@ export function SiteHeader({
                 sete secoes e so entao achar. E' a mesma ficha do rodape. */}
             <div
               className="item-menu mt-8"
-              style={{ ["--i" as string]: NAV_GROUPS.length + 2 }}
+              style={{ ["--i" as string]: grupos.length + 2 }}
             >
               <p
                 className="text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
