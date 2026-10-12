@@ -81,7 +81,7 @@ export function Entrar({ aoEntrar, aviso }: { aoEntrar: () => Promise<void>; avi
         Painel do site
       </h1>
       <p className="mt-3 text-[1.0625rem] leading-[1.6] text-muted">
-        Digite a senha para cuidar dos textos do blog, da página inicial e dos números do site.
+        Digite a senha para cuidar do blog, das páginas do site e da página inicial, e para ver as visitas e as buscas.
       </p>
 
       {aviso && (

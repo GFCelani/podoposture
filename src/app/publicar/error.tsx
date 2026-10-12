@@ -56,7 +56,7 @@ export default function ErroDoPainel({
 
       <p className="mt-4 text-[1.0625rem] leading-[1.6] text-ink">
         Se você estava escrevendo, o que digitou continua guardado neste
-        navegador: ao reabrir, o editor recupera o texto — ou pergunta antes,
+        navegador: ao reabrir, o editor recupera o texto, ou pergunta antes
         se ele tiver mudado em outro aparelho.
       </p>
 

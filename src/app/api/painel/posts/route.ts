@@ -28,7 +28,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** A saida para quem mandou como rascunho um texto que ja esta no ar. */
 const JA_ESTA_PUBLICADO =
-  "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na lista “Meu blog” e use “Tirar do site e guardar”.";
+  "Este texto já está publicado no site. Para tirá-lo do ar, abra ele na aba “Blog” e use “Tirar do site e guardar”.";
 
 /** O tema escolhido foi apagado em outra janela entre a escolha e o envio. */
 const TEMA_SUMIU = "Esse tema acabou de ser apagado. Escolha outro da lista.";

@@ -5,10 +5,10 @@ de ninguém. Tem quatro abas:
 
 | Aba | Para quê |
 |---|---|
-| **Meu blog** | Escrever, editar, publicar, despublicar e apagar os textos do blog — os 69 do site antigo e os novos — e gerir os temas |
+| **Blog** | Escrever, editar, publicar, despublicar e apagar os textos do blog — os 69 do site antigo e os novos — e gerir os temas |
 | **Página inicial** | Trocar textos, listas, botões e fotos da home — inclusive a foto de fundo do topo —, o logo, o ícone da aba e a imagem de compartilhamento, com prévia antes de publicar |
-| **Páginas** | Criar, editar, publicar, despublicar e apagar as páginas do site — as 17 do site antigo, a do atendimento e as novas —, no mesmo editor do blog, e escolher em que grupo do menu cada uma entra |
-| **Números** | Ver quantas pessoas leram o site, de onde vieram e quais buscas no Google trouxeram gente |
+| **Páginas do site** | Criar, editar, publicar, despublicar e apagar as páginas do site — as 17 do site antigo, a do atendimento e as novas —, no mesmo editor do blog, e escolher em que grupo do menu cada uma entra |
+| **Visitas e buscas** | Ver quantas pessoas leram o site, de onde vieram e quais buscas no Google trouxeram gente |
 
 Toda imagem do site passa pelo painel. Ficam no código só os desenhos (as
 figuras do corpo, os ícones dos serviços, as linhas do fundo) e a página
@@ -18,7 +18,7 @@ Contato, que no lugar da foto tem o mapa.
 banco, as páginas que estavam no código (as 17 do site antigo, menos Contato,
 e Como é o meu atendimento) são copiadas para lá sozinhas, com o texto igual e
 as fotos que a clínica tinha publicado para cada uma. Dali em diante quem
-manda nelas é a aba **Páginas**. Sem banco, o site mostra as páginas do
+manda nelas é a aba **Páginas do site**. Sem banco, o site mostra as páginas do
 código, como antes.
 
 O endereço não aparece em menu, rodapé nem sitemap, e está bloqueado no
@@ -43,10 +43,10 @@ configuração. A lista completa, com o porquê de cada uma, está em
 | `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET` | A entrada no painel | Ninguém entra; o painel diz que não foi configurado |
 | `DATABASE_URL` | O blog no banco (textos do site antigo e novos, editáveis), temas, imagens enviadas, edição da página inicial e das fotos das páginas, logo, ícone e cartão de compartilhamento, números guardados | O blog mostra os textos do arquivo do repositório e a home mostra o texto padrão; as abas explicam que falta o banco |
 | `CRON_SECRET` | A coleta diária dos números (`/api/cron/numeros`) e a renovação diária do cache do site. **Cadastre assim que houver `DATABASE_URL`**, mesmo sem ligar os números | A coleta recusa todo pedido, inclusive o da Vercel. E uma página que tenha ido ao cache com o texto padrão durante uma queda do banco só se refaz na próxima publicação ou deploy |
-| `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` (opcional) | Visitas na aba Números | A aba diz "a contagem de visitas ainda não foi ligada", nunca "0 visitas" |
-| `GSC_SERVICE_ACCOUNT`, `GSC_SITE_URL` | Buscas no Google na aba Números | A aba diz "as buscas no Google ainda não foram ligadas" |
+| `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` (opcional) | Visitas na aba Visitas e buscas | A aba diz "a contagem de visitas ainda não foi ligada", nunca "0 visitas" |
+| `GSC_SERVICE_ACCOUNT`, `GSC_SITE_URL` | Buscas no Google na aba Visitas e buscas | A aba diz "as buscas no Google ainda não foram ligadas" |
 | `DATA_DA_MIGRACAO` (opcional) | A marca de antes e depois da troca de site no gráfico | O gráfico sai sem marca e diz que a data não foi marcada |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (opcionais) | Aviso quando a coleta falha duas noites seguidas | O aviso fica só na aba Números |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (opcionais) | Aviso quando a coleta falha duas noites seguidas | O aviso fica só na aba Visitas e buscas |
 | `PROXY_HOPS` | Limite de tentativas correto fora da Vercel | Na Vercel, deixe vazio |
 | `DOMINIO_NO_AR` | Libera os buscadores no dia da troca de DNS. **Só vale depois de um deploy novo**: o `robots.txt` é gerado no build | Na Vercel, o `robots.txt` bloqueia tudo, de propósito. Fora da Vercel ele sempre libera |
 
@@ -81,7 +81,7 @@ primeiro uso, e não há migração para rodar.
 `DATABASE_URL`, os textos que vieram do site antigo (o arquivo
 `src/content/posts.json`) são copiados para cá sozinhos — com o corpo idêntico,
 a mesma data e a mesma ordem —, junto com os temas que eles tinham no GoDaddy.
-Dali em diante eles aparecem em **Meu blog** e se editam como qualquer texto.
+Dali em diante eles aparecem na aba **Blog** e se editam como qualquer texto.
 As páginas não mudam em nada: a migração foi conferida comparando o HTML de
 todas as páginas do blog antes e depois, byte a byte.
 
@@ -163,15 +163,15 @@ Nada disto se resolve pelo código nem por quem só tem acesso ao repositório:
 
 ## Como ela usa
 
-### Meu blog
+### Blog
 
 1. Abre `/publicar` e digita a senha.
 2. Vê a lista de todos os textos do blog, do mais recente para o mais antigo. O
-   botão preenchido é **Escrever texto**.
+   botão preenchido é **Novo texto do blog**.
 3. Preenche título e tema, e cola o texto direto do Word: negrito, títulos e
    listas vêm junto.
-4. Usa o botão **Imagem** para inserir fotos no meio do texto, e **Escolher
-   capa** para a imagem que aparece na lista do blog.
+4. Usa o botão **Inserir imagem** para pôr fotos no meio do texto, e **Escolher
+   imagem de capa** para a imagem que aparece na lista do blog.
 5. **Ver como vai ficar** mostra o texto com a tipografia real do site.
 6. **Publicar no site** deixa no ar na hora. **Guardar como rascunho** salva sem
    publicar.
@@ -184,10 +184,10 @@ nos 69).
 
 ### Temas
 
-O botão **Temas**, ao lado de Escrever texto, abre a lista de temas com quantos
+O botão **Editar temas do blog**, ao lado de Novo texto do blog, abre a lista de temas com quantos
 textos cada um tem. Dá para criar, renomear e apagar.
 
-- **Renomear** leva todos os textos do tema junto, e o site é refeito na hora.
+- **Renomear tema** leva todos os textos do tema junto, e o site é refeito na hora.
 - **Apagar um tema sem textos** pede o segundo clique.
 - **Apagar um tema com textos** mostra quantos são e pede para onde eles vão —
   outro tema ou "Deixar sem tema" —, sem nada escolhido de antemão, e só depois
@@ -213,20 +213,20 @@ textos cada um tem. Dá para criar, renomear e apagar.
    que foi publicado naquela seção, na hora; ele só aparece quando o publicado
    difere do original.
 
-### Páginas
+### Páginas do site
 
 As páginas do site (Tratamento da Dor, Osteopatia, Palmilhas, Quem Somos,
 Como é o meu atendimento etc.) moram no banco, como os textos do blog, e se
 editam do mesmo jeito. Contato é a exceção: o conteúdo dela é o endereço, o
 mapa e os telefones, que se trocam na aba **Página inicial**.
 
-1. Abre a aba **Páginas**: a lista vem na ordem do menu, com o grupo de cada
+1. Abre a aba **Páginas do site**: a lista vem na ordem do menu, com o grupo de cada
    uma e se está no ar.
-2. **Editar** abre o mesmo editor do blog: título, subtítulo (a frase embaixo
+2. **Editar página** abre o mesmo editor do blog: título, subtítulo (a frase embaixo
    do título, que também vai para o Google), em que grupo do menu ela entra,
    a foto ao lado do título (com a descrição para quem não enxerga e a
    legenda) e o texto.
-3. Fotos no meio do texto entram pelo botão **Imagem**, como no blog. Na
+3. Fotos no meio do texto entram pelo botão **Inserir imagem**, como no blog. Na
    página, cada foto aparece na coluna da direita, alinhada com o título ou o
    parágrafo depois do qual ela foi inserida; duas seguidas ficam uma embaixo
    da outra. O botão já deixa o lugar da descrição (entre colchetes) e da
@@ -235,7 +235,7 @@ mapa e os telefones, que se trocam na aba **Página inicial**.
 4. **Ver como vai ficar** mostra a página na largura da tela, com o mesmo
    desenho do site.
 5. **Publicar no site**, **Guardar como rascunho** (numa página no ar, vira
-   **Tirar do site e guardar**, com segundo clique) e **Apagar** (dois
+   **Tirar do site e guardar**, com segundo clique) e **Apagar página** (dois
    cliques) funcionam como no blog. Publicar, tirar do ar ou apagar atualiza
    o menu do site inteiro na hora.
 
@@ -255,7 +255,7 @@ página seja outro.
 
 ### Nova página
 
-1. Na aba **Páginas**, clica em **Nova página**.
+1. Na aba **Páginas do site**, clica em **Nova página**.
 2. Escreve o título, escolhe o grupo do menu e escreve ou cola o texto (do
    Word, os títulos, negritos e listas vêm junto). Títulos de seção são as
    linhas que começam com `##`.
@@ -267,9 +267,10 @@ página seja outro.
 
 Para trazer um texto pronto, escrito fora do painel.
 
-1. Na aba **Meu blog** (vira texto do blog) ou **Páginas** (vira página
-   nova), clica em **Importar arquivo** e escolhe o arquivo. Dentro do
-   editor, o mesmo botão troca o título, o subtítulo e o texto do que está
+1. Na aba **Blog**, clica em **Importar arquivo como texto do blog**; na aba
+   **Páginas do site**, em **Importar arquivo como página**. Depois escolhe o
+   arquivo. Dentro do editor, **Importar arquivo para este texto** (ou **para
+   esta página**) troca o título, o subtítulo e o texto do que está
    aberto pelos do arquivo: é o jeito de substituir o conteúdo de uma página
    que já existe. Grupo do menu, tema e foto continuam.
 2. O editor abre com o arquivo já distribuído nos campos e a prévia aberta.
@@ -284,7 +285,7 @@ Para trazer um texto pronto, escrito fora do painel.
    - imagem com endereço de outro site fica no texto, mas o site mostra só a
      descrição no lugar dela (ele não carrega imagem de fora); imagem de
      arquivo do computador sai do texto. Nos dois casos aparece um aviso
-     dizendo qual, para ela enviar a foto pelo botão **Imagem**.
+     dizendo qual, para ela enviar a foto pelo botão **Inserir imagem**.
 4. Aceita só `.md`, `.markdown`, `.html` e `.htm`, até 256 KB. O `.html` passa
    pelo mesmo conversor que abre os textos antigos do blog; script e estilo do
    arquivo são descartados.
@@ -312,7 +313,7 @@ No Safari, que não gera WebP, o painel manda o logo e o ícone em PNG (para nã
 perder a transparência) e as fotos em JPEG. O servidor confere o formato e as
 medidas pelos próprios bytes do arquivo.
 
-### Números
+### Visitas e buscas
 
 Abre a aba e a resposta está no primeiro quadro: quantas pessoas leram, de onde
 vieram, os textos mais lidos e as buscas do Google, com o período anterior ao
@@ -356,7 +357,7 @@ nasceu provando que pega: com a proteção removida de uma rota, o teste acusa.
 ## Perguntas que vão aparecer
 
 **Some algum texto antigo?** Não. Os 69 continuam exatamente onde estão, nas
-mesmas URLs e com a mesma página — agora editáveis em **Meu blog**.
+mesmas URLs e com a mesma página — agora editáveis na aba **Blog**.
 
 **E se o banco cair?** As páginas do blog que já estavam prontas continuam no
 ar; as outras dão erro até o banco voltar, e o painel avisa. O site nunca volta
@@ -369,7 +370,7 @@ do texto e o sitemap são atualizados na hora.
 prévia e confirmar. Rascunho não aparece para ninguém além de quem tem a senha.
 
 **Dá para apagar sem querer?** Apagar exige dois cliques: o primeiro troca o
-botão para "Confirmar exclusão".
+botão para "Confirmar e apagar".
 
 **Os números são em tempo real?** Não. A coleta é diária, e o Google libera as
 buscas com 2 a 3 dias de atraso.

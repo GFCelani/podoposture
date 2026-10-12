@@ -7,7 +7,7 @@ import { LIMITE_NOME_DO_TEMA, erroNoNomeDoTema, normalizarNomeDoTema } from "@/l
 /**
  * Os temas do blog: criar, renomear e apagar.
  *
- * Mora dentro de "Meu blog", aberta pelo botao "Temas". A regra que importa
+ * Mora dentro de "Blog", aberta pelo botao "Editar temas do blog". A regra que importa
  * e a de apagar:
  *
  * - tema sem texto: dois cliques, como apagar um texto;
@@ -123,7 +123,7 @@ export function GestaoDeTemas({
   return (
     <section aria-labelledby="temas-titulo" className="mt-8 rounded-lg border border-rule bg-surface px-5 py-6 md:px-7">
       <h2 id="temas-titulo" className="font-display text-[1.375rem] leading-[1.25] font-semibold text-ink-strong">
-        Temas
+        Temas do blog
       </h2>
       <p className="mt-2 max-w-[60ch] text-[0.9375rem] leading-[1.6] text-muted">
         Os temas agrupam os textos no blog. Um tema só aparece no site quando tem pelo menos um texto publicado.
@@ -388,9 +388,10 @@ function LinhaDoTema({
                 setModo("renomear");
               }}
               disabled={ocupado || modo === "apagar"}
+              aria-label={`Renomear tema: ${tema.nome}`}
               className={BOTAO_CONTORNO}
             >
-              Renomear
+              Renomear tema
             </button>
             {modo === "ver" && (
               <button
@@ -401,17 +402,18 @@ function LinhaDoTema({
                 }}
                 disabled={ocupado}
                 aria-describedby={confirmando ? `${id}-aviso` : undefined}
+                aria-label={ocupado ? undefined : `${confirmando ? "Confirmar e apagar" : "Apagar tema"}: ${tema.nome}`}
                 className={`min-h-[44px] rounded-md px-4 text-[0.9375rem] ${
                   confirmando ? "border-[1.5px] border-[#8c2f2f] text-[#8c2f2f]" : "text-muted hover:text-[#8c2f2f]"
                 }`}
               >
-                {ocupado ? "Apagando…" : confirmando ? "Confirmar exclusão" : "Apagar"}
+                {ocupado ? "Apagando…" : confirmando ? "Confirmar e apagar" : "Apagar tema"}
               </button>
             )}
           </div>
           {modo === "ver" && confirmando && (
             <p id={`${id}-aviso`} role="alert" className={`w-full ${AVISO_ERRO}`}>
-              O tema “{tema.nome}” é apagado. Nenhum texto usa ele. Para confirmar, clique outra vez em “Confirmar exclusão”.
+              O tema “{tema.nome}” é apagado. Nenhum texto usa ele. Para confirmar, clique outra vez em “Confirmar e apagar”.
             </p>
           )}
         </div>

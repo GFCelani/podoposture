@@ -97,7 +97,7 @@ function FaixaDaPrevia({
   return (
     <div className="fixed bottom-4 left-4 right-24 z-[60] max-h-[75vh] max-w-md overflow-y-auto rounded-lg border border-paper/25 bg-accent-deep px-5 pt-3 pb-1 text-paper shadow-lift lg:bottom-8 lg:left-8">
       <p role="status" className="text-[1rem] font-medium">
-        {rotulo ? `Como vai ficar “${rotulo}” — ainda não está no site` : "Como vai ficar — ainda não está no site"}
+        {rotulo ? `Como vai ficar “${rotulo}”. Ainda não está no site.` : "Como vai ficar. Ainda não está no site."}
       </p>
       {outros.length > 0 && (
         <p className="mt-1 text-[0.875rem] leading-[1.5] text-paper">

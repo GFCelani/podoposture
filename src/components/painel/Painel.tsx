@@ -42,10 +42,10 @@ import { Numeros } from "./Numeros";
 type Aba = "textos" | "inicio" | "paginas" | "numeros";
 
 const ABAS: readonly { id: Aba; rotulo: string }[] = [
-  { id: "textos", rotulo: "Meu blog" },
+  { id: "textos", rotulo: "Blog" },
   { id: "inicio", rotulo: "Página inicial" },
-  { id: "paginas", rotulo: "Páginas" },
-  { id: "numeros", rotulo: "Números" },
+  { id: "paginas", rotulo: "Páginas do site" },
+  { id: "numeros", rotulo: "Visitas e buscas" },
 ];
 
 type Tela =
@@ -279,7 +279,7 @@ export function Painel() {
           onClick={() => void sair()}
           className="sublinha min-h-[44px] shrink-0 text-[0.9375rem] text-accent hover:text-accent-deep"
         >
-          Sair
+          Sair do painel
         </button>
       </header>
 

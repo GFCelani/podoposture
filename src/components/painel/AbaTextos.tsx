@@ -9,8 +9,8 @@ import { armazemDaAba, deixarRecado, tomarRecadoDa } from "@/lib/recado-do-edito
 
 import { GestaoDeTemas } from "./GestaoDeTemas";
 /**
- * Aba "Meu blog": todos os posts do blog — os que vieram do GoDaddy e os
- * escritos pelo painel — e, pelo botao "Temas", a lista de temas.
+ * Aba "Blog": todos os posts do blog — os que vieram do GoDaddy e os
+ * escritos pelo painel — e, pelo botao "Editar temas do blog", a lista de temas.
  *
  * E a entrada padrao do painel. Segue o contrato de aba descrito em
  * Painel.tsx; alem de `aoPerderSessao`, recebe `aoAbrirEditor`, porque o editor
@@ -34,9 +34,12 @@ const PERFIL = {
     lista: "posts",
     item: "post",
     recado: "blog",
-    titulo: "Meu blog",
+    titulo: "Textos do blog",
     idDoTitulo: "textos-titulo",
-    novo: "Escrever texto",
+    novo: "Novo texto do blog",
+    importar: "Importar arquivo como texto do blog",
+    editar: "Editar texto",
+    apagar: "Apagar texto",
     semGrupo: "Sem tema",
     endereco: (slug: string) => `/home/f/${slug}`,
     carregando: "Carregando seus textos…",
@@ -48,16 +51,19 @@ const PERFIL = {
     nome: "texto",
     oNome: "O texto",
     esteNome: "Este texto",
-    rascunho: "Rascunho — ainda não está no site",
+    rascunho: "Rascunho, ainda não está no site",
   },
   pagina: {
     api: "/api/painel/paginas",
     lista: "paginas",
     item: "pagina",
     recado: "paginas",
-    titulo: "Páginas",
+    titulo: "Páginas do site",
     idDoTitulo: "paginas-titulo",
     novo: "Nova página",
+    importar: "Importar arquivo como página",
+    editar: "Editar página",
+    apagar: "Apagar página",
     semGrupo: "Fora do menu",
     endereco: (slug: string) => `/${slug}`,
     carregando: "Carregando as páginas…",
@@ -69,7 +75,7 @@ const PERFIL = {
     nome: "página",
     oNome: "A página",
     esteNome: "Esta página",
-    rascunho: "Rascunho — ainda não está no site",
+    rascunho: "Rascunho, ainda não está no site",
   },
 } as const;
 
@@ -298,11 +304,11 @@ export function AbaTextos({
             aria-controls="painel-temas"
             className="min-h-[48px] rounded-md border-[1.5px] border-accent/45 px-5 text-accent hover:border-accent"
           >
-            {verTemas ? "Fechar temas" : "Temas"}
+            {verTemas ? "Fechar temas do blog" : "Editar temas do blog"}
           </button>
           )}
           <label className="inline-flex min-h-[48px] cursor-pointer items-center rounded-md border-[1.5px] border-accent/45 px-5 text-accent hover:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
-            Importar arquivo
+            {perfil.importar}
             <input
               type="file"
               accept=".md,.markdown,.html,.htm,text/markdown,text/html"
@@ -456,22 +462,24 @@ function LinhaDePost({
           id={`editar-${post.id}`}
           onClick={aoEditar}
           disabled={abrindo}
+          aria-label={abrindo ? undefined : `${perfil.editar}: ${post.titulo}`}
           className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent disabled:opacity-50"
         >
-          {abrindo ? "Abrindo…" : "Editar"}
+          {abrindo ? "Abrindo…" : perfil.editar}
         </button>
         <button
           onClick={() => void apagar()}
           onBlur={() => setConfirmando(false)}
           disabled={apagando}
           aria-describedby={confirmando ? `aviso-apagar-${post.id}` : undefined}
+          aria-label={apagando ? undefined : `${confirmando ? "Confirmar e apagar" : perfil.apagar}: ${post.titulo}`}
           className={`min-h-[44px] rounded-md px-4 text-[0.9375rem] ${
             confirmando
               ? "border-[1.5px] border-[#8c2f2f] text-[#8c2f2f]"
               : "text-muted hover:text-[#8c2f2f]"
           }`}
         >
-          {apagando ? "Apagando…" : confirmando ? "Confirmar exclusão" : "Apagar"}
+          {apagando ? "Apagando…" : confirmando ? "Confirmar e apagar" : perfil.apagar}
         </button>
       </div>
       {/* Como nas outras confirmacoes do painel: a troca do rotulo sozinha nem
@@ -484,8 +492,8 @@ function LinhaDePost({
           className="w-full rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f]"
         >
           {post.publicado
-            ? `${perfil.esteNome} sai do site e não pode ser recuperad${tipo === "pagina" ? "a" : "o"}. Para confirmar, clique outra vez em “Confirmar exclusão”.`
-            : "Este rascunho é apagado e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar exclusão”."}
+            ? `${perfil.esteNome} sai do site e não pode ser recuperad${tipo === "pagina" ? "a" : "o"}. Para confirmar, clique outra vez em “Confirmar e apagar”.`
+            : "Este rascunho é apagado e não pode ser recuperado. Para confirmar, clique outra vez em “Confirmar e apagar”."}
         </p>
       )}
     </li>

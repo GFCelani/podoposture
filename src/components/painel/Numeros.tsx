@@ -126,7 +126,7 @@ export function Numeros({ aoPerderSessao }: { aoPerderSessao: () => void }) {
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">Números</h1>
+        <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong">Visitas e buscas</h1>
         <SeletorDePeriodo periodo={periodo} aoEscolher={setPeriodo} />
       </div>
 
@@ -355,7 +355,7 @@ function QuadroDePessoas({
       <Secao id="numeros-pessoas" titulo="Quantas pessoas abriram o site" primeira>
         <FonteSemNumero
           estado={estado}
-          naoLigada="A contagem de visitas ainda não foi ligada — é com quem cuida do site."
+          naoLigada="A contagem de visitas ainda não foi ligada; é com quem cuida do site."
           semDia="A contagem de visitas está ligada, mas ainda não há nenhum dia guardado. A coleta roda todo dia às 6h da manhã."
         />
       </Secao>
@@ -507,7 +507,7 @@ function QuadroDeBuscas({
       <Secao id="numeros-buscas" titulo="O que as pessoas buscaram no Google">
         <FonteSemNumero
           estado={estado}
-          naoLigada="As buscas no Google ainda não foram ligadas — é com quem cuida do site."
+          naoLigada="As buscas no Google ainda não foram ligadas; é com quem cuida do site."
           semDia="O acesso às buscas no Google está ligado, mas ainda não há nenhum dia guardado. O Google libera os números com 2 a 3 dias de atraso."
         />
       </Secao>
@@ -521,7 +521,7 @@ function QuadroDeBuscas({
         O site apareceu {contar(buscas.aparicoes, ["vez", "vezes"])} nos resultados do Google e recebeu{" "}
         <strong className="font-medium text-ink-strong">{contar(buscas.cliques, ["clique", "cliques"])}</strong>.
         {buscas.posicao !== null &&
-          ` Em média, ele aparece na posição ${POSICAO.format(buscas.posicao)} — a primeira página do Google mostra cerca de 10 resultados.`}
+          ` Em média, ele aparece na posição ${POSICAO.format(buscas.posicao)}; a primeira página do Google mostra cerca de 10 resultados.`}
       </p>
       <p className="mt-2 text-[1.0625rem] leading-[1.6] text-ink">
         {buscas.anterior
@@ -592,7 +592,7 @@ function AntesEDepois({
   let frase: string;
   if (!migracao) {
     frase =
-      "A data da mudança do site ainda não foi marcada — é com quem cuida do site. Quando for, o gráfico mostra onde ela cai e compara os meses de antes com os de depois.";
+      "A data da mudança do site ainda não foi marcada; é com quem cuida do site. Quando for, o gráfico mostra onde ela cai e compara os meses de antes com os de depois.";
   } else {
     const { antes, depois } = mediasAntesEDepois(meses, migracao, primeiroDia, ultimoDia);
     const mesDaMudanca = mesPorExtenso(migracao);

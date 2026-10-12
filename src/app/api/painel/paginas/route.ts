@@ -24,7 +24,7 @@ const TAMANHO_MAXIMO = 256 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const JA_ESTA_PUBLICADA =
-  "Esta página já está publicada no site. Para tirá-la do ar, abra ela na lista “Páginas” e use “Tirar do site e guardar”.";
+  "Esta página já está publicada no site. Para tirá-la do ar, abra ela na aba “Páginas do site” e use “Tirar do site e guardar”.";
 
 async function lerCorpo(req: Request): Promise<Record<string, unknown> | null> {
   const leitura = await lerCorpoLimitado(req, TAMANHO_MAXIMO);
