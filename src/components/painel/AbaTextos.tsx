@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel, ResumoDoPainel } from "@/lib/painel-tipos";
+import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
 import type { PaginaDoPainel, ResumoDaPagina } from "@/lib/paginas-tipos";
 import { armazemDaAba, deixarRecado, tomarRecadoDa } from "@/lib/recado-do-editor";
 
@@ -84,7 +85,7 @@ export function AbaTextos({
 }: {
   tipo?: "post" | "pagina";
   aoPerderSessao: () => void;
-  aoAbrirEditor: (post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => void;
+  aoAbrirEditor: (post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean, importado?: Importado) => void;
   /** Para onde vai o foco quando a lista termina de carregar (voltando do editor), ou null. */
   tomarFoco: () => string | null;
 }) {
@@ -231,6 +232,20 @@ export function AbaTextos({
 
   const aoFalhar = useCallback((texto: string) => setAviso({ tipo: "erro", texto }), []);
 
+  /** Um .md (ou .html) vira um texto novo (ou pagina nova), aberto como rascunho no editor. */
+  async function importar(arquivo: File) {
+    const problema = conferirArquivo(arquivo.name, arquivo.size);
+    if (problema) {
+      setAviso({ tipo: "erro", texto: problema.erro });
+      return;
+    }
+    try {
+      aoAbrirEditor(null, semBancoAgora.current, importarArquivo(arquivo.name, await arquivo.text()));
+    } catch {
+      setAviso({ tipo: "erro", texto: "Não foi possível ler esse arquivo. Confira se é um .md ou .html de texto e tente de novo." });
+    }
+  }
+
   return (
     <>
       {erroDaLista && (
@@ -286,6 +301,19 @@ export function AbaTextos({
             {verTemas ? "Fechar temas" : "Temas"}
           </button>
           )}
+          <label className="inline-flex min-h-[48px] cursor-pointer items-center rounded-md border-[1.5px] border-accent/45 px-5 text-accent hover:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent">
+            Importar arquivo
+            <input
+              type="file"
+              accept=".md,.markdown,.html,.htm,text/markdown,text/html"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void importar(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
           {/* Unico botao preenchido da tela — a acao dominante do loop de retorno */}
           <button
           onClick={() => void abrirEditor(null)}

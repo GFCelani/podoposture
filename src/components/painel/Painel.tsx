@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel } from "@/lib/painel-tipos";
+import type { Importado } from "@/lib/importar-arquivo";
 import type { PaginaDoPainel } from "@/lib/paginas-tipos";
 import { BrandMark } from "../brand-mark";
 import { AbaTextos } from "./AbaTextos";
@@ -57,6 +58,7 @@ type Tela =
       post: PostDoPainel | PaginaDoPainel | null;
       semBanco: boolean;
       abaDeOrigem: Aba;
+      importado?: Importado;
     };
 
 const SESSAO_TERMINOU = "Sua sessão terminou. Digite a senha de novo para continuar de onde parou.";
@@ -166,13 +168,19 @@ export function Painel() {
   const perderSessaoEmInicio = useCallback(() => perderSessao("inicio", SESSAO_TERMINOU_NA_PAGINA_INICIAL), [perderSessao]);
   const perderSessaoEmPaginas = useCallback(() => perderSessao("paginas", SESSAO_TERMINOU), [perderSessao]);
   const perderSessaoEmNumeros = useCallback(() => perderSessao("numeros", SESSAO_TERMINOU), [perderSessao]);
-  const abrirEditor = useCallback((post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => {
-    setTela({ nome: "editor", tipo: "post", post, semBanco, abaDeOrigem: "textos" });
-  }, []);
+  const abrirEditor = useCallback(
+    (post: PostDoPainel | PaginaDoPainel | null, semBanco: boolean, importado?: Importado) => {
+      setTela({ nome: "editor", tipo: "post", post, semBanco, abaDeOrigem: "textos", importado });
+    },
+    [],
+  );
   // A pagina abre no MESMO editor do post (ver paginas-tipos.ts).
-  const abrirEditorDePagina = useCallback((pagina: PostDoPainel | PaginaDoPainel | null, semBanco: boolean) => {
-    setTela({ nome: "editor", tipo: "pagina", post: pagina, semBanco, abaDeOrigem: "paginas" });
-  }, []);
+  const abrirEditorDePagina = useCallback(
+    (pagina: PostDoPainel | PaginaDoPainel | null, semBanco: boolean, importado?: Importado) => {
+      setTela({ nome: "editor", tipo: "pagina", post: pagina, semBanco, abaDeOrigem: "paginas", importado });
+    },
+    [],
+  );
 
   async function sair() {
     // A tela volta para a senha em qualquer caso: prender alguem numa sessao
@@ -223,6 +231,7 @@ export function Painel() {
         key={`${tipo}-${post?.id ?? "novo"}`}
         tipo={tipo}
         post={post}
+        importado={tela.importado ?? null}
         semBanco={tela.semBanco}
         aoSalvar={voltar}
         aoCancelar={voltar}

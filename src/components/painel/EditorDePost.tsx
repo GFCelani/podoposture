@@ -6,6 +6,7 @@ import TurndownService from "turndown";
 import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
+import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
 import {
   AVISO_SAIU_DO_AR,
@@ -104,6 +105,16 @@ function comoDados(d: Omit<Dados, "capaAlt" | "capaLegenda"> & Partial<Dados>): 
   };
 }
 
+/** O arquivo importado por cima do que esta na tela: titulo, subtitulo e texto. */
+function comImportado(base: Dados, importado: Importado): Dados {
+  return {
+    ...base,
+    titulo: importado.titulo || base.titulo,
+    resumo: importado.resumo || (importado.titulo ? "" : base.resumo),
+    corpo: importado.corpo,
+  };
+}
+
 /** O que muda de post para pagina, fora o formulario. */
 const PERFIL = {
   post: { api: "/api/painel/posts", chave: "post", nome: "texto" },
@@ -149,6 +160,7 @@ type Saida = "topo" | "fim";
 export function EditorDePost({
   tipo = "post",
   post: postAoAbrir,
+  importado: importadoAoAbrir = null,
   semBanco,
   aoSalvar,
   aoCancelar,
@@ -156,6 +168,8 @@ export function EditorDePost({
 }: {
   tipo?: TipoDeTexto;
   post: PostDoPainel | PaginaDoPainel | null;
+  /** Arquivo importado na lista (botao Importar arquivo): abre como rascunho, com a previa. */
+  importado?: Importado | null;
   semBanco: boolean;
   aoSalvar: () => void;
   aoCancelar: () => void;
@@ -187,18 +201,25 @@ export function EditorDePost({
   const [idDoNovo] = useState(() => (post ? null : novoId()));
   const [hoje] = useState(() => new Date().toISOString());
 
-  const [campos, setCampos] = useState<Dados>(inicio.tipo === "aplicar" ? comoDados(inicio.copia.dados) : inicial);
+  const [campos, setCampos] = useState<Dados>(() => {
+    const base = inicio.tipo === "aplicar" ? comoDados(inicio.copia.dados) : inicial;
+    return importadoAoAbrir ? comImportado(base, importadoAoAbrir) : base;
+  });
+  /** O que o arquivo importado nao trouxe como estava (ver importar-arquivo.ts). */
+  const [avisosDaImportacao, setAvisosDaImportacao] = useState<string[]>(importadoAoAbrir?.avisos ?? []);
   const [recuperado, setRecuperado] = useState(inicio.tipo === "aplicar");
   /** Copia de uma versao anterior do texto, esperando ela decidir. */
   const [pendente, setPendente] = useState<CopiaDoPost | null>(inicio.tipo === "perguntar" ? inicio.copia : null);
   const [erros, setErros] = useState<Erros>({});
   const [aviso, setAviso] = useState<string | null>(null);
-  const [sucesso, setSucesso] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState<string | null>(
+    importadoAoAbrir ? "Arquivo importado como rascunho. Nada foi publicado: confira na prévia e salve quando estiver certo." : null,
+  );
   const [salvando, setSalvando] = useState<"publicar" | "rascunho" | null>(null);
   const [confirmandoRascunho, setConfirmandoRascunho] = useState(false);
   const [confirmandoSaida, setConfirmandoSaida] = useState<Saida | null>(null);
   const [enviando, setEnviando] = useState<"capa" | "corpo" | null>(null);
-  const [verPrevia, setVerPrevia] = useState(false);
+  const [verPrevia, setVerPrevia] = useState(Boolean(importadoAoAbrir));
   const emCurso = useRef(false);
   const enviandoAgora = useRef(false);
   const areaTexto = useRef<HTMLTextAreaElement>(null);
@@ -436,6 +457,37 @@ export function EditorDePost({
     });
   }
 
+  /* -------- importar arquivo -------- */
+
+  /**
+   * Um .md (ou .html) no lugar do titulo, do subtitulo e do texto. Grupo,
+   * tema e foto ficam. Nada e' salvo: o arquivo vira o que esta na tela, a
+   * previa abre, e o resto e' o caminho de sempre (rascunho ou publicar).
+   */
+  async function importarDoArquivo(arquivo: File) {
+    const problema = conferirArquivo(arquivo.name, arquivo.size);
+    if (problema) {
+      setAviso(problema.erro);
+      return;
+    }
+    try {
+      const importado = importarArquivo(arquivo.name, await arquivo.text());
+      setCampos((c) => comImportado(c, importado));
+      if (pendente) setPendente(null);
+      setErros({});
+      setAviso(null);
+      setAvisosDaImportacao(importado.avisos);
+      setSucesso(
+        post
+          ? `Arquivo importado: título, ${pagina ? "subtítulo" : "resumo"} e texto foram trocados pelos do arquivo. Nada foi publicado: confira na prévia e salve quando estiver certo.`
+          : "Arquivo importado como rascunho. Nada foi publicado: confira na prévia e salve quando estiver certo.",
+      );
+      setVerPrevia(true);
+    } catch {
+      setAviso("Não foi possível ler esse arquivo. Confira se é um .md ou .html de texto e tente de novo.");
+    }
+  }
+
   /* -------- imagem -------- */
 
   async function enviarImagem(arquivo: File, comoCapa: boolean) {
@@ -638,6 +690,43 @@ export function EditorDePost({
       >
         {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto" : "Escrever texto"}
       </h1>
+
+      <div className="mt-4">
+        <label
+          className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
+            travado ? "cursor-default opacity-60" : "cursor-pointer"
+          }`}
+        >
+          Importar arquivo
+          <input
+            type="file"
+            accept=".md,.markdown,.html,.htm,text/markdown,text/html"
+            className="sr-only"
+            disabled={travado}
+            aria-describedby="ajuda-importar"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void importarDoArquivo(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <p id="ajuda-importar" className="mt-2 text-[0.875rem] leading-[1.6] text-muted">
+          Um arquivo .md (ou .html) {post ? `troca o título, o ${pagina ? "subtítulo" : "resumo"} e o texto desta ${perfil.nome} pelos dele` : `vira ${pagina ? "esta página" : "este texto"}`}, como
+          rascunho. O primeiro título do arquivo vira o título; nada vai para o site antes de você salvar.
+        </p>
+      </div>
+
+      {avisosDaImportacao.length > 0 && (
+        <div role="status" className={`mt-6 ${nota}`}>
+          <p className="font-medium text-ink-strong">O que conferir no que veio do arquivo:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {avisosDaImportacao.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {semBanco && (
         <p className={`mt-6 ${nota}`}>

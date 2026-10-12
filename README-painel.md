@@ -7,12 +7,19 @@ de ninguém. Tem quatro abas:
 |---|---|
 | **Meu blog** | Escrever, editar, publicar, despublicar e apagar os textos do blog — os 69 do site antigo e os novos — e gerir os temas |
 | **Página inicial** | Trocar textos, listas, botões e fotos da home — inclusive a foto de fundo do topo —, o logo, o ícone da aba e a imagem de compartilhamento, com prévia antes de publicar |
-| **Páginas** | Trocar, tirar e pôr as fotos das 17 páginas internas (a do lado do título e até 3 no meio do texto), com prévia da própria página |
+| **Páginas** | Criar, editar, publicar, despublicar e apagar as páginas do site — as 17 do site antigo, a do atendimento e as novas —, no mesmo editor do blog, e escolher em que grupo do menu cada uma entra |
 | **Números** | Ver quantas pessoas leram o site, de onde vieram e quais buscas no Google trouxeram gente |
 
 Toda imagem do site passa pelo painel. Ficam no código só os desenhos (as
 figuras do corpo, os ícones dos serviços, as linhas do fundo) e a página
 Contato, que no lugar da foto tem o mapa.
+
+**As páginas também moram no banco.** Na primeira vez que o site sobe com o
+banco, as páginas que estavam no código (as 17 do site antigo, menos Contato,
+e Como é o meu atendimento) são copiadas para lá sozinhas, com o texto igual e
+as fotos que a clínica tinha publicado para cada uma. Dali em diante quem
+manda nelas é a aba **Páginas**. Sem banco, o site mostra as páginas do
+código, como antes.
 
 O endereço não aparece em menu, rodapé nem sitemap, e está bloqueado no
 `robots.txt`. Isso evita que ele apareça numa busca, mas **não é o que protege**.
@@ -208,16 +215,84 @@ textos cada um tem. Dá para criar, renomear e apagar.
 
 ### Páginas
 
-1. Escolhe a página na lista, que mostra as fotos que estão no ar.
-2. **Foto ao lado do título**: troca, tira (a página passa a abrir sem moldura)
-   ou põe de volta. Cada foto pede uma descrição (lida para quem não enxerga) e
-   a legenda curta que aparece embaixo dela.
-3. **Fotos no meio do texto**: até 3, que entram juntas — a primeira grande, em
-   paisagem, e as outras menores, em retrato. Ela escolhe ao lado de qual
-   trecho do texto elas ficam, ou deixa a escolha automática.
-4. **Ver como vai ficar** abre a própria página com as fotos novas; publicar
-   pede a confirmação, como na página inicial. **Voltar o site às fotos
-   originais** traz de volta as fotos de antes de uma vez.
+As páginas do site (Tratamento da Dor, Osteopatia, Palmilhas, Quem Somos,
+Como é o meu atendimento etc.) moram no banco, como os textos do blog, e se
+editam do mesmo jeito. Contato é a exceção: o conteúdo dela é o endereço, o
+mapa e os telefones, que se trocam na aba **Página inicial**.
+
+1. Abre a aba **Páginas**: a lista vem na ordem do menu, com o grupo de cada
+   uma e se está no ar.
+2. **Editar** abre o mesmo editor do blog: título, subtítulo (a frase embaixo
+   do título, que também vai para o Google), em que grupo do menu ela entra,
+   a foto ao lado do título (com a descrição para quem não enxerga e a
+   legenda) e o texto.
+3. Fotos no meio do texto entram pelo botão **Imagem**, como no blog. Na
+   página, cada foto aparece na coluna da direita, alinhada com o título ou o
+   parágrafo depois do qual ela foi inserida; duas seguidas ficam uma embaixo
+   da outra. O botão já deixa o lugar da descrição (entre colchetes) e da
+   legenda (entre aspas). Não há como pôr uma foto no meio do texto: o
+   desenho da página é sempre texto à esquerda e fotos à direita.
+4. **Ver como vai ficar** mostra a página na largura da tela, com o mesmo
+   desenho do site.
+5. **Publicar no site**, **Guardar como rascunho** (numa página no ar, vira
+   **Tirar do site e guardar**, com segundo clique) e **Apagar** (dois
+   cliques) funcionam como no blog. Publicar, tirar do ar ou apagar atualiza
+   o menu do site inteiro na hora.
+
+**Endereço.** A página nova ganha o endereço do título, sem acento
+(`Fisioterapia Pélvica` → `/fisioterapia-pelvica`). Enquanto ela nunca foi ao
+ar, o endereço acompanha o título; depois da primeira publicação ele não muda
+mais, mesmo trocando o título — como nos textos do blog. Os endereços das
+páginas antigas, inclusive os com acento, continuam os mesmos, e o de uma
+página apagada fica reservado: uma página nova com o mesmo título recebe
+`-2` no fim.
+
+**Menu.** A página entra no fim do grupo escolhido (Tratamentos, Técnicas,
+Avaliação ou A Clínica). "Fora do menu" deixa a página no ar só pelo endereço,
+pelo sitemap e pelo Google. As páginas que vieram do site antigo mantêm no
+menu o nome curto que já tinham ("Tratamento da Dor"), mesmo que o título da
+página seja outro.
+
+### Nova página
+
+1. Na aba **Páginas**, clica em **Nova página**.
+2. Escreve o título, escolhe o grupo do menu e escreve ou cola o texto (do
+   Word, os títulos, negritos e listas vêm junto). Títulos de seção são as
+   linhas que começam com `##`.
+3. **Ver como vai ficar**, e depois **Publicar no site** ou **Guardar como
+   rascunho**. Publicada, ela já aparece no menu, no sitemap e nas páginas
+   relacionadas do mesmo grupo.
+
+### Importar arquivo (.md ou .html)
+
+Para trazer um texto pronto, escrito fora do painel.
+
+1. Na aba **Meu blog** (vira texto do blog) ou **Páginas** (vira página
+   nova), clica em **Importar arquivo** e escolhe o arquivo. Dentro do
+   editor, o mesmo botão troca o título, o subtítulo e o texto do que está
+   aberto pelos do arquivo: é o jeito de substituir o conteúdo de uma página
+   que já existe. Grupo do menu, tema e foto continuam.
+2. O editor abre com o arquivo já distribuído nos campos e a prévia aberta.
+   **Nada vai para o site** até ela clicar em publicar ou guardar.
+3. Como o arquivo é lido:
+   - o título é o primeiro `# Título` do arquivo (ou o `title:` do cabeçalho
+     entre `---`, se houver);
+   - o primeiro parágrafo curto logo depois do título vira o subtítulo (ou o
+     `description:` do cabeçalho);
+   - `##` e `###` viram as seções; `>` vira a citação em destaque; listas,
+     links e negrito passam como estão;
+   - imagem com endereço de outro site fica no texto, mas o site mostra só a
+     descrição no lugar dela (ele não carrega imagem de fora); imagem de
+     arquivo do computador sai do texto. Nos dois casos aparece um aviso
+     dizendo qual, para ela enviar a foto pelo botão **Imagem**.
+4. Aceita só `.md`, `.markdown`, `.html` e `.htm`, até 256 KB. O `.html` passa
+   pelo mesmo conversor que abre os textos antigos do blog; script e estilo do
+   arquivo são descartados.
+
+A importação acontece no navegador, dentro do painel, que só abre com a senha.
+O servidor não recebe o arquivo: recebe o texto quando ela salva, pelas
+mesmas rotas, com a mesma validação e o mesmo limite do editor, e o texto é
+Markdown sem HTML executável, como qualquer texto escrito à mão.
 
 ### Logo, ícone e compartilhamento (na aba Página inicial)
 
