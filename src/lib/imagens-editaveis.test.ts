@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 
-import { trechosQueRecebemFotos } from "@/components/secoes-de-conteudo";
+import { trechosDoFluxo } from "./fluxo";
 import { miniatura, palavrasDoOriginal, textoDoValor, tomarSecaoParaReabrir } from "@/components/painel/inicio/edicao";
 
 import { CONTEUDO_PADRAO } from "./conteudo-padrao";
@@ -154,7 +154,7 @@ describe("paginas internas com fotos", () => {
     for (const chave of CHAVES_DE_PAGINA) {
       const pagina = buscarPagina(PAGINAS_COM_FOTOS[chave].slug);
       expect(pagina, chave).toBeDefined();
-      expect(PAGINAS_COM_FOTOS[chave].trechos, chave).toEqual(trechosQueRecebemFotos(pagina!.html));
+      expect(PAGINAS_COM_FOTOS[chave].trechos, chave).toEqual(trechosDoFluxo(pagina!.html));
     }
   });
 

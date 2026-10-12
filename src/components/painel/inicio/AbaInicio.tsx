@@ -62,7 +62,7 @@ const TEXTOS: Record<AbaDeSecoes, { titulo: string; intro: string; carregando: s
   paginas: {
     titulo: "Páginas",
     intro:
-      "As fotos das páginas do site: a do lado do título e as do meio do texto. Dá para trocar, tirar e pôr fotos. Nada vai para o site antes de você ver como a página fica e publicar, e cada página pode voltar às fotos originais de uma vez.",
+      "As fotos das páginas do site: a do lado do título e as da coluna ao lado do texto. Dá para trocar, tirar e pôr fotos. Nada vai para o site antes de você ver como a página fica e publicar, e cada página pode voltar às fotos originais de uma vez.",
     carregando: "Carregando as fotos das páginas…",
     falha: "Não foi possível carregar as fotos das páginas. Tente de novo em alguns minutos.",
   },

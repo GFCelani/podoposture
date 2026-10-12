@@ -130,7 +130,7 @@ export type FotoDaPagina = { imagem: Imagem; legenda: string };
 /**
  * As fotos de uma pagina interna: a da moldura ao lado do titulo (0 ou 1) e as
  * de apoio no meio do texto (0 a 3), que entram juntas ao lado do trecho
- * `ancoraDoApoio` ("" = onde o plano da pagina escolher; ver secoes-de-conteudo).
+ * `ancoraDoApoio` ("" = o titulo da primeira secao; ver lib/fluxo.ts).
  */
 export type ConteudoDaPagina = { foto: FotoDaPagina[]; apoio: FotoDaPagina[]; ancoraDoApoio: string };
 
@@ -178,6 +178,8 @@ export const PAGINAS_COM_FOTOS: Readonly<Record<ChaveDePagina, { slug: string; t
     slug: "tratamento-da-dor",
     trechos: [
       { id: "para-quem-e-indicado", titulo: "PARA QUEM É INDICADO ?" },
+      { id: "e-para-voce-se", titulo: "É PARA VOCÊ SE…" },
+      { id: "talvez-nao-seja-indicado-se", titulo: "Talvez não seja indicado se…" },
       { id: "onde-esta-a-sua-dor", titulo: "ONDE ESTÁ A SUA DOR?" },
       { id: "programa-de-tratamento", titulo: "PROGRAMA DE TRATAMENTO" },
     ],
@@ -199,6 +201,8 @@ export const PAGINAS_COM_FOTOS: Readonly<Record<ChaveDePagina, { slug: string; t
     trechos: [
       { id: "neuromodulacao-auricular-vagal-para-zumbido-somatossensorial", titulo: "Neuromodulação Auricular Vagal para Zumbido Somatossensorial" },
       { id: "neuromodulacao-auricular-vagal-tavns", titulo: "Neuromodulação Auricular Vagal - taVNS" },
+      { id: "manipulacoes-osteopaticas", titulo: "Manipulações Osteopáticas" },
+      { id: "educacao-e-conscientizacao", titulo: "Educação e Conscientização" },
       { id: "neuromodulacao-auricular-vagal-para-o-zumbido", titulo: "Neuromodulação Auricular Vagal para o Zumbido" },
     ],
   },
@@ -226,18 +230,23 @@ export const PAGINAS_COM_FOTOS: Readonly<Record<ChaveDePagina, { slug: string; t
   "pagina-posturologia": {
     slug: "posturologia",
     trechos: [
+      { id: "posturologia-a-ciencia-da-postura-e-do-equilibrio", titulo: "Posturologia: A Ciência da Postura e do Equilíbrio" },
       { id: "o-que-e-posturologia", titulo: "O Que é Posturologia?" },
+      { id: "como-funciona-a-posturologia", titulo: "Como Funciona a Posturologia?" },
+      { id: "beneficios-da-posturologia", titulo: "Benefícios da Posturologia" },
       { id: "tecnicas-e-ferramentas-utilizadas-na-posturologia", titulo: "Técnicas e Ferramentas Utilizadas na Posturologia" },
       { id: "aplicacoes-da-posturologia", titulo: "Aplicações da Posturologia" },
       { id: "evidencias-cientificas", titulo: "Evidências Científicas" },
       { id: "conclusao", titulo: "Conclusão" },
       { id: "referencias", titulo: "Referências" },
+      { id: "galeria-de-fotografias", titulo: "Galeria de fotografias" },
     ],
   },
   "pagina-rpg": { slug: "rpg", trechos: [] },
   "pagina-acupuntura": {
     slug: "acupuntura",
     trechos: [
+      { id: "acupuntura-e-eletroacupuntura", titulo: "ACUPUNTURA E ELETROACUPUNTURA" },
       { id: "acupuntura-e-eletroacupuntura-beneficios-e-aplicacoes", titulo: "Acupuntura e Eletroacupuntura: Benefícios e Aplicações" },
     ],
   },
@@ -325,6 +334,10 @@ export const PAGINAS_COM_FOTOS: Readonly<Record<ChaveDePagina, { slug: string; t
   "pagina-curriculo-profissional": {
     slug: "currículo-profissional",
     trechos: [
+      { id: "formacao-academica-e-titulos-reconhecidos", titulo: "Formação Acadêmica e Títulos Reconhecidos" },
+      { id: "formacao-internacional", titulo: "Formação Internacional" },
+      { id: "neuromodulacao-neurociencia-da-dor-e-sistema-nervoso", titulo: "Neuromodulação, Neurociência da Dor e Sistema Nervoso" },
+      { id: "osteopatia-coluna-vertebral-e-dor-cronica", titulo: "Osteopatia, Coluna Vertebral e Dor Crônica" },
       { id: "posturologia-podoposturologia-e-biomecanica", titulo: "Posturologia, Podoposturologia e Biomecânica" },
       { id: "abordagens-integrativas-e-complementares", titulo: "Abordagens Integrativas e Complementares" },
       { id: "observacao-final", titulo: "Observação Final" },
@@ -745,7 +758,7 @@ function descritorDaPagina(chave: ChaveDePagina): DescritorDeSecao<ConteudoDaPag
   const rotulo = rotuloDaPaginaComFotos(chave);
   return {
     rotulo,
-    ajuda: "A foto em moldura ao lado do título e as fotos no meio do texto desta página.",
+    ajuda: "A foto em moldura ao lado do título e as fotos ao lado do texto desta página.",
     global: false,
     aparece: `Na página “${rotulo}”`,
     pagina: slug,
@@ -763,20 +776,20 @@ function descritorDaPagina(chave: ChaveDePagina): DescritorDeSecao<ConteudoDaPag
       },
       apoio: {
         tipo: "lista",
-        rotulo: "Fotos no meio do texto",
+        rotulo: "Fotos ao lado do texto",
         rotuloDoItem: "Foto",
         min: 0,
         max: 3,
-        ajuda: "Até 3. Entram juntas, ao lado de um trecho do texto: a primeira grande e as outras menores, lado a lado.",
-        vazio: "Sem fotos no meio do texto.",
+        ajuda: "Até 3. Entram na coluna da direita, uma embaixo da outra, a partir do título escolhido abaixo. O texto nunca é cortado por elas.",
+        vazio: "Sem fotos ao lado do texto.",
         item: campoFotoDaPagina(RECORTE_DO_APOIO),
       },
       ancoraDoApoio: {
         tipo: "escolha",
-        rotulo: "Ao lado de qual trecho as fotos do meio do texto entram",
-        ajuda: "Só vale quando há fotos no meio do texto.",
+        rotulo: "Ao lado de qual título as fotos entram",
+        ajuda: "Só vale quando há fotos ao lado do texto.",
         opcoes: [
-          { valor: "", rotulo: "Escolha automática (primeiro quadro em destaque do texto)" },
+          { valor: "", rotulo: "O primeiro título do texto" },
           ...trechos.map((t) => ({ valor: t.id, rotulo: t.titulo })),
         ],
       },

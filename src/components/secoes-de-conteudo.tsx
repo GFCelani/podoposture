@@ -1,66 +1,33 @@
 import type { ReactNode } from "react";
 
-import { classificar, elementos, paresDeListas, type Bloco } from "@/lib/blocos";
-import type { Foto } from "@/lib/ilustracao-da-pagina";
+import { classificar, elementos } from "@/lib/blocos";
 import { dividirEmSecoes, type Documento, type Secao } from "@/lib/secoes";
-import {
-  Blocos,
-  Faixa,
-  FiguraLateral,
-  FotosDeApoio,
-  Html,
-  Lateral,
-  Marca,
-  type Tom,
-} from "./blocos";
+import { Blocos, Html } from "./blocos";
 import { PageGrid } from "./layers";
 import { Reveal } from "./reveal";
 
 /**
- * O corpo de texto de uma pagina interna, em blocos.
+ * O corpo de texto de um post, em blocos.
  *
- * Recebe o HTML migrado inteiro e o entrega dividido por `dividirEmSecoes`
- * (a abertura e uma secao por titulo); dentro de cada secao, `classificar`
+ * Recebe o HTML inteiro e o entrega dividido por `dividirEmSecoes` (a
+ * abertura e uma secao por titulo); dentro de cada secao, `classificar`
  * reconhece o formato de cada trecho (prosa, citacao, lista rotulada, lista,
  * azulejos, protocolo, placa, referencias) e `Blocos` da a cada um a sua
- * apresentacao e a sua largura. Nada e' escrito e nada sai da ordem: o que
- * muda de uma pagina para outra e' so a forma, decidida pelo conteudo.
- *
- * Tres tipos de pagina:
- *   tratamento     grade de 12 colunas, lateral com fio de prumo, ponto de
- *                  sonar e numeral fixo enquanto a secao rola; sumario em
- *                  fila quando ha tres ou mais secoes; par de listas lado a
- *                  lado; bandas em superficie para listas rotuladas e banda
- *                  profunda (com a figura esquematica) para um mapa de
- *                  rotulos grande.
- *   institucional  a mesma grade, sem numerais: sao paginas de apresentacao,
- *                  e numerar "Visao" e "Formacao" leria como protocolo.
- *   post           corpo corrido na largura do conteudo; os mesmos blocos,
- *                  empilhados.
+ * apresentacao, empilhados na coluna de leitura. Nada e' escrito e nada sai
+ * da ordem.
  *
  * Abertura em duas medidas (primeiro paragrafo grande a esquerda, o resto
  * numa coluna estreita a direita) quando o texto antes do primeiro titulo e'
  * curto o bastante para isso; senao, o primeiro paragrafo grande e o resto
- * em prosa, como antes.
+ * em prosa.
  *
- * O plano da pagina (que secao vira o que, onde cai cada corte diagonal, em
- * que banda entram as fotos de apoio) e' calculado inteiro em `planejar`
- * antes de renderizar, para a renderizacao nao carregar estado.
+ * As paginas de conteudo tinham aqui um segundo modo, em grade, com lateral
+ * numerada e sumario. Desde 2026-10 elas usam o layout unico de
+ * corpo-em-fluxo.tsx (texto a esquerda, imagem a direita).
  */
-export type TipoDeCorpo = "tratamento" | "institucional" | "post";
+export type TipoDeCorpo = "post";
 
-type SecaoLida = { secao: Secao; tituloHtml: string; blocos: Bloco[] };
-
-type Grupo = { tom: Tom; blocos: Bloco[]; corte?: "dir" | "esq"; fotos?: Foto[] };
-
-type Cabeca = { s: SecaoLida; n?: string; nivel: Documento["nivel"] };
-
-type Item =
-  | { kind: "secao"; cabeca: Cabeca; grupos: Grupo[] }
-  | { kind: "par"; a: SecaoLida; b: SecaoLida; nA?: string; nB?: string; resto: Grupo[] }
-  | { kind: "fotos"; fotos: Foto[] };
-
-const nn = (n: number) => String(n).padStart(2, "0");
+type SecaoLida = { secao: Secao; tituloHtml: string; blocos: ReturnType<typeof classificar> };
 
 function ler(secao: Secao): SecaoLida {
   const m = secao.html.match(/^<h[23][^>]*>([\s\S]*?)<\/h[23]>/);
@@ -71,152 +38,18 @@ function ler(secao: Secao): SecaoLida {
   };
 }
 
-/**
- * Agrupa os blocos de uma secao em faixas por tom: listas rotuladas seguidas
- * formam uma banda em superficie; um mapa de rotulos com oito ou mais pecas
- * forma uma banda profunda; o resto fica no papel, junto.
- */
-function agrupar(blocos: Bloco[]): Grupo[] {
-  const tomDe = (b: Bloco): Tom =>
-    b.tipo === "lista-rotulada"
-      ? "surface"
-      : b.tipo === "azulejos" && b.itens.length >= 8
-        ? "deep"
-        : "paper";
-  const out: Grupo[] = [];
-  for (const b of blocos) {
-    const tom = tomDe(b);
-    const ultimo = out[out.length - 1];
-    if (ultimo && ultimo.tom === tom && tom !== "deep") ultimo.blocos.push(b);
-    else out.push({ tom, blocos: [b] });
-  }
-  return out;
-}
-
-/**
- * O plano da pagina em grade. Alterna a quina do corte diagonal entre as
- * bandas tintadas; poe as fotos de apoio ao lado da secao que a primeira
- * delas nomeia (`secao`) ou, sem ancora, na primeira banda em superficie; sem
- * nenhuma das duas, numa banda propria depois da primeira secao.
- */
-function planejar(
-  lidas: SecaoLida[],
-  nivel: Documento["nivel"],
-  numerar: boolean,
-  apoio?: Foto[],
-): Item[] {
-  const pares = paresDeListas(lidas.map((s) => s.blocos));
-  const itens: Item[] = [];
-  let cortes = 0;
-  let fotos = apoio && apoio.length > 0 ? apoio : undefined;
-  const ancora = fotos?.[0].secao;
-
-  const decorar = (blocos: Bloco[], id?: string): Grupo[] =>
-    agrupar(blocos).map((g, k) => {
-      const grupo: Grupo = { ...g };
-      if (g.tom !== "paper") grupo.corte = cortes++ % 2 === 0 ? "dir" : "esq";
-      const aqui = ancora ? k === 0 && id === ancora : g.tom === "surface";
-      if (aqui && fotos) {
-        grupo.fotos = fotos;
-        fotos = undefined;
-      }
-      return grupo;
-    });
-
-  for (let i = 0; i < lidas.length; i++) {
-    const n = numerar ? nn(i + 1) : undefined;
-    if (pares.has(i)) {
-      const b = lidas[i + 1];
-      itens.push({
-        kind: "par",
-        a: lidas[i],
-        b,
-        nA: n,
-        nB: numerar ? nn(i + 2) : undefined,
-        resto: decorar(b.blocos.slice(1)),
-      });
-      i++;
-      continue;
-    }
-    const s = lidas[i];
-    const grupos = decorar(s.blocos, s.secao.id);
-    if (grupos.length === 0) grupos.push({ tom: "paper", blocos: [] });
-    itens.push({ kind: "secao", cabeca: { s, n, nivel }, grupos });
-  }
-
-  if (fotos && itens.length > 0) itens.splice(1, 0, { kind: "fotos", fotos });
-  return itens;
-}
-
-/**
- * Os titulos ao lado dos quais as fotos de apoio de fato entram, na ordem do
- * texto: secao com corpo e fora de um par de listas. E a lista que o painel
- * oferece como ancora (PAGINAS_COM_FOTOS em conteudo-tipos.ts); o teste
- * confere as duas, pela mesma conta que a pagina faz em `planejar`.
- */
-export function trechosQueRecebemFotos(html: string): { id: string; titulo: string }[] {
+export function SecoesDeConteudo({ html }: { html: string; tipo?: TipoDeCorpo }) {
   const doc = dividirEmSecoes(html);
   const lidas = doc.secoes.map(ler);
-  return lidas
-    .filter(({ secao }) => {
-      const teste: Foto = { src: "", alt: "", legenda: "", largura: 1, altura: 1, secao: secao.id };
-      return planejar(lidas, doc.nivel, false, [teste]).some(
-        (item) => item.kind === "secao" && item.cabeca.s.secao.id === secao.id && item.grupos.some((g) => g.fotos),
-      );
-    })
-    .map(({ secao }) => ({ id: secao.id, titulo: secao.titulo }));
-}
-
-export function SecoesDeConteudo({
-  html,
-  tipo = "post",
-  apoio,
-}: {
-  html: string;
-  tipo?: TipoDeCorpo;
-  /** Fotografias de apoio, distribuidas no corpo (so grade). */
-  apoio?: Foto[];
-}) {
-  const doc = dividirEmSecoes(html);
-  const grade = tipo !== "post";
-  const numerar = tipo === "tratamento";
-  const lidas = doc.secoes.map(ler);
-
-  let corpo: ReactNode;
-  if (grade) {
-    corpo = planejar(lidas, doc.nivel, numerar, apoio).map((item, k) => {
-      if (item.kind === "fotos") {
-        return (
-          <Faixa key="fotos" prumo>
-            <div className="pi-corpo-sec">
-              <div className="pi-col-largo">
-                <FotosDeApoio fotos={item.fotos} />
-              </div>
-            </div>
-          </Faixa>
-        );
-      }
-      if (item.kind === "par") {
-        return (
-          <ParDeListas key={item.a.secao.id} {...item} nivel={doc.nivel} />
-        );
-      }
-      return <Faixas key={item.cabeca.s.secao.id ?? k} cabeca={item.cabeca} grupos={item.grupos} />;
-    });
-  } else {
-    corpo = lidas.map((s) => <SecaoCorrida key={s.secao.id} s={s} nivel={doc.nivel} />);
-  }
-
   return (
     <>
-      {doc.abertura && <Abertura html={doc.abertura} grade={grade} />}
-      {numerar && lidas.length >= 3 && <Sumario secoes={doc.secoes} />}
-      {corpo}
+      {doc.abertura && <Abertura html={doc.abertura} />}
+      {lidas.map((s) => (
+        <SecaoCorrida key={s.secao.id} s={s} nivel={doc.nivel} />
+      ))}
     </>
   );
 }
-
-/* ------------------------------------------------------------------ grade */
 
 function Titulo({
   s,
@@ -228,106 +61,7 @@ function Titulo({
   className?: string;
 }) {
   const Tag = nivel === "h3" ? "h3" : "h2";
-  return (
-    <Tag
-      id={s.secao.id}
-      className={className}
-      dangerouslySetInnerHTML={{ __html: s.tituloHtml }}
-    />
-  );
-}
-
-/**
- * Uma secao em grade: uma faixa por grupo de tom. A primeira faixa leva a
- * lateral com o numeral e o titulo; as seguintes continuam sem titulo, e o
- * fio de prumo segue por todas.
- */
-function Faixas({ grupos, cabeca }: { grupos: Grupo[]; cabeca?: Cabeca }) {
-  // secao de uma frase: um bloco de prosa so, curto
-  const curta =
-    grupos.length === 1 &&
-    grupos[0].blocos.length <= 1 &&
-    (grupos[0].blocos[0]?.tipo ?? "prosa") === "prosa" &&
-    (grupos[0].blocos[0]?.tipo === "prosa" ? grupos[0].blocos[0].html.replace(/<[^>]+>/g, "").length : 0) < 220;
-  return (
-    <>
-      {grupos.map((g, k) => {
-        const primeira = k === 0 && cabeca ? cabeca : undefined;
-        return (
-          <Faixa key={k} tom={g.tom} corte={g.corte} prumo continua={!primeira} curta={curta}>
-            {primeira && <Lateral n={primeira.n} tom={g.tom} />}
-            <div className="pi-corpo-sec">
-              {primeira && (
-                <Reveal className="pi-col-titulo" variante="cortina">
-                  <Titulo s={primeira.s} nivel={primeira.nivel} />
-                </Reveal>
-              )}
-              {g.fotos ? (
-                <>
-                  <div className="pi-esq">
-                    <Blocos blocos={g.blocos} modo="grade" colunas={false} atraso={primeira ? 80 : 0} />
-                  </div>
-                  <FotosDeApoio fotos={g.fotos} />
-                </>
-              ) : (
-                <Blocos blocos={g.blocos} modo="grade" atraso={primeira ? 80 : 0} />
-              )}
-              {g.tom === "deep" && <FiguraLateral />}
-            </div>
-          </Faixa>
-        );
-      })}
-    </>
-  );
-}
-
-/**
- * Duas secoes de lista lado a lado: a primeira em cartoes (colunas 1-6 do
- * corpo), a segunda numa caixa em superficie (8-10), com o proprio numeral e
- * o proprio titulo, ancorado como qualquer outro. O que sobra da segunda
- * secao continua abaixo, em faixas sem titulo.
- */
-function ParDeListas({
-  a,
-  b,
-  nA,
-  nB,
-  resto,
-  nivel,
-}: {
-  a: SecaoLida;
-  b: SecaoLida;
-  nA?: string;
-  nB?: string;
-  resto: Grupo[];
-  nivel: Documento["nivel"];
-}) {
-  const listaA = a.blocos[0];
-  const listaB = b.blocos[0];
-  if (listaA.tipo !== "lista" || listaB.tipo !== "lista") return null;
-  return (
-    <>
-      <Faixa prumo>
-        <Lateral n={nA} />
-        <div className="pi-corpo-sec">
-          <Reveal className="pi-col-titulo" variante="cortina">
-            <Titulo s={a} nivel={nivel} />
-          </Reveal>
-          <Reveal className="pi-col-par" delay={80}>
-            <Html className="pi-lista pi-cartoes" html={listaA.html} />
-          </Reveal>
-          <Reveal className="pi-col-caixa" delay={160}>
-            <div className="pi-caixa bg-surface">
-              <Marca n={nB} />
-              <Titulo s={b} nivel={nivel} className="pi-h2 pi-h2-caixa" />
-              <Html className="pi-lista pi-caixa-lista" html={listaB.html} />
-            </div>
-          </Reveal>
-        </div>
-      </Faixa>
-      <Faixas grupos={resto} />
-    </>
-  );
+  return <Tag id={s.secao.id} className={className} dangerouslySetInnerHTML={{ __html: s.tituloHtml }} />;
 }
 
 /* ---------------------------------------------------------------- corrido */
@@ -350,7 +84,7 @@ function SecaoCorrida({ s, nivel }: { s: SecaoLida; nivel: Documento["nivel"] })
 
 /* --------------------------------------------------------------- abertura */
 
-function Abertura({ html, grade }: { html: string; grade: boolean }) {
+function Abertura({ html }: { html: string }) {
   const els = elementos(html);
   const [primeiro, ...resto] = els;
   const abreComP = primeiro?.tag === "p";
@@ -372,26 +106,6 @@ function Abertura({ html, grade }: { html: string; grade: boolean }) {
         <Reveal className="pi-col-apoio" delay={120}>
           <Html className="pi-apoio" html={restoHtml} />
         </Reveal>
-      </>
-    );
-  } else if (grade) {
-    // primeiro paragrafo grande a esquerda; o resto passa pela classificacao
-    // de blocos, empilhado em oito colunas
-    miolo = (
-      <>
-        {abreComP && (
-          <Reveal className="pi-col-lead">
-            <Html className="pi-lead" html={primeiro.html} />
-          </Reveal>
-        )}
-        <div className="pi-col-resto pi-resto">
-          <Blocos
-            blocos={classificar(abreComP ? restoHtml : html)}
-            modo="grade"
-            colunas={false}
-            atraso={abreComP ? 120 : 0}
-          />
-        </div>
       </>
     );
   } else {
@@ -420,43 +134,5 @@ function Abertura({ html, grade }: { html: string; grade: boolean }) {
         <div className="pi-grid">{miolo}</div>
       </div>
     </section>
-  );
-}
-
-/* ---------------------------------------------------------------- sumario */
-
-/**
- * Os titulos das secoes, ancorados, numa banda em superficie com corte
- * diagonal, em fila. Nada e' escrito: sao os titulos que ja estao no texto.
- */
-function Sumario({ secoes }: { secoes: Secao[] }) {
-  return (
-    <nav
-      aria-label="Seções desta página"
-      className="pi-sumario corte-alto-dir relative overflow-hidden border-b border-rule bg-surface"
-    >
-      <PageGrid />
-      <div className="pi-wrap relative mx-auto max-w-[1240px] px-6 md:px-8 lg:px-10">
-        <div className="pi-grid">
-          <Reveal className="pi-sumario-marca">
-            <Marca />
-          </Reveal>
-          <Reveal className="pi-sumario-lista" delay={80}>
-            <ol>
-              {secoes.map((secao, i) => (
-                <li key={secao.id}>
-                  <a href={`#${secao.id}`} className="group">
-                    <span className="n" aria-hidden="true">
-                      {nn(i + 1)}
-                    </span>
-                    <span className="t sublinha">{secao.titulo}</span>
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </Reveal>
-        </div>
-      </div>
-    </nav>
   );
 }
