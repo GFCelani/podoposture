@@ -2,12 +2,14 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { lerCorpoLimitado } from "@/lib/corpo";
+import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { exigirSessao } from "@/lib/guarda";
 import { htmlParaMarkdown } from "@/lib/html-para-markdown";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { resumoAutomatico } from "@/lib/markdown";
 import { bancoConfigurado, registrarAuditoria } from "@/lib/painel-db";
 import { apagarPagina, atualizarPagina, buscarPaginaPorId } from "@/lib/paginas-db";
+import { fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import { camposDaPagina, validarPagina, type PaginaDoPainel } from "@/lib/paginas-tipos";
 
 import { revalidarPaginas } from "../revalidar";
@@ -51,7 +53,10 @@ export async function GET(_req: Request, ctx: Contexto) {
   try {
     const pagina = await buscarPaginaPorId(pronto.id);
     if (!pagina) return NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });
-    return NextResponse.json({ pagina: comoOEditorVe(pagina) });
+    // Pagina antiga: a previa precisa do registro das fotos para po-las onde o site poe.
+    const fotosDoRegistro =
+      modeloDaPagina(pagina.slug) === "antigo" ? fotosConhecidas(pagina.slug, await lerConteudoDoSite()) : undefined;
+    return NextResponse.json({ pagina: { ...comoOEditorVe(pagina), ...(fotosDoRegistro ? { fotosDoRegistro } : {}) } });
   } catch (erro) {
     console.error("[painel] falha ao ler pagina:", erro);
     return NextResponse.json({ erro: "Não foi possível ler a página." }, { status: 502 });

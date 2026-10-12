@@ -55,6 +55,11 @@ export type PaginaDoPainel = DadosDaPagina &
     identificacao: string[];
     /** Posicao dentro do grupo do menu. */
     ordem: number;
+    /**
+     * So na leitura do editor, e so nas paginas antigas: o registro das fotos
+     * de apoio, para a previa por as fotos onde o site poe (paginas-antigas.ts).
+     */
+    fotosDoRegistro?: { srcs: string[]; ancora: string };
   };
 
 export type ResumoDaPagina = Omit<PaginaDoPainel, "corpo">;

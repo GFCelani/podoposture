@@ -32,6 +32,8 @@ export default defineConfig({
     ? undefined
     : {
         command: `npm run build && npx next start -p ${PORTA}`,
+        // As paginas de exemplo do teste (lib/paginas-de-exemplo.ts): so aqui.
+        env: { PAGINAS_DE_EXEMPLO: "1" },
         url: `http://localhost:${PORTA}`,
         reuseExistingServer: false,
         timeout: 600_000,

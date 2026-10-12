@@ -1,8 +1,9 @@
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { classificar, elementos } from "@/lib/blocos";
-import { planejarFluxo, type LinhaDoFluxo, type TrechoDoFluxo } from "@/lib/fluxo";
+import { distribuirFotos, type LinhaDistribuida } from "@/lib/distribuir-fotos";
+import { planejarFluxo } from "@/lib/fluxo";
 import type { Foto } from "@/lib/ilustracao-da-pagina";
 
 import { Blocos, Html } from "./blocos";
@@ -19,23 +20,29 @@ import { Reveal } from "./reveal";
  * faixa, areia e papel alternados a partir da areia, como as etapas do
  * atendimento; um fio no texto abre uma faixa sem titulo. Os blocos que lib/blocos.ts reconhece (citacao, listas,
  * protocolo...) mantem a apresentacao deles, mas todos na coluna do texto.
+ *
+ * Desde 2026-10-12 so Palmilhas Personalizadas usa este corpo (pagina
+ * antiga; ver lib/paginas-antigas.ts). As fotos seguem a regra de
+ * lib/distribuir-fotos.ts: a coluna delas nao passa muito do texto ao lado,
+ * e a que sobra desce para a secao seguinte sem foto.
  */
 type Tom = "paper" | "surface";
 
 export function CorpoEmFluxo({ html, apoio }: { html: string; apoio?: Foto[] }) {
   const plano = planejarFluxo(html, apoio);
+  const distribuido = distribuirFotos(plano);
   const Tag = plano.nivel === "h3" ? "h3" : "h2";
   return (
     <div className="fx" data-layout="fluxo">
       {plano.abertura && (
         <Faixa tom="paper" rotulo="Introdução">
-          <Linhas trecho={plano.abertura} abertura />
+          <Linhas linhas={distribuido.abertura} abertura />
         </Faixa>
       )}
       {plano.secoes.map((s, i) => (
         <Faixa key={s.id ?? `trecho-${i}`} tom={i % 2 === 0 ? "surface" : "paper"} rotuloId={s.id}>
           <Linhas
-            trecho={s}
+            linhas={distribuido.secoes[i]}
             titulo={
               s.id ? (
                 <Tag id={s.id} className="pi-h2" dangerouslySetInnerHTML={{ __html: s.tituloHtml ?? "" }} />
@@ -72,24 +79,29 @@ function Faixa({
 }
 
 function Linhas({
-  trecho,
+  linhas,
   titulo,
   abertura = false,
 }: {
-  trecho: TrechoDoFluxo;
+  linhas: LinhaDistribuida[];
   titulo?: ReactNode;
   abertura?: boolean;
 }) {
   return (
     <>
-      {trecho.linhas.map((linha, k) => (
+      {linhas.map((linha, k) => (
         <div key={k} className="ja-grade fx-linha" data-fotos={linha.fotos.length || undefined}>
           <div className="ja-texto fx-texto">
             {linha.comTitulo && titulo && <Reveal variante="cortina">{titulo}</Reveal>}
             <TextoDaLinha linha={linha} lead={abertura && k === 0} />
           </div>
           {linha.fotos.length > 0 && (
-            <div className="ja-foto fx-fotos">
+            <div
+              className="ja-foto fx-fotos"
+              data-arranjo={linha.arranjo === "par" ? "par" : undefined}
+              data-excede={linha.excede || undefined}
+              style={linha.escala < 1 ? ({ "--escala": linha.escala } as CSSProperties) : undefined}
+            >
               {linha.fotos.map((f, j) => (
                 <Reveal key={f.src + j} delay={120 + 80 * j}>
                   <Figura foto={f} />
@@ -104,7 +116,7 @@ function Linhas({
 }
 
 /** O texto de uma linha; na abertura, o primeiro paragrafo vira o lead. */
-function TextoDaLinha({ linha, lead }: { linha: LinhaDoFluxo; lead: boolean }) {
+function TextoDaLinha({ linha, lead }: { linha: LinhaDistribuida; lead: boolean }) {
   if (!linha.html) return null;
   if (lead) {
     const [primeiro, ...resto] = elementos(linha.html);

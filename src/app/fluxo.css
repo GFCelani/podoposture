@@ -54,3 +54,18 @@
     margin-top: 32px;
   }
 }
+
+/* Regra das imagens (lib/distribuir-fotos.ts): grade de duas, depois a
+   coluna reduzida, encostada na borda direita. */
+@media (min-width: 1024px) {
+  .fx-fotos[data-arranjo="par"] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .fx-fotos[style] {
+    justify-self: end;
+    width: calc(100% * var(--escala, 1));
+  }
+}

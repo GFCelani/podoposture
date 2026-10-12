@@ -1,0 +1,129 @@
+/* ===========================================================================
+   PAGINA NOVA (components/corpo-da-pagina-nova.tsx): o layout unico das
+   paginas criadas pelo painel. Importado por globals.css, depois de
+   paginas-internas.css, de onde vem toda a tipografia (.pi-h2, .pi-lead,
+   .prosa e os blocos); aqui so grade e respiro.
+
+   O involucro e a grade sao os do topo da pagina (PageShell): 1240px, doze
+   colunas de goteira 24. Texto em 1-7 e imagens em 9-12 quando a linha tem
+   imagem; sem imagem, o texto ocupa a linha (a prosa para nos 66ch dela).
+   Abaixo de 1024 empilha, a imagem depois do texto a que pertence.
+   =========================================================================== */
+
+/* O respiro das faixas das outras paginas (.ja-wrap). */
+.pn-wrap {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+/* Dois trechos na mesma faixa (titulo sem corpo seguido de secao): o
+   respiro de um titulo para o seguinte, nao o de uma faixa nova. */
+.pn-trecho + .pn-trecho {
+  margin-top: 48px;
+}
+
+.pn-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 32px;
+}
+
+.pn-linha + .pn-linha {
+  margin-top: 1.6rem;
+}
+
+.pn-texto {
+  min-width: 0;
+}
+
+.pn-blocos > * + * {
+  margin-top: 1.6rem;
+}
+
+/* A prosa encosta na esquerda da coluna, na abscissa do titulo da pagina
+   (por padrao ela centra a medida), e ocupa a coluna do texto inteira. */
+.pn-blocos .prosa {
+  margin-inline: 0;
+  max-width: none;
+}
+
+.pn-depois-do-titulo {
+  margin-top: 28px;
+}
+
+.pn-depois-do-lead {
+  margin-top: 1.35em;
+}
+
+/* Empilhadas no telefone: a largura toda, ate os 360px da foto do topo. */
+.pn-fotos {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 360px;
+}
+
+@media (min-width: 768px) {
+  .pn-wrap {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .pn-depois-do-titulo {
+    margin-top: 32px;
+  }
+
+  .pn-trecho + .pn-trecho {
+    margin-top: 56px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pn-wrap {
+    padding-top: 88px;
+    padding-bottom: 88px;
+  }
+
+  .pn-linha {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 0;
+  }
+
+  .pn-texto {
+    grid-column: 1 / 13;
+  }
+
+  .pn-linha[data-fotos] > .pn-texto {
+    grid-column: 1 / 8;
+  }
+
+  /* Sem imagem ao lado, a linha nao reserva a coluna da direita: os blocos
+     largos (listas em colunas, protocolo, fichas) vao ate a borda, e a
+     prosa ate a medida confortavel, um pouco alem da coluna do texto. O
+     lead fica na largura da coluna do texto, como no topo da pagina. */
+  .pn-linha:not([data-fotos]) .pn-blocos .prosa {
+    max-width: 80ch;
+  }
+
+  .pn-linha:not([data-fotos]) .pi-lead {
+    max-width: calc((100% - 11 * 24px) / 12 * 7 + 6 * 24px);
+  }
+
+  /* A coluna das imagens termina na borda direita do conteudo; reduzida
+     (lib/distribuir-fotos.ts), encolhe para a direita. */
+  .pn-fotos {
+    grid-column: 9 / 13;
+    align-self: start;
+    justify-self: end;
+    max-width: none;
+    width: calc(100% * var(--escala, 1));
+  }
+
+  .pn-fotos[data-arranjo="par"] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}

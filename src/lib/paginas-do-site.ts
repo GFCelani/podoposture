@@ -15,6 +15,12 @@ import { MAPA_ASCII_PAGINAS, PAGINAS_DINAMICAS, descricaoDaPagina, rotaDaPagina 
 import { bancoConfigurado, lerComDisjuntor, sondarComDisjuntor } from "./painel-db";
 import { slugValido } from "./painel-tipos";
 import { buscarPaginaPublicada, listarPaginasPublicadas } from "./paginas-db";
+import {
+  EXEMPLOS_LIGADOS,
+  SLUG_DA_PAGINA_DE_TESTE,
+  palmilhasComFotosDaCliente,
+  paginaNovaDeTeste,
+} from "./paginas-de-exemplo";
 import type { PaginaDoPainel, ResumoDaPagina } from "./paginas-tipos";
 
 /**
@@ -108,7 +114,11 @@ const publicadasDoBanco = cache(async (): Promise<ResumoDaPagina[]> => {
 
 /** As publicadas, sem o corpo: sitemap, menu, relacionados. */
 export async function paginasPublicadas(): Promise<Resumo[]> {
-  if (!bancoConfigurado()) return DO_CODIGO;
+  if (!bancoConfigurado()) {
+    if (!EXEMPLOS_LIGADOS) return DO_CODIGO;
+    const teste = paginaNovaDeTeste();
+    return [...DO_CODIGO, { slug: teste.slug, titulo: teste.titulo, categoria: "", ordem: 0 }];
+  }
   return publicadasDoBanco();
 }
 
@@ -152,7 +162,9 @@ export async function buscarPaginaDoSite(segmento: string): Promise<PaginaDoSite
   const slug = slugReal(segmento);
   if (slug === SLUG_DO_CONTATO) return paginaDoContato();
   if (!bancoConfigurado()) {
+    if (EXEMPLOS_LIGADOS && slug === SLUG_DA_PAGINA_DE_TESTE) return paginaNovaDeTeste();
     const p = DO_CODIGO.find((x) => x.slug === slug);
+    if (EXEMPLOS_LIGADOS && p?.slug === "palmilhas-personalizadas") return palmilhasComFotosDaCliente(doCodigo(p));
     return p ? doCodigo(p) : undefined;
   }
   // Endereco que nao e' do site antigo nem tem forma de slug do painel nao

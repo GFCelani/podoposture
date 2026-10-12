@@ -7,8 +7,12 @@ import {
   type FotosDoRegistro,
 } from "@/lib/paginas-antigas";
 
+import { distribuirFotos } from "@/lib/distribuir-fotos";
+import { planejarFluxo } from "@/lib/fluxo";
+
 import { CorpoDoAtendimento } from "./como-e-o-meu-atendimento";
 
+import { CorpoDaPaginaNova } from "./corpo-da-pagina-nova";
 import { CorpoEmFluxo } from "./corpo-em-fluxo";
 import type { TipoDePagina } from "./page-shell";
 import { SecoesDeConteudo } from "./secoes-de-conteudo";
@@ -30,7 +34,7 @@ export function CorpoDaPagina({
   /** As fotos de apoio do registro de fotos da pagina, com a ancora dela. */
   fotos?: FotosDoRegistro;
 }) {
-  if (modeloDaPagina(slug) === "novo") return <CorpoEmFluxo html={html} />;
+  if (modeloDaPagina(slug) === "novo") return <CorpoDaPaginaNova html={html} />;
   const nfc = slug.normalize("NFC");
   if (nfc === SLUG_DO_ATENDIMENTO) return <CorpoDoAtendimento lido={lerAtendimento(html)} />;
   const { html: texto, apoio } = separarFotos(html, fotos);
@@ -39,3 +43,15 @@ export function CorpoDaPagina({
 }
 
 
+/**
+ * As imagens passam do que o texto comporta, mesmo depois da regra de
+ * lib/distribuir-fotos.ts (descer, grade de duas, reduzir)? E' o aviso do
+ * editor. So nas paginas que seguem essa regra: as novas e Palmilhas.
+ */
+export function imagensAlemDoTexto(slug: string, html: string): boolean {
+  if (!/<img\b/i.test(html)) return false;
+  if (modeloDaPagina(slug) === "novo") return distribuirFotos(planejarFluxo(html)).excesso;
+  if (slug.normalize("NFC") !== SLUG_DAS_PALMILHAS) return false;
+  const { html: texto, apoio } = separarFotos(html);
+  return distribuirFotos(planejarFluxo(texto, apoio)).excesso;
+}

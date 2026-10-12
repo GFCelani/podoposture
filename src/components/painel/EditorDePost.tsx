@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import TurndownService from "turndown";
 
-import { CorpoEmFluxo } from "@/components/corpo-em-fluxo";
+import { CorpoDaPagina, imagensAlemDoTexto } from "@/components/corpo-da-pagina";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
 import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
+import { ehInstitucional, modeloDaPagina } from "@/lib/paginas-antigas";
 import {
   AVISO_SAIU_DO_AR,
   LIMITES_POST,
@@ -389,6 +390,22 @@ export function EditorDePost({
     [verPrevia, campos.resumo, campos.corpo],
   );
 
+  // A pagina na previa passa pelo renderizador dela: a antiga (endereco do
+  // site antigo) pelo dela, a nova (ainda sem endereco, ou criada aqui) pelo
+  // layout unico. Ver lib/paginas-antigas.ts.
+  const slugDaPagina = pagina && post ? post.slug : "";
+  const antiga = modeloDaPagina(slugDaPagina) === "antigo";
+  const tipoDaPrevia = (antiga ? ehInstitucional(slugDaPagina) : campos.categoria === "A Clínica") ? "institucional" : "tratamento";
+  const fotosDoRegistro = post && "fotosDoRegistro" in post ? post.fotosDoRegistro : undefined;
+
+  // Aviso discreto quando ha mais imagens do que o texto ao lado comporta
+  // (lib/distribuir-fotos.ts). Adiado: nao refaz a conta a cada tecla.
+  const corpoAdiado = useDeferredValue(campos.corpo);
+  const imagensDemais = useMemo(
+    () => pagina && corpoAdiado.includes("![") && imagensAlemDoTexto(slugDaPagina, markdownParaHtml(corpoAdiado)),
+    [pagina, slugDaPagina, corpoAdiado],
+  );
+
   /* -------- escrever no texto -------- */
 
   function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
@@ -569,7 +586,7 @@ export function EditorDePost({
       }
       const salvo = corpo[perfil.chave] as PostDoPainel | PaginaDoPainel;
       // A copia de texto novo vive noutra chave; sem apagar, ela voltaria
-      // sozinha na proxima vez que ela abrisse "Escrever texto".
+      // sozinha na proxima vez que ela abrisse "Novo texto do blog".
       apagarCopia();
       setPost(salvo);
       // `publicado` entra na comparacao de "alterado": o formulario de texto
@@ -688,7 +705,7 @@ export function EditorDePost({
         tabIndex={-1}
         className="mt-6 font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
       >
-        {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto" : "Escrever texto"}
+        {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto do blog" : "Novo texto do blog"}
       </h1>
 
       <div className="mt-4">
@@ -697,7 +714,9 @@ export function EditorDePost({
             travado ? "cursor-default opacity-60" : "cursor-pointer"
           }`}
         >
-          Importar arquivo
+          {post
+            ? `Importar arquivo para ${pagina ? "esta página" : "este texto"}`
+            : `Importar arquivo como ${pagina ? "página" : "texto do blog"}`}
           <input
             type="file"
             accept=".md,.markdown,.html,.htm,text/markdown,text/html"
@@ -893,10 +912,10 @@ export function EditorDePost({
                 : campos.capa
                   ? pagina
                     ? "Trocar foto"
-                    : "Trocar capa"
+                    : "Trocar imagem de capa"
                   : pagina
                     ? "Escolher foto"
-                    : "Escolher capa"}
+                    : "Escolher imagem de capa"}
               <input
                 id="campo-capa"
                 type="file"
@@ -921,7 +940,7 @@ export function EditorDePost({
                   disabled={enviando !== null || travado}
                   className="min-h-[44px] text-[0.9375rem] text-muted hover:text-[#8c2f2f] disabled:opacity-50"
                 >
-                  Remover
+                  {pagina ? "Remover foto" : "Remover imagem de capa"}
                 </button>
               </>
             )}
@@ -1005,10 +1024,19 @@ export function EditorDePost({
           </div>
 
           <p id="ajuda-corpo" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
-            Pode colar direto do Word — negrito, títulos e listas vêm junto.
+            Pode colar direto do Word: negrito, títulos e listas vêm junto.
             {pagina &&
-              " Cada imagem aparece na coluna da direita, ao lado do título ou parágrafo depois do qual ela foi inserida. O botão Imagem já deixa o lugar da descrição (entre colchetes) e da legenda (entre aspas)."}
+              (antiga && !["palmilhas-personalizadas", "como-e-o-meu-atendimento"].includes(slugDaPagina.normalize("NFC"))
+                ? " Esta página mantém o desenho que sempre teve: as imagens aparecem juntas, ao lado da seção em que está a primeira delas."
+                : " Cada imagem aparece na coluna da direita, ao lado do título ou parágrafo depois do qual ela foi inserida.") +
+                " O botão Inserir imagem já deixa o lugar da descrição (entre colchetes) e da legenda (entre aspas)."}
           </p>
+          {imagensDemais && (
+            <p role="status" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+              Há mais imagens do que o texto ao lado comporta. No site, algumas descem para a seção seguinte ou ficam
+              menores; para ficarem do tamanho certo, escreva mais texto perto delas ou tire uma imagem.
+            </p>
+          )}
 
           {!verPrevia && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -1022,7 +1050,7 @@ export function EditorDePost({
                 Itálico
               </button>
               <button type="button" onClick={() => inserir("\n## ", "", "Título da seção")} disabled={travado} className={BOTAO_FORMATO}>
-                Título
+                Título de seção
               </button>
               <button type="button" onClick={() => inserir("\n- ", "", "item")} disabled={travado} className={BOTAO_FORMATO}>
                 Lista
@@ -1035,7 +1063,7 @@ export function EditorDePost({
                   enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
                 }`}
               >
-                {enviando === "corpo" ? "Enviando…" : "Imagem"}
+                {enviando === "corpo" ? "Enviando…" : "Inserir imagem"}
                 <input
                   type="file"
                   accept="image/*"
@@ -1059,7 +1087,7 @@ export function EditorDePost({
 
           {verPrevia && pagina ? (
             // A pagina: o topo com a foto em moldura e o corpo no MESMO
-            // componente da pagina publicada (corpo-em-fluxo.tsx), na largura
+            // componente da pagina publicada (corpo-da-pagina.tsx), na largura
             // da janela: as duas colunas dependem dela, e dentro da coluna do
             // editor a previa mostraria outra pagina.
             <div
@@ -1103,7 +1131,7 @@ export function EditorDePost({
                 </div>
               </div>
               {campos.corpo.trim() ? (
-                <CorpoEmFluxo html={previa} />
+                <CorpoDaPagina slug={slugDaPagina} html={previa} tipo={tipoDaPrevia} fotos={fotosDoRegistro} />
               ) : (
                 <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
                   Escreva o texto para ver como a página vai ficar.
