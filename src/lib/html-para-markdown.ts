@@ -1,5 +1,6 @@
 import TurndownService from "turndown";
 
+import { IMAGENS_DO_SITE } from "./imagens-do-site";
 import { FOTO_DO_ACERVO } from "./markdown";
 
 /**
@@ -142,10 +143,23 @@ conversor.addRule("imagemDoSite", {
       const altura = img.getAttribute("height");
       return largura && altura ? `![${alt}](${src} "${largura}x${altura}")` : "";
     }
-    if (src.startsWith("/img/post/")) return `![${alt}](${src})`;
+    // A legenda (o figcaption da figura, ou o title da imagem) vai no titulo
+    // da imagem em Markdown, que a pagina volta a mostrar embaixo da foto.
+    const legenda = legendaDa(img).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const titulo = legenda ? ` "${legenda}"` : "";
+    if (src.startsWith("/img/post/") || Object.hasOwn(IMAGENS_DO_SITE, src)) return `![${alt}](${src}${titulo})`;
     return "";
   },
 });
+// O figcaption ja foi para o titulo da imagem: aqui ele nao repete.
+conversor.addRule("legenda", { filter: ["figcaption"], replacement: () => "" });
+
+function legendaDa(img: HTMLImageElement): string {
+  const pai = img.parentNode as HTMLElement | null;
+  const figura = pai?.nodeName === "FIGURE" ? pai : null;
+  const legenda = figura?.querySelector("figcaption")?.textContent ?? img.getAttribute("title") ?? "";
+  return legenda.replace(/\s+/g, " ").trim();
+}
 
 conversor.addRule("figura", {
   filter: ["figure"],

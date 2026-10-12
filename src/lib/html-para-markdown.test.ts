@@ -134,3 +134,16 @@ describe("imagem do acervo no Markdown", () => {
     );
   });
 });
+
+describe("figura com legenda, das paginas", () => {
+  it("figure com figcaption vai e volta com a legenda", () => {
+    const html =
+      '<h2>Etapa</h2><figure><img src="/img/galeria/mesa-da-consulta.webp" alt="Mesa" width="1200" height="750">' +
+      '<figcaption>A mesa do consultório, onde a consulta começa.</figcaption></figure><p>Texto.</p>';
+    const md = htmlParaMarkdown(html);
+    expect(md).toContain('![Mesa](/img/galeria/mesa-da-consulta.webp "A mesa do consultório, onde a consulta começa.")');
+    expect(md).not.toMatch(/\n[^!\n]*A mesa do consultório/);
+    const volta = markdownParaHtml(md);
+    expect(volta).toContain('title="A mesa do consultório, onde a consulta começa."');
+  });
+});

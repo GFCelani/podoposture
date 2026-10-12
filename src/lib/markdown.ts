@@ -3,6 +3,7 @@ import ins from "markdown-it-ins";
 import mark from "markdown-it-mark";
 
 import { lerNomeDoArquivo } from "./imagem-webp";
+import { IMAGENS_DO_SITE } from "./imagens-do-site";
 
 /**
  * Markdown -> HTML, sem caminho para injecao.
@@ -90,8 +91,12 @@ md.renderer.rules.image = (tokens, i) => {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
-  const tag = (largura: number | string, altura: number | string) =>
+  // O titulo da imagem (`![alt](src "legenda")`) e' a legenda que a pagina
+  // mostra embaixo da foto; so a do acervo do blog usa o titulo para a medida.
+  const titulo = String(token.attrGet("title") ?? "").trim();
+  const tag = (largura: number | string, altura: number | string, legenda = "") =>
     `<img src="${escapar(src)}" alt="${escapar(alt)}"` +
+    (legenda ? ` title="${escapar(legenda)}"` : "") +
     ` width="${largura}" height="${altura}"` +
     ` loading="lazy" decoding="async">`;
 
@@ -106,13 +111,18 @@ md.renderer.rules.image = (tokens, i) => {
     return medida ? tag(medida[1], medida[2]) : escapar(alt);
   }
 
+  // Foto do proprio site (public/img), com a medida da tabela: e' o que as
+  // paginas trazem do codigo. Endereco fora da tabela nao vira imagem.
+  const doSite = Object.hasOwn(IMAGENS_DO_SITE, src) ? IMAGENS_DO_SITE[src] : undefined;
+  if (doSite) return tag(doSite.largura, doSite.altura, titulo);
+
   const prefixo = "/img/post/";
   if (!src.startsWith(prefixo)) return escapar(alt);
 
   const medida = lerNomeDoArquivo(src.slice(prefixo.length));
   if (!medida) return escapar(alt);
 
-  return tag(medida.largura, medida.altura);
+  return tag(medida.largura, medida.altura, titulo);
 };
 
 /** O endereco de uma foto do acervo em /img/blog/. Ver a regra de imagem acima. */

@@ -8,9 +8,10 @@
  * em vez de duplicar o titulo com <br> no JSX, mantem o titulo do <title>,
  * do JSON-LD, da trilha e do h1 saindo da mesma string.
  *
- * Se uma palavra listada nao existir mais no texto (a cliente reescreveu),
- * `quebrar` lanca na geracao estatica e o build acusa, em vez de a pagina
- * sair com a quebra em lugar nenhum.
+ * Se uma palavra listada nao existir mais no texto (a cliente reescreveu o
+ * titulo pelo painel), `quebrar` lanca e `quebrasDaAbertura` desiste daquela
+ * quebra: a linha volta a ser decidida pelo navegador. Lancar derrubaria uma
+ * pagina editada pelo painel, ja depois do build.
  */
 
 type Quebras = {
@@ -26,6 +27,10 @@ const QUEBRAS: Record<string, Quebras> = {
   "tratamento-da-dor": {
     titulo: ["persiste,", "entender"],
     subtitulo: ["dor,", "integrando"],
+  },
+  /* As duas frases da abertura, uma por linha, como a pagina sempre teve. */
+  "como-e-o-meu-atendimento": {
+    subtitulo: ["dor."],
   },
 };
 
@@ -58,8 +63,15 @@ export function quebrasDaAbertura(
 ): { titulo?: string[]; subtitulo?: string[] } {
   const q = POR_SLUG.get(slug.normalize("NFC"));
   if (!q) return {};
+  const tentar = (texto: string, apos: readonly string[]) => {
+    try {
+      return quebrar(texto, apos);
+    } catch {
+      return undefined;
+    }
+  };
   return {
-    titulo: q.titulo ? quebrar(titulo, q.titulo) : undefined,
-    subtitulo: q.subtitulo && subtitulo ? quebrar(subtitulo, q.subtitulo) : undefined,
+    titulo: q.titulo ? tentar(titulo, q.titulo) : undefined,
+    subtitulo: q.subtitulo && subtitulo ? tentar(subtitulo, q.subtitulo) : undefined,
   };
 }

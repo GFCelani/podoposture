@@ -17,7 +17,7 @@ import { Reveal } from "./reveal";
  *
  * A abertura e' papel, com o primeiro paragrafo grande; cada secao e' uma
  * faixa, areia e papel alternados a partir da areia, como as etapas do
- * atendimento. Os blocos que lib/blocos.ts reconhece (citacao, listas,
+ * atendimento; um fio no texto abre uma faixa sem titulo. Os blocos que lib/blocos.ts reconhece (citacao, listas,
  * protocolo...) mantem a apresentacao deles, mas todos na coluna do texto.
  */
 type Tom = "paper" | "surface";
@@ -33,11 +33,13 @@ export function CorpoEmFluxo({ html, apoio }: { html: string; apoio?: Foto[] }) 
         </Faixa>
       )}
       {plano.secoes.map((s, i) => (
-        <Faixa key={s.id} tom={i % 2 === 0 ? "surface" : "paper"} rotuloId={s.id}>
+        <Faixa key={s.id ?? `trecho-${i}`} tom={i % 2 === 0 ? "surface" : "paper"} rotuloId={s.id}>
           <Linhas
             trecho={s}
             titulo={
-              <Tag id={s.id} className="pi-h2" dangerouslySetInnerHTML={{ __html: s.tituloHtml ?? "" }} />
+              s.id ? (
+                <Tag id={s.id} className="pi-h2" dangerouslySetInnerHTML={{ __html: s.tituloHtml ?? "" }} />
+              ) : undefined
             }
           />
         </Faixa>

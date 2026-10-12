@@ -140,3 +140,19 @@ describe("resumoAutomatico", () => {
     expect(markdownParaTexto("Dor <script>alert(1)</script> lombar")).toBe("Dor <script>alert(1)</script> lombar");
   });
 });
+
+describe("imagem das paginas: foto do site e legenda", () => {
+  it("foto de public/img vira imagem com a medida da tabela; o titulo vira a legenda", () => {
+    const html = markdownParaHtml('![Bancada](/img/galeria/bancada-do-consultorio.webp "A bancada do consultório.")');
+    expect(html).toContain('src="/img/galeria/bancada-do-consultorio.webp"');
+    expect(html).toContain('width="960" height="1200"');
+    expect(html).toContain('title="A bancada do consultório."');
+  });
+
+  it("foto enviada leva a legenda; endereco fora da tabela continua sem virar imagem", () => {
+    const enviada = `/img/post/${"a".repeat(64)}-800x600.webp`;
+    expect(markdownParaHtml(`![x](${enviada} "Legenda \\"citada\\"")`)).toContain('title="Legenda &quot;citada&quot;"');
+    expect(markdownParaHtml("![x](/img/galeria/nao-existe.webp)")).not.toContain("<img");
+    expect(markdownParaHtml('![x](/img/galeria/x.webp" onerror="alert(1))')).not.toContain("<img");
+  });
+});

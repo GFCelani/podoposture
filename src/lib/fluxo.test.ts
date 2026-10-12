@@ -79,3 +79,17 @@ describe("plano do corpo em fluxo", () => {
     expect(plano.abertura!.linhas[0].fotos.map((f) => f.legenda)).toEqual(["Uma legenda", "Outra legenda"]);
   });
 });
+
+describe("fio no texto", () => {
+  it("um <hr> fecha a faixa e abre outra sem titulo", () => {
+    const plano = planejarFluxo("<p>Abertura.</p><h2>Um</h2><p>a</p><hr><p>Fecho.</p><h2>Dois</h2><p>b</p>");
+    expect(plano.secoes.map((s) => s.id ?? "(sem titulo)")).toEqual(["um", "(sem titulo)", "dois"]);
+    expect(plano.secoes[1].linhas).toEqual([{ html: "<p>Fecho.</p>", comTitulo: false, fotos: [] }]);
+  });
+
+  it("as fotos sem ancora vao para o primeiro titulo, nao para a faixa sem titulo", () => {
+    const plano = planejarFluxo("<p>A.</p><hr><p>B.</p><h2>Um</h2><p>a</p><h2>Dois</h2><p>b</p>", [foto(1)]);
+    expect(plano.secoes[0].id).toBeUndefined();
+    expect(plano.secoes[1].linhas[0].fotos).toHaveLength(1);
+  });
+});

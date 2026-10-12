@@ -20,7 +20,9 @@
  *   - duas imagens seguidas empilham na mesma coluna, nunca lado a lado;
  *   - imagem sem texto antes dela vai para o primeiro bloco depois; num
  *     trecho sem texto nenhum, fica sozinha na coluna da direita;
- *   - imagem no meio de um paragrafo sai dele e fica ao lado dele.
+ *   - imagem no meio de um paragrafo sai dele e fica ao lado dele;
+ *   - um fio (<hr>, o `---` do Markdown) fecha a faixa e abre outra, sem
+ *     titulo: e' como o texto separa um fecho do resto.
  */
 import { elementos, type Elemento } from "./blocos";
 import type { Foto } from "./ilustracao-da-pagina";
@@ -138,6 +140,8 @@ function linhasDe(pecas: Peca[], comTitulo: boolean): LinhaDoFluxo[] {
   return linhas;
 }
 
+const FIO = /<hr\b[^>]*>/i;
+
 /**
  * O plano de uma pagina. `apoio` sao as fotos que o painel guarda por
  * pagina, presas a um titulo pelo `secao` da primeira (sem ancora, ou com
@@ -147,16 +151,23 @@ function linhasDe(pecas: Peca[], comTitulo: boolean): LinhaDoFluxo[] {
 export function planejarFluxo(html: string, apoio: Foto[] = []): PlanoDoFluxo {
   const doc = dividirEmSecoes(html);
 
-  const abertura = doc.abertura.trim() ? linhasDe(pecasDe(doc.abertura, false), false) : [];
-  const secoes: TrechoDoFluxo[] = doc.secoes.map((s) => {
+  const semTitulo = (trecho: string): TrechoDoFluxo[] =>
+    trecho.trim() ? [{ linhas: linhasDe(pecasDe(trecho, false), false) }] : [];
+
+  // um fio fecha a faixa: o que vem depois dele e' uma faixa sem titulo
+  const [primeiroDaAbertura, ...restoDaAbertura] = doc.abertura.split(FIO);
+  const abertura = primeiroDaAbertura.trim() ? linhasDe(pecasDe(primeiroDaAbertura, false), false) : [];
+  const secoes: TrechoDoFluxo[] = restoDaAbertura.flatMap(semTitulo);
+  for (const s of doc.secoes) {
     const m = /^<(h[23])[^>]*>([\s\S]*?)<\/\1>/.exec(s.html);
-    const corpo = m ? s.html.slice(m[0].length) : s.html;
-    return { id: s.id, tituloHtml: m ? m[2] : s.titulo, linhas: linhasDe(pecasDe(corpo, true), true) };
-  });
+    const [corpo, ...resto] = (m ? s.html.slice(m[0].length) : s.html).split(FIO);
+    secoes.push({ id: s.id, tituloHtml: m ? m[2] : s.titulo, linhas: linhasDe(pecasDe(corpo, true), true) });
+    secoes.push(...resto.flatMap(semTitulo));
+  }
 
   if (apoio.length > 0) {
     const ancora = apoio[0].secao;
-    const alvo = secoes.find((s) => s.id === ancora) ?? secoes[0];
+    const alvo = secoes.find((s) => s.id && s.id === ancora) ?? secoes.find((s) => s.id);
     const fotos = apoio.map((f) => {
       const copia = { ...f };
       delete copia.secao;
