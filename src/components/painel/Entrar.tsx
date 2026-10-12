@@ -2,7 +2,18 @@
 
 import { useRef, useState } from "react";
 
+import { medirTela } from "@/lib/telas-do-painel";
+
 import { BrandMark } from "../brand-mark";
+
+/** A medida da janela para o registro de telas; sem ela, o login segue igual. */
+function medirSemFalhar() {
+  try {
+    return medirTela();
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * A tela de senha.
@@ -42,7 +53,9 @@ export function Entrar({ aoEntrar, aviso }: { aoEntrar: () => Promise<void>; avi
       const resposta = await fetch("/api/painel/entrar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ senha }),
+        // A janela de quem entra vai junto: o servidor so guarda se a senha
+        // conferir (lib/telas-do-painel.ts). Falhou a medida, vai sem ela.
+        body: JSON.stringify({ senha, tela: medirSemFalhar() }),
       });
 
       if (resposta.ok) {

@@ -52,6 +52,21 @@ export function criarBilhete(segredo: string, agora: number = Date.now()): strin
 }
 
 /**
+ * O identificador aleatorio de um bilhete recem-criado, para registros presos
+ * a sessao (a tela de quem entrou, lib/telas-db.ts). Nao confere assinatura:
+ * so serve para o bilhete que o proprio servidor acabou de assinar.
+ */
+export function idDoBilhete(bilhete: string): string | null {
+  try {
+    const carga: unknown = JSON.parse(Buffer.from(bilhete.split(".")[0] ?? "", "base64url").toString("utf8"));
+    const id = typeof carga === "object" && carga !== null ? (carga as { id?: unknown }).id : null;
+    return typeof id === "string" ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Confere o bilhete. Devolve a sessao, ou `null` para qualquer defeito.
  *
  * Qualquer caminho de falha — sem segredo, formato errado, assinatura que nao

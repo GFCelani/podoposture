@@ -157,7 +157,106 @@ export function Numeros({ aoPerderSessao }: { aoPerderSessao: () => void }) {
           <Conteudo resposta={carga.resposta} agora={carga.recebidaEm} />
         </div>
       )}
+
+      <TelasDoPainel aoPerderSessao={aoPerderSessao} />
     </>
+  );
+}
+
+/* ------------------------------------------------------- telas do painel */
+
+type TelaLida = {
+  id: number;
+  em: string;
+  janelaL: number;
+  janelaA: number;
+  externaL: number;
+  externaA: number;
+  devicePixelRatio: number;
+  telaL: number;
+  telaA: number;
+  telaUtilL: number;
+  telaUtilA: number;
+  navegador: string;
+  sistema: string;
+  zoom: number | null;
+  escalaDoSistema: number | null;
+  sessao: string;
+};
+
+/**
+ * Para quem cuida do site: a janela de quem entrou no painel, registro a
+ * registro (lib/telas-do-painel.ts). Recolhido e no fim da aba, e so busca
+ * quando aberto.
+ */
+function TelasDoPainel({ aoPerderSessao }: { aoPerderSessao: () => void }) {
+  const [telas, setTelas] = useState<TelaLida[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function abrir(e: React.SyntheticEvent<HTMLDetailsElement>) {
+    if (!e.currentTarget.open || telas) return;
+    try {
+      const resposta = await fetch("/api/painel/telas", { cache: "no-store" });
+      if (resposta.status === 401) return aoPerderSessao();
+      const corpo = await resposta.json();
+      if (!resposta.ok) return setErro(typeof corpo?.erro === "string" ? corpo.erro : "Não foi possível ler as telas.");
+      setTelas(Array.isArray(corpo?.telas) ? corpo.telas : []);
+    } catch {
+      setErro("Sem conexão com o servidor.");
+    }
+  }
+
+  const data = (iso: string) =>
+    new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
+
+  return (
+    <details onToggle={abrir} className="mt-16 border-t border-rule pt-6 text-[0.8125rem] text-muted">
+      <summary className="cursor-pointer select-none">Telas de quem entrou no painel (para quem cuida do site)</summary>
+      {erro && <p className="mt-4">{erro}</p>}
+      {telas && telas.length === 0 && <p className="mt-4">Nenhum registro ainda. Cada login com a senha certa grava um.</p>}
+      {telas && telas.length > 0 && (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-left" style={{ fontFamily: "var(--mono)" }}>
+            <thead>
+              <tr className="border-b border-rule">
+                {["Quando", "Janela (CSS)", "Zoom", "Escala do sistema", "DPR", "Tela", "Tela útil", "Janela externa", "Navegador", "Sistema"].map((t) => (
+                  <th key={t} className="py-2 pr-4 font-normal whitespace-nowrap">
+                    {t}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {telas.map((t) => (
+                <tr key={t.id} className="border-b border-rule/60 text-ink">
+                  <td className="py-2 pr-4 whitespace-nowrap">{data(t.em)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {t.janelaL}×{t.janelaA}
+                  </td>
+                  <td className="py-2 pr-4">{t.zoom ? `${t.zoom}%` : "?"}</td>
+                  <td className="py-2 pr-4">{t.escalaDoSistema ? `${t.escalaDoSistema}%` : "?"}</td>
+                  <td className="py-2 pr-4">{t.devicePixelRatio}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {t.telaL}×{t.telaA}
+                  </td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {t.telaUtilL}×{t.telaUtilA}
+                  </td>
+                  <td className="py-2 pr-4 whitespace-nowrap">
+                    {t.externaL}×{t.externaA}
+                  </td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{t.navegador}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{t.sistema}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-3">
+            Zoom pela razão entre a janela externa e a interna (só Chrome e Edge); escala do sistema = DPR ÷ zoom.
+          </p>
+        </div>
+      )}
+    </details>
   );
 }
 
