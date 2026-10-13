@@ -7,7 +7,7 @@ import { lerPublicados } from "./conteudo-db";
 import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import { mesclarConteudo } from "./conteudo-tipos";
 import { paginasDoAcervo, type PaginaDoAcervo } from "./pagina-do-acervo";
-import { MAPA_ASCII_PAGINAS } from "./pages";
+import { MAPA_ASCII_PAGINAS, PAGINAS_DINAMICAS, descricaoDaPagina, subtituloCortadoAntigo, subtituloDaPagina } from "./pages";
 import dados from "@/content/pages.json";
 import { bancoConfigurado, bancoDoPainel } from "./painel-db";
 import { ehEstreia, enderecoPodeMudar, gerarSlug, juntarSlug } from "./painel-tipos";
@@ -130,7 +130,10 @@ let importacao: Promise<number> | null = null;
  */
 export async function garantirPaginas(): Promise<void> {
   await garantirTabelasDePaginas();
-  importacao ??= lerFotosEImportar().catch((erro) => {
+  importacao ??= lerFotosEImportar().then(async (novas) => {
+    await completarSubtitulosCortados();
+    return novas;
+  }).catch((erro) => {
     importacao = null;
     throw erro;
   });
@@ -150,6 +153,38 @@ async function lerFotosEImportar(): Promise<number> {
   if (ja === slugs.length) return 0;
   const conteudo = mesclarConteudo(CONTEUDO_PADRAO, await lerPublicados());
   return importarPaginas(paginasDoAcervo(conteudo));
+}
+
+/**
+ * Subtitulo cortado em 155 caracteres que a importacao gravou no banco
+ * (lib/subtitulo-inteiro.ts), trocado pelo inteiro. So onde o banco ainda tem
+ * exatamente o cortado: subtitulo editado no painel nao e' tocado. A descricao
+ * de busca, que era o proprio subtitulo, fica com a forma curta. Depois da
+ * primeira vez, uma consulta que nao acha nada. Devolve quantas trocou.
+ */
+export async function completarSubtitulosCortados(): Promise<number> {
+  const trocas = PAGINAS_DINAMICAS.flatMap((p) => {
+    const antigo = subtituloCortadoAntigo(p);
+    const novo = subtituloDaPagina(p, "");
+    return antigo !== novo ? [{ slug: p.slug.normalize("NFC"), antigo, novo, descricao: descricaoDaPagina(p, "") }] : [];
+  });
+  if (trocas.length === 0) return 0;
+  const sql = bancoDoPainel();
+  const noBanco = await sql<{ slug: string; resumo: string }[]>`
+    SELECT slug, resumo FROM paginas WHERE slug = ANY(${trocas.map((t) => t.slug)})`;
+  const atual = new Map(noBanco.map((l) => [l.slug, l.resumo]));
+  let trocadas = 0;
+  for (const t of trocas) {
+    if (atual.get(t.slug) !== t.antigo) continue;
+    const descricao = t.descricao !== t.novo ? t.descricao : "";
+    const linhas = await sql`
+      UPDATE paginas
+      SET resumo = ${t.novo}, descricao = CASE WHEN descricao = '' THEN ${descricao} ELSE descricao END
+      WHERE slug = ${t.slug} AND resumo = ${t.antigo}
+      RETURNING id`;
+    trocadas += linhas.length;
+  }
+  return trocadas;
 }
 
 /** Leva para o banco as paginas do codigo que ainda nao entraram. Devolve quantas. */

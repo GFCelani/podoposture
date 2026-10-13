@@ -11,7 +11,7 @@ import { markdownParaHtml } from "./markdown";
 import { montarMenu } from "./menu";
 import { NAV_GROUPS, type NavGroup } from "./nav";
 import { paginasDoAcervo, SLUG_DO_CONTATO, type PaginaDoAcervo } from "./pagina-do-acervo";
-import { MAPA_ASCII_PAGINAS, PAGINAS_DINAMICAS, descricaoDaPagina, rotaDaPagina } from "./pages";
+import { MAPA_ASCII_PAGINAS, PAGINAS_DINAMICAS, rotaDaPagina, subtituloDaPagina } from "./pages";
 import { bancoConfigurado, lerComDisjuntor, sondarComDisjuntor } from "./painel-db";
 import { slugValido } from "./painel-tipos";
 import { buscarPaginaPublicada, listarPaginasPublicadas } from "./paginas-db";
@@ -147,7 +147,7 @@ function paginaDoContato(): PaginaDoSite | undefined {
   return {
     slug: bruta.slug,
     titulo: bruta.titulo || bruta.tituloOriginal,
-    resumo: bruta.abertura?.subtitulo ?? descricaoDaPagina(bruta, ""),
+    resumo: subtituloDaPagina(bruta, ""),
     grupo: "A Clínica",
     capa: null,
     html: "",

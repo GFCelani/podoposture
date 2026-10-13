@@ -21,7 +21,7 @@ import {
   type PostDoPainel,
   type ResumoDoPainel,
 } from "./painel-tipos";
-import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS, type PostBruto } from "./posts";
+import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS, RESUMOS_COMPLETADOS, type PostBruto } from "./posts";
 import { urlParaODriver } from "./url-do-banco";
 
 /**
@@ -424,11 +424,35 @@ let acervoPronto: Promise<number> | null = null;
  * novo — a promessa nao fica guardada com o erro dentro.
  */
 export function garantirAcervo(): Promise<number> {
-  acervoPronto ??= importarAcervo(BRUTOS_DO_JSON).catch((erro) => {
+  acervoPronto ??= importarAcervo(BRUTOS_DO_JSON).then(async (novos) => {
+    await completarResumosCortados();
+    return novos;
+  }).catch((erro) => {
     acervoPronto = null;
     throw erro;
   });
   return acervoPronto;
+}
+
+/**
+ * Resumo do GoDaddy cortado em "..." que a importacao gravou no banco, trocado
+ * pelo inteiro (lib/subtitulo-inteiro.ts). So onde o banco ainda tem
+ * exatamente o cortado: resumo editado no painel nao e' tocado. Depois da
+ * primeira vez, uma consulta que nao acha nada. Devolve quantos trocou.
+ */
+export async function completarResumosCortados(): Promise<number> {
+  if (RESUMOS_COMPLETADOS.length === 0) return 0;
+  const sql = bancoDoPainel();
+  const noBanco = await sql<{ slug: string; resumo: string }[]>`
+    SELECT slug, resumo FROM posts WHERE slug = ANY(${RESUMOS_COMPLETADOS.map((r) => r.slug)})`;
+  const atual = new Map(noBanco.map((l) => [l.slug, l.resumo]));
+  let trocados = 0;
+  for (const r of RESUMOS_COMPLETADOS) {
+    if (atual.get(r.slug) !== r.antigo) continue;
+    const linhas = await sql`UPDATE posts SET resumo = ${r.novo} WHERE slug = ${r.slug} AND resumo = ${r.antigo} RETURNING id`;
+    trocados += linhas.length;
+  }
+  return trocados;
 }
 
 /**

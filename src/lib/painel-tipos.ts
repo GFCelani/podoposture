@@ -89,9 +89,12 @@ export type ResumoDoPainel = Omit<PostDoPainel, "corpo">;
 
 export const LIMITE_SLUG = 80;
 
+/* resumo: 500, e nao mais 300, desde 2026-10-13: os subtitulos que deixaram
+   de sair cortados (lib/subtitulo-inteiro.ts) vao ate 443 caracteres
+   (Acupuntura), e com 300 a clinica nao conseguiria salvar a pagina. */
 export const LIMITES_POST = {
   titulo: 140,
-  resumo: 300,
+  resumo: 500,
   corpo: 120_000,
 } as const;
 

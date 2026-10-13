@@ -20,6 +20,14 @@ import { expect, test, type Page } from "@playwright/test";
  * as duas fotos da cliente ficam na coluna da direita sem deixar vazio (a
  * referencia dela foi regravada depois dessa correcao, e conferida a olho).
  *
+ * Em 2026-10-13 o TOPO de todas mudou de proposito e as referencias foram
+ * regravadas: o bloco de texto passou a ficar centrado na altura da foto
+ * (antes, rente a base dela; muda em 1440, nao em 390), e o subtitulo de
+ * seis paginas deixou de sair cortado em 155 caracteres (Acupuntura,
+ * Acupuntura Clinica, Baropodometria, Dor Lombar Cronica, Neuromodulacao,
+ * Palmilhas; muda tambem em 390). Abaixo do topo, conferido elemento a
+ * elemento (posicao relativa ao fim do topo, tamanho e texto), nada mudou.
+ *
  * Falha se qualquer pixel divergir (a tolerancia por pixel e' a padrao do
  * Playwright, para o antisserrilhado da fonte).
  */

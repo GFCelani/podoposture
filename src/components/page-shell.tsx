@@ -78,6 +78,9 @@ import { SocialBand } from "./social-band";
  */
 export type TipoDePagina = "tratamento" | "institucional" | "post";
 
+/** Acima disto o subtitulo do topo e' "longo" (data-longo, ver o <p> dele). */
+const SUBTITULO_LONGO = 240;
+
 /*
  * Async, e le o conteudo do site por conta propria: cabecalho, rodape, faixa
  * social e disco flutuante mostram o contato editado no painel, e as paginas
@@ -141,13 +144,10 @@ export async function PageShell({
           {/* O cabecalho e' chapa fixa fora do fluxo: este respiro de cima
               e' o que faz o conteudo nascer abaixo dela, e nao debaixo. */}
           <div className="ps-topo relative mx-auto max-w-[1240px] px-6 pt-32 pb-12 md:px-8 md:pt-36 md:pb-14 lg:px-10 lg:pt-44 lg:pb-16">
-            <div
-              className={
-                duasColunas
-                  ? `lg:grid lg:grid-cols-12 lg:gap-x-6 ${post ? "lg:items-start" : "lg:items-end"}`
-                  : ""
-              }
-            >
+            {/* Duas colunas: o bloco de texto centrado na altura da midia,
+                e nao mais rente a base dela (2026-10-13). Vale para pagina
+                e para post. No telefone empilha e nada disso entra. */}
+            <div className={duasColunas ? "lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6" : ""}>
               <div className={duasColunas ? "lg:col-span-7" : ""}>
                 {trilha && trilha.length > 0 && (
                   <Reveal>
@@ -236,7 +236,15 @@ export async function PageShell({
 
                 {subtitulo && (
                   <Reveal delay={220}>
-                    <p className="ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
+                    {/* data-longo: subtitulo inteiro que passa de 240 caracteres
+                        (paginas e posts do site antigo, ver
+                        lib/subtitulo-inteiro.ts) ganha corpo menor e a largura
+                        da coluna a partir de lg, para o topo continuar na
+                        primeira tela sem cortar o texto (globals.css). */}
+                    <p
+                      data-longo={subtitulo.length > SUBTITULO_LONGO ? "" : undefined}
+                      className="ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]"
+                    >
                       {subtituloLinhas ? <Linhas linhas={subtituloLinhas} /> : subtitulo}
                     </p>
                   </Reveal>

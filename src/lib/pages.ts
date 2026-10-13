@@ -115,9 +115,32 @@ export function rotuloDaPagina(pagina: Pagina): string {
  */
 export function descricaoDaPagina(pagina: Pagina, reserva: string = DESCRICAO_PADRAO): string {
   if (pagina.descricaoOriginal) return pagina.descricaoOriginal;
-  const m = pagina.html.match(/<p>([\s\S]*?)<\/p>/);
-  const texto = m ? m[1].replace(/<[^>]+>/g, "").trim() : "";
-  return texto.length > 60 ? `${texto.slice(0, 155).trimEnd()}…` : reserva;
+  const texto = primeiroParagrafo(pagina.html);
+  if (texto.length <= 60) return reserva;
+  // "…" so quando de fato corta (ate 2026-10-13 entrava sempre)
+  return texto.length > 155 ? `${texto.slice(0, 155).trimEnd()}…` : texto;
+}
+
+/**
+ * Subtitulo visivel da pagina: a abertura da cliente, senao a descricao do
+ * site antigo, senao o 1o paragrafo INTEIRO. Nunca a descricao de busca
+ * cortada em 155 caracteres, que era o que aparecia ate 2026-10-13 (ver
+ * lib/subtitulo-inteiro.ts).
+ */
+export function subtituloDaPagina(pagina: Pagina, reserva: string = DESCRICAO_PADRAO): string {
+  if (pagina.abertura) return pagina.abertura.subtitulo;
+  if (pagina.descricaoOriginal) return pagina.descricaoOriginal;
+  const texto = primeiroParagrafo(pagina.html);
+  return texto.length > 60 ? textoDoHtml(texto) : reserva;
+}
+
+/** O subtitulo como saia ate 2026-10-13, cortado: e' o que a correcao do banco procura. */
+export function subtituloCortadoAntigo(pagina: Pagina): string {
+  if (pagina.abertura) return pagina.abertura.subtitulo;
+  if (pagina.descricaoOriginal) return pagina.descricaoOriginal;
+  const texto = primeiroParagrafo(pagina.html);
+  return texto.length > 60 ? `${texto.slice(0, 155).trimEnd()}…` : "";
 }
 
 import { DESCRICAO_PADRAO } from "./site";
+import { primeiroParagrafo, textoDoHtml } from "./subtitulo-inteiro";

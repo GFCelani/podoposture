@@ -15,6 +15,8 @@
 import dados from "@/content/posts.json";
 import rotas from "@/content/rotas.json";
 
+import { resumoInteiro } from "./subtitulo-inteiro";
+
 export type PostBruto = {
   slug: string;
   titulo: string;
@@ -46,10 +48,21 @@ export type Post = {
 export const PREFIXO_POST = "/home/f/";
 export const BLOG_INDEX = "/nosso-blog";
 
-/** Os 68 migrados. Exportado porque `posts-do-site.ts` os une aos do painel. */
-export const BRUTOS_DO_JSON = (dados as PostBruto[])
-  .slice()
-  .sort((a, b) => b.dataISO.localeCompare(a.dataISO));
+const DO_JSON = (dados as PostBruto[]).slice().sort((a, b) => b.dataISO.localeCompare(a.dataISO));
+
+/**
+ * Os 68 migrados. Exportado porque `posts-do-site.ts` os une aos do painel.
+ * O resumo que o GoDaddy cortou em "..." sai completado ate o fim da frase
+ * (lib/subtitulo-inteiro.ts): e' ele o subtitulo do topo do post.
+ */
+export const BRUTOS_DO_JSON: PostBruto[] = DO_JSON.map((p) => ({ ...p, resumo: resumoInteiro(p.resumo, p.html) }));
+
+/** Resumo cortado do JSON e o inteiro: o que a importacao gravou no banco e o que deve estar la. */
+export const RESUMOS_COMPLETADOS = DO_JSON.flatMap((p, i) =>
+  BRUTOS_DO_JSON[i].resumo !== p.resumo
+    ? [{ slug: p.slug.normalize("NFC"), antigo: p.resumo, novo: BRUTOS_DO_JSON[i].resumo }]
+    : [],
+);
 
 const BRUTOS = BRUTOS_DO_JSON;
 

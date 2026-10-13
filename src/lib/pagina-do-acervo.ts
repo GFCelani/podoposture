@@ -13,7 +13,7 @@ import {
 import { chaveDaPagina, type ConteudoDoSite } from "./conteudo-tipos";
 import { ilustracaoDaPagina, type Foto } from "./ilustracao-da-pagina";
 import { NAV_GROUPS } from "./nav";
-import { PAGINAS_DINAMICAS, descricaoDaPagina, type Pagina } from "./pages";
+import { PAGINAS_DINAMICAS, descricaoDaPagina, subtituloDaPagina, type Pagina } from "./pages";
 import { dividirEmSecoes } from "./secoes";
 
 /**
@@ -98,7 +98,7 @@ export function paginaDoAcervo(pagina: Pagina, conteudo: ConteudoDoSite): Pagina
   const ilustracao = ilustracaoDaPagina(pagina.slug, chave ? conteudo[chave] : null);
   // A descricao de busca que a pagina tinha; vazia, ela usava a do site.
   const descricao = descricaoDaPagina(pagina, "");
-  const resumo = pagina.abertura?.subtitulo ?? descricao;
+  const resumo = subtituloDaPagina(pagina, "");
   return {
     slug: pagina.slug.normalize("NFC"),
     titulo: pagina.titulo || pagina.tituloOriginal || pagina.slug,

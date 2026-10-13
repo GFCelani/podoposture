@@ -2369,3 +2369,36 @@ a:focus-visible .marca-vertebra {
     line-height: 1.7;
   }
 }
+
+/* ===============================================================
+   TOPO DAS PAGINAS INTERNAS — subtitulo longo (data-longo, page-shell.tsx).
+
+   Desde 2026-10-13 o subtitulo nao e' mais cortado em 155 caracteres: os
+   que vinham do primeiro paragrafo do site antigo vao inteiros (305 na
+   Baropodometria, 443 na Acupuntura), e os resumos de post ate o fim da
+   frase. No corpo e na medida de 62ch eles empurravam o topo para fora da
+   primeira tela. A partir de lg, o longo ocupa a coluna inteira em corpo
+   menor; em janela baixa (ate 720px, o que inclui 1536 x 695), um degrau
+   abaixo; ate 560px (Full HD em 175%), mais um.
+   =============================================================== */
+@media (min-width: 1024px) {
+  .ps-subtitulo[data-longo] {
+    max-width: none;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 720px) {
+  .ps-subtitulo[data-longo] {
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 560px) {
+  .ps-subtitulo[data-longo] {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
