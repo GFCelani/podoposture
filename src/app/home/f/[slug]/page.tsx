@@ -11,6 +11,7 @@ import { medidaDaCapa, ogDaCapa } from "@/lib/capa";
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
 import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
+import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
 
 /**
  * Os posts do blog — os do GoDaddy e os escritos pelo painel.
@@ -156,7 +157,9 @@ export default async function PostDoBlog({
           </p>
         }
       >
-        <SecoesDeConteudo html={post.html} tipo="post" />
+        {/* O paragrafo que o topo ja mostra como subtitulo nao se repete aqui
+            (lib/subtitulo-inteiro.ts). */}
+        <SecoesDeConteudo html={semParagrafoRepetido(post.html, post.resumo)} tipo="post" />
         <PostsRelacionados posts={relacionados} />
         <ConviteConsulta />
       </PageShell>

@@ -15,6 +15,7 @@ import { NAV_GROUPS } from "@/lib/nav";
 import { SLUG_DO_ATENDIMENTO, ehInstitucional, fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import type { PaginaDoSite } from "@/lib/paginas-do-site";
 import { derivarContato } from "@/lib/site";
+import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
 
 /**
  * A composicao de uma pagina interna, sem leitura nenhuma.
@@ -132,7 +133,12 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
             comoSecao={false}
           />
         ) : (
-          <CorpoDaPagina slug={pagina.slug} html={pagina.html} tipo={tipo} fotos={fotosConhecidas(pagina.slug, conteudo)} />
+          <CorpoDaPagina
+            slug={pagina.slug}
+            html={semParagrafoRepetido(pagina.html, subtitulo)}
+            tipo={tipo}
+            fotos={fotosConhecidas(pagina.slug, conteudo)}
+          />
         )}
         <PaginasRelacionadas slug={pagina.slug} />
         <ConviteConsulta />
@@ -176,7 +182,7 @@ function PaginaDoAtendimento({ pagina }: { pagina: PaginaDoSite }) {
         trilha={trilhaDaPagina(pagina.grupo, titulo)}
         midia={pagina.capa ? <FotoEmMoldura foto={pagina.capa} /> : undefined}
       >
-        <CorpoDaPagina slug={pagina.slug} html={pagina.html} tipo="institucional" />
+        <CorpoDaPagina slug={pagina.slug} html={semParagrafoRepetido(pagina.html, pagina.resumo)} tipo="institucional" />
         <ConviteConsulta />
       </PageShell>
     </>

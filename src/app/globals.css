@@ -2339,6 +2339,46 @@ a:focus-visible .marca-vertebra {
   }
 }
 
+/* A FOTO DO TOPO PELA ALTURA DA JANELA. A moldura (foto, legenda em mono e
+   o passe-partout) nunca passa da janela: altura maxima de 100svh menos o
+   respiro de cima do topo (176px; 120 em janela baixa) e 16 de folga. Ela e'
+   uma coluna flex em que so a FOTO encolhe (min-height: 0), recortada pelo
+   object-cover, sem distorcer; a legenda fica inteira. Sem isso, em
+   1536 x 695 a moldura passava 5px da janela em quatro paginas, e em
+   1024 x 461 a largura pela altura deixava a moldura com 180px e a legenda
+   quebrava em oito linhas (Osteopatia, Flexo-distracao). Onde a moldura ja
+   cabe (1440 x 900, 1536 x 730), nada muda. */
+@media (min-width: 1024px) {
+  .ps-midia figure {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100svh - 176px - 16px);
+  }
+
+  .ps-midia figure > img {
+    min-height: 0;
+    flex: 0 1 auto;
+  }
+
+  .ps-midia figure > figcaption {
+    flex: none;
+  }
+}
+
+/* Em janela baixa o respiro de cima e' 120px, e a moldura nao estreita
+   abaixo de 240px: mais estreita, a legenda quebrava em linhas demais e
+   sobrava pouca altura para a foto. */
+@media (min-width: 1024px) and (max-height: 680px) {
+  .ps-midia {
+    width: min(100%, max(240px, calc((100svh - 160px - 96px) * 0.8 + 16px)));
+  }
+
+  .ps-midia figure {
+    max-height: calc(100svh - 120px - 16px);
+  }
+}
+
+
 /* Mais baixa ainda (Full HD em 175%, 1024x461): o emblema sai, a pagina se
    apresenta pela trilha e pelo titulo, e o subtitulo e a identificacao
    apertam o passo para o topo caber na primeira tela. */

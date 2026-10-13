@@ -5,6 +5,9 @@ import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { menuDoSite } from "@/lib/paginas-do-site";
 import { contatoDoCabecalho, derivarContato } from "@/lib/site";
 
+import { ajustarTitulo } from "@/lib/ajuste-do-titulo";
+
+import { AjusteDoTitulo } from "./ajuste-do-titulo";
 import { FloatingWhatsApp } from "./floating-whatsapp";
 import { PageGrid, SeamRuler } from "./layers";
 import { Reveal } from "./reveal";
@@ -77,6 +80,9 @@ import { SocialBand } from "./social-band";
  * ===========================================================================
  */
 export type TipoDePagina = "tratamento" | "institucional" | "post";
+
+/** O ajuste do titulo longo como script, para rodar antes da primeira pintura. */
+const AJUSTE_ANTES_DA_PINTURA = `(${ajustarTitulo.toString()})()`;
 
 /** Acima disto o subtitulo do topo e' "longo" (data-longo, ver o <p> dele). */
 const SUBTITULO_LONGO = 240;
@@ -277,6 +283,12 @@ export async function PageShell({
             </div>
 
           </div>
+
+          {/* Titulo longo reduzido ate o topo caber na primeira tela
+              (lib/ajuste-do-titulo.ts): aqui, antes da pintura; depois, no
+              componente, quando a fonte carrega e a janela muda. */}
+          <script dangerouslySetInnerHTML={{ __html: AJUSTE_ANTES_DA_PINTURA }} />
+          <AjusteDoTitulo />
         </header>
 
         {children}

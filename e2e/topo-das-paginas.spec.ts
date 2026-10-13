@@ -65,3 +65,46 @@ for (const caminho of PAGINAS) {
     expect(m.topoMidia, "foto abaixo do texto").toBeGreaterThan(m.baseTexto);
   });
 }
+
+/**
+ * O topo cabe na primeira tela a partir de 1024px: bloco de texto e moldura
+ * da foto terminam dentro da janela. Titulo longo desce de corpo ate caber,
+ * nunca abaixo de 28px (lib/ajuste-do-titulo.ts); a foto encolhe pela altura
+ * da janela (globals.css, "A FOTO DO TOPO PELA ALTURA DA JANELA").
+ */
+const CABE_EM = [
+  "/baropodometria",
+  "/tratamento-da-dor",
+  `/${encodeURIComponent("osteopatia")}`,
+  `/${encodeURIComponent("flexo-distração")}`,
+  "/acupuntura",
+];
+const JANELAS_BAIXAS: [number, number][] = [
+  [1536, 695],
+  [1366, 600],
+  [1280, 559],
+  [1097, 494],
+  [1024, 461],
+];
+
+for (const caminho of CABE_EM) {
+  for (const [largura, altura] of JANELAS_BAIXAS) {
+    test(`topo cabe na primeira tela: ${decodeURIComponent(caminho)} ${largura}x${altura}`, async ({ page }) => {
+      await page.setViewportSize({ width: largura, height: altura });
+      await page.goto(caminho, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(300);
+      const m = await page.evaluate(() => {
+        const [texto, midia] = [...(document.querySelector(".ps-topo > div")?.children ?? [])];
+        return {
+          texto: texto.getBoundingClientRect().bottom,
+          midia: midia ? midia.getBoundingClientRect().bottom : 0,
+          titulo: parseFloat(getComputedStyle(document.querySelector(".ps-titulo")!).fontSize),
+        };
+      });
+      expect(m.texto, "bloco de texto dentro da janela").toBeLessThanOrEqual(altura);
+      expect(m.midia, "moldura da foto dentro da janela").toBeLessThanOrEqual(altura);
+      expect(m.titulo, "titulo nao desce do minimo legivel").toBeGreaterThanOrEqual(28);
+    });
+  }
+}

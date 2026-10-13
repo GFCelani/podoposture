@@ -5,7 +5,7 @@ import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import { LIMITES_POST } from "./painel-tipos";
 import { PAGINAS_DINAMICAS, subtituloCortadoAntigo, subtituloDaPagina } from "./pages";
 import { BRUTOS_DO_JSON, RESUMOS_COMPLETADOS } from "./posts";
-import { resumoInteiro, textoDoHtml } from "./subtitulo-inteiro";
+import { resumoInteiro, semParagrafoRepetido, textoDoHtml } from "./subtitulo-inteiro";
 
 const CORTE = /(\.\.\.|…)\s*$/;
 
@@ -55,5 +55,36 @@ describe("nenhum subtitulo cortado", () => {
     expect(trocadas).toEqual(
       ["acupuntura", "acupuntura-clínica", "baropodometria", "dor-lombar-crônica", "neuromodulação", "palmilhas-personalizadas"].sort(),
     );
+  });
+});
+
+describe("semParagrafoRepetido", () => {
+  const html =
+    '<p>Mais de 30 anos.<br />\nAtendimento por <a href="/x"><strong>Claudia</strong></a>.</p>\n<h2>Depois</h2><p>Resto.</p>';
+
+  it("tira do corpo o primeiro paragrafo quando ele e' o subtitulo", () => {
+    expect(semParagrafoRepetido(html, "Mais de 30 anos. Atendimento por Claudia.")).toBe("<h2>Depois</h2><p>Resto.</p>");
+  });
+
+  it("subtitulo diferente, ou so o comeco do paragrafo, deixa o corpo inteiro", () => {
+    expect(semParagrafoRepetido(html, "Outro subtitulo escrito no painel.")).toBe(html);
+    expect(semParagrafoRepetido(html, "Mais de 30 anos.")).toBe(html);
+    expect(semParagrafoRepetido(html, "")).toBe(html);
+  });
+
+  it("acontece em 6 paginas e 12 posts do acervo", () => {
+    const paginas = paginasDoAcervo(CONTEUDO_PADRAO).filter((p) => semParagrafoRepetido(p.corpo, p.resumo) !== p.corpo);
+    expect(paginas.map((p) => p.slug).sort()).toEqual(
+      ["acupuntura", "acupuntura-clínica", "baropodometria", "dor-lombar-crônica", "neuromodulação", "palmilhas-personalizadas"].sort(),
+    );
+    const posts = BRUTOS_DO_JSON.filter((p) => semParagrafoRepetido(p.html, p.resumo) !== p.html);
+    expect(posts).toHaveLength(12);
+    // nada do texto se perde: o que sai do corpo e' exatamente o subtitulo
+    for (const p of posts) {
+      const corpo = textoDoHtml(p.html);
+      const resto = textoDoHtml(semParagrafoRepetido(p.html, p.resumo));
+      expect(corpo.startsWith(textoDoHtml(p.resumo)), p.slug).toBe(true);
+      expect(corpo.endsWith(resto), p.slug).toBe(true);
+    }
   });
 });

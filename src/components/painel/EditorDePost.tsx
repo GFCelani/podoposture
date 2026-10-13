@@ -8,6 +8,7 @@ import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
 import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
+import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
 import { ehInstitucional, modeloDaPagina } from "@/lib/paginas-antigas";
 import {
   AVISO_SAIU_DO_AR,
@@ -1131,7 +1132,12 @@ export function EditorDePost({
                 </div>
               </div>
               {campos.corpo.trim() ? (
-                <CorpoDaPagina slug={slugDaPagina} html={previa} tipo={tipoDaPrevia} fotos={fotosDoRegistro} />
+                <CorpoDaPagina
+                  slug={slugDaPagina}
+                  html={semParagrafoRepetido(previa, resumoDaPrevia)}
+                  tipo={tipoDaPrevia}
+                  fotos={fotosDoRegistro}
+                />
               ) : (
                 <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
                   Escreva o texto para ver como a página vai ficar.
@@ -1174,7 +1180,7 @@ export function EditorDePost({
                 )}
               </div>
               {campos.corpo.trim() ? (
-                <SecoesDeConteudo html={previa} tipo="post" />
+                <SecoesDeConteudo html={semParagrafoRepetido(previa, resumoDaPrevia)} tipo="post" />
               ) : (
                 <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
                   Escreva o texto para ver como ele vai ficar.

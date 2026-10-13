@@ -28,6 +28,11 @@ import { expect, test, type Page } from "@playwright/test";
  * Palmilhas; muda tambem em 390). Abaixo do topo, conferido elemento a
  * elemento (posicao relativa ao fim do topo, tamanho e texto), nada mudou.
  *
+ * Ainda em 2026-10-13, as mesmas seis foram regravadas de novo (1440 e 390):
+ * o primeiro paragrafo do corpo, identico ao subtitulo do topo, deixou de
+ * aparecer duas vezes (lib/subtitulo-inteiro.ts, semParagrafoRepetido). O
+ * topo ficou identico; a diferenca comeca no corpo.
+ *
  * Falha se qualquer pixel divergir (a tolerancia por pixel e' a padrao do
  * Playwright, para o antisserrilhado da fonte).
  */

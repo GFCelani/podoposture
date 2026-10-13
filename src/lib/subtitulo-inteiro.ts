@@ -64,3 +64,19 @@ export function resumoInteiro(resumo: string, html: string): string {
   const achou = fim.exec(corpo);
   return achou ? corpo.slice(0, achou.index + 1) : corpo;
 }
+
+/**
+ * O corpo sem o paragrafo que o topo ja mostra. Nas paginas e posts do site
+ * antigo o subtitulo e' o primeiro paragrafo do corpo, e ele aparecia duas
+ * vezes, no topo e logo abaixo. Se o primeiro <p> do corpo diz exatamente o
+ * subtitulo (comparado como texto: sem tags, entidades e espacos de
+ * diferenca), ele sai do corpo e o texto fica uma vez so, no topo. Qualquer
+ * diferenca, como um subtitulo escrito no painel ou um resumo que e' so o
+ * comeco do paragrafo, e o corpo volta inteiro.
+ */
+export function semParagrafoRepetido(html: string, subtitulo: string | null | undefined): string {
+  if (!subtitulo) return html;
+  const m = /<p\b[^>]*>([\s\S]*?)<\/p>\s*/i.exec(html);
+  if (!m || textoDoHtml(m[1]) !== textoDoHtml(subtitulo)) return html;
+  return html.slice(0, m.index) + html.slice(m.index + m[0].length);
+}
