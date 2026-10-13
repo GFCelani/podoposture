@@ -33,6 +33,11 @@ import { expect, test, type Page } from "@playwright/test";
  * aparecer duas vezes (lib/subtitulo-inteiro.ts, semParagrafoRepetido). O
  * topo ficou identico; a diferenca comeca no corpo.
  *
+ * E Dor Lombar Cronica e Neuromodulacao uma terceira vez (1440 e 390): o
+ * paragrafo que sobe para o topo leva a formatacao que tinha (o link e o
+ * negrito em "Claudia Meirelles", a quebra de linha; o negrito da frase de
+ * Neuromodulacao). So a linha do subtitulo muda.
+ *
  * Falha se qualquer pixel divergir (a tolerancia por pixel e' a padrao do
  * Playwright, para o antisserrilhado da fonte).
  */

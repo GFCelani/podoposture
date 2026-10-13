@@ -84,6 +84,9 @@ export type TipoDePagina = "tratamento" | "institucional" | "post";
 /** O ajuste do titulo longo como script, para rodar antes da primeira pintura. */
 const AJUSTE_ANTES_DA_PINTURA = `(${ajustarTitulo.toString()})()`;
 
+const CLASSE_DO_SUBTITULO =
+  "ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]";
+
 /** Acima disto o subtitulo do topo e' "longo" (data-longo, ver o <p> dele). */
 const SUBTITULO_LONGO = 240;
 
@@ -98,6 +101,7 @@ export async function PageShell({
   titulo,
   tituloLinhas,
   subtitulo,
+  subtituloHtml,
   subtituloLinhas,
   identificacao,
   trilha,
@@ -112,6 +116,10 @@ export async function PageShell({
       text-balance: uma linha por item, a partir de sm. */
   tituloLinhas?: string[];
   subtitulo?: string | null;
+  /** O subtitulo como HTML, quando ele e' o primeiro paragrafo do texto:
+      sobe com os links e o negrito que tinha (lib/subtitulo-inteiro.ts).
+      `subtitulo` continua sendo o mesmo texto, para medir. */
+  subtituloHtml?: string | null;
   /** Quebra escrita do subtitulo, mesma regra. */
   subtituloLinhas?: string[];
   /** Linhas de identificacao em mono sob o subtitulo (quem atende, onde). */
@@ -247,12 +255,20 @@ export async function PageShell({
                         lib/subtitulo-inteiro.ts) ganha corpo menor e a largura
                         da coluna a partir de lg, para o topo continuar na
                         primeira tela sem cortar o texto (globals.css). */}
-                    <p
-                      data-longo={subtitulo.length > SUBTITULO_LONGO ? "" : undefined}
-                      className="ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]"
-                    >
-                      {subtituloLinhas ? <Linhas linhas={subtituloLinhas} /> : subtitulo}
-                    </p>
+                    {subtituloHtml ? (
+                      <p
+                        data-longo={subtitulo.length > SUBTITULO_LONGO ? "" : undefined}
+                        className={CLASSE_DO_SUBTITULO}
+                        dangerouslySetInnerHTML={{ __html: subtituloHtml }}
+                      />
+                    ) : (
+                      <p
+                        data-longo={subtitulo.length > SUBTITULO_LONGO ? "" : undefined}
+                        className={CLASSE_DO_SUBTITULO}
+                      >
+                        {subtituloLinhas ? <Linhas linhas={subtituloLinhas} /> : subtitulo}
+                      </p>
+                    )}
                   </Reveal>
                 )}
 

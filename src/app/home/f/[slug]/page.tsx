@@ -11,7 +11,7 @@ import { medidaDaCapa, ogDaCapa } from "@/lib/capa";
 import { lerConteudoDoSite } from "@/lib/conteudo-do-site";
 import { BLOG_INDEX, hrefDoPost } from "@/lib/posts";
 import { buscarPostDoSite, relacionadosDoSite, slugsDePostAGerar } from "@/lib/posts-do-site";
-import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
+import { topoDoTexto } from "@/lib/subtitulo-inteiro";
 
 /**
  * Os posts do blog — os do GoDaddy e os escritos pelo painel.
@@ -100,6 +100,10 @@ export default async function PostDoBlog({
      capa e' cortada so por baixo, onde a arte nao tem o titulo. Nunca mais
      estreita que a capa, que o corte seria nas laterais. Sem medida (capa de
      fora das duas fontes conhecidas), 3:2, a razao da capa mais larga. */
+  /* Resumo que e' o primeiro paragrafo sobe com a formatacao dele; o que e'
+     so o comeco do texto nao aparece no topo (lib/subtitulo-inteiro.ts). A
+     descricao de busca continua sendo o resumo. */
+  const topo = topoDoTexto(post.html, post.resumo);
   const razao = medida ? Math.max(medida.largura / medida.altura, 4 / 5) : 3 / 2;
 
   return (
@@ -122,7 +126,8 @@ export default async function PostDoBlog({
       <PageShell
         tipo="post"
         titulo={post.titulo}
-        subtitulo={post.resumo}
+        subtitulo={topo.subtitulo}
+        subtituloHtml={topo.subtituloHtml}
         trilha={[
           { nome: "Nosso Blog", href: BLOG_INDEX },
           { nome: post.titulo },
@@ -159,7 +164,7 @@ export default async function PostDoBlog({
       >
         {/* O paragrafo que o topo ja mostra como subtitulo nao se repete aqui
             (lib/subtitulo-inteiro.ts). */}
-        <SecoesDeConteudo html={semParagrafoRepetido(post.html, post.resumo)} tipo="post" />
+        <SecoesDeConteudo html={topo.corpo} tipo="post" />
         <PostsRelacionados posts={relacionados} />
         <ConviteConsulta />
       </PageShell>

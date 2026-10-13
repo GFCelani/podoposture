@@ -2442,3 +2442,24 @@ a:focus-visible .marca-vertebra {
     line-height: 1.5;
   }
 }
+
+/* Subtitulo que veio do primeiro paragrafo do texto traz a formatacao dele
+   (page-shell.tsx, subtituloHtml): link e negrito como no corpo. */
+.ps-subtitulo a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  transition: text-decoration-color var(--dur-media, 220ms) ease;
+}
+
+.ps-subtitulo a:hover {
+  text-decoration-color: currentColor;
+}
+
+.ps-subtitulo strong,
+.ps-subtitulo b {
+  font-weight: 600;
+  color: var(--color-ink-strong);
+}

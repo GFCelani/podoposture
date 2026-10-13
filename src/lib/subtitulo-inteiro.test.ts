@@ -5,7 +5,7 @@ import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import { LIMITES_POST } from "./painel-tipos";
 import { PAGINAS_DINAMICAS, subtituloCortadoAntigo, subtituloDaPagina } from "./pages";
 import { BRUTOS_DO_JSON, RESUMOS_COMPLETADOS } from "./posts";
-import { resumoInteiro, semParagrafoRepetido, textoDoHtml } from "./subtitulo-inteiro";
+import { resumoInteiro, textoDoHtml, topoDoTexto } from "./subtitulo-inteiro";
 
 const CORTE = /(\.\.\.|…)\s*$/;
 
@@ -58,33 +58,46 @@ describe("nenhum subtitulo cortado", () => {
   });
 });
 
-describe("semParagrafoRepetido", () => {
+describe("topoDoTexto", () => {
   const html =
     '<p>Mais de 30 anos.<br />\nAtendimento por <a href="/x"><strong>Claudia</strong></a>.</p>\n<h2>Depois</h2><p>Resto.</p>';
 
-  it("tira do corpo o primeiro paragrafo quando ele e' o subtitulo", () => {
-    expect(semParagrafoRepetido(html, "Mais de 30 anos. Atendimento por Claudia.")).toBe("<h2>Depois</h2><p>Resto.</p>");
+  it("subtitulo igual ao primeiro paragrafo: sobe com links e formatacao e sai do corpo", () => {
+    const t = topoDoTexto(html, "Mais de 30 anos. Atendimento por Claudia.");
+    expect(t.subtituloHtml).toBe('Mais de 30 anos.<br />\nAtendimento por <a href="/x"><strong>Claudia</strong></a>.');
+    expect(t.corpo).toBe("<h2>Depois</h2><p>Resto.</p>");
   });
 
-  it("subtitulo diferente, ou so o comeco do paragrafo, deixa o corpo inteiro", () => {
-    expect(semParagrafoRepetido(html, "Outro subtitulo escrito no painel.")).toBe(html);
-    expect(semParagrafoRepetido(html, "Mais de 30 anos.")).toBe(html);
-    expect(semParagrafoRepetido(html, "")).toBe(html);
+  it("subtitulo que e' so o comeco do texto: topo sem subtitulo, corpo inteiro", () => {
+    expect(topoDoTexto(html, "Mais de 30 anos.")).toEqual({ subtitulo: null, subtituloHtml: null, corpo: html });
   });
 
-  it("acontece em 6 paginas e 12 posts do acervo", () => {
-    const paginas = paginasDoAcervo(CONTEUDO_PADRAO).filter((p) => semParagrafoRepetido(p.corpo, p.resumo) !== p.corpo);
-    expect(paginas.map((p) => p.slug).sort()).toEqual(
+  it("subtitulo proprio: aparece como texto, corpo inteiro", () => {
+    expect(topoDoTexto(html, "Outro subtitulo escrito no painel.")).toEqual({
+      subtitulo: "Outro subtitulo escrito no painel.",
+      subtituloHtml: null,
+      corpo: html,
+    });
+    expect(topoDoTexto(html, "")).toEqual({ subtitulo: null, subtituloHtml: null, corpo: html });
+  });
+
+  it("no acervo: 6 paginas e 12 posts sobem o paragrafo, 11 posts ficam sem subtitulo", () => {
+    const paginas = paginasDoAcervo(CONTEUDO_PADRAO).map((p) => ({ slug: p.slug, t: topoDoTexto(p.corpo, p.resumo) }));
+    expect(paginas.filter((p) => p.t.subtituloHtml).map((p) => p.slug).sort()).toEqual(
       ["acupuntura", "acupuntura-clínica", "baropodometria", "dor-lombar-crônica", "neuromodulação", "palmilhas-personalizadas"].sort(),
     );
-    const posts = BRUTOS_DO_JSON.filter((p) => semParagrafoRepetido(p.html, p.resumo) !== p.html);
-    expect(posts).toHaveLength(12);
+    // subtitulo vazio (Curriculo Profissional) cai na descricao do site; nenhum e' so o comeco do texto
+    expect(paginas.filter((p) => p.t.subtitulo === null && p.slug !== "currículo-profissional")).toHaveLength(0);
+    const lombar = paginas.find((p) => p.slug === "dor-lombar-crônica")!;
+    expect(lombar.t.subtituloHtml).toMatch(/<a href="[^"]+"><strong>Claudia Meirelles<\/strong><\/a>/);
+
+    const posts = BRUTOS_DO_JSON.map((p) => ({ p, t: topoDoTexto(p.html, p.resumo) }));
+    expect(posts.filter((x) => x.t.subtituloHtml)).toHaveLength(12);
+    expect(posts.filter((x) => x.t.subtitulo === null)).toHaveLength(11);
     // nada do texto se perde: o que sai do corpo e' exatamente o subtitulo
-    for (const p of posts) {
-      const corpo = textoDoHtml(p.html);
-      const resto = textoDoHtml(semParagrafoRepetido(p.html, p.resumo));
-      expect(corpo.startsWith(textoDoHtml(p.resumo)), p.slug).toBe(true);
-      expect(corpo.endsWith(resto), p.slug).toBe(true);
+    for (const { p, t } of posts.filter((x) => x.t.subtituloHtml)) {
+      expect(textoDoHtml(t.subtituloHtml!)).toBe(textoDoHtml(p.resumo));
+      expect(textoDoHtml(p.html).endsWith(textoDoHtml(t.corpo)), p.slug).toBe(true);
     }
   });
 });

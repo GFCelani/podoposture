@@ -66,17 +66,41 @@ export function resumoInteiro(resumo: string, html: string): string {
 }
 
 /**
- * O corpo sem o paragrafo que o topo ja mostra. Nas paginas e posts do site
- * antigo o subtitulo e' o primeiro paragrafo do corpo, e ele aparecia duas
- * vezes, no topo e logo abaixo. Se o primeiro <p> do corpo diz exatamente o
- * subtitulo (comparado como texto: sem tags, entidades e espacos de
- * diferenca), ele sai do corpo e o texto fica uma vez so, no topo. Qualquer
- * diferenca, como um subtitulo escrito no painel ou um resumo que e' so o
- * comeco do paragrafo, e o corpo volta inteiro.
+ * O que vai no topo e o que fica no corpo, para paginas e posts cujo
+ * subtitulo vem do proprio texto (o site antigo; o resumo automatico do
+ * painel). Tres casos, comparando como texto (sem tags, entidades e
+ * espacos de diferenca):
+ *
+ * - O subtitulo E' o primeiro paragrafo: o paragrafo sai do corpo e vai
+ *   para o topo com o HTML que tinha (links, negrito, quebra de linha). O
+ *   texto aparece uma vez so e nada da formatacao se perde.
+ * - O subtitulo e' so o COMECO do texto (o trecho que o blog antigo
+ *   cortava, o resumo automatico): o topo fica sem subtitulo e o corpo vai
+ *   inteiro. Mostrar o trecho no topo era repetir metade do paragrafo.
+ * - Qualquer outro subtitulo (escrito no painel): aparece no topo como
+ *   texto, e o corpo vai inteiro.
  */
-export function semParagrafoRepetido(html: string, subtitulo: string | null | undefined): string {
-  if (!subtitulo) return html;
-  const m = /<p\b[^>]*>([\s\S]*?)<\/p>\s*/i.exec(html);
-  if (!m || textoDoHtml(m[1]) !== textoDoHtml(subtitulo)) return html;
-  return html.slice(0, m.index) + html.slice(m.index + m[0].length);
+export type TopoDoTexto = {
+  /** O subtitulo do topo, em texto; null = topo sem subtitulo. */
+  subtitulo: string | null;
+  /** O HTML do paragrafo, quando o subtitulo e' o primeiro paragrafo do corpo. */
+  subtituloHtml: string | null;
+  corpo: string;
+};
+
+const PRIMEIRO_PARAGRAFO = /<p\b[^>]*>([\s\S]*?)<\/p>\s*/i;
+
+export function topoDoTexto(html: string, subtitulo: string | null | undefined): TopoDoTexto {
+  if (!subtitulo) return { subtitulo: null, subtituloHtml: null, corpo: html };
+  const alvo = textoDoHtml(subtitulo);
+  const m = PRIMEIRO_PARAGRAFO.exec(html);
+  if (m && textoDoHtml(m[1]) === alvo) {
+    return {
+      subtitulo,
+      subtituloHtml: m[1].trim(),
+      corpo: html.slice(0, m.index) + html.slice(m.index + m[0].length),
+    };
+  }
+  if (alvo && textoDoHtml(html).startsWith(alvo)) return { subtitulo: null, subtituloHtml: null, corpo: html };
+  return { subtitulo, subtituloHtml: null, corpo: html };
 }

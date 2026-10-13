@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { markdownParaHtml, markdownParaTexto, resumoAutomatico } from "./markdown";
+import { LIMITES_POST } from "./painel-tipos";
 
 /**
  * O corpo do post e injetado com `dangerouslySetInnerHTML` e nao passa por
@@ -121,12 +122,27 @@ describe("resumoAutomatico", () => {
     expect(resumoAutomatico("Texto curto.")).toBe("Texto curto.");
   });
 
-  it("corta na fronteira de palavra", () => {
-    const longo = "palavra ".repeat(60).trim();
-    const r = resumoAutomatico(longo, 100);
-    expect(r.length).toBeLessThanOrEqual(101);
-    expect(r.endsWith("…")).toBe(true);
-    expect(r).not.toMatch(/pala…$/);
+  it("vai ate o fim da frase em que o limite cai, sem reticencias", () => {
+    const texto = "Primeira frase curta. " + "Segunda frase que passa do limite ".repeat(4).trim() + ". Terceira.";
+    const r = resumoAutomatico(texto, 40);
+    expect(r).toBe("Primeira frase curta. " + "Segunda frase que passa do limite ".repeat(4).trim() + ".");
+  });
+
+  it("frase que passa do teto do painel: fica nas frases inteiras antes do limite", () => {
+    const texto = "Uma frase inteira e completa aqui no comeco. " + "palavra ".repeat(120) + "fim.";
+    expect(resumoAutomatico(texto, 100, 500)).toBe("Uma frase inteira e completa aqui no comeco.");
+  });
+
+  it("sem frase nenhuma ate o teto: ultima palavra inteira antes dele, sem reticencias", () => {
+    const longo = "palavra ".repeat(120).trim();
+    const r = resumoAutomatico(longo, 100, 500);
+    expect(r.length).toBeLessThanOrEqual(500);
+    expect(r).toMatch(/palavra$/);
+  });
+
+  it("nunca passa do limite do campo no painel", () => {
+    const texto = "Frase. " + "x".repeat(30) + " " + "longa ".repeat(200) + "fim.";
+    expect(resumoAutomatico(texto).length).toBeLessThanOrEqual(LIMITES_POST.resumo);
   });
 
   it("nao carrega marcacao", () => {

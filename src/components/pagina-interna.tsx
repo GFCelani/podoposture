@@ -15,7 +15,7 @@ import { NAV_GROUPS } from "@/lib/nav";
 import { SLUG_DO_ATENDIMENTO, ehInstitucional, fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import type { PaginaDoSite } from "@/lib/paginas-do-site";
 import { derivarContato } from "@/lib/site";
-import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
+import { topoDoTexto } from "@/lib/subtitulo-inteiro";
 
 /**
  * A composicao de uma pagina interna, sem leitura nenhuma.
@@ -97,6 +97,9 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
   const eContato = pagina.especial === "contato";
   const antiga = modeloDaPagina(pagina.slug) === "antigo";
   const quebras = quebrasDaAbertura(pagina.slug, titulo, subtitulo);
+  /* Subtitulo que e' o primeiro paragrafo sobe com a formatacao dele e sai
+     do corpo; o que e' so o comeco do texto nao aparece no topo. */
+  const topo = topoDoTexto(pagina.html, subtitulo);
   /* Pagina antiga sem foto ao lado do titulo mostra o rotulo da foto que
      falta, como sempre mostrou; a nova vai sem moldura. */
   const placeholder = antiga && !pagina.capa ? ilustracaoDaPagina(pagina.slug, null).placeholder : undefined;
@@ -114,8 +117,9 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
         tipo={tipo}
         titulo={titulo}
         tituloLinhas={quebras.titulo}
-        subtitulo={subtitulo}
-        subtituloLinhas={quebras.subtitulo}
+        subtitulo={topo.subtitulo}
+        subtituloHtml={topo.subtituloHtml}
+        subtituloLinhas={topo.subtitulo ? quebras.subtitulo : undefined}
         identificacao={pagina.identificacao.length > 0 ? pagina.identificacao : undefined}
         trilha={trilhaDaPagina(pagina.grupo, rotulo)}
         glifo={`/${pagina.slug.normalize("NFC")}`}
@@ -135,7 +139,7 @@ export function PaginaInterna({ pagina, conteudo }: { pagina: PaginaDoSite; cont
         ) : (
           <CorpoDaPagina
             slug={pagina.slug}
-            html={semParagrafoRepetido(pagina.html, subtitulo)}
+            html={topo.corpo}
             tipo={tipo}
             fotos={fotosConhecidas(pagina.slug, conteudo)}
           />
@@ -170,6 +174,7 @@ function PaginaDoAtendimento({ pagina }: { pagina: PaginaDoSite }) {
   const caminho = `/${pagina.slug}`;
   const descricao = pagina.descricao || pagina.resumo;
   const linhas = pagina.resumo === ABERTURA_DO_ATENDIMENTO.join(" ") ? [...ABERTURA_DO_ATENDIMENTO] : undefined;
+  const topo = topoDoTexto(pagina.html, pagina.resumo);
   return (
     <>
       <TrilhaJsonLd itens={[{ nome: titulo, caminho }]} />
@@ -177,12 +182,13 @@ function PaginaDoAtendimento({ pagina }: { pagina: PaginaDoSite }) {
       <PageShell
         tipo="institucional"
         titulo={titulo}
-        subtitulo={pagina.resumo || undefined}
-        subtituloLinhas={linhas}
+        subtitulo={topo.subtitulo}
+        subtituloHtml={topo.subtituloHtml}
+        subtituloLinhas={topo.subtitulo ? linhas : undefined}
         trilha={trilhaDaPagina(pagina.grupo, titulo)}
         midia={pagina.capa ? <FotoEmMoldura foto={pagina.capa} /> : undefined}
       >
-        <CorpoDaPagina slug={pagina.slug} html={semParagrafoRepetido(pagina.html, pagina.resumo)} tipo="institucional" />
+        <CorpoDaPagina slug={pagina.slug} html={topo.corpo} tipo="institucional" />
         <ConviteConsulta />
       </PageShell>
     </>

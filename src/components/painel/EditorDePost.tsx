@@ -8,7 +8,7 @@ import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
 import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
-import { semParagrafoRepetido } from "@/lib/subtitulo-inteiro";
+import { topoDoTexto, type TopoDoTexto } from "@/lib/subtitulo-inteiro";
 import { ehInstitucional, modeloDaPagina } from "@/lib/paginas-antigas";
 import {
   AVISO_SAIU_DO_AR,
@@ -390,6 +390,10 @@ export function EditorDePost({
     () => (verPrevia ? campos.resumo || resumoAutomatico(campos.corpo) : ""),
     [verPrevia, campos.resumo, campos.corpo],
   );
+  // O topo e o corpo como o site monta (lib/subtitulo-inteiro.ts): subtitulo
+  // igual ao primeiro paragrafo sobe com a formatacao e sai do corpo; o que e'
+  // so o comeco do texto, como o resumo automatico, nao aparece no topo.
+  const topoDaPrevia = useMemo(() => topoDoTexto(previa, resumoDaPrevia), [previa, resumoDaPrevia]);
 
   // A pagina na previa passa pelo renderizador dela: a antiga (endereco do
   // site antigo) pelo dela, a nova (ainda sem endereco, ou criada aqui) pelo
@@ -1109,11 +1113,7 @@ export function EditorDePost({
                     <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
                       {campos.titulo || "Título da página"}
                     </p>
-                    {resumoDaPrevia && (
-                      <p className="mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
-                        {resumoDaPrevia}
-                      </p>
-                    )}
+                    <SubtituloDaPrevia topo={topoDaPrevia} />
                   </div>
                   {campos.capa && (
                     <figure className="mt-10 max-w-[360px] overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate lg:col-span-4 lg:col-start-9 lg:mt-0 lg:max-w-none">
@@ -1134,7 +1134,7 @@ export function EditorDePost({
               {campos.corpo.trim() ? (
                 <CorpoDaPagina
                   slug={slugDaPagina}
-                  html={semParagrafoRepetido(previa, resumoDaPrevia)}
+                  html={topoDaPrevia.corpo}
                   tipo={tipoDaPrevia}
                   fotos={fotosDoRegistro}
                 />
@@ -1165,11 +1165,7 @@ export function EditorDePost({
                 <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
                   {campos.titulo || "Título do texto"}
                 </p>
-                {resumoDaPrevia && (
-                  <p className="mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]">
-                    {resumoDaPrevia}
-                  </p>
-                )}
+                <SubtituloDaPrevia topo={topoDaPrevia} />
                 {campos.capa && (
                   /* No site a capa vai inteira, na proporcao dela, ao lado da
                      abertura; aqui so interessa mostrar que nada e' cortado. */
@@ -1180,7 +1176,7 @@ export function EditorDePost({
                 )}
               </div>
               {campos.corpo.trim() ? (
-                <SecoesDeConteudo html={semParagrafoRepetido(previa, resumoDaPrevia)} tipo="post" />
+                <SecoesDeConteudo html={topoDaPrevia.corpo} tipo="post" />
               ) : (
                 <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
                   Escreva o texto para ver como ele vai ficar.
@@ -1275,5 +1271,16 @@ export function EditorDePost({
         )}
       </div>
     </div>
+  );
+}
+
+/** O subtitulo da previa como o topo do site mostra (ver topoDaPrevia). */
+function SubtituloDaPrevia({ topo }: { topo: TopoDoTexto }) {
+  if (!topo.subtitulo) return null;
+  const classe = "ps-subtitulo mt-6 max-w-[62ch] text-[1.0625rem] leading-[1.7] text-muted md:mt-7 md:text-[1.125rem]";
+  return topo.subtituloHtml ? (
+    <p className={classe} dangerouslySetInnerHTML={{ __html: topo.subtituloHtml }} />
+  ) : (
+    <p className={classe}>{topo.subtitulo}</p>
   );
 }

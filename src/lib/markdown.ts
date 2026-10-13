@@ -166,12 +166,30 @@ export function contarPalavras(corpo: string): number {
 
 /**
  * Resumo tirado do proprio texto, quando quem escreveu nao dita um.
- * Corta na fronteira de palavra para nao terminar no meio de uma.
+ *
+ * Vai ate o fim da frase em que o `limite` cai, como os resumos do blog
+ * antigo depois de 2026-10-13 (lib/subtitulo-inteiro.ts): nunca termina no
+ * meio de palavra nem com reticencias. Ate entao cortava em 180 caracteres
+ * com "…", e o corte aparecia no topo da pagina como subtitulo.
+ *
+ * `teto` e' o limite do campo no painel (LIMITES_POST.resumo): o resumo e'
+ * gerado antes da validacao, e passar dele impediria salvar. Se a frase do
+ * limite termina depois do teto, vale a ultima frase inteira antes do
+ * limite; se nenhuma frase termina ate o teto, a ultima palavra inteira
+ * antes dele.
  */
-export function resumoAutomatico(corpo: string, limite = 180): string {
+export function resumoAutomatico(corpo: string, limite = 180, teto = 500): string {
   const t = markdownParaTexto(corpo);
   if (t.length <= limite) return t;
-  const corte = t.slice(0, limite);
+  const fimDeFrase = /[.!?…](?=\s|$)/g;
+  fimDeFrase.lastIndex = limite - 1;
+  const depois = fimDeFrase.exec(t);
+  if (depois && depois.index < teto) return t.slice(0, depois.index + 1);
+  let ultima = -1;
+  const antes = /[.!?…](?=\s|$)/g;
+  for (let m = antes.exec(t); m && m.index < limite; m = antes.exec(t)) ultima = m.index;
+  if (ultima > 40) return t.slice(0, ultima + 1);
+  const corte = t.slice(0, teto);
   const ultimoEspaco = corte.lastIndexOf(" ");
-  return `${(ultimoEspaco > 40 ? corte.slice(0, ultimoEspaco) : corte).trimEnd()}…`;
+  return (ultimoEspaco > 40 ? corte.slice(0, ultimoEspaco) : corte).trimEnd();
 }
