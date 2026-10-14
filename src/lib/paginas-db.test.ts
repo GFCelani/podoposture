@@ -127,6 +127,37 @@ describe.skipIf(!URL_DE_TESTE)("paginas no Postgres", () => {
     expect(fora?.pagina.categoria).toBe("");
   });
 
+  it("a ordem nova do grupo vale no painel e no menu do site; lista velha e' recusada sem mexer em nada", async () => {
+    const { montarMenu } = await import("./menu");
+    const doGrupo = async () =>
+      (await db.listarTodasAsPaginas()).filter((p) => p.categoria === "Tratamentos").map((p) => p.id);
+    const antes = await doGrupo();
+    expect(antes.length).toBeGreaterThan(2);
+
+    const invertida = [...antes].reverse();
+    expect(await db.reordenarGrupo("Tratamentos", invertida)).toEqual({ ok: true });
+    expect(await doGrupo()).toEqual(invertida);
+    const menu = montarMenu(await db.listarPaginasPublicadas()).find((g) => g.label === "Tratamentos")!;
+    const titulos = new Map((await db.listarTodasAsPaginas()).map((p) => [p.id, `/${p.slug}`]));
+    expect(menu.items.map((i) => i.href.normalize("NFC"))).toEqual(invertida.map((id) => titulos.get(id)!.normalize("NFC")));
+
+    // outra janela criou uma pagina no grupo: a lista que ela tinha ficou velha
+    const { pagina } = await db.criarPagina(NOVA);
+    expect(await db.reordenarGrupo("Tratamentos", antes)).toEqual({ ok: false, motivo: "desatualizada" });
+    expect(await doGrupo()).toEqual([...invertida, pagina.id]);
+
+    // id de outro grupo, ou faltando um, tambem
+    const tecnica = (await db.listarTodasAsPaginas()).find((p) => p.categoria === "Técnicas")!;
+    expect((await db.reordenarGrupo("Tratamentos", [...invertida, tecnica.id])).ok).toBe(false);
+    expect((await db.reordenarGrupo("Tratamentos", invertida)).ok).toBe(false);
+
+    // com a lista certa, a nova pode ir para o topo; o rascunho entra na ordem mas nao no menu
+    expect((await db.reordenarGrupo("Tratamentos", [pagina.id, ...antes])).ok).toBe(true);
+    expect(await doGrupo()).toEqual([pagina.id, ...antes]);
+    const noMenu = montarMenu(await db.listarPaginasPublicadas()).find((g) => g.label === "Tratamentos")!;
+    expect(noMenu.items.map((i) => i.href)).not.toContain(`/${pagina.slug}`);
+  });
+
   it("pagina do codigo apagada nao volta na proxima importacao", async () => {
     const quem = (await db.listarTodasAsPaginas()).find((p) => p.slug === "rpg")!;
     expect(await db.apagarPagina(quem.id)).toBe("rpg");

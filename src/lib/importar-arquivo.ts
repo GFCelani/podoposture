@@ -54,18 +54,107 @@ export function conferirArquivo(nome: string, tamanho: number): ErroDeImportacao
   return null;
 }
 
+/* ------------------------------------------------------------------- leitura */
+
+/**
+ * Os bytes do arquivo em texto. `File.text()` le sempre como UTF-8, e o .md
+ * salvo como "ANSI" no Windows (Bloco de Notas antigo, "Salvar como texto" do
+ * Word) chegava com losango no lugar de cada acento. Aqui: UTF-16 pelo BOM,
+ * UTF-8 quando os bytes sao UTF-8 valido, senao Windows-1252, a codificacao
+ * de texto do Windows em portugues.
+ */
+export function lerTextoDoArquivo(dados: ArrayBuffer): string {
+  const bytes = new Uint8Array(dados);
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder("utf-16le").decode(bytes.subarray(2));
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder("utf-16be").decode(bytes.subarray(2));
+  try {
+    // fatal: byte que nao e' UTF-8 lanca, em vez de virar losango calado
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return windows1252(bytes);
+  }
+}
+
+/**
+ * 0x80-0x9F do Windows-1252 (aspas curvas, travessao, reticencias, euro...).
+ * A tabela e' feita aqui porque o `TextDecoder("windows-1252")` do Node le
+ * esses bytes como Latin-1 e devolve caracteres de controle; o resto do
+ * Windows-1252 e' igual ao Latin-1. Byte sem caractere fica como esta.
+ */
+const DE_0X80_A_0X9F = "€\x81‚ƒ„…†‡ˆ‰Š‹Œ\x8DŽ\x8F\x90‘’“”•–—˜™š›œ\x9DžŸ";
+
+function windows1252(bytes: Uint8Array): string {
+  let texto = "";
+  for (const b of bytes) texto += b >= 0x80 && b <= 0x9f ? DE_0X80_A_0X9F[b - 0x80] : String.fromCharCode(b);
+  return texto;
+}
+
 /* --------------------------------------------------------------- frontmatter */
 
+/**
+ * O frontmatter YAML, so no que interessa: `chave: valor` de uma linha e os
+ * blocos `>`/`|` (que viram uma linha so, porque titulo e subtitulo sao uma
+ * linha). Lista e mapa aninhado sao ignorados.
+ */
 function lerFrontmatter(texto: string): { campos: Record<string, string>; resto: string } {
   const m = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/.exec(texto);
   if (!m) return { campos: {}, resto: texto };
   const campos: Record<string, string> = {};
-  for (const linha of m[1].split("\n")) {
-    const par = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(linha);
+  const linhas = m[1].split("\n");
+  for (let i = 0; i < linhas.length; i += 1) {
+    const par = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(linhas[i]);
     if (!par) continue;
-    campos[par[1].toLowerCase()] = par[2].trim().replace(/^(["'])([\s\S]*)\1$/, "$2").trim();
+    let valor = par[2].trim();
+    if (/^[>|][+-]?$/.test(valor)) {
+      const bloco: string[] = [];
+      while (i + 1 < linhas.length && (/^\s+\S/.test(linhas[i + 1]) || linhas[i + 1].trim() === "")) {
+        i += 1;
+        bloco.push(linhas[i].trim());
+      }
+      valor = bloco.filter(Boolean).join(" ");
+    }
+    campos[par[1].toLowerCase()] = valor.replace(/^(["'])([\s\S]*)\1$/, "$2").trim();
   }
   return { campos, resto: texto.slice(m[0].length) };
+}
+
+/* -------------------------------------------------------------------- limpeza */
+
+/** Aplica `trocar` so no texto fora dos blocos de codigo (``` e ~~~). */
+function foraDasCercas(texto: string, trocar: (trecho: string) => string): string {
+  const partes: string[] = [];
+  let fora: string[] = [];
+  let dentro = false;
+  const fechar = () => {
+    if (fora.length) partes.push(trocar(fora.join("\n")));
+    fora = [];
+  };
+  for (const linha of texto.split("\n")) {
+    const cerca = /^\s*(```|~~~)/.test(linha);
+    if (dentro || cerca) {
+      fechar();
+      partes.push(linha);
+      if (cerca) dentro = !dentro;
+    } else {
+      fora.push(linha);
+    }
+  }
+  fechar();
+  return partes.join("\n");
+}
+
+/**
+ * O que outros editores escrevem e o site nao mostra: comentario HTML (sai) e
+ * os atalhos do Obsidian — `[[Pagina|texto]]` vira o texto, e `![[foto.png]]`
+ * vira imagem comum, que segue a regra das imagens (arquivo local sai, com
+ * aviso).
+ */
+function limparMarcasDeEditor(trecho: string): string {
+  return trecho
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/!\[\[([^\]|]+?)(?:\|[^\]]*)?\]\]/g, (_, arquivo: string) => `![](<${arquivo.trim()}>)`)
+    .replace(/\[\[([^\]|]+?)\|([^\]]+?)\]\]/g, "$2")
+    .replace(/\[\[([^\]]+?)\]\]/g, (_, alvo: string) => alvo.replace(/#.*$/, "").trim());
 }
 
 /* -------------------------------------------------------------------- blocos */
@@ -120,7 +209,10 @@ function imagemDoSite(src: string): boolean {
 function tratarImagens(corpo: string, avisos: string[]): string {
   const externas: string[] = [];
   const locais: string[] = [];
-  const saida = corpo.replace(/!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g, (inteira, _alt: string, src: string) => {
+  // O endereco entre < > pode ter espaco (nome de arquivo do Obsidian); solto, nao.
+  const imagem = /!\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^)\s]+))(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g;
+  const saida = corpo.replace(imagem, (inteira, _alt: string, entreSinais: string | undefined, solto: string | undefined) => {
+    const src = (entreSinais ?? solto ?? "").trim();
     if (imagemDoSite(src)) return inteira;
     if (/^https?:\/\//i.test(src)) {
       externas.push(src);
@@ -153,7 +245,7 @@ export function importarMarkdown(bruto: string): Importado {
   const avisos: string[] = [];
   const texto = bruto.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
   const { campos, resto } = lerFrontmatter(texto);
-  const blocos = blocosDe(resto);
+  const blocos = blocosDe(foraDasCercas(resto, limparMarcasDeEditor));
 
   // o titulo: o do frontmatter, senao o primeiro h1; o h1 sai do corpo
   let titulo = campos.title ?? campos.titulo ?? "";
@@ -182,9 +274,10 @@ export function importarMarkdown(bruto: string): Importado {
   }
 
   // outro h1 que sobrar vira h2: o titulo da pagina e' o unico h1
-  let corpo = blocos
-    .map((b) => b.replace(/^#(?!#)([ \t]+)/gm, "##$1").replace(/^(.+)\n=+[ \t]*$/m, "## $1"))
-    .join("\n\n");
+  // (fora dos blocos de codigo: la, # e' comentario, nao titulo)
+  let corpo = foraDasCercas(blocos.join("\n\n"), (t) =>
+    t.replace(/^#(?!#)([ \t]+)/gm, "##$1").replace(/^(.+)\n=+[ \t]*$/gm, "## $1"),
+  );
   corpo = tratarImagens(corpo, avisos).replace(/\n{3,}/g, "\n\n").trim();
 
   if (/<\/?[a-z][\w-]*(\s[^>]*)?>/i.test(corpo.replace(/```[\s\S]*?```/g, ""))) {

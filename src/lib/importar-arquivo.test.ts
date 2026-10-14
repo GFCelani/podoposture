@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { planejarFluxo } from "./fluxo";
-import { conferirArquivo, importarArquivo } from "./importar-arquivo";
+import { conferirArquivo, importarArquivo, lerTextoDoArquivo } from "./importar-arquivo";
 import { markdownParaHtml } from "./markdown";
 
 /**
@@ -104,5 +104,67 @@ describe("conferencia do arquivo antes de ler", () => {
     expect(r.avisos.some((a) => a.includes("não tem título"))).toBe(true);
     expect(r.avisos.some((a) => a.includes("trechos em HTML"))).toBe(true);
     expect(markdownParaHtml(r.corpo)).not.toContain("<div>");
+  });
+});
+
+describe("leitura dos bytes do arquivo", () => {
+  const bytes = (...b: number[]) => new Uint8Array(b).buffer;
+
+  it("UTF-8, com ou sem BOM, sai igual", () => {
+    const texto = "# Ação e reação\n\nCoração.";
+    const utf8 = new TextEncoder().encode(texto);
+    expect(lerTextoDoArquivo(utf8.buffer)).toBe(texto);
+    expect(lerTextoDoArquivo(bytes(0xef, 0xbb, 0xbf, ...utf8))).toBe(texto);
+  });
+
+  it("arquivo salvo como ANSI no Windows (Bloco de Notas antigo, Word) nao vira losango", () => {
+    // "Ação ç" em Windows-1252: A, 0xE7, 0xE3, o, espaco, 0xE7
+    expect(lerTextoDoArquivo(bytes(0x41, 0xe7, 0xe3, 0x6f, 0x20, 0xe7))).toBe("Ação ç");
+    // aspas curvas do Word em Windows-1252
+    expect(lerTextoDoArquivo(bytes(0x93, 0x6f, 0x69, 0x94))).toBe("“oi”");
+  });
+
+  it("UTF-16 com BOM (Salvar como Unicode no Windows)", () => {
+    const le = [0xff, 0xfe, 0x23, 0x00, 0x20, 0x00, 0xe9, 0x00];
+    expect(lerTextoDoArquivo(bytes(...le))).toBe("# é");
+    const be = [0xfe, 0xff, 0x00, 0x23, 0x00, 0x20, 0x00, 0xe9];
+    expect(lerTextoDoArquivo(bytes(...be))).toBe("# é");
+  });
+});
+
+describe("importar arquivo: Markdown de outros editores", () => {
+  it("frontmatter em bloco (> e |) vira uma linha so; quebra do Windows nao atrapalha", () => {
+    const r = importarArquivo(
+      "x.md",
+      "---\r\ntitle: 'Dor no joelho'\r\ndescription: >-\r\n  Uma frase\r\n  em duas linhas.\r\ntags:\r\n  - joelho\r\n---\r\n\r\nTexto do corpo.\r\n",
+    );
+    expect(r.titulo).toBe("Dor no joelho");
+    expect(r.resumo).toBe("Uma frase em duas linhas.");
+    expect(r.corpo).toBe("Texto do corpo.");
+    const literal = importarArquivo("x.md", "---\ntitle: X\nsubtitle: |\n  linha um\n  linha dois\n---\nCorpo.");
+    expect(literal.resumo).toBe("linha um linha dois");
+  });
+
+  it("comentario HTML some, sem o aviso de HTML", () => {
+    const r = importarArquivo("x.md", "# Titulo\n\n<!-- nota interna -->\nTexto.\n\n<!--\nvarias\nlinhas\n-->\n\nFim.");
+    expect(r.corpo).not.toContain("nota interna");
+    expect(r.corpo).not.toContain("varias");
+    expect(r.avisos.some((a) => a.includes("HTML"))).toBe(false);
+  });
+
+  it("link e imagem do Obsidian: o link vira texto, a imagem sai com aviso", () => {
+    const r = importarArquivo(
+      "x.md",
+      "---\ndescription: D\n---\n# T\n\nVeja [[Dor lombar|a dor lombar]] e [[Osteopatia#Como e]].\n\n![[foto do joelho.png]]\n\nFim.",
+    );
+    expect(r.corpo).toContain("Veja a dor lombar e Osteopatia.");
+    expect(r.corpo).not.toContain("[[");
+    expect(r.avisos.some((a) => a.includes("foto do joelho.png"))).toBe(true);
+  });
+
+  it("# dentro de bloco de codigo nao vira secao", () => {
+    const r = importarArquivo("x.md", "# T\n\nTexto.\n\n```\n# comentario\n\nnpm install\n```\n\n# Outra parte\n\nFim.");
+    expect(r.corpo).toContain("```\n# comentario\n\nnpm install\n```");
+    expect(r.corpo).toContain("## Outra parte");
   });
 });

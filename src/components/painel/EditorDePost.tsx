@@ -6,7 +6,7 @@ import TurndownService from "turndown";
 import { CorpoDaPagina, imagensAlemDoTexto } from "@/components/corpo-da-pagina";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
-import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
+import { conferirArquivo, importarArquivo, lerTextoDoArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
 import { topoDoTexto, type TopoDoTexto } from "@/lib/subtitulo-inteiro";
 import { ehInstitucional, modeloDaPagina } from "@/lib/paginas-antigas";
@@ -493,7 +493,7 @@ export function EditorDePost({
       return;
     }
     try {
-      const importado = importarArquivo(arquivo.name, await arquivo.text());
+      const importado = importarArquivo(arquivo.name, lerTextoDoArquivo(await arquivo.arrayBuffer()));
       setCampos((c) => comImportado(c, importado));
       if (pendente) setPendente(null);
       setErros({});
@@ -868,8 +868,9 @@ export function EditorDePost({
           </label>
           {pagina && (
             <p id="ajuda-categoria" className="mt-1 text-[0.875rem] text-muted">
-              A página entra no fim do grupo escolhido, no menu do topo do site. Fora do menu, ela fica no ar só
-              pelo endereço e pelo Google.
+              A página entra no fim do grupo escolhido, no menu do topo do site. Para mudar a posição dela no
+              grupo, use as setas na lista “Páginas do site”. Fora do menu, ela fica no ar só pelo endereço e
+              pelo Google.
             </p>
           )}
           <select

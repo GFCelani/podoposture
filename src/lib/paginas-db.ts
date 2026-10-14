@@ -7,6 +7,7 @@ import { lerPublicados } from "./conteudo-db";
 import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 import { mesclarConteudo } from "./conteudo-tipos";
 import { paginasDoAcervo, type PaginaDoAcervo } from "./pagina-do-acervo";
+import { mesmasPaginas } from "./ordem-das-paginas";
 import { MAPA_ASCII_PAGINAS, PAGINAS_DINAMICAS, descricaoDaPagina, subtituloCortadoAntigo, subtituloDaPagina } from "./pages";
 import dados from "@/content/pages.json";
 import { bancoConfigurado, bancoDoPainel } from "./painel-db";
@@ -403,6 +404,33 @@ async function gravarPagina(
   if (linha) return { pagina: paraPagina(linha), estavaPublicada: linha.estava_publicada };
   if (manterNoAr && !d.publicado && (await buscarPaginaPorId(id))?.publicado) throw new PaginaTiraDoArSemConfirmacao();
   return null;
+}
+
+/** Trava das escritas de ordem: duas janelas reordenando nao se cruzam. */
+const TRAVA_DA_ORDEM = 7_370_103;
+
+/**
+ * A nova ordem de um grupo do menu: `ids` e' a lista inteira do grupo, de
+ * cima para baixo. Grava so se o grupo tem exatamente essas paginas agora
+ * (ver ordem-das-paginas.ts); senao devolve "desatualizada" e nada muda.
+ */
+export async function reordenarGrupo(
+  grupo: string,
+  ids: readonly string[],
+): Promise<{ ok: true } | { ok: false; motivo: "desatualizada" }> {
+  await garantirPaginas();
+  const sql = bancoDoPainel();
+  return sql.begin(async (sql) => {
+    await sql`SELECT pg_advisory_xact_lock(${TRAVA_DA_ORDEM})`;
+    const noGrupo = await sql<{ id: string }[]>`SELECT id FROM paginas WHERE grupo = ${grupo} FOR UPDATE`;
+    if (!mesmasPaginas(ids, noGrupo.map((l) => l.id))) return { ok: false as const, motivo: "desatualizada" as const };
+    // Uma consulta so: cada id recebe a posicao dele na lista enviada.
+    await sql`
+      UPDATE paginas SET ordem = nova.posicao - 1
+      FROM unnest(${sql.array([...ids])}::text[]) WITH ORDINALITY AS nova(id, posicao)
+      WHERE paginas.id = nova.id AND paginas.grupo = ${grupo}`;
+    return { ok: true as const };
+  });
 }
 
 /** Apaga de vez. Devolve o endereco que a pagina tinha, para limpar o cache. */

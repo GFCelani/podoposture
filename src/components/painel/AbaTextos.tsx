@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PostDoPainel, ResumoDoPainel } from "@/lib/painel-tipos";
-import { conferirArquivo, importarArquivo, type Importado } from "@/lib/importar-arquivo";
-import type { PaginaDoPainel, ResumoDaPagina } from "@/lib/paginas-tipos";
+import { conferirArquivo, importarArquivo, lerTextoDoArquivo, type Importado } from "@/lib/importar-arquivo";
+import { rotuloNoMenu } from "@/lib/menu";
+import { agruparPorMenu, moverNaLista } from "@/lib/ordem-das-paginas";
+import { GRUPOS_DO_MENU, type GrupoDoMenu, type PaginaDoPainel, type ResumoDaPagina } from "@/lib/paginas-tipos";
 import { armazemDaAba, deixarRecado, tomarRecadoDa } from "@/lib/recado-do-editor";
 
 import { GestaoDeTemas } from "./GestaoDeTemas";
@@ -83,6 +85,12 @@ type Resumo = ResumoDoPainel | ResumoDaPagina;
 
 const SEM_CONEXAO = "Sem conexão com o servidor. Verifique a internet e tente de novo.";
 
+/** O que fica sob o nome de cada grupo na lista de paginas. */
+const AJUDA_DO_GRUPO: Partial<Record<GrupoDoMenu, string>> = {
+  "A Clínica": "Contato fica sempre por último no menu.",
+};
+const AJUDA_FORA_DO_MENU = "Não aparecem no menu: ficam no ar só pelo endereço e pelo Google.";
+
 export function AbaTextos({
   tipo = "post",
   aoPerderSessao,
@@ -111,6 +119,10 @@ export function AbaTextos({
   const [erroDaLista, setErroDaLista] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [abrindo, setAbrindo] = useState<string | null>(null);
+  /** A pagina que esta mudando de posicao: uma por vez, como abrir. */
+  const [movendo, setMovendo] = useState<string | null>(null);
+  /** O botao que recebe o foco depois de mover (a linha muda de lugar na tela). */
+  const focoAposMover = useRef<{ id: string; direcao: -1 | 1 } | null>(null);
 
   const carregar = useCallback(async (): Promise<void> => {
     try {
@@ -238,6 +250,74 @@ export function AbaTextos({
 
   const aoFalhar = useCallback((texto: string) => setAviso({ tipo: "erro", texto }), []);
 
+  /**
+   * Sobe ou desce uma pagina dentro do grupo do menu. A lista muda na tela na
+   * hora e volta como estava se o servidor recusar; o pedido leva o grupo
+   * inteiro, e o servidor recusa se ele mudou em outra janela (409), caso em
+   * que a lista recarrega.
+   */
+  async function mover(grupo: GrupoDoMenu, ids: string[], pagina: ResumoDaPagina, direcao: -1 | 1) {
+    if (movendo) return;
+    const nova = moverNaLista(ids, pagina.id, direcao);
+    if (!nova) return;
+    const antes = posts;
+    setPosts((lista) =>
+      lista.map((p) => (p.categoria === grupo && nova.includes(p.id) ? { ...p, ordem: nova.indexOf(p.id) } : p)),
+    );
+    setMovendo(pagina.id);
+    setAviso(null);
+    focoAposMover.current = { id: pagina.id, direcao };
+    try {
+      const resposta = await fetch(`${perfil.api}/ordem`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ grupo, ids: nova }),
+      });
+      if (resposta.status === 401 || resposta.status === 403) {
+        setPosts(antes);
+        aoPerderSessao();
+        return;
+      }
+      if (!resposta.ok) {
+        const corpo = await resposta.json().catch(() => ({}));
+        setPosts(antes);
+        setAviso({
+          tipo: "erro",
+          texto:
+            (resposta.status === 409 || resposta.status === 503) && typeof corpo?.erro === "string"
+              ? corpo.erro
+              : "Não foi possível mudar a ordem agora. O menu continua como estava; tente de novo em alguns minutos.",
+        });
+        if (resposta.status === 409) void carregar();
+        return;
+      }
+      const posicao = nova.indexOf(pagina.id) + 1;
+      setAviso({
+        tipo: "feito",
+        texto: `“${rotuloNoMenu(pagina)}” agora é a ${posicao}ª de ${nova.length} em ${grupo}.${
+          pagina.publicado ? " O menu do site já mudou." : " Ela aparece nessa posição quando for publicada."
+        }`,
+      });
+    } catch {
+      setPosts(antes);
+      setAviso({ tipo: "erro", texto: `${SEM_CONEXAO} O menu continua como estava.` });
+    } finally {
+      setMovendo(null);
+    }
+  }
+
+  // Depois de mover, o foco fica na seta que ela usou (ou na outra, se a
+  // pagina chegou na ponta e essa seta nao serve mais): a linha trocou de
+  // lugar na tela, e sem isto o foco de teclado se perdia.
+  useEffect(() => {
+    const alvo = focoAposMover.current;
+    if (!alvo || movendo) return;
+    focoAposMover.current = null;
+    const usada = document.getElementById(`${alvo.direcao < 0 ? "subir" : "descer"}-${alvo.id}`);
+    const outra = document.getElementById(`${alvo.direcao < 0 ? "descer" : "subir"}-${alvo.id}`);
+    (usada?.getAttribute("aria-disabled") === "true" ? outra : usada)?.focus();
+  }, [posts, movendo]);
+
   /** Um .md (ou .html) vira um texto novo (ou pagina nova), aberto como rascunho no editor. */
   async function importar(arquivo: File) {
     const problema = conferirArquivo(arquivo.name, arquivo.size);
@@ -246,7 +326,7 @@ export function AbaTextos({
       return;
     }
     try {
-      aoAbrirEditor(null, semBancoAgora.current, importarArquivo(arquivo.name, await arquivo.text()));
+      aoAbrirEditor(null, semBancoAgora.current, importarArquivo(arquivo.name, lerTextoDoArquivo(await arquivo.arrayBuffer())));
     } catch {
       setAviso({ tipo: "erro", texto: "Não foi possível ler esse arquivo. Confira se é um .md ou .html de texto e tente de novo." });
     }
@@ -349,6 +429,53 @@ export function AbaTextos({
           <br />
           Comece pelo botão <strong className="text-ink-strong">{perfil.novo}</strong>.
         </p>
+      ) : tipo === "pagina" ? (
+        // As paginas na ordem do cabecalho do site, grupo por grupo; as setas
+        // mudam a posicao dentro do grupo (o grupo se troca no editor).
+        agruparPorMenu(posts as ResumoDaPagina[]).map(({ grupo, paginas }) => {
+          const ids = paginas.map((p) => p.id);
+          const idDoGrupo = `grupo-${grupo ? GRUPOS_DO_MENU.indexOf(grupo) : "fora"}`;
+          const ajuda = grupo ? AJUDA_DO_GRUPO[grupo] : AJUDA_FORA_DO_MENU;
+          return (
+            <section key={grupo ?? "fora"} aria-labelledby={idDoGrupo} className="mt-10">
+              <h2
+                id={idDoGrupo}
+                className="text-[0.75rem] tracking-[0.16em] text-muted uppercase"
+                style={{ fontFamily: "var(--mono)" }}
+              >
+                {grupo ? `Menu · ${grupo}` : "Fora do menu"}
+              </h2>
+              {ajuda && <p className="mt-1 text-[0.875rem] text-muted">{ajuda}</p>}
+              <ol className="mt-3 divide-y divide-rule border-t border-rule">
+                {paginas.map((pagina, i) => (
+                  <LinhaDePost
+                    key={pagina.id}
+                    tipo={tipo}
+                    post={pagina}
+                    abrindo={abrindo === pagina.id}
+                    aoEditar={() => {
+                      if (!abrindo) void abrirEditor(pagina.id);
+                    }}
+                    aoApagado={aoApagado}
+                    aoFalhar={aoFalhar}
+                    aoPerderSessao={aoPerderSessao}
+                    mover={
+                      grupo && paginas.length > 1
+                        ? {
+                            grupo,
+                            podeSubir: i > 0,
+                            podeDescer: i < paginas.length - 1,
+                            ocupado: movendo !== null,
+                            aoMover: (direcao) => void mover(grupo, ids, pagina, direcao),
+                          }
+                        : undefined
+                    }
+                  />
+                ))}
+              </ol>
+            </section>
+          );
+        })
       ) : (
         <ul className="mt-8 divide-y divide-rule border-t border-rule">
           {posts.map((post) => (
@@ -382,6 +509,7 @@ function LinhaDePost({
   aoApagado,
   aoFalhar,
   aoPerderSessao,
+  mover,
 }: {
   tipo: "post" | "pagina";
   post: Resumo;
@@ -390,6 +518,15 @@ function LinhaDePost({
   aoApagado: () => void;
   aoFalhar: (texto: string) => void;
   aoPerderSessao: () => void;
+  /** So nas paginas de um grupo do menu com mais de uma: as setas de posicao. */
+  mover?: {
+    grupo: GrupoDoMenu;
+    podeSubir: boolean;
+    podeDescer: boolean;
+    /** Outra pagina mudando de lugar agora: as setas esperam. */
+    ocupado: boolean;
+    aoMover: (direcao: -1 | 1) => void;
+  };
 }) {
   const perfil = PERFIL[tipo];
   const [confirmando, setConfirmando] = useState(false);
@@ -430,12 +567,18 @@ function LinhaDePost({
     }
   }
 
+  // A pagina aparece pelo nome que tem no menu do site, que e' o que ela esta
+  // ordenando; o titulo, quando e' outro (as do site antigo tem frase inteira
+  // no titulo), vem embaixo.
+  const nome = tipo === "pagina" ? rotuloNoMenu(post) : post.titulo;
+
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5">
-      <div className="min-w-0">
-        <p className="font-display text-[1.125rem] leading-[1.35] font-medium text-ink-strong">
-          {post.titulo}
-        </p>
+      {/* basis + flex-1: titulo longo quebra dentro da coluna em vez de
+          empurrar os botoes para a linha de baixo so naquela linha */}
+      <div className="min-w-0 flex-1 basis-[14rem]">
+        <p className="font-display text-[1.125rem] leading-[1.35] font-medium text-ink-strong">{nome}</p>
+        {nome !== post.titulo && <p className="mt-0.5 text-[0.875rem] text-muted">Título da página: {post.titulo}</p>}
         <p className="mt-1 text-[0.875rem] text-muted">
           {post.publicado ? (
             <>
@@ -452,17 +595,47 @@ function LinhaDePost({
           ) : (
             <span className="text-[#8a6d1f]">{perfil.rascunho}</span>
           )}
-          {" · "}
-          {post.categoria || perfil.semGrupo}
+          {/* Na lista de paginas o grupo ja e' o titulo da secao. */}
+          {tipo === "post" && ` · ${post.categoria || perfil.semGrupo}`}
         </p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {mover && (
+          // aria-disabled, e nao disabled: o botao continua focavel. Com
+          // disabled, a seta da pagina que chegou na ponta perdia o foco e
+          // ele caia no corpo da pagina.
+          <div className="flex items-center gap-1" role="group" aria-label={`Posição de “${nome}” no menu`}>
+            {([-1, 1] as const).map((direcao) => {
+              const pode = direcao < 0 ? mover.podeSubir : mover.podeDescer;
+              const inativo = !pode || mover.ocupado;
+              const acao = direcao < 0 ? "Subir" : "Descer";
+              return (
+                <button
+                  key={direcao}
+                  type="button"
+                  id={`${direcao < 0 ? "subir" : "descer"}-${post.id}`}
+                  onClick={() => {
+                    if (!inativo) mover.aoMover(direcao);
+                  }}
+                  aria-disabled={inativo}
+                  aria-label={`${acao} “${nome}” no menu de ${mover.grupo}`}
+                  title={pode ? `${acao} no menu` : direcao < 0 ? "Já é a primeira do grupo" : "Já é a última do grupo"}
+                  className={`min-h-[44px] min-w-[44px] rounded-md border-[1.5px] px-3 text-[1rem] leading-none ${
+                    pode ? "border-accent/45 text-accent hover:border-accent" : "border-rule text-muted/50"
+                  } aria-disabled:cursor-not-allowed`}
+                >
+                  <span aria-hidden="true">{direcao < 0 ? "↑" : "↓"}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         <button
           id={`editar-${post.id}`}
           onClick={aoEditar}
           disabled={abrindo}
-          aria-label={abrindo ? undefined : `${perfil.editar}: ${post.titulo}`}
+          aria-label={abrindo ? undefined : `${perfil.editar}: ${nome}`}
           className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent disabled:opacity-50"
         >
           {abrindo ? "Abrindo…" : perfil.editar}
@@ -472,7 +645,7 @@ function LinhaDePost({
           onBlur={() => setConfirmando(false)}
           disabled={apagando}
           aria-describedby={confirmando ? `aviso-apagar-${post.id}` : undefined}
-          aria-label={apagando ? undefined : `${confirmando ? "Confirmar e apagar" : perfil.apagar}: ${post.titulo}`}
+          aria-label={apagando ? undefined : `${confirmando ? "Confirmar e apagar" : perfil.apagar}: ${nome}`}
           className={`min-h-[44px] rounded-md px-4 text-[0.9375rem] ${
             confirmando
               ? "border-[1.5px] border-[#8c2f2f] text-[#8c2f2f]"

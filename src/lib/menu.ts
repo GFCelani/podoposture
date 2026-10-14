@@ -30,6 +30,6 @@ export function montarMenu(paginas: readonly Resumo[]): NavGroup[] {
  * pagina nova entra com o proprio titulo.
  */
 const ROTULOS_DO_CODIGO = new Map(NAV_GROUPS.flatMap((g) => g.items).map((i) => [i.href.normalize("NFC"), i.label]));
-function rotuloNoMenu(p: Resumo): string {
+export function rotuloNoMenu(p: Pick<Resumo, "slug" | "titulo">): string {
   return ROTULOS_DO_CODIGO.get(`/${p.slug}`.normalize("NFC")) ?? p.titulo.replace(/(?<!\.\.)\.$/, "");
 }
