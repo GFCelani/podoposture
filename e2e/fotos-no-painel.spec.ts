@@ -208,9 +208,14 @@ test("Como e o meu atendimento: trocar a segunda foto pelo painel, publicar, ver
     expect(servida.ok()).toBe(true);
     expect(servida.headers()["content-type"]).toMatch(/^image\//);
   } finally {
-    // De volta ao original: o mesmo corpo, entao o servidor guarda de novo o HTML de antes.
+    // De volta ao original: o mesmo corpo, entao o servidor guarda de novo o
+    // HTML de antes. Com a versao de agora (a da publicacao do teste), que e'
+    // o que a trava de versao pede (lib/versao-do-texto.ts).
+    const agora = ((await (await page.request.get(`/api/painel/paginas/${id}`, { headers: origem() })).json()) as {
+      pagina: { atualizadoEm: string };
+    }).pagina;
     const volta = await page.request.put(`/api/painel/paginas/${id}`, {
-      data: guardada,
+      data: { ...guardada, versao: agora.atualizadoEm },
       headers: origem(),
     });
     expect(volta.ok()).toBe(true);

@@ -19,10 +19,13 @@ vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map(), RES
  *
  *   - secoes da pagina inicial (conteudo-db.ts): N gravacoes com a mesma
  *     versao esperada, so UMA passa, as outras recebem conflito (null);
- *   - posts e paginas nao tem conferencia de versao no servidor (a versao
- *     so decide a copia do navegador, copia-do-post.ts): as gravacoes
- *     passam todas, e cada uma sai exatamente 1 ms depois da anterior,
- *     mesmo com o relogio "parado".
+ *   - posts e paginas, com a mesma trava (versao-do-texto.ts): salvar,
+ *     publicar, tirar do site e apagar com a mesma versao esperada, so UMA
+ *     passa, as outras recebem `VersaoDesatualizada`; o envio repetido de
+ *     um texto novo so passa enquanto ninguem mexeu nele;
+ *   - sem versao esperada (uso interno), as gravacoes passam todas, e cada
+ *     uma sai exatamente 1 ms depois da anterior, mesmo com o relogio
+ *     "parado".
  *
  * Banco proprio (`podoposture_teste_versao`), apagado e recriado a cada
  * execucao.
@@ -107,6 +110,17 @@ describe.skipIf(!URL_DE_TESTE)("trava de versao com gravacoes simultaneas", () =
   }
 
   const secao = (chave: string) => direto`chave = ${chave}`;
+
+  /**
+   * "ok" quando gravou; "conflito" quando a trava recusou (pelo nome: cada
+   * instancia tem a sua classe); "nada" quando o texto ja nao existia (outra
+   * aba apagou antes: apagar devolve false/null, salvar devolve null).
+   */
+  const resultado = (p: Promise<unknown>) =>
+    p.then(
+      (v) => (v === false || v === null ? ("nada" as const) : ("ok" as const)),
+      (erro: Error) => (erro?.name === "VersaoDesatualizada" ? ("conflito" as const) : Promise.reject(erro)),
+    );
 
   /**
    * A versao da linha uma hora a frente do relogio: e' como fica quando as
@@ -209,5 +223,97 @@ describe.skipIf(!URL_DE_TESTE)("trava de versao com gravacoes simultaneas", () =
     );
     const versoes = r.map((p) => Date.parse(p!.pagina.atualizadoEm)).sort((a, b) => a - b);
     expect(versoes).toEqual(instancias.map((_, n) => base + n + 1));
+  }, 60_000);
+
+  const DADOS_DO_POST = { titulo: "Texto disputado", resumo: "r", categoria: "", capa: "", corpo: "corpo", publicado: false };
+  const DADOS_DA_PAGINA = { ...DADOS_DO_POST, titulo: "Pagina disputada", capaAlt: "", capaLegenda: "" };
+
+  it("post: salvar, publicar e tirar do site com a mesma versao, so uma gravacao passa", async () => {
+    const [{ posts }] = instancias;
+    const { post } = await posts.criarPost(DADOS_DO_POST);
+    let versao = post.atualizadoEm;
+    // rascunho, publicar, tirar do site: cada rodada parte da versao que a anterior deixou
+    for (const publicado of [false, true, false]) {
+      const r = await aoMesmoTempo(
+        "posts",
+        direto`id = ${post.id}`,
+        instancias.map((i, n) => () => resultado(i.posts.atualizarPost(post.id, { ...DADOS_DO_POST, publicado, corpo: `aba ${n}` }, "markdown", versao))),
+      );
+      expect(r.filter((x) => x === "ok"), `publicado=${publicado}`).toHaveLength(1);
+      expect(r.filter((x) => x === "conflito")).toHaveLength(INSTANCIAS - 1);
+      const agora = (await posts.buscarPorId(post.id))!;
+      expect(agora.publicado).toBe(publicado);
+      expect(agora.corpo).toBe(`aba ${r.indexOf("ok")}`);
+      versao = agora.atualizadoEm;
+    }
+  }, 60_000);
+
+  it("post: apagar e salvar ao mesmo tempo com a mesma versao, so um passa; apagar com versao velha nao apaga", async () => {
+    const [{ posts }] = instancias;
+    const { post } = await posts.criarPost(DADOS_DO_POST);
+    const r = await aoMesmoTempo("posts", direto`id = ${post.id}`, [
+      () => resultado(instancias[0].posts.apagarPost(post.id, post.atualizadoEm)),
+      () => resultado(instancias[1].posts.atualizarPost(post.id, DADOS_DO_POST, "markdown", post.atualizadoEm)),
+      () => resultado(instancias[2].posts.apagarPost(post.id, post.atualizadoEm)),
+    ]);
+    expect(r.filter((x) => x === "ok")).toHaveLength(1);
+
+    const { post: outro } = await posts.criarPost(DADOS_DO_POST);
+    const editado = (await posts.atualizarPost(outro.id, { ...DADOS_DO_POST, corpo: "novo" }, "markdown", outro.atualizadoEm))!;
+    await expect(posts.apagarPost(outro.id, outro.atualizadoEm)).rejects.toMatchObject({ name: "VersaoDesatualizada" });
+    expect(await posts.buscarPorId(outro.id)).not.toBeNull();
+    expect(await posts.apagarPost(outro.id, editado.atualizadoEm)).toBe(true);
+  }, 60_000);
+
+  it("post: envio repetido de texto novo passa enquanto ninguem mexeu; depois, e' conflito", async () => {
+    const [{ posts }] = instancias;
+    const id = randomUUID();
+    await posts.criarPost(DADOS_DO_POST, id);
+    const repetido = await posts.criarPost({ ...DADOS_DO_POST, corpo: "repetido" }, id);
+    expect(repetido.post.corpo).toBe("repetido");
+    // outra aba abriu e salvou; o envio repetido da primeira nao grava por cima
+    const salvo = await posts.buscarPorId(id);
+    await posts.atualizarPost(id, { ...DADOS_DO_POST, corpo: "outra aba" }, "markdown", salvo!.atualizadoEm);
+    await expect(posts.criarPost({ ...DADOS_DO_POST, corpo: "por cima" }, id)).rejects.toMatchObject({ name: "VersaoDesatualizada" });
+    expect((await posts.buscarPorId(id))!.corpo).toBe("outra aba");
+  }, 60_000);
+
+  it("pagina: salvar, publicar, tirar do site e apagar com a mesma versao, so uma passa", async () => {
+    const [{ paginas }] = instancias;
+    const { pagina } = await paginas.criarPagina(DADOS_DA_PAGINA, randomUUID());
+    let versao = pagina.atualizadoEm;
+    for (const publicado of [false, true, false]) {
+      const r = await aoMesmoTempo(
+        "paginas",
+        direto`id = ${pagina.id}`,
+        instancias.map((i, n) => () =>
+          resultado(i.paginas.atualizarPagina(pagina.id, { ...DADOS_DA_PAGINA, publicado, corpo: `aba ${n}` }, "markdown", versao)),
+        ),
+      );
+      expect(r.filter((x) => x === "ok"), `publicado=${publicado}`).toHaveLength(1);
+      const agora = (await paginas.buscarPaginaPorId(pagina.id))!;
+      expect(agora.publicado).toBe(publicado);
+      versao = agora.atualizadoEm;
+    }
+    const r = await aoMesmoTempo(
+      "paginas",
+      direto`id = ${pagina.id}`,
+      instancias.map((i) => () => resultado(i.paginas.apagarPagina(pagina.id, versao))),
+    );
+    expect(r.filter((x) => x === "ok")).toHaveLength(1);
+    expect(await paginas.buscarPaginaPorId(pagina.id)).toBeNull();
+  }, 60_000);
+
+  it("pagina: envio repetido de pagina nova passa enquanto ninguem mexeu; depois, e' conflito", async () => {
+    const [{ paginas }] = instancias;
+    const id = randomUUID();
+    await paginas.criarPagina(DADOS_DA_PAGINA, id);
+    expect((await paginas.criarPagina({ ...DADOS_DA_PAGINA, corpo: "repetido" }, id)).pagina.corpo).toBe("repetido");
+    const salva = await paginas.buscarPaginaPorId(id);
+    await paginas.atualizarPagina(id, { ...DADOS_DA_PAGINA, corpo: "outra aba" }, "markdown", salva!.atualizadoEm);
+    await expect(paginas.criarPagina({ ...DADOS_DA_PAGINA, corpo: "por cima" }, id)).rejects.toMatchObject({
+      name: "VersaoDesatualizada",
+    });
+    expect((await paginas.buscarPaginaPorId(id))!.corpo).toBe("outra aba");
   }, 60_000);
 });

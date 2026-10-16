@@ -23,6 +23,7 @@ import {
 } from "./painel-tipos";
 import { BRUTOS_DO_JSON, MAPA_ASCII_POSTS, RESUMOS_COMPLETADOS, type PostBruto } from "./posts";
 import { urlParaODriver } from "./url-do-banco";
+import { CRIACAO, VersaoDesatualizada, type VersaoEsperada } from "./versao-do-texto";
 
 /**
  * Enderecos que os 68 posts migrados ja ocupam.
@@ -610,7 +611,10 @@ export async function criarPost(
     const existente = await buscarPorId(id);
     if (existente) {
       return (
-        (await gravarPost(id, dados, { manterNoAr: true })) ?? { post: existente, estavaPublicado: existente.publicado }
+        (await gravarPost(id, dados, { manterNoAr: true, versao: CRIACAO })) ?? {
+          post: existente,
+          estavaPublicado: existente.publicado,
+        }
       );
     }
   }
@@ -629,7 +633,7 @@ export async function criarPost(
         RETURNING *`;
       if (linha) return { post: paraPost(linha), estavaPublicado: false };
       // O mesmo id entrou por outro pedido entre a conferencia e a insercao.
-      const atualizado = await gravarPost(idDoPost, dados, { manterNoAr: true });
+      const atualizado = await gravarPost(idDoPost, dados, { manterNoAr: true, versao: CRIACAO });
       if (atualizado) return atualizado;
     } catch (erro) {
       const codigo = (erro as { code?: string })?.code;
@@ -648,8 +652,9 @@ export async function atualizarPost(
   id: string,
   dados: DadosDoPost,
   formato: PostDoPainel["formato"] = "markdown",
+  versao?: VersaoEsperada,
 ): Promise<PostDoPainel | null> {
-  return (await gravarPost(id, dados, { formato }))?.post ?? null;
+  return (await gravarPost(id, dados, { formato, versao }))?.post ?? null;
 }
 
 /**
@@ -663,11 +668,15 @@ export async function atualizarPost(
  *
  * `manterNoAr` recusa, pela mesma linha travada, a troca de publicado para
  * rascunho (ver `criarPost`).
+ *
+ * `versao`: a gravacao so passa se o texto ainda estiver nela, conferido no
+ * proprio UPDATE (ver versao-do-texto.ts); senao lanca `VersaoDesatualizada`
+ * com o texto como esta.
  */
 async function gravarPost(
   id: string,
   dados: DadosDoPost,
-  opcoes: { manterNoAr?: boolean; formato?: PostDoPainel["formato"] } = {},
+  opcoes: { manterNoAr?: boolean; formato?: PostDoPainel["formato"]; versao?: VersaoEsperada } = {},
 ): Promise<{ post: PostDoPainel; estavaPublicado: boolean } | null> {
   const manterNoAr = opcoes.manterNoAr === true;
   const formato = opcoes.formato ?? "markdown";
@@ -707,6 +716,7 @@ async function gravarPost(
     FROM (SELECT id, publicado FROM posts WHERE id = ${id} FOR UPDATE) AS antes
     WHERE posts.id = antes.id
       AND (${!manterNoAr}::boolean OR antes.publicado = FALSE OR ${dados.publicado}::boolean)
+      AND ${confereVersao(sql, opcoes.versao)}
     RETURNING posts.*, antes.publicado AS estava_publicado`;
   } catch (erro) {
     if ((erro as { code?: string })?.code === "23503") throw new TemaInexistente();
@@ -714,18 +724,42 @@ async function gravarPost(
   }
   const [linha] = linhas;
   if (linha) return { post: paraPost(linha), estavaPublicado: linha.estava_publicado };
-  // Nada escrito: ou o texto sumiu entre a leitura e a escrita, ou a regra
-  // acima recusou. A decisao ja foi tomada com a linha travada; esta leitura so
-  // diz qual dos dois foi.
-  if (manterNoAr && !dados.publicado && (await buscarPorId(id))?.publicado) throw new TiraDoArSemConfirmacao();
+  // Nada escrito: ou o texto sumiu entre a leitura e a escrita, ou uma das
+  // regras acima recusou. A decisao ja foi tomada com a linha travada; esta
+  // leitura so diz qual foi. A versao primeiro: ela so anda para a frente, entao
+  // a que nao conferia no UPDATE continua sem conferir aqui.
+  const agora = await buscarPorId(id);
+  if (agora && !versaoConfere(agora, opcoes.versao)) throw new VersaoDesatualizada(agora);
+  if (manterNoAr && !dados.publicado && agora?.publicado) throw new TiraDoArSemConfirmacao();
   return null;
 }
 
-export async function apagarPost(id: string): Promise<boolean> {
+/**
+ * Apaga de vez, so se o texto ainda estiver na `versao` (conferida no proprio
+ * DELETE); senao lanca `VersaoDesatualizada`. false = ja nao existia.
+ */
+export async function apagarPost(id: string, versao?: VersaoEsperada): Promise<boolean> {
   await garantirBanco();
   const sql = bancoDoPainel();
-  const linhas = await sql`DELETE FROM posts WHERE id = ${id} RETURNING id`;
-  return linhas.length > 0;
+  const linhas = await sql`DELETE FROM posts WHERE id = ${id} AND ${confereVersao(sql, versao)} RETURNING id`;
+  if (linhas.length > 0) return true;
+  const agora = await buscarPorId(id);
+  if (agora) throw new VersaoDesatualizada(agora);
+  return false;
+}
+
+/** A conferencia de versao dentro da instrucao que grava (ver versao-do-texto.ts). */
+function confereVersao(sql: ReturnType<typeof bancoDoPainel>, versao: VersaoEsperada) {
+  if (versao === undefined) return sql`TRUE`;
+  if (versao === CRIACAO) return sql`date_trunc('milliseconds', posts.atualizado_em) = date_trunc('milliseconds', posts.criado_em)`;
+  return sql`date_trunc('milliseconds', posts.atualizado_em) = ${versao}::timestamptz`;
+}
+
+/** A mesma conferencia, no texto ja lido: so para dizer por que nada foi gravado. */
+function versaoConfere(post: PostDoPainel, versao: VersaoEsperada): boolean {
+  if (versao === undefined) return true;
+  if (versao === CRIACAO) return post.atualizadoEm === post.criadoEm;
+  return Date.parse(post.atualizadoEm) === Date.parse(versao);
 }
 
 /* ---------------------------------------------------------------- imagens */

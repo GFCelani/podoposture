@@ -18,6 +18,7 @@ import { resumoAutomatico } from "@/lib/markdown";
 import { camposDoCorpo, envioMudaOSite, repetirTiraDoAr, validarPost } from "@/lib/painel-tipos";
 import { BLOG_INDEX, caminhoDaRota } from "@/lib/posts";
 import { nomesDosTemas } from "@/lib/temas-db";
+import { MENSAGEM_DE_CONFLITO, VersaoDesatualizada } from "@/lib/versao-do-texto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,6 +132,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ post }, { status: 201 });
   } catch (erro) {
+    // Envio repetido de um texto novo que outra aba ja mudou (versao-do-texto.ts).
+    if (erro instanceof VersaoDesatualizada) {
+      return NextResponse.json({ erro: MENSAGEM_DE_CONFLITO, conflito: "versao", post: erro.atual }, { status: 409 });
+    }
     if (erro instanceof TiraDoArSemConfirmacao) {
       return NextResponse.json({ erro: JA_ESTA_PUBLICADO }, { status: 409 });
     }

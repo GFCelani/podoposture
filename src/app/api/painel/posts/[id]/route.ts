@@ -18,6 +18,7 @@ import { resumoAutomatico } from "@/lib/markdown";
 import { camposDoCorpo, validarPost, type PostDoPainel } from "@/lib/painel-tipos";
 import { BLOG_INDEX, caminhoDaRota } from "@/lib/posts";
 import { nomesDosTemas } from "@/lib/temas-db";
+import { MENSAGEM_DE_CONFLITO, VersaoDesatualizada, lerVersao } from "@/lib/versao-do-texto";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,14 @@ const TEMA_SUMIU = "Esse tema acabou de ser apagado. Escolha outro da lista.";
  * O corpo como o editor edita. Post do GoDaddy (`formato: html`) vai convertido
  * para Markdown; o do painel ja e Markdown. Ver html-para-markdown.ts.
  */
+/**
+ * 409: o texto mudou depois que o editor o carregou, e nada foi gravado. O
+ * texto como esta agora vai junto: o editor mostra a hora e a versao salva.
+ */
+function conflito(atual: PostDoPainel) {
+  return NextResponse.json({ erro: MENSAGEM_DE_CONFLITO, conflito: "versao", post: comoOEditorVe(atual) }, { status: 409 });
+}
+
 function comoOEditorVe(post: PostDoPainel): PostDoPainel {
   return post.formato === "html" ? { ...post, corpo: htmlParaMarkdown(post.corpo) } : post;
 }
@@ -112,6 +121,10 @@ export async function PUT(req: Request, ctx: Contexto) {
   try {
     const atual = await buscarPorId(pronto.id);
     if (!atual) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
+    // Sem a versao que o editor carregou nao ha como saber se outra aba gravou
+    // no meio: e' conflito, como versao velha (painel antigo em cache).
+    const versao = lerVersao((bruto as { versao?: unknown }).versao);
+    if (!versao) return conflito(atual);
 
     // A capa que o texto ja tem vale mesmo fora de /img/post/ (a dos posts do
     // GoDaddy mora em /img/blog/). Os temas vem do banco.
@@ -129,7 +142,7 @@ export async function PUT(req: Request, ctx: Contexto) {
       formato = "html";
     }
 
-    const post = await atualizarPost(pronto.id, campos, formato);
+    const post = await atualizarPost(pronto.id, campos, formato, versao);
     if (!post) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
 
     await registrarAuditoria("post-editado", post.slug, ipDaRequisicao(await headers()));
@@ -140,6 +153,7 @@ export async function PUT(req: Request, ctx: Contexto) {
 
     return NextResponse.json({ post: comoOEditorVe(post) });
   } catch (erro) {
+    if (erro instanceof VersaoDesatualizada) return conflito(erro.atual as PostDoPainel);
     if (erro instanceof TemaInexistente) {
       return NextResponse.json({ erro: "Confira os campos destacados.", erros: { categoria: TEMA_SUMIU } }, { status: 400 });
     }
@@ -148,13 +162,17 @@ export async function PUT(req: Request, ctx: Contexto) {
   }
 }
 
-export async function DELETE(_req: Request, ctx: Contexto) {
+export async function DELETE(req: Request, ctx: Contexto) {
   const pronto = await preparar(ctx);
   if (!pronto.ok) return pronto.resposta;
 
   try {
     const post = await buscarPorId(pronto.id);
-    const apagou = await apagarPost(pronto.id);
+    if (!post) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
+    // Apaga so a versao que a lista mostrava (?versao=): mudou no meio, avisa.
+    const versao = lerVersao(new URL(req.url).searchParams.get("versao"));
+    if (!versao) return conflito(post);
+    const apagou = await apagarPost(pronto.id, versao);
     if (!apagou) return NextResponse.json({ erro: "Post não encontrado." }, { status: 404 });
 
     await registrarAuditoria("post-apagado", post?.slug ?? null, ipDaRequisicao(await headers()));
@@ -165,6 +183,7 @@ export async function DELETE(_req: Request, ctx: Contexto) {
 
     return NextResponse.json({ ok: true });
   } catch (erro) {
+    if (erro instanceof VersaoDesatualizada) return conflito(erro.atual as PostDoPainel);
     console.error("[painel] falha ao apagar post:", erro);
     return NextResponse.json({ erro: "Não foi possível apagar o post." }, { status: 502 });
   }

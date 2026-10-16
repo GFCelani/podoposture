@@ -8,7 +8,8 @@
 #   - vitest completo com DATABASE_URL_TESTE;
 #   - build de producao com banco, `next start` e os e2e que gravam no banco
 #     (e2e/painel-paginas.spec.ts e e2e/fotos-no-painel.spec.ts) e o da versao
-#     do painel (e2e/painel-versao.spec.ts).
+#     do painel (e2e/painel-versao.spec.ts) e o da trava contra gravacao por cima
+#     (e2e/conflito-de-versao.spec.ts).
 #
 # Nenhuma chave real. O repositorio e' publico: a senha do painel, o hash
 # dela e o segredo da sessao nascem aqui, a cada execucao, e o banco morre
@@ -91,7 +92,7 @@ jobs:
       - name: e2e do painel com banco
         env:
           PW_BASE_URL: http://localhost:3218
-        run: npx playwright test e2e/painel-versao.spec.ts e2e/painel-paginas.spec.ts e2e/fotos-no-painel.spec.ts --workers=1
+        run: npx playwright test e2e/painel-versao.spec.ts e2e/painel-paginas.spec.ts e2e/fotos-no-painel.spec.ts e2e/conflito-de-versao.spec.ts --workers=1
 
       - name: registros da falha
         if: failure()

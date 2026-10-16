@@ -19,6 +19,7 @@ import {
   type PaginaDoPainel,
   type ResumoDaPagina,
 } from "./paginas-tipos";
+import { CRIACAO, VersaoDesatualizada, type VersaoEsperada } from "./versao-do-texto";
 
 /**
  * As paginas do site no Postgres, no molde dos posts (painel-db.ts): a mesma
@@ -327,7 +328,7 @@ export async function criarPagina(
     const existente = await buscarPaginaPorId(id);
     if (existente) {
       return (
-        (await gravarPagina(id, dadosDaPagina, { manterNoAr: true })) ?? {
+        (await gravarPagina(id, dadosDaPagina, { manterNoAr: true, versao: CRIACAO })) ?? {
           pagina: existente,
           estavaPublicada: existente.publicado,
         }
@@ -349,7 +350,7 @@ export async function criarPagina(
         ON CONFLICT (id) DO NOTHING
         RETURNING *`;
       if (linha) return { pagina: paraPagina(linha), estavaPublicada: false };
-      const atualizada = await gravarPagina(idDaPagina, dadosDaPagina, { manterNoAr: true });
+      const atualizada = await gravarPagina(idDaPagina, dadosDaPagina, { manterNoAr: true, versao: CRIACAO });
       if (atualizada) return atualizada;
     } catch (erro) {
       if ((erro as { code?: string })?.code !== "23505" || tentativa === 3) throw erro;
@@ -363,19 +364,21 @@ export async function atualizarPagina(
   id: string,
   dadosDaPagina: DadosDaPagina,
   formato: PaginaDoPainel["formato"] = "markdown",
+  versao?: VersaoEsperada,
 ): Promise<{ pagina: PaginaDoPainel; estavaPublicada: boolean } | null> {
-  return gravarPagina(id, dadosDaPagina, { formato });
+  return gravarPagina(id, dadosDaPagina, { formato, versao });
 }
 
 /**
  * O UPDATE, com a linha travada, devolvendo se ela estava publicada logo
  * antes desta escrita (ver `gravarPost`). O endereco so muda enquanto a
  * pagina nunca foi ao ar; trocar de grupo leva a pagina para o fim dele.
+ * `versao`: a mesma trava dos posts (ver versao-do-texto.ts).
  */
 async function gravarPagina(
   id: string,
   d: DadosDaPagina,
-  opcoes: { manterNoAr?: boolean; formato?: PaginaDoPainel["formato"] } = {},
+  opcoes: { manterNoAr?: boolean; formato?: PaginaDoPainel["formato"]; versao?: VersaoEsperada } = {},
 ): Promise<{ pagina: PaginaDoPainel; estavaPublicada: boolean } | null> {
   const manterNoAr = opcoes.manterNoAr === true;
   const formato = opcoes.formato ?? "markdown";
@@ -402,10 +405,14 @@ async function gravarPagina(
     FROM (SELECT id, publicado FROM paginas WHERE id = ${id} FOR UPDATE) AS antes
     WHERE paginas.id = antes.id
       AND (${!manterNoAr}::boolean OR antes.publicado = FALSE OR ${d.publicado}::boolean)
+      AND ${confereVersao(sql, opcoes.versao)}
     RETURNING paginas.*, antes.publicado AS estava_publicada`;
   const [linha] = linhas;
   if (linha) return { pagina: paraPagina(linha), estavaPublicada: linha.estava_publicada };
-  if (manterNoAr && !d.publicado && (await buscarPaginaPorId(id))?.publicado) throw new PaginaTiraDoArSemConfirmacao();
+  // Nada escrito: a versao primeiro (ver `gravarPost`).
+  const agora = await buscarPaginaPorId(id);
+  if (agora && !versaoConfere(agora, opcoes.versao)) throw new VersaoDesatualizada(agora);
+  if (manterNoAr && !d.publicado && agora?.publicado) throw new PaginaTiraDoArSemConfirmacao();
   return null;
 }
 
@@ -436,10 +443,32 @@ export async function reordenarGrupo(
   });
 }
 
-/** Apaga de vez. Devolve o endereco que a pagina tinha, para limpar o cache. */
-export async function apagarPagina(id: string): Promise<string | null> {
+/**
+ * Apaga de vez, so se a pagina ainda estiver na `versao` (conferida no
+ * proprio DELETE); senao lanca `VersaoDesatualizada`. Devolve o endereco que
+ * a pagina tinha, para limpar o cache; null = ja nao existia.
+ */
+export async function apagarPagina(id: string, versao?: VersaoEsperada): Promise<string | null> {
   await garantirPaginas();
   const sql = bancoDoPainel();
-  const [linha] = await sql<{ slug: string }[]>`DELETE FROM paginas WHERE id = ${id} RETURNING slug`;
-  return linha?.slug ?? null;
+  const [linha] = await sql<{ slug: string }[]>`
+    DELETE FROM paginas WHERE id = ${id} AND ${confereVersao(sql, versao)} RETURNING slug`;
+  if (linha) return linha.slug;
+  const agora = await buscarPaginaPorId(id);
+  if (agora) throw new VersaoDesatualizada(agora);
+  return null;
+}
+
+/** A conferencia de versao dentro da instrucao que grava (ver versao-do-texto.ts). */
+function confereVersao(sql: postgres.Sql, versao: VersaoEsperada) {
+  if (versao === undefined) return sql`TRUE`;
+  if (versao === CRIACAO) return sql`date_trunc('milliseconds', paginas.atualizado_em) = date_trunc('milliseconds', paginas.criado_em)`;
+  return sql`date_trunc('milliseconds', paginas.atualizado_em) = ${versao}::timestamptz`;
+}
+
+/** A mesma conferencia, na pagina ja lida: so para dizer por que nada foi gravado. */
+function versaoConfere(pagina: PaginaDoPainel, versao: VersaoEsperada): boolean {
+  if (versao === undefined) return true;
+  if (versao === CRIACAO) return pagina.atualizadoEm === pagina.criadoEm;
+  return Date.parse(pagina.atualizadoEm) === Date.parse(versao);
 }

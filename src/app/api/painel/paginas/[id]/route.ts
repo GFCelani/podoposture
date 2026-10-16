@@ -12,6 +12,7 @@ import { paginasDoAcervo } from "@/lib/pagina-do-acervo";
 import { apagarPagina, atualizarPagina, buscarPaginaPorId } from "@/lib/paginas-db";
 import { fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import { camposDaPagina, validarPagina, type PaginaDoPainel } from "@/lib/paginas-tipos";
+import { VersaoDesatualizada, lerVersao } from "@/lib/versao-do-texto";
 
 import { revalidarPaginas } from "../revalidar";
 
@@ -27,6 +28,14 @@ type Contexto = { params: Promise<{ id: string }> };
 /** Pagina que veio do codigo (`formato: html`) abre convertida para Markdown. */
 function comoOEditorVe(pagina: PaginaDoPainel): PaginaDoPainel {
   return pagina.formato === "html" ? { ...pagina, corpo: htmlParaMarkdown(pagina.corpo) } : pagina;
+}
+
+/** 409: a pagina mudou depois que o editor a carregou; nada foi gravado (ver api/painel/posts/[id]). */
+function conflito(atual: PaginaDoPainel) {
+  return NextResponse.json(
+    { erro: "Esta página foi alterada em outra aba ou aparelho, e nada foi salvo agora.", conflito: "versao", pagina: comoOEditorVe(atual) },
+    { status: 409 },
+  );
 }
 
 /** Quebra de linha do navegador e espaco das pontas nao contam como edicao. */
@@ -87,6 +96,9 @@ export async function PUT(req: Request, ctx: Contexto) {
   try {
     const atual = await buscarPaginaPorId(pronto.id);
     if (!atual) return NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });
+    // Sem a versao que o editor carregou, e' conflito (ver api/painel/posts/[id]).
+    const versao = lerVersao((bruto as { versao?: unknown }).versao);
+    if (!versao) return conflito(atual);
     const erros = validarPagina(campos, { capaAceita: atual.capa });
     if (Object.keys(erros).length > 0) {
       return NextResponse.json({ erro: "Confira os campos destacados.", erros }, { status: 400 });
@@ -108,27 +120,35 @@ export async function PUT(req: Request, ctx: Contexto) {
         formato = "html";
       }
     }
-    const salva = await atualizarPagina(pronto.id, campos, formato);
+    const salva = await atualizarPagina(pronto.id, campos, formato, versao);
     if (!salva) return NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });
     await registrarAuditoria("pagina-editada", salva.pagina.slug, ipDaRequisicao(await headers()));
     revalidarPaginas(salva.pagina.slug);
     return NextResponse.json({ pagina: comoOEditorVe(salva.pagina) });
   } catch (erro) {
+    if (erro instanceof VersaoDesatualizada) return conflito(erro.atual as PaginaDoPainel);
     console.error("[painel] falha ao atualizar pagina:", erro);
     return NextResponse.json({ erro: "Não foi possível salvar a página." }, { status: 502 });
   }
 }
 
-export async function DELETE(_req: Request, ctx: Contexto) {
+export async function DELETE(req: Request, ctx: Contexto) {
   const pronto = await preparar(ctx);
   if (!pronto.ok) return pronto.resposta;
   try {
-    const slug = await apagarPagina(pronto.id);
+    // Apaga so a versao que a lista mostrava (?versao=): mudou no meio, avisa.
+    const versao = lerVersao(new URL(req.url).searchParams.get("versao"));
+    if (!versao) {
+      const atual = await buscarPaginaPorId(pronto.id);
+      return atual ? conflito(atual) : NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });
+    }
+    const slug = await apagarPagina(pronto.id, versao);
     if (!slug) return NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });
     await registrarAuditoria("pagina-apagada", slug, ipDaRequisicao(await headers()));
     revalidarPaginas(slug);
     return NextResponse.json({ ok: true });
   } catch (erro) {
+    if (erro instanceof VersaoDesatualizada) return conflito(erro.atual as PaginaDoPainel);
     console.error("[painel] falha ao apagar pagina:", erro);
     return NextResponse.json({ erro: "Não foi possível apagar a página." }, { status: 502 });
   }

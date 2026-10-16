@@ -252,6 +252,15 @@ export function AbaTextos({
 
   const aoFalhar = useCallback((texto: string) => setAviso({ tipo: "erro", texto }), []);
 
+  /** Apagar recusado: o texto mudou em outra aba (versao-do-texto.ts). Avisa e recarrega. */
+  const aoMudarNoMeio = useCallback(
+    (texto: string) => {
+      setAviso({ tipo: "erro", texto });
+      void carregar();
+    },
+    [carregar],
+  );
+
   /**
    * Sobe ou desce uma pagina dentro do grupo do menu. A lista muda na tela na
    * hora e volta como estava se o servidor recusar; o pedido leva o grupo
@@ -460,6 +469,7 @@ export function AbaTextos({
                     }}
                     aoApagado={aoApagado}
                     aoFalhar={aoFalhar}
+                    aoMudarNoMeio={aoMudarNoMeio}
                     aoPerderSessao={aoPerderSessao}
                     mover={
                       grupo && paginas.length > 1
@@ -493,6 +503,7 @@ export function AbaTextos({
               }}
               aoApagado={aoApagado}
               aoFalhar={aoFalhar}
+              aoMudarNoMeio={aoMudarNoMeio}
               aoPerderSessao={aoPerderSessao}
             />
           ))}
@@ -510,6 +521,7 @@ function LinhaDePost({
   aoEditar,
   aoApagado,
   aoFalhar,
+  aoMudarNoMeio,
   aoPerderSessao,
   mover,
 }: {
@@ -519,6 +531,7 @@ function LinhaDePost({
   aoEditar: () => void;
   aoApagado: () => void;
   aoFalhar: (texto: string) => void;
+  aoMudarNoMeio: (texto: string) => void;
   aoPerderSessao: () => void;
   /** So nas paginas de um grupo do menu com mais de uma: as setas de posicao. */
   mover?: {
@@ -543,9 +556,26 @@ function LinhaDePost({
     }
     setApagando(true);
     try {
-      const resposta = await fetch(`${perfil.api}/${post.id}`, { method: "DELETE" });
+      // A versao que a lista mostra: se o texto mudou em outra aba ou aparelho
+      // depois, nada e' apagado (lib/versao-do-texto.ts).
+      const resposta = await fetch(`${perfil.api}/${post.id}?versao=${encodeURIComponent(post.atualizadoEm)}`, {
+        method: "DELETE",
+      });
       if (resposta.status === 401 || resposta.status === 403) {
         aoPerderSessao();
+        return;
+      }
+      if (resposta.status === 409) {
+        const corpo = await resposta.json().catch(() => null);
+        const atual = corpo?.[tipo === "pagina" ? "pagina" : "post"] as { atualizadoEm?: string } | undefined;
+        const hora = atual?.atualizadoEm
+          ? ` às ${new Date(atual.atualizadoEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}`
+          : "";
+        aoMudarNoMeio(
+          tipo === "pagina"
+            ? `Esta página foi alterada em outra aba ou aparelho${hora} e não foi apagada. A lista foi atualizada; confira antes de apagar.`
+            : `Este texto foi alterado em outra aba ou aparelho${hora} e não foi apagado. A lista foi atualizada; confira antes de apagar.`,
+        );
         return;
       }
       // 404: ja nao existia (apagado em outra janela). O que ela queria ja

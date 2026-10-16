@@ -11,6 +11,7 @@ import { PaginaTiraDoArSemConfirmacao, buscarPaginaPorId, criarPagina, listarTod
 import { camposDaPagina, validarPagina } from "@/lib/paginas-tipos";
 
 import { revalidarPaginas } from "./revalidar";
+import { VersaoDesatualizada } from "@/lib/versao-do-texto";
 
 /**
  * As paginas do site no painel: a lista e a pagina nova. Espelho de
@@ -79,6 +80,10 @@ export async function POST(req: Request) {
     if (envioMudaOSite({ publicado: estavaPublicada }, pagina)) revalidarPaginas(pagina.slug);
     return NextResponse.json({ pagina }, { status: 201 });
   } catch (erro) {
+    // Envio repetido de um texto novo que outra aba ja mudou (versao-do-texto.ts).
+    if (erro instanceof VersaoDesatualizada) {
+      return NextResponse.json({ erro: "Esta página foi alterada em outra aba ou aparelho, e nada foi salvo agora.", conflito: "versao", pagina: erro.atual }, { status: 409 });
+    }
     if (erro instanceof PaginaTiraDoArSemConfirmacao) {
       return NextResponse.json({ erro: JA_ESTA_PUBLICADA }, { status: 409 });
     }

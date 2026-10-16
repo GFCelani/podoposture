@@ -219,6 +219,15 @@ export function EditorDePost({
     importadoAoAbrir ? "Arquivo importado como rascunho. Nada foi publicado: confira na prévia e salve quando estiver certo." : null,
   );
   const [salvando, setSalvando] = useState<"publicar" | "rascunho" | null>(null);
+  /**
+   * A gravacao recusada porque o texto mudou em outra aba ou aparelho
+   * (lib/versao-do-texto.ts): a versao que esta salva agora e o que ela tinha
+   * pedido (publicar ou guardar). O que ela escreveu fica no editor.
+   */
+  const [conflito, setConflito] = useState<{ salva: PostDoPainel | PaginaDoPainel; publicar: boolean } | null>(null);
+  const [verSalva, setVerSalva] = useState(false);
+  const [confirmandoPorCima, setConfirmandoPorCima] = useState(false);
+  const caixaDoConflito = useRef<HTMLDivElement>(null);
   const [confirmandoRascunho, setConfirmandoRascunho] = useState(false);
   const [confirmandoSaida, setConfirmandoSaida] = useState<Saida | null>(null);
   // "foto": trocando uma foto que ja esta no texto; `trocando` diz qual.
@@ -610,6 +619,38 @@ export function EditorDePost({
     }
   }
 
+  /* -------- conflito de versao -------- */
+
+  /**
+   * Nada foi gravado: o texto mudou em outra aba ou aparelho. O que ela
+   * escreveu continua no editor e na copia do navegador; a caixa abaixo dos
+   * botoes diz a hora e oferece ver a versao salva ou gravar a dela por cima.
+   */
+  function mostrarConflito(salva: PostDoPainel | PaginaDoPainel, publicar: boolean) {
+    // Texto novo cujo envio repetido foi recusado: dali em diante ele e' o
+    // texto salvo, e "salvar por cima" grava nele (como `passarAoTextoNoAr`).
+    if (!post) {
+      apagarCopia();
+      setPost(salva);
+    }
+    setConflito({ salva, publicar });
+    setVerSalva(false);
+    setConfirmandoPorCima(false);
+    setAviso(null);
+    requestAnimationFrame(() => caixaDoConflito.current?.focus());
+  }
+
+  function salvarPorCima() {
+    if (!conflito) return;
+    // O mesmo gesto de apagar: o segundo clique confirma.
+    if (!confirmandoPorCima) {
+      setConfirmandoPorCima(true);
+      return;
+    }
+    setConfirmandoPorCima(false);
+    void salvar(conflito.publicar, conflito.salva.atualizadoEm);
+  }
+
   /* -------- salvar -------- */
 
   /**
@@ -656,7 +697,12 @@ export function EditorDePost({
     }
   }
 
-  async function salvar(publicar: boolean) {
+  /**
+   * `porCima`: a versao que esta salva agora, vista na caixa de conflito. Ela
+   * ja confirmou trocar essa versao pela dela, entao a gravacao leva essa
+   * versao (e, se outra aba gravar de novo no meio, e' conflito de novo).
+   */
+  async function salvar(publicar: boolean, porCima?: string) {
     if (emCurso.current || enviandoAgora.current) return;
     const dados = { ...campos, publicado: publicar };
     const encontrados = validar(dados);
@@ -674,7 +720,7 @@ export function EditorDePost({
 
     // ui-ux-pro-max ux: Interaction/Confirmation Dialogs — o mesmo gesto de
     // apagar: o segundo clique confirma, e o botao diz o que vai acontecer.
-    if (!publicar && rascunhoPrecisaConfirmar(post) && !confirmandoRascunho) {
+    if (!publicar && !porCima && rascunhoPrecisaConfirmar(post) && !confirmandoRascunho) {
       setConfirmandoRascunho(true);
       return;
     }
@@ -690,7 +736,11 @@ export function EditorDePost({
         {
           method: post ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(post || !idDoNovo ? dados : { ...dados, id: idDoNovo }),
+          // A versao que este editor carregou: o servidor so grava se ela ainda
+          // for a do banco (lib/versao-do-texto.ts).
+          body: JSON.stringify(
+            post ? { ...dados, versao: porCima ?? post.atualizadoEm } : idDoNovo ? { ...dados, id: idDoNovo } : dados,
+          ),
         },
       );
 
@@ -701,6 +751,10 @@ export function EditorDePost({
 
       if (!resposta.ok) {
         const corpo = await resposta.json().catch(() => ({}));
+        if (resposta.status === 409 && corpo?.conflito === "versao" && corpo?.[perfil.chave]) {
+          mostrarConflito(corpo[perfil.chave] as PostDoPainel | PaginaDoPainel, publicar);
+          return;
+        }
         if (resposta.status === 409 && !post && idDoNovo && (await passarAoTextoNoAr(idDoNovo))) return;
         if (corpo?.erros) setErros(corpo.erros);
         setAviso(mensagemDeFalhaAoSalvar(resposta.status, corpo?.erro));
@@ -729,678 +783,797 @@ export function EditorDePost({
   const alerta = "rounded-md bg-[#f7ecec] px-4 py-3 text-[0.9375rem] leading-[1.6] text-[#8c2f2f]";
   const nota = "rounded-md border border-rule bg-surface px-4 py-3 text-[0.9375rem] leading-[1.6] text-ink";
 
+  const horaDoConflito = conflito ? horaDaVersao(conflito.salva.atualizadoEm) : "";
+  const textoDoConflito = pagina
+    ? `Esta página foi alterada em outra aba ou aparelho às ${horaDoConflito}. O que você escreveu aqui não foi salvo.`
+    : `Este texto foi alterado em outra aba ou aparelho às ${horaDoConflito}. O que você escreveu aqui não foi salvo.`;
+
   const rotuloDaSaida = (onde: Saida) =>
     onde === "topo" ? "← Descartar alterações e voltar" : "Descartar alterações e sair";
   const explicacaoDaSaida = (onde: Saida) =>
     `Você mudou este texto e não salvou. Sair agora descarta essas mudanças, inclusive a cópia guardada neste navegador. Para confirmar, clique outra vez em “${rotuloDaSaida(onde).replace("← ", "")}”.`;
 
   return (
-    <div className="mx-auto max-w-[52rem] px-6 py-12 lg:py-16">
-      <button
-        type="button"
-        onClick={() => sair("topo")}
-        onBlur={() => setConfirmandoSaida((c) => (c === "topo" ? null : c))}
-        aria-describedby={confirmandoSaida === "topo" ? "aviso-saida-topo" : undefined}
-        className={`min-h-[44px] text-[0.9375rem] ${
-          confirmandoSaida === "topo" ? "rounded-md border-[1.5px] border-[#8c2f2f] px-3 text-[#8c2f2f]" : "sublinha text-accent"
-        }`}
-      >
-        {confirmandoSaida === "topo" ? rotuloDaSaida("topo") : "← Voltar para a lista"}
-      </button>
-      {confirmandoSaida === "topo" && (
-        <p id="aviso-saida-topo" role="alert" className={`mt-3 ${alerta}`}>
-          {explicacaoDaSaida("topo")}
-        </p>
-      )}
-
-      <h1
-        ref={titulo}
-        tabIndex={-1}
-        className="mt-6 font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
-      >
-        {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto do blog" : "Novo texto do blog"}
-      </h1>
-
-      <div className="mt-4">
-        <label
-          className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
-            travado ? "cursor-default opacity-60" : "cursor-pointer"
+    // Com a versao salva aberta (conflito), ela vai numa coluna ao lado do
+    // editor; abaixo de lg, depois dele, logo abaixo da caixa do conflito.
+    <div className={conflito && verSalva ? "lg:flex lg:items-start lg:gap-8 lg:px-6" : undefined}>
+      <div className="mx-auto w-full max-w-[52rem] px-6 py-12 lg:py-16">
+        <button
+          type="button"
+          onClick={() => sair("topo")}
+          onBlur={() => setConfirmandoSaida((c) => (c === "topo" ? null : c))}
+          aria-describedby={confirmandoSaida === "topo" ? "aviso-saida-topo" : undefined}
+          className={`min-h-[44px] text-[0.9375rem] ${
+            confirmandoSaida === "topo" ? "rounded-md border-[1.5px] border-[#8c2f2f] px-3 text-[#8c2f2f]" : "sublinha text-accent"
           }`}
         >
-          {post
-            ? `Importar arquivo para ${pagina ? "esta página" : "este texto"}`
-            : `Importar arquivo como ${pagina ? "página" : "texto do blog"}`}
-          <input
-            type="file"
-            accept=".md,.markdown,.html,.htm,text/markdown,text/html"
-            className="sr-only"
-            disabled={travado}
-            aria-describedby="ajuda-importar"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void importarDoArquivo(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        <p id="ajuda-importar" className="mt-2 text-[0.875rem] leading-[1.6] text-muted">
-          Um arquivo .md (ou .html) {post ? `troca o título, o ${pagina ? "subtítulo" : "resumo"} e o texto desta ${perfil.nome} pelos dele` : `vira ${pagina ? "esta página" : "este texto"}`}, como
-          rascunho. O primeiro título do arquivo vira o título; nada vai para o site antes de você salvar.
-        </p>
-      </div>
-
-      {avisosDaImportacao.length > 0 && (
-        <div role="status" className={`mt-6 ${nota}`}>
-          <p className="font-medium text-ink-strong">O que conferir no que veio do arquivo:</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {avisosDaImportacao.map((a) => (
-              <li key={a}>{a}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {semBanco && (
-        <p className={`mt-6 ${nota}`}>
-          O banco de dados ainda não está ligado neste servidor: por enquanto dá para escrever, mas não para
-          guardar nem publicar. O que você escrever fica guardado neste navegador. Avise quem cuida do site.
-        </p>
-      )}
-
-      {recuperado && (
-        <div role="status" className={`mt-6 ${nota}`}>
-          <p>Recuperamos o que você estava escrevendo da última vez neste navegador.</p>
-          <button
-            type="button"
-            onClick={descartarCopia}
-            className="sublinha mt-1 min-h-[44px] text-[0.9375rem] text-accent"
-          >
-            {post ? "Descartar e usar o que está salvo" : "Descartar e começar do zero"}
-          </button>
-        </div>
-      )}
-
-      {pendente && (
-        <div role="status" className={`mt-6 ${nota}`}>
-          <p>
-            Há uma versão deste texto guardada neste navegador
-            {pendente.guardadaEm ? ` em ${rotuloDaData(pendente.guardadaEm)}` : ""}, mas o texto foi salvo
-            depois disso, talvez em outro aparelho. Abaixo está a versão salva. Se começar a escrever, a versão
-            deste navegador é substituída.
+          {confirmandoSaida === "topo" ? rotuloDaSaida("topo") : "← Voltar para a lista"}
+        </button>
+        {confirmandoSaida === "topo" && (
+          <p id="aviso-saida-topo" role="alert" className={`mt-3 ${alerta}`}>
+            {explicacaoDaSaida("topo")}
           </p>
-          <div className="mt-1 flex flex-wrap gap-x-6">
-            <button
-              type="button"
-              onClick={usarCopiaPendente}
-              className="sublinha min-h-[44px] text-[0.9375rem] text-accent"
-            >
-              Usar a versão deste navegador
-            </button>
+        )}
+
+        <h1
+          ref={titulo}
+          tabIndex={-1}
+          className="mt-6 font-display text-[1.75rem] leading-[1.2] font-semibold text-ink-strong outline-none"
+        >
+          {pagina ? (post ? "Editar página" : "Nova página") : post ? "Editar texto do blog" : "Novo texto do blog"}
+        </h1>
+
+        <div className="mt-4">
+          <label
+            className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
+              travado ? "cursor-default opacity-60" : "cursor-pointer"
+            }`}
+          >
+            {post
+              ? `Importar arquivo para ${pagina ? "esta página" : "este texto"}`
+              : `Importar arquivo como ${pagina ? "página" : "texto do blog"}`}
+            <input
+              type="file"
+              accept=".md,.markdown,.html,.htm,text/markdown,text/html"
+              className="sr-only"
+              disabled={travado}
+              aria-describedby="ajuda-importar"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void importarDoArquivo(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <p id="ajuda-importar" className="mt-2 text-[0.875rem] leading-[1.6] text-muted">
+            Um arquivo .md (ou .html) {post ? `troca o título, o ${pagina ? "subtítulo" : "resumo"} e o texto desta ${perfil.nome} pelos dele` : `vira ${pagina ? "esta página" : "este texto"}`}, como
+            rascunho. O primeiro título do arquivo vira o título; nada vai para o site antes de você salvar.
+          </p>
+        </div>
+
+        {avisosDaImportacao.length > 0 && (
+          <div role="status" className={`mt-6 ${nota}`}>
+            <p className="font-medium text-ink-strong">O que conferir no que veio do arquivo:</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {avisosDaImportacao.map((a) => (
+                <li key={a}>{a}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {semBanco && (
+          <p className={`mt-6 ${nota}`}>
+            O banco de dados ainda não está ligado neste servidor: por enquanto dá para escrever, mas não para
+            guardar nem publicar. O que você escrever fica guardado neste navegador. Avise quem cuida do site.
+          </p>
+        )}
+
+        {recuperado && (
+          <div role="status" className={`mt-6 ${nota}`}>
+            <p>Recuperamos o que você estava escrevendo da última vez neste navegador.</p>
             <button
               type="button"
               onClick={descartarCopia}
-              className="sublinha min-h-[44px] text-[0.9375rem] text-muted hover:text-[#8c2f2f]"
+              className="sublinha mt-1 min-h-[44px] text-[0.9375rem] text-accent"
             >
-              Descartar a versão deste navegador
+              {post ? "Descartar e usar o que está salvo" : "Descartar e começar do zero"}
             </button>
           </div>
-        </div>
-      )}
-
-      {/* ui-ux-pro-max ux: Accessibility/Error Messages */}
-      {aviso && (
-        <p role="alert" className={`mt-6 ${alerta}`}>
-          {aviso}
-        </p>
-      )}
-      {/* ui-ux-pro-max ux: Feedback/Confirmation Messages — regiao sempre na
-          pagina: aviso que nasce ja com texto nem sempre e lido pelo leitor de tela */}
-      <p role="status" className={sucesso ? "mt-6 rounded-md bg-surface px-4 py-3 text-[0.9375rem] text-ink" : "sr-only"}>
-        {sucesso ?? ""}
-      </p>
-
-      <div className="mt-10 space-y-8">
-        <div>
-          <label htmlFor="campo-titulo" className={rotulo}>
-            Título
-          </label>
-          <input
-            id="campo-titulo"
-            value={campos.titulo}
-            maxLength={LIMITES_POST.titulo}
-            readOnly={travado}
-            onChange={(e) => mudar("titulo", e.target.value)}
-            onBlur={() => aoSairDo("titulo")}
-            aria-invalid={erros.titulo ? true : undefined}
-            aria-describedby={erros.titulo ? "erro-titulo" : undefined}
-            className={entrada}
-          />
-          {erros.titulo && (
-            <p id="erro-titulo" role="alert" className={erroDoCampo}>
-              {erros.titulo}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="campo-resumo" className={rotulo}>
-            {pagina ? "Subtítulo" : "Resumo"} <span className="font-normal text-muted">(opcional)</span>
-          </label>
-          <p id="ajuda-resumo" className="mt-1 text-[0.875rem] text-muted">
-            {pagina
-              ? "É a frase que aparece embaixo do título e no Google. Se deixar em branco, usamos o começo do texto."
-              : "É o trecho que aparece na lista do blog e no Google. Se deixar em branco, usamos o começo do texto."}
-          </p>
-          <textarea
-            id="campo-resumo"
-            value={campos.resumo}
-            maxLength={LIMITES_POST.resumo}
-            rows={2}
-            readOnly={travado}
-            onChange={(e) => mudar("resumo", e.target.value)}
-            onBlur={() => aoSairDo("resumo")}
-            aria-invalid={erros.resumo ? true : undefined}
-            aria-describedby={ids("ajuda-resumo", erros.resumo && "erro-resumo")}
-            className={entrada}
-          />
-          {erros.resumo && (
-            <p id="erro-resumo" role="alert" className={erroDoCampo}>
-              {erros.resumo}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="campo-categoria" className={rotulo}>
-            {pagina ? "Onde entra no menu" : "Tema"}
-          </label>
-          {pagina && (
-            <p id="ajuda-categoria" className="mt-1 text-[0.875rem] text-muted">
-              A página entra no fim do grupo escolhido, no menu do topo do site. Para mudar a posição dela no
-              grupo, use as setas na lista “Páginas do site”. Fora do menu, ela fica no ar só pelo endereço e
-              pelo Google.
-            </p>
-          )}
-          <select
-            id="campo-categoria"
-            value={campos.categoria}
-            disabled={travado}
-            onChange={(e) => mudar("categoria", e.target.value)}
-            onBlur={() => aoSairDo("categoria")}
-            aria-invalid={erros.categoria ? true : undefined}
-            aria-describedby={ids(pagina && "ajuda-categoria", erros.categoria && "erro-categoria")}
-            className={entrada}
-          >
-            <option value="">{pagina ? "Fora do menu" : "Sem tema"}</option>
-            {/* O tema atual entra mesmo antes da lista chegar do servidor. */}
-            {(pagina ? GRUPOS_DO_MENU : (temas ?? temasValidos)).map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          {erroDosTemas && (
-            <p className="mt-2 text-[0.875rem] text-muted">
-              Não foi possível carregar a lista de temas agora. O tema atual continua; os outros aparecem ao reabrir o texto.
-            </p>
-          )}
-          {erros.categoria && (
-            <p id="erro-categoria" role="alert" className={erroDoCampo}>
-              {erros.categoria}
-            </p>
-          )}
-        </div>
-
-        <div data-foto-do-painel={campos.capa ? "capa" : undefined}>
-          <span className={rotulo}>
-            {pagina ? "Foto ao lado do título" : "Imagem de capa"} <span className="font-normal text-muted">(opcional)</span>
-          </span>
-          <div className="mt-2 flex flex-wrap items-center gap-4">
-            <label
-              className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
-                enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
-              }`}
-            >
-              {enviando === "capa"
-                ? "Enviando…"
-                : campos.capa
-                  ? pagina
-                    ? "Trocar foto"
-                    : "Trocar imagem de capa"
-                  : pagina
-                    ? "Escolher foto"
-                    : "Escolher imagem de capa"}
-              <input
-                id="campo-capa"
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                disabled={enviando !== null || travado}
-                aria-describedby={ids(enviando === "capa" && "status-capa", erros.capa && "erro-capa")}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void enviarImagem(f, true);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-            {campos.capa && (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={campos.capa} alt="" className="h-16 w-auto rounded-md border border-rule" />
-                <button
-                  type="button"
-                  onClick={() => mudar("capa", "")}
-                  disabled={enviando !== null || travado}
-                  className="min-h-[44px] text-[0.9375rem] text-muted hover:text-[#8c2f2f] disabled:opacity-50"
-                >
-                  {pagina ? "Remover foto" : "Remover imagem de capa"}
-                </button>
-              </>
-            )}
-          </div>
-          {enviando === "capa" && (
-            <p id="status-capa" role="status" className="mt-2 text-[0.875rem] text-muted">
-              Enviando a imagem de capa. Pode levar alguns segundos.
-            </p>
-          )}
-          {erros.capa && (
-            <p id="erro-capa" role="alert" className={erroDoCampo}>
-              {erros.capa}
-            </p>
-          )}
-          {pagina && campos.capa && (
-            <div className="mt-5 space-y-5">
-              <div>
-                <label htmlFor="campo-capaAlt" className={rotulo}>
-                  Descrição da foto
-                </label>
-                <p id="ajuda-capaAlt" className="mt-1 text-[0.875rem] text-muted">
-                  O que aparece na foto, para quem não enxerga ouvir.
-                </p>
-                <input
-                  id="campo-capaAlt"
-                  value={campos.capaAlt}
-                  maxLength={LIMITES_PAGINA.capaAlt}
-                  readOnly={travado}
-                  onChange={(e) => mudar("capaAlt", e.target.value)}
-                  onBlur={() => aoSairDo("capaAlt")}
-                  aria-invalid={erros.capaAlt ? true : undefined}
-                  aria-describedby={ids("ajuda-capaAlt", erros.capaAlt && "erro-capaAlt")}
-                  className={entrada}
-                />
-                {erros.capaAlt && (
-                  <p id="erro-capaAlt" role="alert" className={erroDoCampo}>
-                    {erros.capaAlt}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="campo-capaLegenda" className={rotulo}>
-                  Legenda <span className="font-normal text-muted">(opcional)</span>
-                </label>
-                <p id="ajuda-capaLegenda" className="mt-1 text-[0.875rem] text-muted">
-                  A linha curta que aparece embaixo da foto.
-                </p>
-                <input
-                  id="campo-capaLegenda"
-                  value={campos.capaLegenda}
-                  maxLength={LIMITES_PAGINA.capaLegenda}
-                  readOnly={travado}
-                  onChange={(e) => mudar("capaLegenda", e.target.value)}
-                  onBlur={() => aoSairDo("capaLegenda")}
-                  aria-invalid={erros.capaLegenda ? true : undefined}
-                  aria-describedby={ids("ajuda-capaLegenda", erros.capaLegenda && "erro-capaLegenda")}
-                  className={entrada}
-                />
-                {erros.capaLegenda && (
-                  <p id="erro-capaLegenda" role="alert" className={erroDoCampo}>
-                    {erros.capaLegenda}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {fotosNoTexto.length > 0 && (
-          <section aria-labelledby="titulo-fotos-do-texto">
-            <h3 id="titulo-fotos-do-texto" className={rotulo}>
-              {pagina ? "Fotos no texto" : "Imagens no texto"}
-            </h3>
-            <p className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
-              Na ordem em que aparecem {pagina ? "na página" : "no texto"}
-              {campos.capa ? (pagina ? ", depois da foto ao lado do título" : ", depois da imagem de capa") : ""}. Trocar
-              aqui muda só a foto: o lugar dela no texto continua o mesmo.
-            </p>
-            <ol className="mt-4">
-              {fotosNoTexto.map((foto, i) => {
-                const n = i + 1 + (campos.capa ? 1 : 0);
-                const id = `foto-do-texto-${i}`;
-                return (
-                  <li key={i} data-foto-do-painel="texto" className="border-t border-rule py-5">
-                    <p className="text-[0.75rem] tracking-[0.12em] text-muted uppercase" style={{ fontFamily: "var(--mono)" }}>
-                      Foto {n}
-                      {foto.secao ? ` · em “${foto.secao}”` : " · no começo do texto"}
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={foto.src} alt="" className="h-20 w-auto rounded-md border border-rule" />
-                      <label
-                        className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
-                          enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
-                        }`}
-                      >
-                        {enviando === "foto" && trocando === i ? "Enviando…" : "Trocar foto"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="sr-only"
-                          aria-label={`Trocar a foto ${n}`}
-                          disabled={enviando !== null || travado}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (f) void trocarFotoDoTexto(f, i);
-                            e.target.value = "";
-                          }}
-                        />
-                      </label>
-                    </div>
-                    {enviando === "foto" && trocando === i && (
-                      <p role="status" className="mt-2 text-[0.875rem] text-muted">
-                        Enviando a foto nova. Pode levar alguns segundos.
-                      </p>
-                    )}
-                    <label htmlFor={`${id}-alt`} className={`${rotulo} mt-4`}>
-                      Descrição da foto {n}
-                    </label>
-                    <input
-                      id={`${id}-alt`}
-                      value={foto.alt}
-                      maxLength={LIMITES_PAGINA.capaAlt}
-                      readOnly={travado}
-                      onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { alt: e.target.value }))}
-                      className={entrada}
-                    />
-                    {pagina && (
-                      <>
-                        <label htmlFor={`${id}-legenda`} className={`${rotulo} mt-4`}>
-                          Legenda da foto {n} <span className="font-normal text-muted">(opcional)</span>
-                        </label>
-                        <input
-                          id={`${id}-legenda`}
-                          value={foto.legenda}
-                          maxLength={LIMITES_PAGINA.capaLegenda}
-                          readOnly={travado}
-                          onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { legenda: e.target.value }))}
-                          className={entrada}
-                        />
-                      </>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
         )}
 
-        <div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <label htmlFor="campo-corpo" className={rotulo}>
-              Texto
+        {pendente && (
+          <div role="status" className={`mt-6 ${nota}`}>
+            <p>
+              Há uma versão deste texto guardada neste navegador
+              {pendente.guardadaEm ? ` em ${rotuloDaData(pendente.guardadaEm)}` : ""}, mas o texto foi salvo
+              depois disso, talvez em outro aparelho. Abaixo está a versão salva. Se começar a escrever, a versão
+              deste navegador é substituída.
+            </p>
+            <div className="mt-1 flex flex-wrap gap-x-6">
+              <button
+                type="button"
+                onClick={usarCopiaPendente}
+                className="sublinha min-h-[44px] text-[0.9375rem] text-accent"
+              >
+                Usar a versão deste navegador
+              </button>
+              <button
+                type="button"
+                onClick={descartarCopia}
+                className="sublinha min-h-[44px] text-[0.9375rem] text-muted hover:text-[#8c2f2f]"
+              >
+                Descartar a versão deste navegador
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ui-ux-pro-max ux: Accessibility/Error Messages */}
+        {aviso && (
+          <p role="alert" className={`mt-6 ${alerta}`}>
+            {aviso}
+          </p>
+        )}
+        {/* ui-ux-pro-max ux: Feedback/Confirmation Messages — regiao sempre na
+            pagina: aviso que nasce ja com texto nem sempre e lido pelo leitor de tela */}
+        <p role="status" className={sucesso ? "mt-6 rounded-md bg-surface px-4 py-3 text-[0.9375rem] text-ink" : "sr-only"}>
+          {sucesso ?? ""}
+        </p>
+
+        <div className="mt-10 space-y-8">
+          <div>
+            <label htmlFor="campo-titulo" className={rotulo}>
+              Título
             </label>
-            <button
-              type="button"
-              onClick={() => setVerPrevia((v) => !v)}
-              className="sublinha min-h-[44px] text-[0.9375rem] text-accent"
-            >
-              {verPrevia ? "Voltar a escrever" : "Ver como vai ficar"}
-            </button>
+            <input
+              id="campo-titulo"
+              value={campos.titulo}
+              maxLength={LIMITES_POST.titulo}
+              readOnly={travado}
+              onChange={(e) => mudar("titulo", e.target.value)}
+              onBlur={() => aoSairDo("titulo")}
+              aria-invalid={erros.titulo ? true : undefined}
+              aria-describedby={erros.titulo ? "erro-titulo" : undefined}
+              className={entrada}
+            />
+            {erros.titulo && (
+              <p id="erro-titulo" role="alert" className={erroDoCampo}>
+                {erros.titulo}
+              </p>
+            )}
           </div>
 
-          <p id="ajuda-corpo" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
-            Pode colar direto do Word: negrito, títulos e listas vêm junto.
-            {pagina &&
-              (antiga && !["palmilhas-personalizadas", "como-e-o-meu-atendimento"].includes(slugDaPagina.normalize("NFC"))
-                ? " Esta página mantém o desenho que sempre teve: as imagens aparecem juntas, ao lado da seção em que está a primeira delas."
-                : " Cada imagem aparece na coluna da direita, ao lado do título ou parágrafo depois do qual ela foi inserida.") +
-                " O botão Inserir imagem já deixa o lugar da descrição (entre colchetes) e da legenda (entre aspas)."}
-          </p>
-          {imagensDemais && (
-            <p role="status" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
-              Há mais imagens do que o texto ao lado comporta. No site, algumas descem para a seção seguinte ou ficam
-              menores; para ficarem do tamanho certo, escreva mais texto perto delas ou tire uma imagem.
+          <div>
+            <label htmlFor="campo-resumo" className={rotulo}>
+              {pagina ? "Subtítulo" : "Resumo"} <span className="font-normal text-muted">(opcional)</span>
+            </label>
+            <p id="ajuda-resumo" className="mt-1 text-[0.875rem] text-muted">
+              {pagina
+                ? "É a frase que aparece embaixo do título e no Google. Se deixar em branco, usamos o começo do texto."
+                : "É o trecho que aparece na lista do blog e no Google. Se deixar em branco, usamos o começo do texto."}
             </p>
-          )}
+            <textarea
+              id="campo-resumo"
+              value={campos.resumo}
+              maxLength={LIMITES_POST.resumo}
+              rows={2}
+              readOnly={travado}
+              onChange={(e) => mudar("resumo", e.target.value)}
+              onBlur={() => aoSairDo("resumo")}
+              aria-invalid={erros.resumo ? true : undefined}
+              aria-describedby={ids("ajuda-resumo", erros.resumo && "erro-resumo")}
+              className={entrada}
+            />
+            {erros.resumo && (
+              <p id="erro-resumo" role="alert" className={erroDoCampo}>
+                {erros.resumo}
+              </p>
+            )}
+          </div>
 
-          {!verPrevia && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {/* Escritos um a um, e nao por map sobre um array montado aqui:
-                  o compilador do React nao consegue provar que closures
-                  criados na renderizacao so tocam o ref dentro do handler. */}
-              <button type="button" onClick={() => inserir("**", "**", "texto")} disabled={travado} className={BOTAO_FORMATO}>
-                Negrito
-              </button>
-              <button type="button" onClick={() => inserir("_", "_", "texto")} disabled={travado} className={BOTAO_FORMATO}>
-                Itálico
-              </button>
-              <button type="button" onClick={() => inserir("\n## ", "", "Título da seção")} disabled={travado} className={BOTAO_FORMATO}>
-                Título de seção
-              </button>
-              <button type="button" onClick={() => inserir("\n- ", "", "item")} disabled={travado} className={BOTAO_FORMATO}>
-                Lista
-              </button>
-              <button type="button" onClick={() => inserir("\n> ", "", "citação")} disabled={travado} className={BOTAO_FORMATO}>
-                Citação
-              </button>
+          <div>
+            <label htmlFor="campo-categoria" className={rotulo}>
+              {pagina ? "Onde entra no menu" : "Tema"}
+            </label>
+            {pagina && (
+              <p id="ajuda-categoria" className="mt-1 text-[0.875rem] text-muted">
+                A página entra no fim do grupo escolhido, no menu do topo do site. Para mudar a posição dela no
+                grupo, use as setas na lista “Páginas do site”. Fora do menu, ela fica no ar só pelo endereço e
+                pelo Google.
+              </p>
+            )}
+            <select
+              id="campo-categoria"
+              value={campos.categoria}
+              disabled={travado}
+              onChange={(e) => mudar("categoria", e.target.value)}
+              onBlur={() => aoSairDo("categoria")}
+              aria-invalid={erros.categoria ? true : undefined}
+              aria-describedby={ids(pagina && "ajuda-categoria", erros.categoria && "erro-categoria")}
+              className={entrada}
+            >
+              <option value="">{pagina ? "Fora do menu" : "Sem tema"}</option>
+              {/* O tema atual entra mesmo antes da lista chegar do servidor. */}
+              {(pagina ? GRUPOS_DO_MENU : (temas ?? temasValidos)).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            {erroDosTemas && (
+              <p className="mt-2 text-[0.875rem] text-muted">
+                Não foi possível carregar a lista de temas agora. O tema atual continua; os outros aparecem ao reabrir o texto.
+              </p>
+            )}
+            {erros.categoria && (
+              <p id="erro-categoria" role="alert" className={erroDoCampo}>
+                {erros.categoria}
+              </p>
+            )}
+          </div>
+
+          <div data-foto-do-painel={campos.capa ? "capa" : undefined}>
+            <span className={rotulo}>
+              {pagina ? "Foto ao lado do título" : "Imagem de capa"} <span className="font-normal text-muted">(opcional)</span>
+            </span>
+            <div className="mt-2 flex flex-wrap items-center gap-4">
               <label
-                className={`inline-flex min-h-[44px] items-center rounded-md border border-rule px-3 text-[0.875rem] text-ink hover:border-accent hover:text-accent ${FOCO_NO_ROTULO} ${
+                className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
                   enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
                 }`}
               >
-                {enviando === "corpo" ? "Enviando…" : "Inserir imagem"}
+                {enviando === "capa"
+                  ? "Enviando…"
+                  : campos.capa
+                    ? pagina
+                      ? "Trocar foto"
+                      : "Trocar imagem de capa"
+                    : pagina
+                      ? "Escolher foto"
+                      : "Escolher imagem de capa"}
                 <input
+                  id="campo-capa"
                   type="file"
                   accept="image/*"
                   className="sr-only"
                   disabled={enviando !== null || travado}
+                  aria-describedby={ids(enviando === "capa" && "status-capa", erros.capa && "erro-capa")}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) void enviarImagem(f, false);
+                    if (f) void enviarImagem(f, true);
                     e.target.value = "";
                   }}
                 />
               </label>
+              {campos.capa && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={campos.capa} alt="" className="h-16 w-auto rounded-md border border-rule" />
+                  <button
+                    type="button"
+                    onClick={() => mudar("capa", "")}
+                    disabled={enviando !== null || travado}
+                    className="min-h-[44px] text-[0.9375rem] text-muted hover:text-[#8c2f2f] disabled:opacity-50"
+                  >
+                    {pagina ? "Remover foto" : "Remover imagem de capa"}
+                  </button>
+                </>
+              )}
             </div>
-          )}
-          {/* Fora da barra: com a previa aberta a barra some, e o envio continua. */}
-          {enviando === "corpo" && (
-            <p role="status" className="mt-2 text-[0.875rem] text-muted">
-              Enviando a imagem para o texto. Pode continuar escrevendo.
-            </p>
-          )}
-
-          {verPrevia && pagina ? (
-            // A pagina: o topo com a foto em moldura e o corpo no MESMO
-            // componente da pagina publicada (corpo-da-pagina.tsx), na largura
-            // da janela: as duas colunas dependem dela, e dentro da coluna do
-            // editor a previa mostraria outra pagina.
-            <div
-              className="mt-4 overflow-hidden border-y border-rule bg-paper"
-              style={larguraDaJanela ? { width: larguraDaJanela, marginLeft: `calc(50% - ${larguraDaJanela / 2}px)` } : undefined}
-            >
-              <div className="border-b border-rule bg-surface">
-                <div className="mx-auto max-w-[1240px] px-6 pt-10 pb-10 md:px-8 lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-6 lg:px-10">
-                  <div className="lg:col-span-7">
-                    {campos.categoria && (
-                      <p
-                        className="mb-6 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
-                        style={{ fontFamily: "var(--mono)" }}
-                      >
-                        Início / {campos.categoria} / {campos.titulo || "Título da página"}
-                      </p>
-                    )}
-                    <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
-                      {campos.titulo || "Título da página"}
+            {enviando === "capa" && (
+              <p id="status-capa" role="status" className="mt-2 text-[0.875rem] text-muted">
+                Enviando a imagem de capa. Pode levar alguns segundos.
+              </p>
+            )}
+            {erros.capa && (
+              <p id="erro-capa" role="alert" className={erroDoCampo}>
+                {erros.capa}
+              </p>
+            )}
+            {pagina && campos.capa && (
+              <div className="mt-5 space-y-5">
+                <div>
+                  <label htmlFor="campo-capaAlt" className={rotulo}>
+                    Descrição da foto
+                  </label>
+                  <p id="ajuda-capaAlt" className="mt-1 text-[0.875rem] text-muted">
+                    O que aparece na foto, para quem não enxerga ouvir.
+                  </p>
+                  <input
+                    id="campo-capaAlt"
+                    value={campos.capaAlt}
+                    maxLength={LIMITES_PAGINA.capaAlt}
+                    readOnly={travado}
+                    onChange={(e) => mudar("capaAlt", e.target.value)}
+                    onBlur={() => aoSairDo("capaAlt")}
+                    aria-invalid={erros.capaAlt ? true : undefined}
+                    aria-describedby={ids("ajuda-capaAlt", erros.capaAlt && "erro-capaAlt")}
+                    className={entrada}
+                  />
+                  {erros.capaAlt && (
+                    <p id="erro-capaAlt" role="alert" className={erroDoCampo}>
+                      {erros.capaAlt}
                     </p>
-                    <SubtituloDaPrevia topo={topoDaPrevia} />
-                  </div>
-                  {campos.capa && (
-                    <figure className="mt-10 max-w-[360px] overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate lg:col-span-4 lg:col-start-9 lg:mt-0 lg:max-w-none">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={campos.capa} alt={campos.capaAlt} className="aspect-[4/5] w-full rounded-md object-cover saturate-[0.9]" />
-                      {campos.capaLegenda && (
-                        <figcaption
-                          className="px-1 pt-3 pb-1 text-[0.6875rem] leading-[1.5] tracking-[0.12em] text-muted"
-                          style={{ fontFamily: "var(--mono)" }}
-                        >
-                          {campos.capaLegenda}
-                        </figcaption>
-                      )}
-                    </figure>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="campo-capaLegenda" className={rotulo}>
+                    Legenda <span className="font-normal text-muted">(opcional)</span>
+                  </label>
+                  <p id="ajuda-capaLegenda" className="mt-1 text-[0.875rem] text-muted">
+                    A linha curta que aparece embaixo da foto.
+                  </p>
+                  <input
+                    id="campo-capaLegenda"
+                    value={campos.capaLegenda}
+                    maxLength={LIMITES_PAGINA.capaLegenda}
+                    readOnly={travado}
+                    onChange={(e) => mudar("capaLegenda", e.target.value)}
+                    onBlur={() => aoSairDo("capaLegenda")}
+                    aria-invalid={erros.capaLegenda ? true : undefined}
+                    aria-describedby={ids("ajuda-capaLegenda", erros.capaLegenda && "erro-capaLegenda")}
+                    className={entrada}
+                  />
+                  {erros.capaLegenda && (
+                    <p id="erro-capaLegenda" role="alert" className={erroDoCampo}>
+                      {erros.capaLegenda}
+                    </p>
                   )}
                 </div>
               </div>
-              {campos.corpo.trim() ? (
-                <CorpoDaPagina
-                  slug={slugDaPagina}
-                  html={topoDaPrevia.corpo}
-                  tipo={tipoDaPrevia}
-                  fotos={fotosDoRegistro}
-                />
-              ) : (
-                <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
-                  Escreva o texto para ver como a página vai ficar.
-                </p>
-              )}
+            )}
+          </div>
+
+          {fotosNoTexto.length > 0 && (
+            <section aria-labelledby="titulo-fotos-do-texto">
+              <h3 id="titulo-fotos-do-texto" className={rotulo}>
+                {pagina ? "Fotos no texto" : "Imagens no texto"}
+              </h3>
+              <p className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+                Na ordem em que aparecem {pagina ? "na página" : "no texto"}
+                {campos.capa ? (pagina ? ", depois da foto ao lado do título" : ", depois da imagem de capa") : ""}. Trocar
+                aqui muda só a foto: o lugar dela no texto continua o mesmo.
+              </p>
+              <ol className="mt-4">
+                {fotosNoTexto.map((foto, i) => {
+                  const n = i + 1 + (campos.capa ? 1 : 0);
+                  const id = `foto-do-texto-${i}`;
+                  return (
+                    <li key={i} data-foto-do-painel="texto" className="border-t border-rule py-5">
+                      <p className="text-[0.75rem] tracking-[0.12em] text-muted uppercase" style={{ fontFamily: "var(--mono)" }}>
+                        Foto {n}
+                        {foto.secao ? ` · em “${foto.secao}”` : " · no começo do texto"}
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={foto.src} alt="" className="h-20 w-auto rounded-md border border-rule" />
+                        <label
+                          className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
+                            enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
+                          }`}
+                        >
+                          {enviando === "foto" && trocando === i ? "Enviando…" : "Trocar foto"}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            aria-label={`Trocar a foto ${n}`}
+                            disabled={enviando !== null || travado}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) void trocarFotoDoTexto(f, i);
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      </div>
+                      {enviando === "foto" && trocando === i && (
+                        <p role="status" className="mt-2 text-[0.875rem] text-muted">
+                          Enviando a foto nova. Pode levar alguns segundos.
+                        </p>
+                      )}
+                      <label htmlFor={`${id}-alt`} className={`${rotulo} mt-4`}>
+                        Descrição da foto {n}
+                      </label>
+                      <input
+                        id={`${id}-alt`}
+                        value={foto.alt}
+                        maxLength={LIMITES_PAGINA.capaAlt}
+                        readOnly={travado}
+                        onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { alt: e.target.value }))}
+                        className={entrada}
+                      />
+                      {pagina && (
+                        <>
+                          <label htmlFor={`${id}-legenda`} className={`${rotulo} mt-4`}>
+                            Legenda da foto {n} <span className="font-normal text-muted">(opcional)</span>
+                          </label>
+                          <input
+                            id={`${id}-legenda`}
+                            value={foto.legenda}
+                            maxLength={LIMITES_PAGINA.capaLegenda}
+                            readOnly={travado}
+                            onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { legenda: e.target.value }))}
+                            className={entrada}
+                          />
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          )}
+
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label htmlFor="campo-corpo" className={rotulo}>
+                Texto
+              </label>
+              <button
+                type="button"
+                onClick={() => setVerPrevia((v) => !v)}
+                className="sublinha min-h-[44px] text-[0.9375rem] text-accent"
+              >
+                {verPrevia ? "Voltar a escrever" : "Ver como vai ficar"}
+              </button>
             </div>
-          ) : verPrevia ? (
-            // O mesmo componente da pagina publicada (home/f/[slug]) e o topo com
-            // as mesmas classes da casca do post. Uma previa com estilo proprio
-            // mostraria outra coisa, e ela publicaria confiando no que nao vai ao ar.
-            <div className="mt-4 overflow-hidden rounded-lg border border-rule bg-paper">
-              <div className="border-b border-rule bg-surface px-6 pt-10 pb-10 md:px-8">
-                <p
-                  className="mb-6 flex items-center gap-4 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
-                  style={{ fontFamily: "var(--mono)" }}
+
+            <p id="ajuda-corpo" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+              Pode colar direto do Word: negrito, títulos e listas vêm junto.
+              {pagina &&
+                (antiga && !["palmilhas-personalizadas", "como-e-o-meu-atendimento"].includes(slugDaPagina.normalize("NFC"))
+                  ? " Esta página mantém o desenho que sempre teve: as imagens aparecem juntas, ao lado da seção em que está a primeira delas."
+                  : " Cada imagem aparece na coluna da direita, ao lado do título ou parágrafo depois do qual ela foi inserida.") +
+                  " O botão Inserir imagem já deixa o lugar da descrição (entre colchetes) e da legenda (entre aspas)."}
+            </p>
+            {imagensDemais && (
+              <p role="status" className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+                Há mais imagens do que o texto ao lado comporta. No site, algumas descem para a seção seguinte ou ficam
+                menores; para ficarem do tamanho certo, escreva mais texto perto delas ou tire uma imagem.
+              </p>
+            )}
+
+            {!verPrevia && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {/* Escritos um a um, e nao por map sobre um array montado aqui:
+                    o compilador do React nao consegue provar que closures
+                    criados na renderizacao so tocam o ref dentro do handler. */}
+                <button type="button" onClick={() => inserir("**", "**", "texto")} disabled={travado} className={BOTAO_FORMATO}>
+                  Negrito
+                </button>
+                <button type="button" onClick={() => inserir("_", "_", "texto")} disabled={travado} className={BOTAO_FORMATO}>
+                  Itálico
+                </button>
+                <button type="button" onClick={() => inserir("\n## ", "", "Título da seção")} disabled={travado} className={BOTAO_FORMATO}>
+                  Título de seção
+                </button>
+                <button type="button" onClick={() => inserir("\n- ", "", "item")} disabled={travado} className={BOTAO_FORMATO}>
+                  Lista
+                </button>
+                <button type="button" onClick={() => inserir("\n> ", "", "citação")} disabled={travado} className={BOTAO_FORMATO}>
+                  Citação
+                </button>
+                <label
+                  className={`inline-flex min-h-[44px] items-center rounded-md border border-rule px-3 text-[0.875rem] text-ink hover:border-accent hover:text-accent ${FOCO_NO_ROTULO} ${
+                    enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
+                  }`}
                 >
-                  <span>{rotuloDaData(post?.publicadoEm ?? hoje)}</span>
-                  {campos.categoria && (
-                    <>
-                      <span aria-hidden="true" className="h-px w-8 bg-rule" />
-                      <span>{campos.categoria}</span>
-                    </>
-                  )}
-                </p>
-                <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
-                  {campos.titulo || "Título do texto"}
-                </p>
-                <SubtituloDaPrevia topo={topoDaPrevia} />
-                {campos.capa && (
-                  /* No site a capa vai inteira, na proporcao dela, ao lado da
-                     abertura; aqui so interessa mostrar que nada e' cortado. */
-                  <figure className="mt-12 w-fit rounded-lg border border-rule bg-paper p-2 shadow-plate">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={campos.capa} alt="" className="max-h-[64svh] w-auto max-w-full rounded-md saturate-[0.9]" />
-                  </figure>
+                  {enviando === "corpo" ? "Enviando…" : "Inserir imagem"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    disabled={enviando !== null || travado}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void enviarImagem(f, false);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+            {/* Fora da barra: com a previa aberta a barra some, e o envio continua. */}
+            {enviando === "corpo" && (
+              <p role="status" className="mt-2 text-[0.875rem] text-muted">
+                Enviando a imagem para o texto. Pode continuar escrevendo.
+              </p>
+            )}
+
+            {verPrevia && pagina ? (
+              // A pagina: o topo com a foto em moldura e o corpo no MESMO
+              // componente da pagina publicada (corpo-da-pagina.tsx), na largura
+              // da janela: as duas colunas dependem dela, e dentro da coluna do
+              // editor a previa mostraria outra pagina.
+              <div
+                className="mt-4 overflow-hidden border-y border-rule bg-paper"
+                style={larguraDaJanela ? { width: larguraDaJanela, marginLeft: `calc(50% - ${larguraDaJanela / 2}px)` } : undefined}
+              >
+                <div className="border-b border-rule bg-surface">
+                  <div className="mx-auto max-w-[1240px] px-6 pt-10 pb-10 md:px-8 lg:grid lg:grid-cols-12 lg:items-end lg:gap-x-6 lg:px-10">
+                    <div className="lg:col-span-7">
+                      {campos.categoria && (
+                        <p
+                          className="mb-6 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                          style={{ fontFamily: "var(--mono)" }}
+                        >
+                          Início / {campos.categoria} / {campos.titulo || "Título da página"}
+                        </p>
+                      )}
+                      <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
+                        {campos.titulo || "Título da página"}
+                      </p>
+                      <SubtituloDaPrevia topo={topoDaPrevia} />
+                    </div>
+                    {campos.capa && (
+                      <figure className="mt-10 max-w-[360px] overflow-hidden rounded-lg border border-rule bg-paper p-2 shadow-plate lg:col-span-4 lg:col-start-9 lg:mt-0 lg:max-w-none">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={campos.capa} alt={campos.capaAlt} className="aspect-[4/5] w-full rounded-md object-cover saturate-[0.9]" />
+                        {campos.capaLegenda && (
+                          <figcaption
+                            className="px-1 pt-3 pb-1 text-[0.6875rem] leading-[1.5] tracking-[0.12em] text-muted"
+                            style={{ fontFamily: "var(--mono)" }}
+                          >
+                            {campos.capaLegenda}
+                          </figcaption>
+                        )}
+                      </figure>
+                    )}
+                  </div>
+                </div>
+                {campos.corpo.trim() ? (
+                  <CorpoDaPagina
+                    slug={slugDaPagina}
+                    html={topoDaPrevia.corpo}
+                    tipo={tipoDaPrevia}
+                    fotos={fotosDoRegistro}
+                  />
+                ) : (
+                  <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
+                    Escreva o texto para ver como a página vai ficar.
+                  </p>
                 )}
               </div>
-              {campos.corpo.trim() ? (
-                <SecoesDeConteudo html={topoDaPrevia.corpo} tipo="post" />
-              ) : (
-                <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
-                  Escreva o texto para ver como ele vai ficar.
+            ) : verPrevia ? (
+              // O mesmo componente da pagina publicada (home/f/[slug]) e o topo com
+              // as mesmas classes da casca do post. Uma previa com estilo proprio
+              // mostraria outra coisa, e ela publicaria confiando no que nao vai ao ar.
+              <div className="mt-4 overflow-hidden rounded-lg border border-rule bg-paper">
+                <div className="border-b border-rule bg-surface px-6 pt-10 pb-10 md:px-8">
+                  <p
+                    className="mb-6 flex items-center gap-4 text-[0.6875rem] tracking-[0.16em] text-muted uppercase"
+                    style={{ fontFamily: "var(--mono)" }}
+                  >
+                    <span>{rotuloDaData(post?.publicadoEm ?? hoje)}</span>
+                    {campos.categoria && (
+                      <>
+                        <span aria-hidden="true" className="h-px w-8 bg-rule" />
+                        <span>{campos.categoria}</span>
+                      </>
+                    )}
+                  </p>
+                  <p className="max-w-[24ch] [overflow-wrap:anywhere] font-display text-[clamp(2rem,1.35rem+3.25vw,3.25rem)] leading-[1.1] font-semibold tracking-[-0.02em] text-balance text-ink-strong max-[359px]:text-[1.625rem]">
+                    {campos.titulo || "Título do texto"}
+                  </p>
+                  <SubtituloDaPrevia topo={topoDaPrevia} />
+                  {campos.capa && (
+                    /* No site a capa vai inteira, na proporcao dela, ao lado da
+                       abertura; aqui so interessa mostrar que nada e' cortado. */
+                    <figure className="mt-12 w-fit rounded-lg border border-rule bg-paper p-2 shadow-plate">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={campos.capa} alt="" className="max-h-[64svh] w-auto max-w-full rounded-md saturate-[0.9]" />
+                    </figure>
+                  )}
+                </div>
+                {campos.corpo.trim() ? (
+                  <SecoesDeConteudo html={topoDaPrevia.corpo} tipo="post" />
+                ) : (
+                  <p className="px-6 py-10 text-center text-[1.0625rem] leading-[1.7] text-muted">
+                    Escreva o texto para ver como ele vai ficar.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <textarea
+                id="campo-corpo"
+                ref={areaTexto}
+                value={campos.corpo}
+                rows={18}
+                readOnly={travado}
+                onChange={(e) => mudar("corpo", e.target.value)}
+                onPaste={aoColar}
+                onBlur={() => aoSairDo("corpo")}
+                aria-invalid={erros.corpo ? true : undefined}
+                aria-describedby={ids("ajuda-corpo", erros.corpo && "erro-corpo")}
+                className="mt-4 w-full rounded-md border-[1.5px] border-rule bg-paper p-4 text-[1.0625rem] leading-[1.7] text-ink outline-none focus:border-accent read-only:bg-surface"
+              />
+            )}
+            {erros.corpo && (
+              <p id="erro-corpo" role="alert" className={erroDoCampo}>
+                {erros.corpo}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-12 border-t border-rule pt-8">
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={() => void salvar(true)}
+              disabled={salvando !== null || enviando !== null}
+              aria-describedby={enviando !== null ? "aviso-envio" : undefined}
+              className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift disabled:opacity-50"
+            >
+              {salvando === "publicar" ? "Publicando…" : "Publicar no site"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void salvar(false)}
+              onBlur={() => setConfirmandoRascunho(false)}
+              disabled={salvando !== null || enviando !== null}
+              aria-describedby={ids(confirmandoRascunho && "aviso-rascunho", enviando !== null && "aviso-envio")}
+              className={`min-h-[48px] rounded-md border-[1.5px] px-6 text-[0.9375rem] disabled:opacity-50 ${
+                confirmandoRascunho
+                  ? "border-[#8c2f2f] text-[#8c2f2f]"
+                  : "border-accent/45 text-accent hover:border-accent"
+              }`}
+            >
+              {salvando === "rascunho"
+                ? "Guardando…"
+                : confirmandoRascunho
+                  ? "Tirar do site e guardar"
+                  : "Guardar como rascunho"}
+            </button>
+            <button
+              type="button"
+              onClick={() => sair("fim")}
+              onBlur={() => setConfirmandoSaida((c) => (c === "fim" ? null : c))}
+              disabled={salvando !== null}
+              aria-describedby={confirmandoSaida === "fim" ? "aviso-saida-fim" : undefined}
+              className={`min-h-[48px] px-2 text-[0.9375rem] disabled:opacity-50 ${
+                confirmandoSaida === "fim" ? "rounded-md border-[1.5px] border-[#8c2f2f] px-4 text-[#8c2f2f]" : "text-muted"
+              }`}
+            >
+              {confirmandoSaida === "fim" ? rotuloDaSaida("fim") : "Cancelar"}
+            </button>
+          </div>
+
+          {enviando !== null && (
+            <p id="aviso-envio" className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
+              Espere a imagem terminar de enviar para publicar ou guardar.
+            </p>
+          )}
+
+          {/* Abaixo dos botoes, e nao acima: aviso que empurra o botao para baixo
+              faz o segundo clique cair em outro lugar. */}
+          {confirmandoRascunho && (
+            <p id="aviso-rascunho" role="alert" className={`mt-4 ${alerta}`}>
+              {pagina
+                ? "Esta página está no site. Guardar como rascunho tira ela do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."
+                : "Este texto está no site. Guardar como rascunho tira ele do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."}
+            </p>
+          )}
+          {confirmandoSaida === "fim" && (
+            <p id="aviso-saida-fim" role="alert" className={`mt-4 ${alerta}`}>
+              {explicacaoDaSaida("fim")}
+            </p>
+          )}
+          {conflito && (
+            <div ref={caixaDoConflito} tabIndex={-1} data-conflito-de-versao className={`mt-4 outline-none ${alerta}`}>
+              <p role="alert">{textoDoConflito}</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setVerSalva((v) => !v)}
+                  aria-expanded={verSalva}
+                  aria-controls="versao-salva"
+                  className="min-h-[44px] rounded-md border-[1.5px] border-accent/45 bg-paper px-4 text-[0.9375rem] text-accent hover:border-accent"
+                >
+                  {verSalva ? "Fechar a versão salva" : "Ver a versão salva"}
+                </button>
+                <button
+                  type="button"
+                  onClick={salvarPorCima}
+                  onBlur={() => setConfirmandoPorCima(false)}
+                  disabled={salvando !== null || enviando !== null}
+                  aria-describedby={confirmandoPorCima ? "aviso-por-cima" : undefined}
+                  className="min-h-[44px] rounded-md border-[1.5px] border-[#8c2f2f] bg-paper px-4 text-[0.9375rem] text-[#8c2f2f] disabled:opacity-50"
+                >
+                  {salvando !== null ? "Salvando…" : confirmandoPorCima ? "Confirmar e salvar por cima" : "Salvar a minha por cima"}
+                </button>
+              </div>
+              {confirmandoPorCima && (
+                <p id="aviso-por-cima" role="alert" className="mt-3">
+                  A versão salva às {horaDoConflito} vai ser trocada pelo que está neste editor. Para confirmar, clique outra
+                  vez em “Confirmar e salvar por cima”.
                 </p>
               )}
             </div>
-          ) : (
-            <textarea
-              id="campo-corpo"
-              ref={areaTexto}
-              value={campos.corpo}
-              rows={18}
-              readOnly={travado}
-              onChange={(e) => mudar("corpo", e.target.value)}
-              onPaste={aoColar}
-              onBlur={() => aoSairDo("corpo")}
-              aria-invalid={erros.corpo ? true : undefined}
-              aria-describedby={ids("ajuda-corpo", erros.corpo && "erro-corpo")}
-              className="mt-4 w-full rounded-md border-[1.5px] border-rule bg-paper p-4 text-[1.0625rem] leading-[1.7] text-ink outline-none focus:border-accent read-only:bg-surface"
-            />
-          )}
-          {erros.corpo && (
-            <p id="erro-corpo" role="alert" className={erroDoCampo}>
-              {erros.corpo}
-            </p>
           )}
         </div>
       </div>
-
-      <div className="mt-12 border-t border-rule pt-8">
-        <div className="flex flex-wrap items-center gap-4">
-          <button
-            type="button"
-            onClick={() => void salvar(true)}
-            disabled={salvando !== null || enviando !== null}
-            aria-describedby={enviando !== null ? "aviso-envio" : undefined}
-            className="min-h-[48px] rounded-md border-[1.5px] border-action-deep/25 bg-action px-7 font-medium text-ink-strong shadow-tag transition-[transform,box-shadow] duration-[260ms] hover:-translate-y-0.5 hover:shadow-lift disabled:opacity-50"
-          >
-            {salvando === "publicar" ? "Publicando…" : "Publicar no site"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void salvar(false)}
-            onBlur={() => setConfirmandoRascunho(false)}
-            disabled={salvando !== null || enviando !== null}
-            aria-describedby={ids(confirmandoRascunho && "aviso-rascunho", enviando !== null && "aviso-envio")}
-            className={`min-h-[48px] rounded-md border-[1.5px] px-6 text-[0.9375rem] disabled:opacity-50 ${
-              confirmandoRascunho
-                ? "border-[#8c2f2f] text-[#8c2f2f]"
-                : "border-accent/45 text-accent hover:border-accent"
-            }`}
-          >
-            {salvando === "rascunho"
-              ? "Guardando…"
-              : confirmandoRascunho
-                ? "Tirar do site e guardar"
-                : "Guardar como rascunho"}
-          </button>
-          <button
-            type="button"
-            onClick={() => sair("fim")}
-            onBlur={() => setConfirmandoSaida((c) => (c === "fim" ? null : c))}
-            disabled={salvando !== null}
-            aria-describedby={confirmandoSaida === "fim" ? "aviso-saida-fim" : undefined}
-            className={`min-h-[48px] px-2 text-[0.9375rem] disabled:opacity-50 ${
-              confirmandoSaida === "fim" ? "rounded-md border-[1.5px] border-[#8c2f2f] px-4 text-[#8c2f2f]" : "text-muted"
-            }`}
-          >
-            {confirmandoSaida === "fim" ? rotuloDaSaida("fim") : "Cancelar"}
-          </button>
-        </div>
-
-        {enviando !== null && (
-          <p id="aviso-envio" className="mt-3 text-[0.875rem] leading-[1.6] text-muted">
-            Espere a imagem terminar de enviar para publicar ou guardar.
-          </p>
-        )}
-
-        {/* Abaixo dos botoes, e nao acima: aviso que empurra o botao para baixo
-            faz o segundo clique cair em outro lugar. */}
-        {confirmandoRascunho && (
-          <p id="aviso-rascunho" role="alert" className={`mt-4 ${alerta}`}>
-            {pagina
-              ? "Esta página está no site. Guardar como rascunho tira ela do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."
-              : "Este texto está no site. Guardar como rascunho tira ele do ar até você publicar de novo. Para confirmar, clique outra vez em “Tirar do site e guardar”."}
-          </p>
-        )}
-        {confirmandoSaida === "fim" && (
-          <p id="aviso-saida-fim" role="alert" className={`mt-4 ${alerta}`}>
-            {explicacaoDaSaida("fim")}
-          </p>
-        )}
-      </div>
+      {conflito && verSalva && <VersaoSalva salva={conflito.salva} pagina={pagina} hora={horaDoConflito} aoFechar={() => setVerSalva(false)} />}
     </div>
+  );
+}
+
+/** A hora de uma versao, como a clinica le: HH:MM no horario de Brasilia. */
+function horaDaVersao(iso: string): string {
+  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
+
+/**
+ * A versao do banco, so para ler, ao lado do editor: o que a outra aba ou
+ * aparelho gravou. Nada aqui muda o que ela escreveu.
+ */
+function VersaoSalva({
+  salva,
+  pagina,
+  hora,
+  aoFechar,
+}: {
+  salva: PostDoPainel | PaginaDoPainel;
+  pagina: boolean;
+  hora: string;
+  aoFechar: () => void;
+}) {
+  const rotulo = "text-[0.75rem] tracking-[0.12em] text-muted uppercase";
+  const legenda = "capaLegenda" in salva ? salva.capaLegenda : "";
+  return (
+    <aside
+      id="versao-salva"
+      aria-labelledby="titulo-versao-salva"
+      className="mx-6 mb-12 rounded-lg border border-rule bg-surface p-5 lg:sticky lg:top-6 lg:mx-0 lg:mt-12 lg:mb-0 lg:max-h-[calc(100svh-3rem)] lg:w-[30rem] lg:shrink-0 lg:overflow-y-auto"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 id="titulo-versao-salva" className="font-display text-[1.25rem] font-semibold text-ink-strong">
+          Versão salva às {hora}
+        </h2>
+        <button type="button" onClick={aoFechar} className="sublinha min-h-[44px] text-[0.9375rem] text-accent">
+          Fechar
+        </button>
+      </div>
+      <p className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+        Só para ler. O que você escreveu continua no editor.
+      </p>
+      <dl className="mt-5 space-y-4 text-[0.9375rem] leading-[1.6] text-ink">
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>Título</dt>
+          <dd className="mt-1">{salva.titulo}</dd>
+        </div>
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>{pagina ? "Subtítulo" : "Resumo"}</dt>
+          <dd className="mt-1">{salva.resumo || "(vazio)"}</dd>
+        </div>
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>{pagina ? "Onde entra no menu" : "Tema"}</dt>
+          <dd className="mt-1">{salva.categoria || (pagina ? "Fora do menu" : "Sem tema")}</dd>
+        </div>
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>{pagina ? "Foto ao lado do título" : "Imagem de capa"}</dt>
+          <dd className="mt-1">
+            {salva.capa ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={salva.capa} alt="" className="h-20 w-auto rounded-md border border-rule" />
+            ) : (
+              "(sem foto)"
+            )}
+            {legenda && <span className="mt-1 block text-muted">{legenda}</span>}
+          </dd>
+        </div>
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>Situação</dt>
+          <dd className="mt-1">{salva.publicado ? "No site" : "Rascunho, fora do site"}</dd>
+        </div>
+        <div>
+          <dt className={rotulo} style={{ fontFamily: "var(--mono)" }}>Texto</dt>
+          <dd className="mt-1 rounded-md border border-rule bg-paper p-3 whitespace-pre-wrap">{salva.corpo}</dd>
+        </div>
+      </dl>
+    </aside>
   );
 }
 
