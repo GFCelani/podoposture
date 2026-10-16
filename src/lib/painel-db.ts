@@ -687,6 +687,9 @@ async function gravarPost(
   // O endereco segue a mesma cautela: a leitura acima pode ser de antes de
   // outro salvamento publicar o texto, e so o proprio UPDATE sabe se ele ja
   // foi ao ar. Com `publicado_em` preenchido o slug fica, venha de onde vier.
+  // atualizado_em e' a versao do texto que o editor guarda com a copia do
+  // navegador (copia-do-post.ts): anda sempre pelo menos 1 ms, para duas
+  // gravacoes no mesmo milissegundo nao terem a mesma versao.
   let linhas: (LinhaPost & { estava_publicado: boolean })[];
   try {
     linhas = await sql<(LinhaPost & { estava_publicado: boolean })[]>`
@@ -695,7 +698,7 @@ async function gravarPost(
       titulo = ${dados.titulo}, resumo = ${dados.resumo},
       categoria = ${dados.categoria || null}, capa = ${dados.capa}, corpo = ${dados.corpo},
       formato = ${formato},
-      publicado = ${dados.publicado}, atualizado_em = NOW(),
+      publicado = ${dados.publicado}, atualizado_em = GREATEST(NOW(), date_trunc('milliseconds', posts.atualizado_em) + INTERVAL '1 millisecond'),
       publicado_em = ${
         ehEstreia(atual.publicadoEm, dados.publicado)
           ? sql`COALESCE(posts.publicado_em, NOW())`

@@ -386,13 +386,16 @@ async function gravarPagina(
   const slug = enderecoPodeMudar(atual, d.titulo) ? await slugLivre(sql, gerarSlug(d.titulo), id) : atual.slug;
   const grupo = d.categoria || null;
   const ordem = (atual.categoria || null) === grupo ? atual.ordem : await ordemNoFimDo(sql, grupo, id);
+  // atualizado_em e' a versao do texto que o editor guarda com a copia do
+  // navegador (copia-do-post.ts): anda sempre pelo menos 1 ms, para duas
+  // gravacoes no mesmo milissegundo nao terem a mesma versao.
   const linhas = await sql<(LinhaPagina & { estava_publicada: boolean })[]>`
     UPDATE paginas SET
       slug = CASE WHEN paginas.publicado_em IS NULL THEN ${slug} ELSE paginas.slug END,
       titulo = ${d.titulo}, resumo = ${d.resumo}, grupo = ${grupo}, ordem = ${ordem},
       capa = ${d.capa}, capa_alt = ${d.capaAlt}, capa_legenda = ${d.capaLegenda},
       corpo = ${d.corpo}, formato = ${formato},
-      publicado = ${d.publicado}, atualizado_em = NOW(),
+      publicado = ${d.publicado}, atualizado_em = GREATEST(NOW(), date_trunc('milliseconds', paginas.atualizado_em) + INTERVAL '1 millisecond'),
       publicado_em = ${
         ehEstreia(atual.publicadoEm, d.publicado) ? sql`COALESCE(paginas.publicado_em, NOW())` : sql`paginas.publicado_em`
       }
