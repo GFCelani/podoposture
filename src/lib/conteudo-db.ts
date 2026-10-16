@@ -149,6 +149,17 @@ function condicaoDeVersao(sql: ReturnType<typeof bancoDoPainel>, versao: string 
   return sql`${versao === undefined} OR date_trunc('milliseconds', conteudo_site.atualizado_em) IS NOT DISTINCT FROM ${versao ?? null}::timestamptz`;
 }
 
+/**
+ * A versao nova de uma secao que muda: a hora de agora, mas sempre pelo menos
+ * 1 ms depois da anterior. A versao e' a hora em milissegundos, e duas
+ * escritas no mesmo milissegundo (o teste no servidor do GitHub faz isso)
+ * ficavam com a mesma versao: a aba com a versao velha passava pela
+ * conferencia e gravava por cima da escrita nova.
+ */
+function proximaVersao(sql: ReturnType<typeof bancoDoPainel>) {
+  return sql`GREATEST(NOW(), date_trunc('milliseconds', conteudo_site.atualizado_em) + INTERVAL '1 millisecond')`;
+}
+
 /** null quando a secao ja nao esta na `versao` esperada: nada foi gravado. */
 export async function gravarRascunho(
   chave: ChaveDeSecao,
@@ -160,7 +171,7 @@ export async function gravarRascunho(
   const [linha] = await sql<LinhaCrua[]>`
     INSERT INTO conteudo_site (chave, rascunho, atualizado_em)
     VALUES (${chave}, ${sql.json(dados as ParametroJson)}, NOW())
-    ON CONFLICT (chave) DO UPDATE SET rascunho = EXCLUDED.rascunho, atualizado_em = NOW()
+    ON CONFLICT (chave) DO UPDATE SET rascunho = EXCLUDED.rascunho, atualizado_em = ${proximaVersao(sql)}
     WHERE ${condicaoDeVersao(sql, versao)}
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;
@@ -181,7 +192,7 @@ export async function publicarSecao(
     INSERT INTO conteudo_site (chave, publicado, rascunho, atualizado_em, publicado_em)
     VALUES (${chave}, ${sql.json(dados as ParametroJson)}, NULL, NOW(), NOW())
     ON CONFLICT (chave) DO UPDATE SET
-      publicado = EXCLUDED.publicado, rascunho = NULL, atualizado_em = NOW(), publicado_em = NOW()
+      publicado = EXCLUDED.publicado, rascunho = NULL, atualizado_em = ${proximaVersao(sql)}, publicado_em = NOW()
     WHERE ${condicaoDeVersao(sql, versao)}
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;
@@ -205,7 +216,7 @@ export async function descartarRascunho(
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
-    UPDATE conteudo_site SET rascunho = NULL, atualizado_em = NOW()
+    UPDATE conteudo_site SET rascunho = NULL, atualizado_em = ${proximaVersao(sql)}
     WHERE chave = ${chave} AND (${condicaoDeVersao(sql, versao)})
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;
@@ -226,7 +237,7 @@ export async function voltarAoPadrao(
   await garantirTabelaDeConteudo();
   const sql = bancoDoPainel();
   const [linha] = await sql<LinhaCrua[]>`
-    UPDATE conteudo_site SET publicado = NULL, publicado_em = NULL, atualizado_em = NOW()
+    UPDATE conteudo_site SET publicado = NULL, publicado_em = NULL, atualizado_em = ${proximaVersao(sql)}
     WHERE chave = ${chave} AND (${condicaoDeVersao(sql, versao)})
     RETURNING chave, publicado, rascunho, atualizado_em, publicado_em`;
   return linha ? paraLinha(linha) : null;

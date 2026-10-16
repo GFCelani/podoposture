@@ -5,7 +5,7 @@ import { CONTEUDO_PADRAO } from "./conteudo-padrao";
 // `server-only` lanca fora do empacotador do Next, e `posts.ts` usa o apelido
 // `@/`, que o vitest deste projeto nao resolve (mesmo motivo de numeros-db.test).
 vi.mock("server-only", () => ({}));
-vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map() }));
+vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map(), RESUMOS_COMPLETADOS: [] }));
 
 /**
  * A conferencia de versao e comportamento do banco (a clausula WHERE do
@@ -90,6 +90,23 @@ describe.skipIf(!URL_DE_TESTE)("versao da secao da pagina inicial no Postgres", 
 
     expect(await db.voltarAoPadrao("galeria", nova!.atualizadoEm)).not.toBeNull();
     expect((await db.lerSecao("galeria"))?.publicado).toBeNull();
+  });
+
+  it("duas escritas no mesmo milissegundo ganham versoes diferentes", async () => {
+    // O relogio parado: a versao gravada ja esta no milissegundo "de agora"
+    // ou depois dele, como fica quando duas escritas caem no mesmo ms.
+    const primeira = await db.publicarSecao("galeria", CONTEUDO_PADRAO.galeria, null);
+    await banco.bancoDoPainel()`UPDATE conteudo_site SET atualizado_em = NOW() + INTERVAL '1 hour' WHERE chave = 'galeria'`;
+    const parada = (await db.lerSecao("galeria"))!.atualizadoEm;
+    expect(parada).not.toBe(primeira!.atualizadoEm);
+
+    const segunda = await db.publicarSecao("galeria", CONTEUDO_PADRAO.galeria, parada);
+    expect(segunda).not.toBeNull();
+    expect(Date.parse(segunda!.atualizadoEm!)).toBe(Date.parse(parada!) + 1);
+    // a aba com a versao de antes e' recusada, e a de agora passa
+    expect(await db.voltarAoPadrao("galeria", parada)).toBeNull();
+    expect(await db.descartarRascunho("galeria", parada)).toBeNull();
+    expect(await db.voltarAoPadrao("galeria", segunda!.atualizadoEm)).not.toBeNull();
   });
 
   it("secao que nunca foi salva devolve null no descarte, e nao conflito", async () => {

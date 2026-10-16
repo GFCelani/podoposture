@@ -6,7 +6,7 @@ import type { LinhaDoDia } from "./numeros-tipos";
 // `@/`, que o vitest deste projeto nao resolve, e aqui so importa porque
 // `painel-db.ts` o carrega para outra coisa.
 vi.mock("server-only", () => ({}));
-vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map() }));
+vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map(), RESUMOS_COMPLETADOS: [] }));
 
 /**
  * Contra um Postgres de verdade: idempotencia e upsert sao comportamento do
