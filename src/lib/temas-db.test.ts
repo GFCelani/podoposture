@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 vi.mock("server-only", () => ({}));
 // Acervo vazio: aqui interessa o tema, nao a importacao (essa tem o proprio teste).
-vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map() }));
+vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map(), RESUMOS_COMPLETADOS: [] }));
 
 /**
  * O CRUD de temas e a trava que impede apagar tema com texto.

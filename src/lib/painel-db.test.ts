@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 // `server-only` lanca fora do empacotador do Next, e `posts.ts` usa o apelido
 // `@/`, que o vitest deste projeto nao resolve (mesmo motivo de numeros-db.test).
 vi.mock("server-only", () => ({}));
-vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map() }));
+vi.mock("./posts", () => ({ BRUTOS_DO_JSON: [], MAPA_ASCII_POSTS: new Map(), RESUMOS_COMPLETADOS: [] }));
 
 /**
  * A poda dos dados do painel e o que sustenta a pagina de privacidade: ela

@@ -8,6 +8,7 @@ import { htmlParaMarkdown } from "@/lib/html-para-markdown";
 import { ipDaRequisicao } from "@/lib/limite-de-tentativas";
 import { resumoAutomatico } from "@/lib/markdown";
 import { bancoConfigurado, registrarAuditoria } from "@/lib/painel-db";
+import { paginasDoAcervo } from "@/lib/pagina-do-acervo";
 import { apagarPagina, atualizarPagina, buscarPaginaPorId } from "@/lib/paginas-db";
 import { fotosConhecidas, modeloDaPagina } from "@/lib/paginas-antigas";
 import { camposDaPagina, validarPagina, type PaginaDoPainel } from "@/lib/paginas-tipos";
@@ -96,6 +97,16 @@ export async function PUT(req: Request, ctx: Contexto) {
     if (atual.formato === "html" && semRuido(campos.corpo) === semRuido(htmlParaMarkdown(atual.corpo))) {
       campos.corpo = atual.corpo;
       formato = "html";
+    } else if (modeloDaPagina(atual.slug) === "antigo") {
+      // Pagina do codigo ja editada que voltou ao texto de origem (desfazer
+      // uma troca de foto, por exemplo): volta tambem o HTML de origem, o
+      // mesmo que a importacao gravou, e nao uma copia dele em Markdown.
+      const slug = atual.slug.normalize("NFC");
+      const doCodigo = paginasDoAcervo(await lerConteudoDoSite()).find((p) => p.slug === slug);
+      if (doCodigo && semRuido(campos.corpo) === semRuido(htmlParaMarkdown(doCodigo.corpo))) {
+        campos.corpo = doCodigo.corpo;
+        formato = "html";
+      }
     }
     const salva = await atualizarPagina(pronto.id, campos, formato);
     if (!salva) return NextResponse.json({ erro: "Página não encontrada." }, { status: 404 });

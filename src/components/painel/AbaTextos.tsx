@@ -43,7 +43,9 @@ const PERFIL = {
     editar: "Editar texto",
     apagar: "Apagar texto",
     semGrupo: "Sem tema",
-    endereco: (slug: string) => `/home/f/${slug}`,
+    // Codificado como no site (hrefDoPost): o "%" do post "chinelos-100%-..."
+    // cru dava 404 no "ver no site".
+    endereco: (slug: string) => `/home/f/${encodeURIComponent(slug)}`,
     carregando: "Carregando seus textos…",
     vazio: "Você ainda não escreveu nenhum texto por aqui.",
     apagado: "Texto apagado.",
@@ -67,7 +69,7 @@ const PERFIL = {
     editar: "Editar página",
     apagar: "Apagar página",
     semGrupo: "Fora do menu",
-    endereco: (slug: string) => `/${slug}`,
+    endereco: (slug: string) => `/${encodeURIComponent(slug)}`,
     carregando: "Carregando as páginas…",
     vazio: "Ainda não há páginas por aqui.",
     apagado: "Página apagada.",

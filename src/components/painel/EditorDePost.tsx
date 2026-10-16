@@ -6,6 +6,7 @@ import TurndownService from "turndown";
 import { CorpoDaPagina, imagensAlemDoTexto } from "@/components/corpo-da-pagina";
 import { SecoesDeConteudo } from "@/components/secoes-de-conteudo";
 import { chaveDaCopia, decidirCopia, escreverCopia, lerCopia, type CopiaDoPost } from "@/lib/copia-do-post";
+import { fotosDoTexto, mudarFotoDoTexto } from "@/lib/fotos-do-texto";
 import { conferirArquivo, importarArquivo, lerTextoDoArquivo, type Importado } from "@/lib/importar-arquivo";
 import { markdownParaHtml, resumoAutomatico } from "@/lib/markdown";
 import { topoDoTexto, type TopoDoTexto } from "@/lib/subtitulo-inteiro";
@@ -220,7 +221,9 @@ export function EditorDePost({
   const [salvando, setSalvando] = useState<"publicar" | "rascunho" | null>(null);
   const [confirmandoRascunho, setConfirmandoRascunho] = useState(false);
   const [confirmandoSaida, setConfirmandoSaida] = useState<Saida | null>(null);
-  const [enviando, setEnviando] = useState<"capa" | "corpo" | null>(null);
+  // "foto": trocando uma foto que ja esta no texto; `trocando` diz qual.
+  const [enviando, setEnviando] = useState<"capa" | "corpo" | "foto" | null>(null);
+  const [trocando, setTrocando] = useState<number | null>(null);
   const [verPrevia, setVerPrevia] = useState(Boolean(importadoAoAbrir));
   const emCurso = useRef(false);
   const enviandoAgora = useRef(false);
@@ -411,6 +414,10 @@ export function EditorDePost({
     [pagina, slugDaPagina, corpoAdiado],
   );
 
+  // As fotos escritas no texto, cada uma com miniatura e campos proprios
+  // (lib/fotos-do-texto.ts): sem isto, so a capa aparecia como foto.
+  const fotosNoTexto = useMemo(() => fotosDoTexto(campos.corpo), [campos.corpo]);
+
   /* -------- escrever no texto -------- */
 
   function mudar<C extends keyof Dados>(campo: C, valor: Dados[C]) {
@@ -559,6 +566,47 @@ export function EditorDePost({
     } finally {
       enviandoAgora.current = false;
       setEnviando(null);
+    }
+  }
+
+  /**
+   * Troca a foto de numero `indice` do texto pela do arquivo: so o endereco
+   * muda, a descricao, a legenda e o lugar no texto ficam. A foto e' achada
+   * de novo quando o envio termina, pelo endereco antigo: se ela escreveu
+   * outra imagem acima enquanto esta subia, a troca ainda cai na foto certa.
+   */
+  async function trocarFotoDoTexto(arquivo: File, indice: number) {
+    if (enviandoAgora.current) return;
+    const antiga = fotosDoTexto(campos.corpo)[indice]?.src;
+    if (!antiga) return;
+    enviandoAgora.current = true;
+    setEnviando("foto");
+    setTrocando(indice);
+    setAviso(null);
+    setSucesso(null);
+    try {
+      const { url } = await enviarAoServidor(arquivo, LARGURA_MAXIMA_DA_IMAGEM);
+      setCampos((c) => {
+        const fotos = fotosDoTexto(c.corpo);
+        const i = fotos[indice]?.src === antiga ? indice : fotos.findIndex((f) => f.src === antiga);
+        return i < 0 ? c : { ...c, corpo: mudarFotoDoTexto(c.corpo, i, { src: url }) };
+      });
+      if (pendente) setPendente(null);
+      setSucesso("Foto trocada. Ela vai para o site quando você publicar.");
+    } catch (erro) {
+      if (erro instanceof ErroAoEnviarImagem && erro.sessaoPerdida) {
+        perderSessao();
+        return;
+      }
+      setAviso(
+        erro instanceof ErroAoEnviarImagem
+          ? erro.message
+          : "Não foi possível enviar a foto. A anterior continua no lugar; tente de novo e, se continuar, use uma foto menor.",
+      );
+    } finally {
+      enviandoAgora.current = false;
+      setEnviando(null);
+      setTrocando(null);
     }
   }
 
@@ -903,7 +951,7 @@ export function EditorDePost({
           )}
         </div>
 
-        <div>
+        <div data-foto-do-painel={campos.capa ? "capa" : undefined}>
           <span className={rotulo}>
             {pagina ? "Foto ao lado do título" : "Imagem de capa"} <span className="font-normal text-muted">(opcional)</span>
           </span>
@@ -1014,6 +1062,87 @@ export function EditorDePost({
             </div>
           )}
         </div>
+
+        {fotosNoTexto.length > 0 && (
+          <section aria-labelledby="titulo-fotos-do-texto">
+            <h3 id="titulo-fotos-do-texto" className={rotulo}>
+              {pagina ? "Fotos no texto" : "Imagens no texto"}
+            </h3>
+            <p className="mt-1 text-[0.875rem] leading-[1.6] text-muted">
+              Na ordem em que aparecem {pagina ? "na página" : "no texto"}
+              {campos.capa ? (pagina ? ", depois da foto ao lado do título" : ", depois da imagem de capa") : ""}. Trocar
+              aqui muda só a foto: o lugar dela no texto continua o mesmo.
+            </p>
+            <ol className="mt-4">
+              {fotosNoTexto.map((foto, i) => {
+                const n = i + 1 + (campos.capa ? 1 : 0);
+                const id = `foto-do-texto-${i}`;
+                return (
+                  <li key={i} data-foto-do-painel="texto" className="border-t border-rule py-5">
+                    <p className="text-[0.75rem] tracking-[0.12em] text-muted uppercase" style={{ fontFamily: "var(--mono)" }}>
+                      Foto {n}
+                      {foto.secao ? ` · em “${foto.secao}”` : " · no começo do texto"}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-4">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={foto.src} alt="" className="h-20 w-auto rounded-md border border-rule" />
+                      <label
+                        className={`inline-flex min-h-[44px] items-center rounded-md border-[1.5px] border-accent/45 px-4 text-[0.9375rem] text-accent hover:border-accent ${FOCO_NO_ROTULO} ${
+                          enviando !== null || travado ? "cursor-default opacity-60" : "cursor-pointer"
+                        }`}
+                      >
+                        {enviando === "foto" && trocando === i ? "Enviando…" : "Trocar foto"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          aria-label={`Trocar a foto ${n}`}
+                          disabled={enviando !== null || travado}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) void trocarFotoDoTexto(f, i);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {enviando === "foto" && trocando === i && (
+                      <p role="status" className="mt-2 text-[0.875rem] text-muted">
+                        Enviando a foto nova. Pode levar alguns segundos.
+                      </p>
+                    )}
+                    <label htmlFor={`${id}-alt`} className={`${rotulo} mt-4`}>
+                      Descrição da foto {n}
+                    </label>
+                    <input
+                      id={`${id}-alt`}
+                      value={foto.alt}
+                      maxLength={LIMITES_PAGINA.capaAlt}
+                      readOnly={travado}
+                      onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { alt: e.target.value }))}
+                      className={entrada}
+                    />
+                    {pagina && (
+                      <>
+                        <label htmlFor={`${id}-legenda`} className={`${rotulo} mt-4`}>
+                          Legenda da foto {n} <span className="font-normal text-muted">(opcional)</span>
+                        </label>
+                        <input
+                          id={`${id}-legenda`}
+                          value={foto.legenda}
+                          maxLength={LIMITES_PAGINA.capaLegenda}
+                          readOnly={travado}
+                          onChange={(e) => mudar("corpo", mudarFotoDoTexto(campos.corpo, i, { legenda: e.target.value }))}
+                          className={entrada}
+                        />
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
 
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
