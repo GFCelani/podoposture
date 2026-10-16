@@ -6,6 +6,9 @@ import { medirTela } from "@/lib/telas-do-painel";
 
 import { BrandMark } from "../brand-mark";
 
+/** A versao do painel neste navegador (next.config.ts). */
+const VERSAO_DO_PAINEL = process.env.NEXT_PUBLIC_VERSAO_DO_PAINEL ?? "";
+
 /** A medida da janela para o registro de telas; sem ela, o login segue igual. */
 function medirSemFalhar() {
   try {
@@ -55,10 +58,17 @@ export function Entrar({ aoEntrar, aviso }: { aoEntrar: () => Promise<void>; avi
         headers: { "Content-Type": "application/json" },
         // A janela de quem entra vai junto: o servidor so guarda se a senha
         // conferir (lib/telas-do-painel.ts). Falhou a medida, vai sem ela.
-        body: JSON.stringify({ senha, tela: medirSemFalhar() }),
+        body: JSON.stringify({ senha, tela: medirSemFalhar(), versao: VERSAO_DO_PAINEL }),
       });
 
       if (resposta.ok) {
+        // Painel de antes de um deploy (a aba ficou aberta): o cookie ja
+        // valeu, entao recarregar abre o painel novo, ja dentro.
+        const ok = await resposta.clone().json().catch(() => null);
+        if (typeof ok?.versao === "string" && ok.versao && ok.versao !== VERSAO_DO_PAINEL) {
+          window.location.reload();
+          return;
+        }
         // "Entrando…" fica ate o painel trocar de tela: sem esperar, o botao
         // voltava a dizer "Entrar" com a senha certa ja aceita, e ela clicava
         // de novo sem saber se tinha dado certo.

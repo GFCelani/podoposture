@@ -191,6 +191,13 @@ export function Painel() {
       .then(async (r) => (r.ok ? null : ((await r.json().catch(() => null))?.erro ?? FALHA_AO_SAIR)))
       .catch(() => FALHA_AO_SAIR);
 
+    // Saiu de verdade: a pagina recarrega, e a tela de senha seguinte e' a do
+    // painel publicado agora, nunca a que ficou na memoria desta aba desde
+    // antes de um deploy (foi assim que um login entrou sem a medida da tela).
+    if (!recado) {
+      window.location.replace("/publicar");
+      return;
+    }
     abaDeVolta.current = "textos";
     setAviso(recado);
     setVisitadas([]);
@@ -259,7 +266,12 @@ export function Painel() {
   }
 
   return (
-    <div className="mx-auto max-w-[52rem] px-6 py-12 max-[359px]:py-8 lg:py-16">
+    // A versao do painel carregado (next.config.ts), para conferir de fora
+    // que a aba recarregou com o painel publicado (e2e/painel-versao.spec.ts).
+    <div
+      data-versao-do-painel={process.env.NEXT_PUBLIC_VERSAO_DO_PAINEL ?? ""}
+      className="mx-auto max-w-[52rem] px-6 py-12 max-[359px]:py-8 lg:py-16"
+    >
       {/* Abaixo de 360px o cabecalho fica numa linha so: com a etiqueta ele
           quebrava em duas e o "Sair" descia, e essa altura sai do primeiro
           quadro da aba Números (ver QuadroDePessoas). A marca continua na tela

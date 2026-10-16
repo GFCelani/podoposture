@@ -270,5 +270,6 @@ async function entrar(corpo: string, cabecalhos: Headers): Promise<NextResponse>
   // banco lento aqui atrasa a resposta mas nao desfaz o login que ja deu certo.
   await esquecerTentativas(origem);
 
-  return NextResponse.json({ ok: true });
+  // A versao deste servidor: o painel que mandou outra recarrega (Entrar.tsx).
+  return NextResponse.json({ ok: true, versao: process.env.NEXT_PUBLIC_VERSAO_DO_PAINEL ?? "" });
 }
