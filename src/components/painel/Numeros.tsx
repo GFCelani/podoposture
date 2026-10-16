@@ -25,6 +25,15 @@ import {
   type TextoLido,
   type Visitas,
 } from "@/lib/numeros-tipos";
+import {
+  textoDaSituacao,
+  textoDaVersao,
+  textoDoNumero,
+  textoDoPalpite,
+  textoDoPar,
+  type MedidaParcial,
+  type SituacaoDaMedida,
+} from "@/lib/telas-do-painel";
 import { BarrasHorizontais, ColunasMensais, LinhaDiaria, type ItemDeBarra, type Ponto } from "./Barras";
 
 /**
@@ -165,22 +174,18 @@ export function Numeros({ aoPerderSessao }: { aoPerderSessao: () => void }) {
 
 /* ------------------------------------------------------- telas do painel */
 
-type TelaLida = {
+/** A linha de api/painel/telas: campo de medida vazio e' o que nao veio valido. */
+type TelaLida = MedidaParcial & {
   id: number;
   em: string;
-  janelaL: number;
-  janelaA: number;
-  externaL: number;
-  externaA: number;
-  devicePixelRatio: number;
-  telaL: number;
-  telaA: number;
-  telaUtilL: number;
-  telaUtilA: number;
+  medida: SituacaoDaMedida;
+  versao: string;
   navegador: string;
   sistema: string;
   zoom: number | null;
   escalaDoSistema: number | null;
+  /** Janela externa / interna; 0 = sem as duas medidas. */
+  razao: number;
   sessao: string;
 };
 
@@ -219,7 +224,20 @@ function TelasDoPainel({ aoPerderSessao }: { aoPerderSessao: () => void }) {
           <table className="w-full border-collapse text-left" style={{ fontFamily: "var(--mono)" }}>
             <thead>
               <tr className="border-b border-rule">
-                {["Quando", "Janela (CSS)", "Zoom", "Escala do sistema", "DPR", "Tela", "Tela útil", "Janela externa", "Navegador", "Sistema"].map((t) => (
+                {[
+                  "Quando",
+                  "Medida",
+                  "Janela (CSS)",
+                  "Zoom",
+                  "Escala do sistema",
+                  "DPR",
+                  "Tela",
+                  "Tela útil",
+                  "Janela externa",
+                  "Navegador",
+                  "Sistema",
+                  "Versão do painel",
+                ].map((t) => (
                   <th key={t} className="py-2 pr-4 font-normal whitespace-nowrap">
                     {t}
                   </th>
@@ -230,29 +248,27 @@ function TelasDoPainel({ aoPerderSessao }: { aoPerderSessao: () => void }) {
               {telas.map((t) => (
                 <tr key={t.id} className="border-b border-rule/60 text-ink">
                   <td className="py-2 pr-4 whitespace-nowrap">{data(t.em)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDaSituacao(t.medida)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoPar(t.janelaL, t.janelaA)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoPalpite(t.zoom, t.razao > 0)}</td>
                   <td className="py-2 pr-4 whitespace-nowrap">
-                    {t.janelaL}×{t.janelaA}
+                    {textoDoPalpite(t.escalaDoSistema, t.razao > 0 && t.devicePixelRatio !== null)}
                   </td>
-                  <td className="py-2 pr-4">{t.zoom ? `${t.zoom}%` : "?"}</td>
-                  <td className="py-2 pr-4">{t.escalaDoSistema ? `${t.escalaDoSistema}%` : "?"}</td>
-                  <td className="py-2 pr-4">{t.devicePixelRatio}</td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {t.telaL}×{t.telaA}
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {t.telaUtilL}×{t.telaUtilA}
-                  </td>
-                  <td className="py-2 pr-4 whitespace-nowrap">
-                    {t.externaL}×{t.externaA}
-                  </td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoNumero(t.devicePixelRatio)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoPar(t.telaL, t.telaA)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoPar(t.telaUtilL, t.telaUtilA)}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDoPar(t.externaL, t.externaA)}</td>
                   <td className="py-2 pr-4 whitespace-nowrap">{t.navegador}</td>
                   <td className="py-2 pr-4 whitespace-nowrap">{t.sistema}</td>
+                  <td className="py-2 pr-4 whitespace-nowrap">{textoDaVersao(t.versao)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className="mt-3">
             Zoom pela razão entre a janela externa e a interna (só Chrome e Edge); escala do sistema = DPR ÷ zoom.
+            Medida parcial: algum campo chegou inválido e ficou “não medido”. Não enviada: o login veio de um
+            painel antigo, ainda aberto no navegador, que não media a tela.
           </p>
         </div>
       )}

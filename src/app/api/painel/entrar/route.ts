@@ -12,7 +12,7 @@ import { registrarAuditoria } from "@/lib/painel-db";
 import { conferirSenha, hashConfigurado } from "@/lib/senha";
 import { criarBilhete, ehLocalhost, idDoBilhete, opcoesDoCookie, segredoConfigurado } from "@/lib/sessao";
 import { registrarTela } from "@/lib/telas-db";
-import { validarMedida } from "@/lib/telas-do-painel";
+import { lerMedida } from "@/lib/telas-do-painel";
 import { criarVagasDeLeitura } from "@/lib/vagas-de-leitura";
 
 export const runtime = "nodejs";
@@ -249,8 +249,17 @@ async function entrar(corpo: string, cabecalhos: Headers): Promise<NextResponse>
   await registrarAuditoria("login-ok", null, origem);
   // A tela de quem entrou (janela, densidade, zoom: lib/telas-do-painel.ts),
   // presa a esta sessao. So depois da senha certa, e nunca derruba o login.
-  const tela = validarMedida((bruto as { tela?: unknown }).tela);
-  if (tela) await registrarTela(idDoBilhete(bilhete) ?? "", tela, cabecalhos.get("user-agent") ?? "");
+  // Grava sempre: medida ruim fica com os campos que vieram, e login sem
+  // medida (o painel antigo em cache no navegador) fica marcado como tal.
+  const { medida, situacao } = lerMedida((bruto as { tela?: unknown }).tela);
+  const versaoDoNavegador = (bruto as { versao?: unknown }).versao;
+  await registrarTela(
+    idDoBilhete(bilhete) ?? "",
+    medida,
+    situacao,
+    typeof versaoDoNavegador === "string" ? versaoDoNavegador : "",
+    cabecalhos.get("user-agent") ?? "",
+  );
   // Acertou a senha: daqui para frente esta origem tem vaga reservada nesta
   // instancia nos dois lugares em que o flood de terceiro a recusava — a leitura
   // do corpo (`vagasDeLeitura`) e o teto de pedidos simultaneos (VAGA_RESERVADA).
