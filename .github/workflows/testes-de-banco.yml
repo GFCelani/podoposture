@@ -1,0 +1,103 @@
+# Os testes que precisam de banco, a cada push e pull request.
+#
+# O pre-commit roda sem banco: os testes de Postgres do vitest pulam
+# (DATABASE_URL_TESTE vazia) e os e2e do painel nem entram. Assim eles
+# ficaram tres dias quebrados sem ninguem ver (o mock de ./posts sem um
+# export novo). Aqui rodam todos, contra um Postgres descartavel:
+#
+#   - vitest completo com DATABASE_URL_TESTE;
+#   - build de producao com banco, `next start` e os e2e que gravam no banco
+#     (e2e/painel-paginas.spec.ts e e2e/fotos-no-painel.spec.ts).
+#
+# Nenhuma chave real. O repositorio e' publico: a senha do painel, o hash
+# dela e o segredo da sessao nascem aqui, a cada execucao, e o banco morre
+# com ela. Nenhum `secrets.*` e' lido.
+
+name: testes de banco
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testes-de-banco-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  banco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: podoposture_teste
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # So valores de teste, deste workflow.
+      DATABASE_URL_TESTE: postgres://postgres:postgres@localhost:5432/podoposture_teste
+      PAINEL_SENHA: senha-de-teste-do-ci
+      PORTA: "3218"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: vitest com banco
+        run: npx vitest run
+
+      - name: banco, senha e sessao descartaveis para o servidor
+        run: |
+          PGPASSWORD=postgres createdb -h localhost -U postgres podoposture_painel
+          echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/podoposture_painel" >> "$GITHUB_ENV"
+          node scripts/gerar-senha.mjs "$PAINEL_SENHA" | grep -E '^ADMIN_(PASSWORD_HASH|SESSION_SECRET)=' >> "$GITHUB_ENV"
+
+      - name: build de producao com banco
+        run: npm run build
+
+      - name: servidor
+        run: |
+          npx next start -p "$PORTA" > servidor.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null "http://localhost:$PORTA/" && exit 0
+            sleep 1
+          done
+          cat servidor.log
+          exit 1
+
+      - name: navegador do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: e2e do painel com banco
+        env:
+          PW_BASE_URL: http://localhost:3218
+        run: npx playwright test e2e/painel-paginas.spec.ts e2e/fotos-no-painel.spec.ts --workers=1
+
+      - name: registros da falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: falha-testes-de-banco
+          path: |
+            servidor.log
+            test-results/
+          retention-days: 7
